@@ -1377,13 +1377,13 @@
     "@rollup/rollup-win32-x64-msvc" "4.30.1"
     "fsevents" "~2.3.2"
 
-"roundtable-encounters@file:":
+"roundtable-tracker@file:":
   "resolved" "file:"
   "version" "0.0.0"
   dependencies:
     "react" "^18.3.1"
     "react-dom" "^18.3.1"
-    "roundtable-encounters" "file:"
+    "roundtable-tracker" "file:"
 
 "run-parallel@^1.1.9":
   "integrity" "sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA=="
