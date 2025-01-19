@@ -1,35 +1,55 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Button, Grommet, Page, PageContent, PageHeader, Text } from 'grommet';
+import { Menu } from 'grommet-icons';
+import { useState } from 'react';
+import { AppBar } from './AppBar';
+import { EncounterBar } from './EncounterBar';
+import { EncounterDirectory } from './EncounterDirectory/EncounterDirectory';
+import { InitiativeList } from './InitiativeList/InitiativeList';
+
+const theme = {
+	global: {
+		colors: {
+			brand: '#228BE6',
+		},
+		font: {
+			family: 'Roboto',
+			size: '18px',
+			height: '20px',
+		},
+	},
+};
 
 function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+	const [show, setShow] = useState<boolean>(false);
+	const [encounterInProgress, setEncounterInProgress] =
+		useState<boolean>(false);
+	return (
+		<Grommet theme={theme} full>
+			<Page fill="vertical" justify="between">
+				<AppBar>
+					<Button>
+						<Menu onClick={() => setShow(true)} />
+					</Button>
+					{!encounterInProgress && (
+						<Button
+							primary
+							label="Start Encounter"
+							onClick={() => setEncounterInProgress(true)}
+						/>
+					)}
+					<Text size="large">My App</Text>
+				</AppBar>
+				<PageContent flex="grow">
+					<PageHeader title="Ta lista potrzebuje integrated wykrywanie gestów swipe & tap" />
+					<InitiativeList />
+				</PageContent>
+				{encounterInProgress && (
+					<EncounterBar endEncounter={() => setEncounterInProgress(false)} />
+				)}
+			</Page>
+			{show && <EncounterDirectory setShow={setShow} />}
+		</Grommet>
+	);
 }
 
-export default App
+export default App;
