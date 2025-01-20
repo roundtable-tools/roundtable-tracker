@@ -1,14 +1,9 @@
 import { Box, Grid } from 'grommet';
 import { InitiativeElement } from './InitiativeElement';
+import { useEncounterStore } from '../store';
 
 export const InitiativeList = () => {
-	const characters = new Array(10)
-		.fill(0)
-		.map((_, index) => ({
-			name: `Character ${index + 1}`,
-			initiative: Math.floor(Math.random() * 20) + 1,
-		}))
-		.sort((a, b) => b.initiative - a.initiative);
+	const characters = useEncounterStore((state) => state.characters);
 
 	const getBackgroundColor = (index: number) => {
 		switch (index) {
