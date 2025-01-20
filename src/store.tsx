@@ -1,6 +1,4 @@
-import { devtools } from 'zustand/middleware/devtools';
-import { persist } from 'zustand/middleware/persist';
-import { create } from 'zustand/react';
+import { create } from 'zustand';
 
 const characters = new Array(10)
 	.fill(0)
@@ -14,15 +12,6 @@ interface EncounterStore {
 	characters: { name: string; initiative: number }[];
 }
 
-export const useEncounterStore = create<EncounterStore>()(
-	devtools(
-		persist(
-			() => ({
-				characters,
-			}),
-			{
-				name: 'encounter',
-			}
-		)
-	)
-);
+export const useEncounterStore = create<EncounterStore>()(() => ({
+	characters,
+}));
