@@ -1,9 +1,12 @@
 import { Accordion, AccordionPanel, Box } from 'grommet';
-import { Character } from '../store';
+import { Character } from '../store/data';
 
-export const InitiativeElement = (props: { character: Character }) => {
+export const InitiativeElement = (props: {
+	character: Character;
+	open: boolean;
+}) => {
 	return (
-		<Accordion>
+		<Accordion activeIndex={props.open ? 0 : []}>
 			<AccordionPanel
 				label={`[${props.character.initiative}] ${props.character.name} - ${props.character.state}`}
 			>

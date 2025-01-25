@@ -1,7 +1,5 @@
 import { create } from 'zustand';
-
-export const STATE = ['normal', 'delayed', 'knocked-out'] as const;
-type State = (typeof STATE)[number];
+import { Character, STATE } from './data';
 
 const characters = new Array(10)
 	.fill(0)
@@ -12,15 +10,17 @@ const characters = new Array(10)
 	}))
 	.sort((a, b) => b.initiative - a.initiative);
 
-export interface Character {
-	name: string;
-	initiative: number;
-	state: State;
-}
 interface EncounterStore {
 	characters: Character[];
+	updateCharacter: (index: number, character: Character) => void;
 }
-
-export const useEncounterStore = create<EncounterStore>()(() => ({
+export const useEncounterStore = create<EncounterStore>()((set) => ({
 	characters,
+	updateCharacter: (index: number, character: Character) => {
+		set((state) => ({
+			characters: state.characters.map((char, i) =>
+				i === index ? character : char
+			),
+		}));
+	},
 }));
