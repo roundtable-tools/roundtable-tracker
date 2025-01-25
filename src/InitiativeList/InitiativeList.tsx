@@ -1,6 +1,7 @@
 import { Box, Grid } from 'grommet';
 import { InitiativeElement } from './InitiativeElement';
 import { useEncounterStore } from '../store';
+import React from 'react';
 
 export const InitiativeList = () => {
 	const characters = useEncounterStore((state) => state.characters);
@@ -19,14 +20,21 @@ export const InitiativeList = () => {
 	};
 
 	return (
-		<Grid rows={['xsmall', '...']} gap="none">
+		<Grid rows={['xsmall', '...']} columns={['50px', '1fr', '50px']} gap="none">
 			{characters.map((character, index) => (
-				<Box key={character.name} background={getBackgroundColor(index)}>
-					<InitiativeElement
-						name={character.name}
-						initiative={character.initiative}
-					/>
-				</Box>
+				<React.Fragment key={character.name}>
+					<Box background={'status-critical'} border={'all'}>
+						Delay
+					</Box>
+					<Box background={'status-unknown'}>
+						<Box background={getBackgroundColor(index)}>
+							<InitiativeElement character={character} />
+						</Box>
+					</Box>
+					<Box background={'status-warning'} border={'all'}>
+						Knock out
+					</Box>
+				</React.Fragment>
 			))}
 		</Grid>
 	);
