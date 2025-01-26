@@ -662,6 +662,11 @@
   resolved "https://registry.npmjs.org/@types/stylis/-/stylis-4.2.5.tgz"
   integrity sha512-1Xve+NMN7FWjY14vLoY5tL3BVEQ/n42YLwaqJIPYhotZ9uBHt87VceMwWQpzmdEt2TNXIorIFG+YeCUUW7RInw==
 
+"@types/throttle-debounce@^5.0.2":
+  version "5.0.2"
+  resolved "https://registry.yarnpkg.com/@types/throttle-debounce/-/throttle-debounce-5.0.2.tgz#3489d91673a4be830c2c9e2acf1f6cdab724102c"
+  integrity sha512-pDzSNulqooSKvSNcksnV72nk8p7gRqN8As71Sp28nov1IgmPKWbOEIwAWvBME5pPTtaXJAvG3O4oc76HlQ4kqQ==
+
 "@typescript-eslint/eslint-plugin@8.20.0":
   version "8.20.0"
   resolved "https://registry.npmjs.org/@typescript-eslint/eslint-plugin/-/eslint-plugin-8.20.0.tgz"
@@ -1861,8 +1866,9 @@ rollup@^4.23.0:
     motion "^12.0.5"
     react "^18.3.1"
     react-dom "^18.3.1"
-    roundtable-tracker "file:../../Library/Caches/Yarn/v6/npm-roundtable-tracker-0.0.0-6cdf16f4-2ff2-407c-a97e-373d799c13ff-1737901955308/node_modules/roundtable-tracker"
+    roundtable-tracker "file:../../Library/Caches/Yarn/v6/npm-roundtable-tracker-0.0.0-fb53c030-3229-48e0-81e9-b0a551c9ac7d-1737911199742/node_modules/roundtable-tracker"
     styled-components "^6.1.14"
+    throttle-debounce "^5.0.2"
     zustand "^5.0.3"
 
 run-parallel@^1.1.9:
@@ -2019,6 +2025,11 @@ test-exclude@^7.0.1:
     "@istanbuljs/schema" "^0.1.2"
     glob "^10.4.1"
     minimatch "^9.0.4"
+
+throttle-debounce@^5.0.2:
+  version "5.0.2"
+  resolved "https://registry.yarnpkg.com/throttle-debounce/-/throttle-debounce-5.0.2.tgz#ec5549d84e053f043c9fd0f2a6dd892ff84456b1"
+  integrity sha512-B71/4oyj61iNH0KeCamLuE2rmKuTO5byTOSVwECM5FA7TiAiAW+UqTKZ9ERueC4qvgSttUhdmq1mXC3kJqGX7A==
 
 tinybench@^2.9.0:
   version "2.9.0"

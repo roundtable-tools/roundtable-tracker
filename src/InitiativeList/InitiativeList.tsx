@@ -1,35 +1,90 @@
 import { Box, Grid } from 'grommet';
 import { InitiativeElement } from './InitiativeElement';
 import { useEncounterStore } from '../store/store';
-import { animate, isDragActive, motion, useMotionValue } from 'motion/react';
+import {
+	animate,
+	isDragActive,
+	motion,
+	Reorder,
+	useMotionValue,
+} from 'motion/react';
 import { Character } from '../store/data';
-import { useContext, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { CommandHistoryContext } from '../CommandHistory/CommandHistoryContext';
 import { UpdateCharacterCommand } from '../CommandHistory/Commands/UpdateCharacterCommand';
+import { debounce } from 'throttle-debounce';
+import { ReorderCharactersCommand } from '../CommandHistory/Commands/ReorderCharactersCommand';
+
+const debounceOneSecond = debounce(
+	1000,
+	(executeFn: () => void) => {
+		executeFn();
+	},
+	{ atBegin: false }
+);
 
 export const InitiativeList = () => {
 	const characters = useEncounterStore((state) => state.characters);
 
 	const { executeCommand } = useContext(CommandHistoryContext);
+	const [charactersIds, setCharactersIds] = useState<string[]>(
+		characters.map((c) => c.name)
+	);
+
+	const charactersMap = characters.reduce(
+		(acc, character) => {
+			acc[character.name] = character;
+			return acc;
+		},
+		{} as Record<string, Character>
+	);
+
+	useEffect(() => {
+		setCharactersIds(characters.map((c) => c.name));
+	}, [characters]);
+
+	const updateOrder = (newOrder: string[]) => {
+		setCharactersIds((prev) => {
+			if (prev.join('') === newOrder.join('')) return prev;
+			debounceOneSecond(() => {
+				executeCommand(new ReorderCharactersCommand({ newOrder }));
+			});
+			return newOrder;
+		});
+	};
 
 	return (
-		<Grid rows={['xsmall', '...']} columns={['50px', '1fr', '50px']} gap="none">
-			{characters.map((character, index) => (
-				<ImitativeRow
-					key={character.name}
-					character={character}
-					index={index}
-					onStateChange={(state) => {
-						executeCommand(
-							new UpdateCharacterCommand({
-								index,
-								newCharacterProps: { state },
-							})
-						);
-					}}
-				/>
-			))}
-		</Grid>
+		<Reorder.Group
+			as="div"
+			axis="y"
+			values={charactersIds}
+			onReorder={updateOrder}
+		>
+			{charactersIds
+				.map((name) => charactersMap[name])
+				.map((character, index) => (
+					<Reorder.Item as="div" key={character.name} value={character.name}>
+						<Grid
+							rows={['xsmall', '...']}
+							columns={['50px', '1fr', '50px']}
+							gap="none"
+						>
+							<ImitativeRow
+								character={character}
+								index={index}
+								onStateChange={(state) => {
+									executeCommand(
+										new UpdateCharacterCommand({
+											index,
+											newCharacterProps: { state },
+										})
+									);
+								}}
+							/>
+						</Grid>
+					</Reorder.Item>
+				))}
+		</Reorder.Group>
 	);
 };
 
@@ -95,8 +150,9 @@ const ImitativeRow = (props: {
 					onDragEnd={() => {
 						const endX = x.get();
 						const newState = parseOffset(endX);
-						props.onStateChange(newState);
 						animate(x, offset[newState]);
+						if (newState === props.character.state) return;
+						props.onStateChange(newState);
 					}}
 				>
 					<Box background={getBackgroundColor(props.index)}>
