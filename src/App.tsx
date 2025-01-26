@@ -25,32 +25,33 @@ function App() {
 	const [encounterInProgress, setEncounterInProgress] =
 		useState<boolean>(false);
 	return (
+
 		<CommandHistoryProvider>
-			<Grommet theme={theme} full>
-				<Page fill="vertical" justify="between">
-					<AppBar>
-						<Button>
-							<Menu onClick={() => setShow(true)} />
-						</Button>
-						{!encounterInProgress && (
-							<Button
-								primary
-								label="Start Encounter"
-								onClick={() => setEncounterInProgress(true)}
-							/>
-						)}
-						<Text size="large">My App</Text>
-					</AppBar>
-					<PageContent flex="grow">
-						<PageHeader title="Ta lista potrzebuje integrated wykrywanie gestów swipe & tap" />
-						<InitiativeList />
-					</PageContent>
-					{encounterInProgress && (
-						<EncounterBar endEncounter={() => setEncounterInProgress(false)} />
-					)}
-				</Page>
-				{show && <EncounterDirectory setShow={setShow} />}
-			</Grommet>
+      <Grommet theme={theme} full>
+        <Page fill="vertical" style={{ height: '100dvh' }}>
+          <AppBar>
+            <Button>
+              <Menu onClick={() => setShow(true)} />
+            </Button>
+            {!encounterInProgress && (
+              <Button
+                primary
+                label="Start Encounter"
+                onClick={() => setEncounterInProgress(true)}
+              />
+            )}
+            <Text size="large">My App</Text>
+          </AppBar>
+          <PageContent style={{ overflowY: 'auto' }}>
+            <PageHeader title="Ta lista potrzebuje integrated wykrywanie gestów swipe & tap" />
+            <InitiativeList />
+          </PageContent>
+          {encounterInProgress && (
+            <EncounterBar endEncounter={() => setEncounterInProgress(false)} />
+          )}
+        </Page>
+        {show && <EncounterDirectory setShow={setShow} />}
+      </Grommet>
 		</CommandHistoryProvider>
 	);
 }

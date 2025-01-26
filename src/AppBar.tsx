@@ -7,5 +7,7 @@ export const AppBar = (props: { children: ReactNode }) => (
 		pad={{ left: 'medium', right: 'small', vertical: 'small' }}
 		elevation="medium"
 		children={props.children}
+		sticky={'scrollup'}
+		flex={{ shrink: 0 }}
 	/>
 );
