@@ -3,7 +3,7 @@ import { Command, STATUS } from '../CommandHistoryContext';
 export class RandomIntCommand implements Command {
 	constructor(range: number = 5) {
 		this.data = {
-			number: (Math.random() * range) | 0,
+			number: Math.floor(Math.random() * range),
 		};
 		this.description = 'Random Int Command';
 	}
