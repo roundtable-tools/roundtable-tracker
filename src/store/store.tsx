@@ -10,34 +10,40 @@ const characters = new Array(10)
 	}))
 	.sort((a, b) => b.initiative - a.initiative);
 
+type ValueOrFunction<T> = T | ((prev: T) => T);
+
+function isCallableFunction<T>(
+	func: ValueOrFunction<T>
+): func is (prev: T) => T {
+	return typeof func === 'function';
+}
+
 interface EncounterStore {
 	characters: Character[];
 	updateCharacter: (
 		index: number,
-		character: Character | ((character: Character) => Character)
+		character: ValueOrFunction<Character>
 	) => void;
 }
+
+function unpackValue<T>(value: ValueOrFunction<T>, currentValue: T): T {
+	if (isCallableFunction(value)) return value(currentValue);
+
+	return value;
+}
+
 export const createEncounterStore = () =>
 	create<EncounterStore>()((set) => ({
 		characters,
 		updateCharacter: (
 			index: number,
-			character: Character | ((character: Character) => Character)
+			newCharacter: Character | ((current: Character) => Character)
 		) => {
-			set((state) => {
-				const currentCharacter = state.characters[index];
-
-				const newCharacter =
-					typeof character === 'function'
-						? character(currentCharacter)
-						: character;
-
-				return {
-					characters: state.characters.map((char, i) =>
-						i === index ? newCharacter : char
-					),
-				};
-			});
+			set((state) => ({
+				characters: state.characters.map((character, i) =>
+					i === index ? unpackValue(newCharacter, character) : character
+				),
+			}));
 		},
 	}));
 
