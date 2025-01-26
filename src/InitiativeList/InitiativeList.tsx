@@ -3,11 +3,14 @@ import { InitiativeElement } from './InitiativeElement';
 import { useEncounterStore } from '../store/store';
 import { animate, isDragActive, motion, useMotionValue } from 'motion/react';
 import { Character } from '../store/data';
-import { useRef, useState } from 'react';
+import { useContext, useRef, useState } from 'react';
+import { CommandHistoryContext } from '../CommandHistory/CommandHistoryContext';
+import { UpdateCharacterCommand } from '../CommandHistory/Commands/UpdateCharacterCommand';
 
 export const InitiativeList = () => {
 	const characters = useEncounterStore((state) => state.characters);
-	const updateCharacter = useEncounterStore((state) => state.updateCharacter);
+
+	const { executeCommand } = useContext(CommandHistoryContext);
 
 	return (
 		<Grid rows={['xsmall', '...']} columns={['50px', '1fr', '50px']} gap="none">
@@ -17,7 +20,12 @@ export const InitiativeList = () => {
 					character={character}
 					index={index}
 					onStateChange={(state) => {
-						updateCharacter(index, { ...character, state });
+						executeCommand(
+							new UpdateCharacterCommand({
+								index,
+								newCharacterProps: { state },
+							})
+						);
 					}}
 				/>
 			))}

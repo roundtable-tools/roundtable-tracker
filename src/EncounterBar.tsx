@@ -2,22 +2,19 @@ import { Box, Button, Clock, Footer } from 'grommet';
 import { Redo, Revert } from 'grommet-icons';
 import { useContext, useState } from 'react';
 import { CommandHistoryContext } from './CommandHistory/CommandHistoryContext';
-import { RandomIntCommand } from './CommandHistory/Commands/RandomIntCommand';
 
 type EncounterBarProps = {
 	endEncounter: () => void;
 };
 
 export const EncounterBar = (props: EncounterBarProps) => {
-	const { executeCommand, undo, canUndo } = useContext(CommandHistoryContext);
+	const { undo, canUndo, redo, canRedo } = useContext(CommandHistoryContext);
 	const { endEncounter } = props;
 	const [time, setTime] = useState('T00:00:00');
 	const resetClock = () => {
 		setTime(`${Math.random()}T00:00:00`);
 	};
-	const createRandomNumber = () => {
-		executeCommand(new RandomIntCommand(256));
-	};
+
 	return (
 		<Footer
 			background="brand"
@@ -39,9 +36,10 @@ export const EncounterBar = (props: EncounterBarProps) => {
 				<Button label="End encounter" onClick={endEncounter} />
 			</Box>
 			<Button
+				disabled={!canRedo}
 				onClick={() => {
 					resetClock();
-					createRandomNumber();
+					redo();
 				}}
 			>
 				<Redo />

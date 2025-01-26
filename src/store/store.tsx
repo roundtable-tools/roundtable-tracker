@@ -12,15 +12,33 @@ const characters = new Array(10)
 
 interface EncounterStore {
 	characters: Character[];
-	updateCharacter: (index: number, character: Character) => void;
+	updateCharacter: (
+		index: number,
+		character: Character | ((character: Character) => Character)
+	) => void;
 }
-export const useEncounterStore = create<EncounterStore>()((set) => ({
-	characters,
-	updateCharacter: (index: number, character: Character) => {
-		set((state) => ({
-			characters: state.characters.map((char, i) =>
-				i === index ? character : char
-			),
-		}));
-	},
-}));
+export const createEncounterStore = () =>
+	create<EncounterStore>()((set) => ({
+		characters,
+		updateCharacter: (
+			index: number,
+			character: Character | ((character: Character) => Character)
+		) => {
+			set((state) => {
+				const currentCharacter = state.characters[index];
+
+				const newCharacter =
+					typeof character === 'function'
+						? character(currentCharacter)
+						: character;
+
+				return {
+					characters: state.characters.map((char, i) =>
+						i === index ? newCharacter : char
+					),
+				};
+			});
+		},
+	}));
+
+export const useEncounterStore = createEncounterStore();

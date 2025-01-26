@@ -6,9 +6,7 @@ export const STATUS = {
 } as const;
 type Status = (typeof STATUS)[keyof typeof STATUS];
 
-export interface Command<
-	T extends Record<string, unknown> = Record<string, unknown>,
-> {
+export interface Command<T extends object = Record<string, unknown>> {
 	execute: () => Status;
 	undo: () => Status;
 	description?: string;
@@ -16,7 +14,7 @@ export interface Command<
 }
 
 export interface CommandHistory {
-	executeCommand: (command: Command) => void;
+	executeCommand: <K extends object, T extends Command<K>>(command: T) => void;
 	undo: () => void;
 	redo: () => void;
 	clearHistory: () => void;
