@@ -41,7 +41,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: 'Test'
-        run: npx vitest --coverage.enabled true --coverage.reportOnFailure true --coverage.reportDir coverage --coverage.reportFile coverage-summary.json --coverage.reportType json-summary
+        run: npx vitest --coverage.enabled true
 
       - name: 'Report Coverage'
         if: always()
