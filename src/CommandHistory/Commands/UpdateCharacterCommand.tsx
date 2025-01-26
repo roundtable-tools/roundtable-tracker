@@ -2,16 +2,16 @@ import { Character } from '../../store/data';
 import { useEncounterStore } from '../../store/store';
 import { Command, STATUS } from '../CommandHistoryContext';
 
-interface CommandProps {
+type CommandProps = {
 	index: number;
 	newCharacterProps: Partial<Character>;
-}
+};
 
-interface CommandData extends CommandProps {
+type CommandData = CommandProps & {
 	oldCharacter?: Character;
-}
+};
 
-export class UpdateCharacterCommand implements Command<CommandData> {
+export class UpdateCharacterCommand implements Command {
 	data: CommandData;
 	description = 'Update Character Command';
 	constructor(props: CommandProps) {
