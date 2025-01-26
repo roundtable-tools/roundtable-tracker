@@ -25,7 +25,7 @@ function App() {
 		useState<boolean>(false);
 	return (
 		<Grommet theme={theme} full>
-			<Page fill="vertical" justify="between">
+			<Page fill="vertical" style={{ height: '100dvh' }}>
 				<AppBar>
 					<Button>
 						<Menu onClick={() => setShow(true)} />
@@ -39,7 +39,7 @@ function App() {
 					)}
 					<Text size="large">My App</Text>
 				</AppBar>
-				<PageContent flex="grow">
+				<PageContent style={{ overflowY: 'auto' }}>
 					<PageHeader title="Ta lista potrzebuje integrated wykrywanie gestów swipe & tap" />
 					<InitiativeList />
 				</PageContent>

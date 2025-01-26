@@ -17,6 +17,7 @@ export const EncounterBar = (props: EncounterBarProps) => {
 			background="brand"
 			pad={{ left: 'medium', right: 'small', vertical: 'small' }}
 			elevation="medium"
+			flex={{ shrink: 0 }}
 		>
 			<Button
 				onClick={() => {
