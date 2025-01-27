@@ -1,9 +1,10 @@
+import { UUID } from '@/utils/uuid';
 import { Character } from '../../store/data';
 import { useEncounterStore } from '../../store/store';
 import { Command, STATUS } from '../CommandHistoryContext';
 
 type CommandProps = {
-	index: number;
+	uuid: UUID;
 	newCharacterProps: Partial<Character>;
 };
 
@@ -21,7 +22,7 @@ export class UpdateCharacterCommand implements Command {
 	execute() {
 		useEncounterStore
 			.getState()
-			.updateCharacter(this.data.index, (oldCharacter) => {
+			.updateCharacter(this.data.uuid, (oldCharacter) => {
 				this.data.oldCharacter = structuredClone(oldCharacter);
 				return {
 					...oldCharacter,
@@ -36,7 +37,7 @@ export class UpdateCharacterCommand implements Command {
 
 		useEncounterStore
 			.getState()
-			.updateCharacter(this.data.index, this.data.oldCharacter);
+			.updateCharacter(this.data.uuid, this.data.oldCharacter);
 
 		return STATUS.success;
 	}

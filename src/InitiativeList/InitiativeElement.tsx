@@ -35,7 +35,7 @@ const State = (props: { state: Character['state'] }) => {
 
 export function TypingEffect({ text = 'Typing Effect' }: { text: string }) {
 	const ref = useRef(null);
-	const isInView = useInView(ref, { once: false });
+	const isInView = useInView(ref, { once: true });
 
 	return (
 		<div ref={ref} style={{ position: 'relative' }}>
