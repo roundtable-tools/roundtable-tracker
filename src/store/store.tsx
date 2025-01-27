@@ -1,14 +1,13 @@
 import { create } from 'zustand';
 import { Character, STATE } from './data';
+import { generateUUID, UUID } from '@/utils/uuid';
 
-const characters = new Array(10)
-	.fill(0)
-	.map((_, index) => ({
-		name: `Character ${index + 1}`,
-		initiative: Math.floor(Math.random() * 20) + 1,
-		state: STATE[Math.floor(Math.random() * STATE.length)],
-	}))
-	.sort((a, b) => b.initiative - a.initiative);
+const characters = new Array(10).fill(0).map((_, index) => ({
+	uuid: generateUUID(),
+	name: `Character ${index + 1}`,
+	initiative: Math.floor(Math.random() * 20) + 1,
+	state: STATE[Math.floor(Math.random() * STATE.length)],
+}));
 
 type ValueOrFunction<T> = T | ((prev: T) => T);
 
@@ -19,11 +18,9 @@ function isCallableFunction<T>(
 }
 
 interface EncounterStore {
-	characters: Character[];
-	updateCharacter: (
-		index: number,
-		character: ValueOrFunction<Character>
-	) => void;
+	charactersMap: Record<UUID, Character>;
+	charactersOrder: UUID[];
+	updateCharacter: (uuid: UUID, character: ValueOrFunction<Character>) => void;
 }
 
 function unpackValue<T>(value: ValueOrFunction<T>, currentValue: T): T {
@@ -34,16 +31,29 @@ function unpackValue<T>(value: ValueOrFunction<T>, currentValue: T): T {
 
 export const createEncounterStore = () =>
 	create<EncounterStore>()((set) => ({
-		characters,
-		updateCharacter: (
-			index: number,
-			newCharacter: Character | ((current: Character) => Character)
-		) => {
-			set((state) => ({
-				characters: state.characters.map((character, i) =>
-					i === index ? unpackValue(newCharacter, character) : character
-				),
-			}));
+		charactersMap: characters.reduce(
+			(acc, character) => {
+				acc[character.uuid] = character;
+				return acc;
+			},
+			{} as Record<UUID, Character>
+		),
+		charactersOrder: characters.map((character) => character.uuid),
+		updateCharacter: (uuid: UUID, newCharacter: ValueOrFunction<Character>) => {
+			return set((state) => {
+				const character = state.charactersMap[uuid];
+				if (!character) {
+					console.error(`Character with uuid ${uuid} not found`);
+					return {};
+				}
+
+				const newCharacterValue = unpackValue(newCharacter, character);
+
+				state.charactersMap[uuid] = newCharacterValue;
+				return {
+					charactersMap: { ...state.charactersMap },
+				};
+			});
 		},
 	}));
 

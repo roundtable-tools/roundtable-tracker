@@ -1,19 +1,19 @@
-import { Character } from '../../store/data';
-import { useEncounterStore } from '../../store/store';
+import { UUID } from '@/utils/uuid';
+import { useEncounterStore } from '@/store/store';
 import { Command, STATUS } from '../CommandHistoryContext';
 
 export class ReorderCharactersCommand implements Command {
-	constructor(public data: { newOrder: string[]; oldOrder?: string[] }) {
+	constructor(public data: { newOrder: UUID[]; oldOrder?: string[] }) {
 		this.description = 'Reorder Characters Command';
 	}
 
 	description?: string | undefined;
 	execute() {
 		useEncounterStore.setState((state) => {
-			this.data.oldOrder = state.characters.map((c) => c.name);
+			this.data.oldOrder = state.charactersOrder;
 
 			return {
-				characters: reorderCharacters(state.characters, this.data.newOrder),
+				charactersOrder: this.data.newOrder,
 			};
 		});
 		return STATUS.success;
@@ -25,14 +25,10 @@ export class ReorderCharactersCommand implements Command {
 			return STATUS.failure;
 		}
 
-		useEncounterStore.setState((state) => ({
-			characters: reorderCharacters(state.characters, orderToRestore),
+		useEncounterStore.setState(() => ({
+			charactersOrder: orderToRestore,
 		}));
 
 		return STATUS.success;
 	}
-}
-
-function reorderCharacters(characters: Character[], order: string[]) {
-	return order.map((name) => characters.find((c) => c.name === name)!);
 }

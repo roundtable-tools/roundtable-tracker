@@ -14,6 +14,7 @@ import { CommandHistoryContext } from '../CommandHistory/CommandHistoryContext';
 import { UpdateCharacterCommand } from '../CommandHistory/Commands/UpdateCharacterCommand';
 import { debounce } from 'throttle-debounce';
 import { ReorderCharactersCommand } from '../CommandHistory/Commands/ReorderCharactersCommand';
+import { UUID } from '@/utils/uuid';
 
 const debounceOneSecond = debounce(
 	1000,
@@ -24,24 +25,15 @@ const debounceOneSecond = debounce(
 );
 
 export const InitiativeList = () => {
-	const characters = useEncounterStore((state) => state.characters);
-
 	const { executeCommand } = useContext(CommandHistoryContext);
-	const [charactersIds, setCharactersIds] = useState<string[]>(
-		characters.map((c) => c.name)
-	);
+	const charactersMap = useEncounterStore((state) => state.charactersMap);
+	const charactersOrder = useEncounterStore((state) => state.charactersOrder);
 
-	const charactersMap = characters.reduce(
-		(acc, character) => {
-			acc[character.name] = character;
-			return acc;
-		},
-		{} as Record<string, Character>
-	);
+	const [charactersIds, setCharactersIds] = useState<UUID[]>(charactersOrder);
 
 	useEffect(() => {
-		setCharactersIds(characters.map((c) => c.name));
-	}, [characters]);
+		setCharactersIds(charactersOrder);
+	}, [charactersOrder]);
 
 	const updateOrder = (newOrder: string[]) => {
 		setCharactersIds((prev) => {
@@ -63,7 +55,7 @@ export const InitiativeList = () => {
 			{charactersIds
 				.map((name) => charactersMap[name])
 				.map((character, index) => (
-					<Reorder.Item as="div" key={character.name} value={character.name}>
+					<Reorder.Item as="div" key={character.uuid} value={character.uuid}>
 						<Grid
 							rows={['xsmall', '...']}
 							columns={['50px', '1fr', '50px']}
@@ -75,7 +67,7 @@ export const InitiativeList = () => {
 								onStateChange={(state) => {
 									executeCommand(
 										new UpdateCharacterCommand({
-											index,
+											uuid: character.uuid,
 											newCharacterProps: { state },
 										})
 									);
