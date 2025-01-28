@@ -1,6 +1,6 @@
 import { UUID } from '@/utils/uuid';
 import { Character } from '../../store/data';
-import { useEncounterStore } from '../../store/store';
+import { encounterStore } from '../../store/store';
 import { Command, STATUS } from '../CommandHistoryContext';
 
 type CommandProps = {
@@ -15,12 +15,15 @@ type CommandData = CommandProps & {
 export class UpdateCharacterCommand implements Command {
 	data: CommandData;
 	description = 'Update Character Command';
-	constructor(props: CommandProps) {
+	constructor(
+		props: CommandProps,
+		private deps = { encounterStore }
+	) {
 		this.data = structuredClone(props);
 	}
 
 	execute() {
-		useEncounterStore
+		this.deps.encounterStore
 			.getState()
 			.updateCharacter(this.data.uuid, (oldCharacter) => {
 				this.data.oldCharacter = structuredClone(oldCharacter);
@@ -35,7 +38,7 @@ export class UpdateCharacterCommand implements Command {
 	undo() {
 		if (!this.data.oldCharacter) return STATUS.failure;
 
-		useEncounterStore
+		this.deps.encounterStore
 			.getState()
 			.updateCharacter(this.data.uuid, this.data.oldCharacter);
 

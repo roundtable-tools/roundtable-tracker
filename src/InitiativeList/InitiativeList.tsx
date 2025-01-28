@@ -1,6 +1,6 @@
 import { Box, Grid } from 'grommet';
 import { InitiativeElement } from './InitiativeElement';
-import { useEncounterStore } from '../store/store';
+
 import {
 	animate,
 	isDragActive,
@@ -15,6 +15,7 @@ import { UpdateCharacterCommand } from '../CommandHistory/Commands/UpdateCharact
 import { debounce } from 'throttle-debounce';
 import { ReorderCharactersCommand } from '../CommandHistory/Commands/ReorderCharactersCommand';
 import { UUID } from '@/utils/uuid';
+import { useEncounterStore } from '@/store/store';
 
 const debounceOneSecond = debounce(
 	1000,

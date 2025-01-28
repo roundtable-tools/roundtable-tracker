@@ -1,6 +1,7 @@
-import { create } from 'zustand';
+import { createStore } from 'zustand/vanilla';
 import { Character, STATE } from './data';
 import { generateUUID, UUID } from '@/utils/uuid';
+import { useStore } from 'zustand';
 
 const characters = new Array(10).fill(0).map((_, index) => ({
 	uuid: generateUUID(),
@@ -17,10 +18,11 @@ function isCallableFunction<T>(
 	return typeof func === 'function';
 }
 
-interface EncounterStore {
+export interface EncounterStore {
 	charactersMap: Record<UUID, Character>;
 	charactersOrder: UUID[];
 	updateCharacter: (uuid: UUID, character: ValueOrFunction<Character>) => void;
+	setCharacters: (characters: Character[]) => void;
 }
 
 function unpackValue<T>(value: ValueOrFunction<T>, currentValue: T): T {
@@ -30,17 +32,26 @@ function unpackValue<T>(value: ValueOrFunction<T>, currentValue: T): T {
 }
 
 export const createEncounterStore = () =>
-	create<EncounterStore>()((set) => ({
-		charactersMap: characters.reduce(
-			(acc, character) => {
-				acc[character.uuid] = character;
-				return acc;
-			},
-			{} as Record<UUID, Character>
-		),
-		charactersOrder: characters.map((character) => character.uuid),
-		updateCharacter: (uuid: UUID, newCharacter: ValueOrFunction<Character>) => {
-			return set((state) => {
+	createStore<EncounterStore>()((set) => ({
+		charactersMap: {},
+		charactersOrder: [],
+		setCharacters: (characters: Character[]) => {
+			set(() => {
+				const charactersMap = characters.reduce(
+					(acc, character) => {
+						acc[character.uuid] = character;
+						return acc;
+					},
+					{} as Record<UUID, Character>
+				);
+
+				const charactersOrder = characters.map((character) => character.uuid);
+
+				return { charactersMap, charactersOrder };
+			});
+		},
+		updateCharacter: (uuid: UUID, newCharacter: ValueOrFunction<Character>) =>
+			set((state) => {
 				const character = state.charactersMap[uuid];
 				if (!character) {
 					console.error(`Character with uuid ${uuid} not found`);
@@ -50,11 +61,15 @@ export const createEncounterStore = () =>
 				const newCharacterValue = unpackValue(newCharacter, character);
 
 				state.charactersMap[uuid] = newCharacterValue;
+
 				return {
 					charactersMap: { ...state.charactersMap },
 				};
-			});
-		},
+			}),
 	}));
+export const encounterStore = createEncounterStore();
 
-export const useEncounterStore = createEncounterStore();
+encounterStore.getState().setCharacters(characters);
+
+export const useEncounterStore = <T,>(selector: (state: EncounterStore) => T) =>
+	useStore(encounterStore, selector);
