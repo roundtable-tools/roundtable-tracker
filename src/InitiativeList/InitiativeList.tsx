@@ -10,12 +10,16 @@ import {
 } from 'motion/react';
 import { Character } from '../store/data';
 import { useContext, useEffect, useRef, useState } from 'react';
-import { CommandHistoryContext } from '../CommandHistory/CommandHistoryContext';
+import {
+	Command,
+	CommandHistoryContext,
+} from '../CommandHistory/CommandHistoryContext';
 import { UpdateCharacterCommand } from '../CommandHistory/Commands/UpdateCharacterCommand';
 import { debounce } from 'throttle-debounce';
 import { ReorderCharactersCommand } from '../CommandHistory/Commands/ReorderCharactersCommand';
 import { UUID } from '@/utils/uuid';
 import { useEncounterStore } from '@/store/store';
+import { useRaisedShadow } from '@/hooks/useRisedShadow';
 
 const debounceOneSecond = debounce(
 	1000,
@@ -56,28 +60,52 @@ export const InitiativeList = () => {
 			{charactersIds
 				.map((name) => charactersMap[name])
 				.map((character, index) => (
-					<Reorder.Item as="div" key={character.uuid} value={character.uuid}>
-						<Grid
-							rows={['xsmall', '...']}
-							columns={['50px', '1fr', '50px']}
-							gap="none"
-						>
-							<ImitativeRow
-								character={character}
-								index={index}
-								onStateChange={(state) => {
-									executeCommand(
-										new UpdateCharacterCommand({
-											uuid: character.uuid,
-											newCharacterProps: { state },
-										})
-									);
-								}}
-							/>
-						</Grid>
-					</Reorder.Item>
+					<ReorderRow
+						key={character.uuid}
+						character={character}
+						index={index}
+						executeCommand={executeCommand}
+					/>
 				))}
 		</Reorder.Group>
+	);
+};
+
+const ReorderRow = (props: {
+	character: Character;
+	index: number;
+	executeCommand: (command: Command) => void;
+}) => {
+	const { character, index, executeCommand } = props;
+
+	const y = useMotionValue(0);
+	const boxShadow = useRaisedShadow(y);
+
+	return (
+		<Reorder.Item
+			as="div"
+			value={character.uuid}
+			style={{ boxShadow, y, position: 'relative' }}
+		>
+			<Grid
+				rows={['xsmall', '...']}
+				columns={['50px', '1fr', '50px']}
+				gap="none"
+			>
+				<ImitativeRow
+					character={character}
+					index={index}
+					onStateChange={(state) => {
+						executeCommand(
+							new UpdateCharacterCommand({
+								uuid: character.uuid,
+								newCharacterProps: { state },
+							})
+						);
+					}}
+				/>
+			</Grid>
+		</Reorder.Item>
 	);
 };
 
@@ -148,7 +176,13 @@ const ImitativeRow = (props: {
 						props.onStateChange(newState);
 					}}
 				>
-					<Box background={getBackgroundColor(props.index)}>
+					<Box
+						background={getBackgroundColor(props.index)}
+						style={{
+							transitionDuration: '1s',
+							transitionProperty: 'background-color',
+						}}
+					>
 						<InitiativeElement character={props.character} open={isOpen} />
 					</Box>
 				</motion.div>
