@@ -16,7 +16,9 @@ export interface Command<
 }
 
 export interface CommandHistory {
-	executeCommand: <K extends Record<string, unknown>>(command: Command<K>) => void;
+	executeCommand: <K extends Record<string, unknown>>(
+		command: Command<K>
+	) => void;
 	undo: () => void;
 	redo: () => void;
 	clearHistory: () => void;
