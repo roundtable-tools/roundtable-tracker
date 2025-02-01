@@ -81,11 +81,16 @@ const ReorderRow = (props: {
 	const y = useMotionValue(0);
 	const boxShadow = useRaisedShadow(y);
 
+	const [isOpen, setOpen] = useState(false);
+	const haveDragged = useRef(false);
+
 	return (
 		<Reorder.Item
 			as="div"
 			value={character.uuid}
 			style={{ boxShadow, y, position: 'relative' }}
+			dragListener={true}
+			whileDrag={{ scale: 1.01 }}
 		>
 			<Grid
 				rows={['xsmall', '...']}
@@ -95,6 +100,8 @@ const ReorderRow = (props: {
 				<ImitativeRow
 					character={character}
 					index={index}
+					isInteractive={true}
+					open={isOpen}
 					onStateChange={(state) => {
 						executeCommand(
 							new UpdateCharacterCommand({
@@ -102,6 +109,15 @@ const ReorderRow = (props: {
 								newCharacterProps: { state },
 							})
 						);
+					}}
+					onMouseDown={() => {
+						haveDragged.current = false;
+					}}
+					onMouseMove={() => {
+						haveDragged.current = isDragActive() || haveDragged.current;
+					}}
+					onMouseUp={() => {
+						if (!haveDragged.current) setOpen(!isOpen);
 					}}
 				/>
 			</Grid>
@@ -141,11 +157,14 @@ const parseOffset = (x: number) => {
 const ImitativeRow = (props: {
 	character: Character;
 	index: number;
+	isInteractive?: boolean;
+	open: boolean;
+	onMouseDown?: () => void;
+	onMouseUp?: () => void;
+	onMouseMove?: () => void;
 	onStateChange: (state: Character['state']) => void;
 }) => {
 	const x = useMotionValue(0);
-	const [isOpen, setOpen] = useState(false);
-	const haveDragged = useRef(false);
 
 	return (
 		<>
@@ -154,20 +173,14 @@ const ImitativeRow = (props: {
 			</Box>
 			<Box background={'status-unknown'}>
 				<motion.div
-					drag="x"
+					drag={props.isInteractive ? 'x' : false}
 					style={{ x }}
 					animate={{ x: offset[props.character.state] }}
 					dragConstraints={{ left: -50, right: 50 }}
 					dragElastic={0.1}
-					onMouseDown={() => {
-						haveDragged.current = false;
-					}}
-					onMouseMove={() => {
-						haveDragged.current = isDragActive() || haveDragged.current;
-					}}
-					onMouseUp={() => {
-						if (!haveDragged.current) setOpen(!isOpen);
-					}}
+					onMouseDown={props.onMouseDown}
+					onMouseUp={props.onMouseUp}
+					onMouseMove={props.onMouseMove}
 					onDragEnd={() => {
 						const endX = x.get();
 						const newState = parseOffset(endX);
@@ -183,7 +196,7 @@ const ImitativeRow = (props: {
 							transitionProperty: 'background-color',
 						}}
 					>
-						<InitiativeElement character={props.character} open={isOpen} />
+						<InitiativeElement character={props.character} open={props.open} />
 					</Box>
 				</motion.div>
 			</Box>
