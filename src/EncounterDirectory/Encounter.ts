@@ -35,7 +35,7 @@ export type Participant<IsAbstract extends LevelRepresentation> = {
 	tiePriority?: Priority;
 }
 
-type ExactEncounterVariant = {
+type ConcreteEncounterVariant = {
 	difficulty?: Difficulty;
 	partySize?: number;
 	level?: number;
@@ -53,18 +53,18 @@ type AbstractEncounterVariant = {
 export type AbstractEncounter = {
 	id: string; // Unique identifier for the encounter
 	name: string;
-	levelRepresentation: typeof LEVEL_REPRESENTATION.Relative; // Whether the encounter uses abstract levels
+	levelRepresentation: typeof LEVEL_REPRESENTATION.Relative; // Abstract encounter with participants of levels relative to the encounter level
 	variants?: AbstractEncounterVariant[];
 } & Omit<Required<AbstractEncounterVariant>,'externalConditions'>;
 
-export type ExactEncounter = {
+export type ConcreteEncounter = {
 	id: string; // Unique identifier for the encounter
 	name: string;
-	levelRepresentation: typeof LEVEL_REPRESENTATION.Exact; // Whether the encounter uses abstract levels
-	variants?: (ExactEncounterVariant)[];
-} & Omit<Required<ExactEncounterVariant>,'externalConditions'>;
+	levelRepresentation: typeof LEVEL_REPRESENTATION.Exact; // Encounter with participants of specific levels
+	variants?: (ConcreteEncounterVariant)[];
+} & Omit<Required<ConcreteEncounterVariant>,'externalConditions'>;
 
-export type Encounter = AbstractEncounter | ExactEncounter;
+export type Encounter = AbstractEncounter | ConcreteEncounter;
 
 // Utility types for sorting and filtering
 export type SortableEncounterFields = 'difficulty' | 'level' | 'partySize' | 'name';
