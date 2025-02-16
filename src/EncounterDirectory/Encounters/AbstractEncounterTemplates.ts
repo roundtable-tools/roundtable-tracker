@@ -2,10 +2,12 @@ import { AbstractEncounter, ALIGNMENT, DIFFICULTY, LEVEL_REPRESENTATION, PRIORIT
 
 const SevereBossAndLackeys: AbstractEncounter = {
     id: 'encounter-001',
-    name: 'Severe Boss and Lackeys',
+    name: 'Boss and Lackeys',
+    searchName: 'Severe | Boss and Lackeys | Party 4 | Level any',
     difficulty: DIFFICULTY.Severe,
     partySize: 4,
     levelRepresentation: LEVEL_REPRESENTATION.Relative,
+    description: 'Severe difficulty encounter for a party of four with a (+2) boss and four (-4) lackeys',
     participants: [
         {
             name: 'Boss',
@@ -25,7 +27,8 @@ const SevereBossAndLackeys: AbstractEncounter = {
     variants: [
         {
             partySize: 5,
-            externalConditions: 'Party size 5',
+            searchName: 'Severe | Boss and Lackeys | Party 5 | Level any',
+            description: 'Severe difficulty encounter for a party of five with a (+3) boss and three (-4) lackeys',
             participants: [
                 {
                     name: 'Elite Boss',
@@ -44,7 +47,8 @@ const SevereBossAndLackeys: AbstractEncounter = {
             ],
         },{
             partySize: 6,
-            externalConditions: 'Party size 6',
+            searchName: 'Severe | Boss and Lackeys | Party 6 | Level any',
+            description: 'Severe difficulty encounter for a party of six with a (+3) boss and four (-3) lackeys',
             participants: [
                 {
                     name: 'Elite Boss',
@@ -66,10 +70,12 @@ const SevereBossAndLackeys: AbstractEncounter = {
 }
 const SevereBossAndLieutenant: AbstractEncounter = {
     id: 'encounter-002',
-    name: 'Severe Boss and Lieutenant',
+    name: 'Boss and Lieutenant',
+    searchName: 'Severe | Boss and Lieutenant | Party 4 | Level any',
     difficulty: DIFFICULTY.Severe,
     partySize: 4,
     levelRepresentation: LEVEL_REPRESENTATION.Relative,
+    description: 'Severe difficulty encounter for a party of four with a (+2) boss and their (+0) lieutenant',
     participants: [
         {
             name: 'Boss',
@@ -89,7 +95,8 @@ const SevereBossAndLieutenant: AbstractEncounter = {
     variants: [
         {
             partySize: 5,
-            externalConditions: 'Party size 5',
+            searchName: 'Severe | Boss and Lieutenant | Party 5 | Level any',
+            description: 'Severe difficulty encounter for a party of five with a (+3) boss and their (-1) lieutenant',
             participants: [
                 {
                     name: 'Elite Boss',
@@ -108,7 +115,8 @@ const SevereBossAndLieutenant: AbstractEncounter = {
             ],
         },{
             partySize: 6,
-            externalConditions: 'Party size 6',
+            searchName: 'Severe | Boss and Lieutenant | Party 6 | Level any',
+            description: 'Severe difficulty encounter for a party of six with a (+3) boss and their (+1) lieutenant',
             participants: [
                 {
                     name: 'Elite Boss',
@@ -130,10 +138,12 @@ const SevereBossAndLieutenant: AbstractEncounter = {
 }
 const SevereWorthyOponents: AbstractEncounter = {
     id: 'encounter-003',
-    name: 'Severe Worthy Opponents',
+    name: 'Worthy Opponents',
+    searchName: 'Severe | Worthy Opponents | Party 4 | Level any',
     difficulty: DIFFICULTY.Severe,
     partySize: 4,
     levelRepresentation: LEVEL_REPRESENTATION.Relative,
+    description: 'Severe difficulty encounter for a party of four with three (+0) opponents',
     participants: [
         {
             name: 'Opponent',
@@ -146,7 +156,8 @@ const SevereWorthyOponents: AbstractEncounter = {
     variants: [
         {
             partySize: 5,
-            externalConditions: 'Party size 5',
+            searchName: 'Severe | Worthy Opponents | Party 5 | Level any',
+            description: 'Severe difficulty encounter for a party of five with three (+0) opponents and a (-1) weak one',
             participants: [
                 {
                     name: 'Opponent',
@@ -165,7 +176,8 @@ const SevereWorthyOponents: AbstractEncounter = {
             ],
         },{
             partySize: 6,
-            externalConditions: 'Party size 6',
+            searchName: 'Severe | Worthy Opponents | Party 6 | Level any',
+            description: 'Severe difficulty encounter for a party of six with three (+0) opponents and a pair of (-1) weak ones',
             participants: [
                 {
                     name: 'Opponent',
@@ -187,10 +199,12 @@ const SevereWorthyOponents: AbstractEncounter = {
 }
 const ModerateLieutenantAndLackeys: AbstractEncounter = {
     id: 'encounter-004',
-    name: 'Moderate Lieutenant and Lackeys',
+    name: 'Lieutenant and Lackeys',
+    searchName: 'Moderate | Lieutenant and Lackeys | Party 4 | Level any',
     difficulty: DIFFICULTY.Moderate,
     partySize: 4,
     levelRepresentation: LEVEL_REPRESENTATION.Relative,
+    description: 'Moderate difficulty encounter for a party of four with a (+0) lieutenant and their four (-4) lackeys',
     participants: [
         {
             name: 'Lieutenant',
@@ -210,7 +224,8 @@ const ModerateLieutenantAndLackeys: AbstractEncounter = {
     variants: [
         {
             partySize: 5,
-            externalConditions: 'Party size 5',
+            searchName: 'Moderate | Lieutenant and Lackeys | Party 5 | Level any',
+            description: 'Moderate difficulty encounter for a party of five with a (+1) lieutenant and their four (-3) lackeys',
             participants: [
                 {
                     name: 'Elite Lieutenant',
@@ -229,7 +244,8 @@ const ModerateLieutenantAndLackeys: AbstractEncounter = {
             ],
         },{
             partySize: 6,
-            externalConditions: 'Party size 6',
+            searchName: 'Moderate | Lieutenant and Lackeys | Party 6 | Level any',
+            description: 'Moderate difficulty encounter for a party of six with a (+1) lieutenant and their four (-3) lackeys',
             participants: [
                 {
                     name: 'Elite Lieutenant',
@@ -251,10 +267,12 @@ const ModerateLieutenantAndLackeys: AbstractEncounter = {
 }
 const ModerateMatedPair: AbstractEncounter = {
     id: 'encounter-005',
-    name: 'Moderate Mated Pair',
+    name: 'Mated Pair',
+    searchName: 'Moderate | Mated Pair | Party 4 | Level any',
     difficulty: DIFFICULTY.Moderate,
     partySize: 4,
     levelRepresentation: LEVEL_REPRESENTATION.Relative,
+    description: 'Moderate difficulty encounter for a party of four with a pair of (+0) mated opponents',
     participants: [
         {
             name: 'Mated Opponent',
@@ -267,7 +285,8 @@ const ModerateMatedPair: AbstractEncounter = {
     variants: [
         {
             partySize: 5,
-            externalConditions: 'Party size 5',
+            searchName: 'Moderate | Mated Pair | Party 5 | Level any',
+            description: 'Moderate difficulty encounter for a party of five with a (+0) mated opponent and an (+1) elite one',
             participants: [
                 {
                     name: 'Mated Opponent',
@@ -286,7 +305,8 @@ const ModerateMatedPair: AbstractEncounter = {
             ],
         },{
             partySize: 6,
-            externalConditions: 'Party size 6',
+            searchName: 'Moderate | Mated Pair | Party 6 | Level any',
+            description: 'Moderate difficulty encounter for a party of six with a pair of (+1) mated opponents',
             participants: [
                 {
                     name: 'Elite Mated Opponent',
@@ -301,10 +321,12 @@ const ModerateMatedPair: AbstractEncounter = {
 }
 const ModerateTroop: AbstractEncounter = {
     id: 'encounter-006',
-    name: 'Moderate Troop',
+    name: 'Troop',
+    searchName: 'Moderate | Troop | Party 4 | Level any',
     difficulty: DIFFICULTY.Moderate,
     partySize: 4,
     levelRepresentation: LEVEL_REPRESENTATION.Relative,
+    description: 'Moderate difficulty encounter for a party of four with a pair of (-2) troops and their (+0) leader',
     participants: [
         {
             name: 'Leader',
@@ -324,7 +346,8 @@ const ModerateTroop: AbstractEncounter = {
     variants: [
         {
             partySize: 5,
-            externalConditions: 'Party size 5',
+            searchName: 'Moderate | Troop | Party 5 | Level any',
+            description: 'Moderate difficulty encounter for a party of five with three (-2) troops and their (+0) leader',
             participants: [
                 {
                     name: 'Leader',
@@ -343,7 +366,8 @@ const ModerateTroop: AbstractEncounter = {
             ],
         },{
             partySize: 6,
-            externalConditions: 'Party size 6',
+            searchName: 'Moderate | Troop | Party 6 | Level any',
+            description: 'Moderate difficulty encounter for a party of six with three (-2) troops and their (+1) leader',
             participants: [
                 {
                     name: 'Elite Leader',
@@ -365,10 +389,12 @@ const ModerateTroop: AbstractEncounter = {
 }
 const LowMookSquad: AbstractEncounter = {
     id: 'encounter-007',
-    name: 'Low Mook Squad',
+    name: 'Mook Squad',
+    searchName: 'Low | Mook Squad | Party 4 | Level any',
     difficulty: DIFFICULTY.Low,
     partySize: 4,
     levelRepresentation: LEVEL_REPRESENTATION.Relative,
+    description: 'Low difficulty encounter for a party of four with six (-4) mooks',
     participants: [
         {
             name: 'Mook',
@@ -381,7 +407,8 @@ const LowMookSquad: AbstractEncounter = {
     variants: [
         {
             partySize: 5,
-            externalConditions: 'Party size 5',
+            searchName: 'Low | Mook Squad | Party 5 | Level any',
+            description: 'Low difficulty encounter for a party of five with two (-4) mooks and four (-3) elite mooks',
             participants: [
                 {
                     name: 'Mook',
@@ -400,7 +427,8 @@ const LowMookSquad: AbstractEncounter = {
             ],
         },{
             partySize: 6,
-            externalConditions: 'Party size 6',
+            searchName: 'Low | Mook Squad | Party 6 | Level any',
+            description: 'Low difficulty encounter for a party of six with one (-4) mook and six (-3) elite mooks',
             participants: [
                 {
                     name: 'Mook',
@@ -422,10 +450,12 @@ const LowMookSquad: AbstractEncounter = {
 }
 const ExtremeSoloBoss: AbstractEncounter = {
     id: 'encounter-008',
-    name: 'Extreme Solo Boss',
+    name: 'Solo Boss',
+    searchName: 'Extreme | Solo Boss | Party 4 | Level any',
     difficulty: DIFFICULTY.Extreme,
     partySize: 4,
     levelRepresentation: LEVEL_REPRESENTATION.Relative,
+    description: 'Extreme difficulty encounter for a party of four with a (+4) boss',
     participants: [
         {
             name: 'Boss',
@@ -438,7 +468,8 @@ const ExtremeSoloBoss: AbstractEncounter = {
     variants: [
         {
             partySize: 5,
-            externalConditions: 'Party size 5',
+            searchName: 'Extreme | Solo Boss | Party 5 | Level any',
+            description: 'Extreme difficulty encounter for a party of five with a (+4) boss and their army of two (-2) Troop squads',
             participants: [
                 {
                     name: 'Boss',
@@ -457,7 +488,8 @@ const ExtremeSoloBoss: AbstractEncounter = {
             ],
         },{
             partySize: 6,
-            externalConditions: 'Party size 6',
+            searchName: 'Extreme | Solo Boss | Party 6 | Level any',
+            description: 'Extreme difficulty encounter for a party of six with a duo (+3) boss and their (+3) companion',
             participants: [
                 {
                     name: 'Weak Boss',

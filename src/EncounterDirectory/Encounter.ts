@@ -27,7 +27,7 @@ type Priority = ValueOf<typeof PRIORITY>
 type LevelRepresentation = ValueOf<typeof LEVEL_REPRESENTATION>
 type RelativeNumber = `+${number}` | `-${number}`
 
-export type Participant<IsAbstract extends LevelRepresentation> = {
+export type Participant<IsAbstract extends LevelRepresentation = LevelRepresentation> = {
 	name: string;
 	level: [0|1] extends [IsAbstract] ? RelativeNumber|number : ([IsAbstract] extends [0] ? RelativeNumber : ([IsAbstract] extends [1] ? number : never));
 	side: Alignment;
@@ -39,14 +39,16 @@ type ConcreteEncounterVariant = {
 	difficulty?: Difficulty;
 	partySize?: number;
 	level?: number;
-	externalConditions: string; // Description of external conditions that trigger the variant
+	searchName: string;
+	description: string; // Description of external conditions that trigger the variant
 	participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[],
 }
 
 type AbstractEncounterVariant = {
 	difficulty?: Difficulty;
 	partySize?: number;
-	externalConditions: string; // Description of external conditions that trigger the variant
+	searchName: string;
+	description: string; // Description of external conditions that trigger the variant
 	participants: Participant<typeof LEVEL_REPRESENTATION.Relative>[],
 }
 
@@ -55,19 +57,19 @@ export type AbstractEncounter = {
 	name: string;
 	levelRepresentation: typeof LEVEL_REPRESENTATION.Relative; // Abstract encounter with participants of levels relative to the encounter level
 	variants?: AbstractEncounterVariant[];
-} & Omit<Required<AbstractEncounterVariant>,'externalConditions'>;
+} & Required<AbstractEncounterVariant>;
 
 export type ConcreteEncounter = {
 	id: string; // Unique identifier for the encounter
 	name: string;
 	levelRepresentation: typeof LEVEL_REPRESENTATION.Exact; // Encounter with participants of specific levels
 	variants?: (ConcreteEncounterVariant)[];
-} & Omit<Required<ConcreteEncounterVariant>,'externalConditions'>;
+} & Required<ConcreteEncounterVariant>;
 
 export type Encounter = AbstractEncounter | ConcreteEncounter;
 
 // Utility types for sorting and filtering
-export type SortableEncounterFields = 'difficulty' | 'level' | 'partySize' | 'name';
+export type SortableEncounterFields = 'name' | 'difficulty' | 'level' | 'partySize';
 
 // Example usage 
 export const exampleEncounter: Encounter = {
@@ -75,8 +77,10 @@ export const exampleEncounter: Encounter = {
 	name: 'Goblin Ambush',
 	level: 2,
 	difficulty: DIFFICULTY.Moderate,
+	description: 'A group of goblins ambush the party',
 	partySize: 4,
 	levelRepresentation: LEVEL_REPRESENTATION.Exact,
+	searchName: 'Goblin Ambush | Moderate | Party 4 | Level 2',
 	participants: [
 		{
 			name: 'Goblin',
@@ -89,7 +93,8 @@ export const exampleEncounter: Encounter = {
 	variants: [
 		{
 			level: 1,
-			externalConditions: 'PCs found the goblins before level up',
+			description: 'PCs found the goblins before level up',
+			searchName: 'Goblin Ambush | Moderate | Party 4 | Level 1',
 			participants: [
 				{
 					name: 'Weak Goblin',
@@ -101,7 +106,8 @@ export const exampleEncounter: Encounter = {
 			],
 		},{
 			difficulty: DIFFICULTY.Low,
-			externalConditions: 'Scout did not report back to the main group',
+			description: 'Scout did not report back to the main group',
+			searchName: 'Goblin Ambush | Low | Party 3 | Level 1',
 			participants: [
 				{
 					name: 'Goblin',
@@ -113,7 +119,8 @@ export const exampleEncounter: Encounter = {
 			],
 		},{
 			partySize: 5,
-			externalConditions: 'Bigger party size',
+			description: 'Bigger party size',
+			searchName: 'Goblin Ambush | Moderate | Party 5 | Level 2',
 			participants: [
 				{
 					name: 'Goblin',
