@@ -18,6 +18,14 @@ const theme = {
 			height: '20px',
 		},
 	},
+	dataTable: {
+		body: {
+			selected: {
+				background: 'active',
+				color: 'text',
+			},
+		},
+	}
 };
 
 function App() {
