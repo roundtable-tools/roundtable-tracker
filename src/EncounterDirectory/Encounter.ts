@@ -26,10 +26,14 @@ type Alignment = ValueOf<typeof ALIGNMENT>
 type Priority = ValueOf<typeof PRIORITY>
 type LevelRepresentation = ValueOf<typeof LEVEL_REPRESENTATION>
 type RelativeNumber = `+${number}` | `-${number}`
+type LevelFormat = {
+	0: RelativeNumber,
+	1: number,
+}
 
 export type Participant<IsAbstract extends LevelRepresentation = LevelRepresentation> = {
 	name: string;
-	level: [0|1] extends [IsAbstract] ? RelativeNumber|number : ([IsAbstract] extends [0] ? RelativeNumber : ([IsAbstract] extends [1] ? number : never));
+	level: LevelFormat[IsAbstract];
 	side: Alignment;
 	count?: number;
 	tiePriority?: Priority;
@@ -67,9 +71,6 @@ export type ConcreteEncounter = {
 } & Required<ConcreteEncounterVariant>;
 
 export type Encounter = AbstractEncounter | ConcreteEncounter;
-
-// Utility types for sorting and filtering
-export type SortableEncounterFields = 'name' | 'difficulty' | 'level' | 'partySize';
 
 // Example usage 
 export const exampleEncounter: Encounter = {
