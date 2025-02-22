@@ -10,16 +10,14 @@ import {
 } from 'motion/react';
 import { Character } from '../store/data';
 import { useContext, useEffect, useRef, useState } from 'react';
-import {
-	Command,
-	CommandHistoryContext,
-} from '../CommandHistory/CommandHistoryContext';
+import { CommandHistoryContext } from '../CommandHistory/CommandHistoryContext';
 import { UpdateCharacterCommand } from '../CommandHistory/Commands/UpdateCharacterCommand';
 import { debounce } from 'throttle-debounce';
 import { ReorderCharactersCommand } from '../CommandHistory/Commands/ReorderCharactersCommand';
 import { UUID } from '@/utils/uuid';
-import { useEncounterStore } from '@/store/store';
+import { useEncounterStore } from '@/store/instance';
 import { useRaisedShadow } from '@/hooks/useRisedShadow';
+import { Command } from '@/CommandHistory/common';
 
 const debounceOneSecond = debounce(
 	1000,
@@ -90,7 +88,7 @@ const ReorderRow = (props: {
 			value={character.uuid}
 			style={{ boxShadow, y, position: 'relative' }}
 			dragListener={true}
-			whileDrag={{ scale: 1.01 }}
+			// whileDrag={{ scale: 1.01 }}
 		>
 			<Grid
 				rows={['xsmall', '...']}

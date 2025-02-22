@@ -1,14 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { UpdateCharacterCommand } from './UpdateCharacterCommand';
-import { createEncounterStore, EncounterStore } from '../../store/store';
+import { createEncounterStore } from '../../store/store';
 import { Character } from '../../store/data';
-import { STATUS } from '../CommandHistoryContext';
-import { StoreApi } from 'zustand';
+import { STATUS } from '../common';
 
 describe('UpdateCharacterCommand', () => {
 	let uuid: string;
 	let oldCharacter: Character;
-	let encounterStore: StoreApi<EncounterStore>;
+	let encounterStore: ReturnType<typeof createEncounterStore>;
 
 	beforeEach(() => {
 		uuid = 'some-unique-uuid';
@@ -17,6 +16,8 @@ describe('UpdateCharacterCommand', () => {
 			name: 'Old Name',
 			initiative: 0,
 			state: 'normal',
+			group: 'players',
+			wounded: 0,
 		};
 
 		encounterStore = createEncounterStore();
