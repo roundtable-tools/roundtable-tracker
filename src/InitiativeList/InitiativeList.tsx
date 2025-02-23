@@ -339,17 +339,22 @@ const ImitativeRow = (props: {
 
 	return (
 		<>
-			<Box
-				background={'graph-3'}
-				border={'all'}
-				align="center"
-				justify="center"
+			<Button
+				disabled={!props.isInteractive}
 				onClick={() => {
 					if (state !== 'delayed') props.onStateChange('delayed');
 				}}
 			>
-				<InProgress />
-			</Box>
+				<Box
+					background={'graph-3'}
+					border={'all'}
+					align="center"
+					justify="center"
+					height={'100%'}
+				>
+					<InProgress />
+				</Box>
+			</Button>
 			<Box background={'status-unknown'}>
 				<motion.div
 					drag={props.isInteractive ? 'x' : false}
@@ -384,17 +389,22 @@ const ImitativeRow = (props: {
 					</Box>
 				</motion.div>
 			</Box>
-			<Box
-				background={'status-warning'}
-				border={'all'}
-				align="center"
-				justify="center"
+			<Button
+				disabled={!props.isInteractive}
 				onClick={() => {
 					if (state !== 'knocked-out') props.onStateChange('knocked-out');
 				}}
 			>
-				<Vulnerability />
-			</Box>
+				<Box
+					background={'status-warning'}
+					border={'all'}
+					align="center"
+					justify="center"
+					height={'100%'}
+				>
+					<Vulnerability />
+				</Box>
+			</Button>
 		</>
 	);
 };
