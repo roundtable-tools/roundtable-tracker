@@ -5,10 +5,16 @@ import { TypingEffect } from '@/components/TypingEffect';
 export const InitiativeElement = (props: {
 	character: Character;
 	open: boolean;
+	isInteractive?: boolean;
 }) => {
 	return (
 		<Accordion activeIndex={props.open ? 0 : []}>
 			<AccordionPanel
+				style={{
+					cursor: props.isInteractive ? 'pointer' : 'default',
+					pointerEvents: props.isInteractive ? 'auto' : 'none',
+					opacity: props.isInteractive ? 1 : 0.8,
+				}}
 				label={
 					<Box pad="medium" direction="row" gap="small">
 						{`[${props.character.initiative}] ${props.character.name}`}{' '}

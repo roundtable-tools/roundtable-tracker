@@ -49,7 +49,7 @@ function App() {
 						)}
 						<Text size="large">My App</Text>
 					</AppBar>
-					<PageContent style={{ overflowY: 'auto' }}>
+					<PageContent style={{ overflowY: 'auto', flexGrow: 1 }}>
 						<PageHeader title="Battle of the West-March" />
 						<InitiativeList />
 					</PageContent>
