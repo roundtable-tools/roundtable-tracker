@@ -1,4 +1,4 @@
-import { Box, Button, Grid } from 'grommet';
+import { Box, Button, Grid, ResponsiveContext } from 'grommet';
 import { InitiativeElement } from './InitiativeElement';
 
 import {
@@ -8,26 +8,19 @@ import {
 	Reorder,
 	useMotionValue,
 } from 'motion/react';
-import { Character } from '../store/data';
+import { Character } from '@/store/data';
 import { useContext, useEffect, useRef, useState } from 'react';
-import { CommandHistoryContext } from '../CommandHistory/CommandHistoryContext';
+import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
 import { debounce } from 'throttle-debounce';
-import { ReorderCharactersCommand } from '../CommandHistory/Commands/ReorderCharactersCommand';
+import { ReorderCharactersCommand } from '@/CommandHistory/Commands/ReorderCharactersCommand';
 import { UUID } from '@/utils/uuid';
 import { useEncounterStore } from '@/store/instance';
 import { useRaisedShadow } from '@/hooks/useRisedShadow';
 import { Command } from '@/CommandHistory/common';
-import {
-	Alert,
-	Close,
-	Halt,
-	InProgress,
-	Undo,
-	Vulnerability,
-} from 'grommet-icons';
+import { Close, Down, InProgress, Undo, Vulnerability } from 'grommet-icons';
 import { UpdateCharacterCommand } from '@/CommandHistory/Commands/UpdateCharacterCommand';
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacter';
-import { CompositeCommand } from '@/CommandHistory/Commands/CompositeCommand';
+import { getKnockOutCommand } from '@/CommandHistory/Commands/composites/KnockOut';
 
 const debounceOneSecond = debounce(
 	1000,
@@ -43,6 +36,9 @@ export const InitiativeList = () => {
 	const { executeCommand } = useContext(CommandHistoryContext);
 	const charactersMap = useEncounterStore((state) => state.charactersMap);
 	const charactersOrder = useEncounterStore((state) => state.charactersOrder);
+	const charactersWithTurn = useEncounterStore(
+		(state) => state.charactersWithTurn
+	);
 
 	const [charactersIds, setCharactersIds] = useState<UUID[]>(charactersOrder);
 	const [mode, setMode] = useState<ListMode>('normal');
@@ -70,11 +66,8 @@ export const InitiativeList = () => {
 	};
 
 	const rowMode = (id: UUID): RowMode => {
-		if (mode === 'resolving-knocked-out') {
-			if (id === knockedOutCharacter) return 'knocked-out-receiver';
-
-			return 'knocked-out-source';
-		}
+		if (mode === 'resolving-knocked-out' && id === knockedOutCharacter)
+			return 'knocked-out-receiver';
 
 		return 'normal';
 	};
@@ -84,36 +77,16 @@ export const InitiativeList = () => {
 		executeCommand(new RemoveCharacterCommand({ uuid: id }));
 	};
 
-	const markAsKiller = (id: UUID) => {
+	const knockOut = () => {
 		setMode('normal');
 		if (!knockedOutCharacter) throw new Error('No knocked out character');
 
 		executeCommand(
-			new CompositeCommand({
-				commands: [
-					new UpdateCharacterCommand({
-						uuid: knockedOutCharacter,
-						newCharacterProps: { state: 'knocked-out' },
-					}),
-					new ReorderCharactersCommand({
-						newOrder: insertBeforeInOrder(knockedOutCharacter, id),
-					}),
-				],
+			getKnockOutCommand(knockedOutCharacter, {
+				charactersWithTurn,
+				charactersOrder,
 			})
 		);
-	};
-
-	const insertBeforeInOrder = (id: UUID, beforeId: UUID) => {
-		if (id === beforeId) return charactersIds;
-
-		const newOrder = [...charactersIds];
-		const index = newOrder.indexOf(id);
-		newOrder.splice(index, 1);
-
-		const beforeIndex = newOrder.indexOf(beforeId);
-		newOrder.splice(beforeIndex, 0, id);
-
-		return newOrder;
 	};
 
 	return (
@@ -130,12 +103,13 @@ export const InitiativeList = () => {
 					<ReorderRow
 						key={character.uuid}
 						character={character}
+						moved={false}
 						index={index}
 						mode={rowMode(character.uuid)}
 						executeCommand={executeCommand}
 						onKnockedOut={onKnockedOut}
 						slayCharacter={slayCharacter}
-						markAsKiller={markAsKiller}
+						knockOut={knockOut}
 						cancelAction={() => setMode('normal')}
 					/>
 				))}
@@ -147,16 +121,16 @@ type RowMode = 'normal' | 'knocked-out-source' | 'knocked-out-receiver';
 
 const ReorderRow = (props: {
 	mode: RowMode;
+	moved: boolean;
 	character: Character;
 	index: number;
 	executeCommand: (command: Command) => void;
 	onKnockedOut: (id: UUID) => void;
 	slayCharacter: (id: UUID) => void;
-	markAsKiller: (id: UUID) => void;
+	knockOut: (id: UUID) => void;
 	cancelAction: () => void;
 }) => {
-	// const [mode, setMode] = useState<RowMode>('knocked-out-receiver');
-
+	const size = useContext(ResponsiveContext);
 	const { character, index, mode, executeCommand } = props;
 
 	const y = useMotionValue(0);
@@ -175,7 +149,7 @@ const ReorderRow = (props: {
 			dragListener={mode === 'normal'}
 			whileDrag={{ scale: 1.01 }}
 		>
-			{mode != 'normal' && (
+			{mode === 'knocked-out-receiver' && (
 				<Box
 					background={'rgba(0,0,0,.8)'}
 					style={{
@@ -190,53 +164,46 @@ const ReorderRow = (props: {
 					direction="row"
 					pad={{ horizontal: 'small' }}
 				>
-					<Box
-						gap={'small'}
-						style={{
-							position: 'absolute',
-							pointerEvents: 'none',
-							top: 0,
-							right: 0,
-							width: 'calc(100% + 100px)',
-							maxWidth: 'unset',
-							height: '100%',
-							zIndex: -1,
-							background:
-								'linear-gradient(90deg, rgba(0,0,0,0) 0%,rgba(0,0,0,0.8) 100px, rgba(0,0,0,0) 100px)',
-						}}
-					/>
-					{mode === 'knocked-out-receiver' ? (
-						<>
-							<Button
-								icon={<Undo />}
-								onClick={() => {
-									restoreRef.current?.(character.state);
-									props.cancelAction();
-								}}
-							/>
-							<Button
-								primary
-								icon={<Close />}
-								label="Slay"
-								color={'status-critical'}
-								onClick={() => props.slayCharacter(character.uuid)}
-							/>
-							<Button
-								secondary
-								icon={<Halt />}
-								color={'status-warning'}
-								onClick={() => props.markAsKiller(character.uuid)}
-							/>
-						</>
-					) : (
-						<Button
-							secondary
-							icon={<Alert />}
-							label="Mark as killer"
-							color={'status-warning'}
-							onClick={() => props.markAsKiller(character.uuid)}
+					{size !== 'small' && (
+						<Box
+							gap={'medium'}
+							direction="row"
+							style={{
+								position: 'absolute',
+								pointerEvents: 'none',
+								top: 0,
+								right: 0,
+								width: 'calc(100% + 100px)',
+								maxWidth: 'unset',
+								height: '100%',
+								zIndex: -1,
+								background:
+									'linear-gradient(90deg, rgba(0,0,0,0) 0%,rgba(0,0,0,0.8) 100px, rgba(0,0,0,0) 100px)',
+							}}
 						/>
 					)}
+
+					<Button
+						icon={<Undo />}
+						onClick={() => {
+							restoreRef.current?.(character.state);
+							props.cancelAction();
+						}}
+					/>
+					<Button
+						primary
+						icon={<Close />}
+						label="Slay"
+						color={'status-critical'}
+						onClick={() => props.slayCharacter(character.uuid)}
+					/>
+					<Button
+						secondary
+						icon={<Down />}
+						color={'status-warning'}
+						onClick={() => props.knockOut(character.uuid)}
+						label="K.O."
+					/>
 				</Box>
 			)}
 
