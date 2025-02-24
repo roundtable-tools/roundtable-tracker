@@ -1,12 +1,16 @@
-import { FC, ReactNode, useState } from 'react';
+import { FC, ReactNode } from 'react';
 
-import { Command, CommandHistoryContext } from './CommandHistoryContext';
+import { CommandHistoryContext } from './CommandHistoryContext';
+import { useEncounterStore } from '@/store/instance';
+import { Command } from './common';
 
 export const CommandHistoryProvider: FC<{ children: ReactNode }> = ({
 	children,
 }) => {
-	const [history, setHistory] = useState<Command[]>([]);
-	const [redoStack, setRedoStack] = useState<Command[]>([]);
+	const redoStack = useEncounterStore((state) => state.redoStack);
+	const setRedoStack = useEncounterStore((state) => state.setRedoStack);
+	const history = useEncounterStore((state) => state.history);
+	const setHistory = useEncounterStore((state) => state.setHistory);
 
 	const executeCommand = (command: Command) => {
 		command.execute();

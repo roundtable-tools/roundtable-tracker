@@ -5,6 +5,9 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 // https://vite.dev/config/
 export default defineConfig({
 	plugins: [tsconfigPaths(), react()],
+	build: {
+		sourcemap: true,
+	},
 	test: {
 		coverage: {
 			// you can include other reporters, but 'json-summary' is required, json is recommended

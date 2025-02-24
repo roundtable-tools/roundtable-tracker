@@ -16,7 +16,7 @@
 		"motion": "^12.0.5",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
-		"roundtable-tracker": "file:",
+		"roundtable-tracker": "file:.",
 		"styled-components": "^6.1.14",
 		"throttle-debounce": "^5.0.2",
 		"uuid": "^11.0.5",

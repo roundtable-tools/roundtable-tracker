@@ -1,17 +1,21 @@
 import { UUID } from '@/utils/uuid';
-import { encounterStore } from '@/store/store';
-import { Command, STATUS } from '../CommandHistoryContext';
+import { Command, CommandDeps, getDeps, STATUS } from '../common';
+
+type CommandProps = { newOrder: UUID[]; oldOrder?: UUID[] };
 
 export class ReorderCharactersCommand implements Command {
+	readonly type = 'ReorderCharactersCommand';
 	description = 'Reorder Characters Command';
-
+	data: CommandProps;
 	constructor(
-		public data: { newOrder: UUID[]; oldOrder?: UUID[] },
-		private deps = { encounterStore }
-	) {}
+		props: CommandProps,
+		private deps?: CommandDeps
+	) {
+		this.data = structuredClone(props);
+	}
 
 	execute() {
-		this.deps.encounterStore.setState((state) => {
+		getDeps(this.deps).encounterStore.setState((state) => {
 			this.data.oldOrder = structuredClone(state.charactersOrder);
 
 			return {
@@ -27,7 +31,7 @@ export class ReorderCharactersCommand implements Command {
 			return STATUS.failure;
 		}
 
-		this.deps.encounterStore.setState(() => ({
+		getDeps(this.deps).encounterStore.setState(() => ({
 			charactersOrder: structuredClone(orderToRestore),
 		}));
 

@@ -25,7 +25,7 @@ const theme = {
 				color: 'text',
 			},
 		},
-	}
+	},
 };
 
 function App() {
@@ -49,8 +49,8 @@ function App() {
 						)}
 						<Text size="large">My App</Text>
 					</AppBar>
-					<PageContent style={{ overflowY: 'auto' }}>
-						<PageHeader title="Ta lista potrzebuje integrated wykrywanie gestów swipe & tap" />
+					<PageContent style={{ overflowY: 'auto', flexGrow: 1 }}>
+						<PageHeader title="Battle of the West-March" />
 						<InitiativeList />
 					</PageContent>
 
