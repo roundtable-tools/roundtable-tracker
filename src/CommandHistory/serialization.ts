@@ -1,8 +1,5 @@
-import { ReorderCharactersCommand } from './Commands/ReorderCharactersCommand';
-import { UpdateCharacterCommand } from './Commands/UpdateCharacterCommand';
+import { getCommand } from './commandRegistry';
 import { Command } from './common';
-
-const commandMap: Record<string, new (data: Command['data']) => Command> = {};
 
 export type CommandJSON<T extends Command['data'] = Command['data']> = {
 	type: string;
@@ -22,6 +19,7 @@ export const isCommandJSON = (
 export const commandToJSON = (command: Command) => {
 	return {
 		type: `Command.${command.type}`,
+		description: command.description,
 		data: command.data,
 	} as CommandJSON<typeof command.data>;
 };
@@ -34,31 +32,7 @@ export const commandFromJSON = (json: Record<string, unknown>) => {
 
 	const CommandClass = getCommand(commandType);
 	const command = new CommandClass(data);
+	command.description = json.description as string;
 
 	return command;
-};
-
-export const getCommand = (
-	type: string
-): new (data: Command['data']) => Command => {
-	if (!(type in commandMap)) throw new Error(`Invalid command type: ${type}`);
-	return commandMap[type];
-};
-
-const registerSerializableCommand = <T extends Command>(
-	command: new (data: T['data']) => T,
-	type: T['type']
-) => {
-	if (type in commandMap)
-		throw new Error(`Command type already registered: ${type}`);
-
-	commandMap[type] = command;
-};
-
-export const registerSerializableCommands = () => {
-	registerSerializableCommand(UpdateCharacterCommand, 'UpdateCharacterCommand');
-	registerSerializableCommand(
-		ReorderCharactersCommand,
-		'ReorderCharactersCommand'
-	);
 };

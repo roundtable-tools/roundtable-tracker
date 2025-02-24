@@ -6,16 +6,25 @@ export const STATUS = {
 } as const;
 type Status = (typeof STATUS)[keyof typeof STATUS];
 
-export interface Command<
+export type Command<
 	T extends Record<string, unknown> = Record<string, unknown>,
-> {
+> = {
 	readonly type: string;
 	description?: string;
 	data: T;
 
 	execute: () => Status;
 	undo: () => Status;
-}
+};
+
+export const isCommand = (obj: unknown): obj is Command => {
+	const command = obj as Command;
+	return (
+		typeof command?.type === 'string' &&
+		typeof command?.execute === 'function' &&
+		typeof command?.undo === 'function'
+	);
+};
 
 export type CommandDeps = {
 	encounterStore: ReturnType<typeof getEncounterStore>;

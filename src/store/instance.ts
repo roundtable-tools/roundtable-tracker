@@ -2,7 +2,7 @@ import { generateUUID } from '@/utils/uuid';
 import { createEncounterStore, EncounterStore } from './store';
 import { Character, STATE } from './data';
 import { useStore } from 'zustand/react';
-import { registerSerializableCommands } from '@/CommandHistory/serialization';
+import { registerSerializableCommands } from '@/CommandHistory/commandRegistry';
 
 const characters = new Array(10).fill(0).map(
 	(_, index) =>
@@ -29,5 +29,5 @@ export const getEncounterStore = () => {
 	return encounterStore;
 };
 
-export const useEncounterStore = <T,>(selector: (state: EncounterStore) => T) =>
+export const useEncounterStore = <T>(selector: (state: EncounterStore) => T) =>
 	useStore(getEncounterStore(), selector);
