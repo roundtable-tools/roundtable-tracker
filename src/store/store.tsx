@@ -17,12 +17,15 @@ function isCallableFunction<T>(
 export interface EncounterStore {
 	charactersMap: Record<UUID, Character>;
 	charactersOrder: UUID[];
+	round: number;
+	charactersWithTurn: Set<UUID>;
 	history: Command[];
 	redoStack: Command[];
 	updateCharacter: (uuid: UUID, character: ValueOrFunction<Character>) => void;
 	setCharacters: (characters: Character[]) => void;
 	setHistory: (history: ValueOrFunction<Command[]>) => void;
 	setRedoStack: (redoStack: ValueOrFunction<Command[]>) => void;
+	nextRound: () => void;
 }
 
 export type EncounterStoreJson = {
@@ -56,6 +59,8 @@ export const createEncounterStore = () =>
 			(set) => ({
 				charactersMap: {},
 				charactersOrder: [],
+				round: 0,
+				charactersWithTurn: new Set(),
 				history: [],
 				redoStack: [],
 				setCharacters: (characters: Character[]) => {
@@ -94,6 +99,14 @@ export const createEncounterStore = () =>
 							charactersMap: { ...state.charactersMap },
 						};
 					}),
+				nextRound: () => {
+					set((state) => {
+						return {
+							round: state.round + 1,
+							charactersWithTurn: new Set(state.charactersOrder),
+						};
+					});
+				},
 
 				setHistory: simpleSet<Command[], typeof set>(set, 'history'),
 				setRedoStack: simpleSet<Command[], typeof set>(set, 'redoStack'),

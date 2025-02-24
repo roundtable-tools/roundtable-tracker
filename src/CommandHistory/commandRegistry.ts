@@ -1,3 +1,5 @@
+import { EndRoundCommand } from './Commands/EndRoundCommand';
+import { EndTurnCommand } from './Commands/EndTurnCommand';
 import { ReorderCharactersCommand } from './Commands/ReorderCharactersCommand';
 import { UpdateCharacterCommand } from './Commands/UpdateCharacterCommand';
 import { Command } from './common';
@@ -29,4 +31,6 @@ export const registerSerializableCommands = () => {
 		ReorderCharactersCommand,
 		'ReorderCharactersCommand'
 	);
+	registerSerializableCommand(EndTurnCommand, 'EndTurnCommand');
+	registerSerializableCommand(EndRoundCommand, 'EndRoundCommand');
 };
