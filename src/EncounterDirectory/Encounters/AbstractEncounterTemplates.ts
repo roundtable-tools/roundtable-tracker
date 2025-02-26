@@ -1,7 +1,7 @@
 import { AbstractEncounter, ALIGNMENT, DIFFICULTY, LEVEL_REPRESENTATION, PRIORITY } from "../Encounter"
 
 const SevereBossAndLackeys: AbstractEncounter = {
-    id: 'encounter-001',
+    id: 'e-001',
     name: 'Boss and Lackeys',
     searchName: 'Severe | Boss and Lackeys | Party 4 | Level any',
     difficulty: DIFFICULTY.Severe,
@@ -69,7 +69,7 @@ const SevereBossAndLackeys: AbstractEncounter = {
     ],
 }
 const SevereBossAndLieutenant: AbstractEncounter = {
-    id: 'encounter-002',
+    id: 'e-002',
     name: 'Boss and Lieutenant',
     searchName: 'Severe | Boss and Lieutenant | Party 4 | Level any',
     difficulty: DIFFICULTY.Severe,
@@ -137,7 +137,7 @@ const SevereBossAndLieutenant: AbstractEncounter = {
     ],
 }
 const SevereWorthyOponents: AbstractEncounter = {
-    id: 'encounter-003',
+    id: 'e-003',
     name: 'Worthy Opponents',
     searchName: 'Severe | Worthy Opponents | Party 4 | Level any',
     difficulty: DIFFICULTY.Severe,
@@ -198,7 +198,7 @@ const SevereWorthyOponents: AbstractEncounter = {
     ],
 }
 const ModerateLieutenantAndLackeys: AbstractEncounter = {
-    id: 'encounter-004',
+    id: 'e-004',
     name: 'Lieutenant and Lackeys',
     searchName: 'Moderate | Lieutenant and Lackeys | Party 4 | Level any',
     difficulty: DIFFICULTY.Moderate,
@@ -266,7 +266,7 @@ const ModerateLieutenantAndLackeys: AbstractEncounter = {
     ],
 }
 const ModerateMatedPair: AbstractEncounter = {
-    id: 'encounter-005',
+    id: 'e-005',
     name: 'Mated Pair',
     searchName: 'Moderate | Mated Pair | Party 4 | Level any',
     difficulty: DIFFICULTY.Moderate,
@@ -320,7 +320,7 @@ const ModerateMatedPair: AbstractEncounter = {
     ],
 }
 const ModerateTroop: AbstractEncounter = {
-    id: 'encounter-006',
+    id: 'e-006',
     name: 'Troop',
     searchName: 'Moderate | Troop | Party 4 | Level any',
     difficulty: DIFFICULTY.Moderate,
@@ -388,7 +388,7 @@ const ModerateTroop: AbstractEncounter = {
     ],
 }
 const LowMookSquad: AbstractEncounter = {
-    id: 'encounter-007',
+    id: 'e-007',
     name: 'Mook Squad',
     searchName: 'Low | Mook Squad | Party 4 | Level any',
     difficulty: DIFFICULTY.Low,
@@ -449,7 +449,7 @@ const LowMookSquad: AbstractEncounter = {
     ],
 }
 const ExtremeSoloBoss: AbstractEncounter = {
-    id: 'encounter-008',
+    id: 'e-008',
     name: 'Solo Boss',
     searchName: 'Extreme | Solo Boss | Party 4 | Level any',
     difficulty: DIFFICULTY.Extreme,

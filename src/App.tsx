@@ -6,6 +6,8 @@ import { CommandHistoryProvider } from './CommandHistory/CommandHistoryProvider'
 import { EncounterBar } from './EncounterBar';
 import { EncounterDirectory } from './EncounterDirectory/EncounterDirectory';
 import { InitiativeList } from './InitiativeList/InitiativeList';
+import { InitiativeContainer } from './InitiativeList/InitiativeContainer';
+import { useEncounterStore } from './store/store';
 
 const theme = {
 	global: {
@@ -30,6 +32,7 @@ const theme = {
 
 function App() {
 	const [show, setShow] = useState<boolean>(false);
+	const encounterData = useEncounterStore((state) => state.encounterData);
 	const [encounterInProgress, setEncounterInProgress] =
 		useState<boolean>(false);
 	return (
@@ -50,8 +53,8 @@ function App() {
 						<Text size="large">My App</Text>
 					</AppBar>
 					<PageContent style={{ overflowY: 'auto' }}>
-						<PageHeader title="Ta lista potrzebuje integrated wykrywanie gestów swipe & tap" />
-						<InitiativeList />
+						<PageHeader title={encounterData?.name} />
+						<InitiativeContainer />
 					</PageContent>
 
 					<EncounterBar endEncounter={() => setEncounterInProgress(false)} />

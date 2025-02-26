@@ -1,9 +1,11 @@
 import { Button, Card, CardBody, CardFooter, CardHeader, Layer, Text } from 'grommet';
-import { Checkmark, Favorite, ShareOption } from 'grommet-icons';
+import { Checkmark } from 'grommet-icons';
 import { EncounterData } from './EncounterData';
 import { useMemo, useState } from 'react';
-import { Encounter } from './Encounter';
 import AbstractEcounters from './Encounters/AbstractEncounterTemplates.ts';
+import { Encounter } from './Encounter.ts';
+import { useEncounterStore } from '@/store/store.tsx';
+import { APP_MODE } from '@/store/data.tsx';
 
 
 
@@ -12,7 +14,8 @@ type EncounterDirectoryProps = {
 };
 
 export const EncounterDirectory = (props: EncounterDirectoryProps) => {
-	const data = AbstractEcounters.flatMap(encounter => {
+	const setEncounterData = useEncounterStore((state) => state.setEncounterData);
+	const data = AbstractEcounters.flatMap<Encounter>(encounter => {
 		return [
 			{
 				id: `${encounter.id}${encounter.variants ? '-a' : ''}`,
@@ -44,6 +47,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 	const { setShow } = props;
 	const [selected, setSelected] = useState<string | number>();
 	const selectedEncounterData = useMemo(() => data.find(({ id }) => id === `${selected}`), [selected, data]);
+	const setAppMode = useEncounterStore((state) => state.setAppMode);
 	return (
 		<Layer onEsc={() => setShow(false)} onClickOutside={() => setShow(false)}>
 			<Card background="light-1" width={'xlarge'} height={'xlarge'}>
@@ -53,7 +57,12 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 				</CardBody>
 				<CardFooter pad="medium" background="light-2">
 					<Text>{selectedEncounterData?.description}</Text>
-					<Button icon={<Checkmark color="plain" />} hoverIndicator label={'Select Encounter'}/>
+					<Button disabled={!selectedEncounterData} icon={<Checkmark color="plain" />} hoverIndicator label={'Select Encounter'} onClick={() => {
+						if(selectedEncounterData) setEncounterData(selectedEncounterData)
+						setAppMode(APP_MODE.Preview)
+						setShow(false)
+						console.log(selectedEncounterData)
+					}}/>
 				</CardFooter>
 			</Card>
 		</Layer>

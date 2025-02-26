@@ -31,6 +31,13 @@ type LevelFormat = {
 	1: number,
 }
 
+export type InitiativeParticipant = {
+	uuid: string;
+	tiePriority: Priority;
+	initiative?: number;
+	level: number;
+} & Omit<Participant<typeof LEVEL_REPRESENTATION.Exact>,'count'>;
+
 export type Participant<IsAbstract extends LevelRepresentation = LevelRepresentation> = {
 	name: string;
 	level: LevelFormat[IsAbstract];
@@ -88,7 +95,6 @@ export const exampleEncounter: Encounter = {
 			level: -1,
 			side: ALIGNMENT.Opponents,
 			count: 4,
-			tiePriority: PRIORITY.NPC,
 		},
 	],
 	variants: [
@@ -102,7 +108,6 @@ export const exampleEncounter: Encounter = {
 					level: -2,
 					side: ALIGNMENT.Opponents,
 					count: 4,
-					tiePriority: PRIORITY.NPC,
 				},
 			],
 		},{
@@ -115,7 +120,6 @@ export const exampleEncounter: Encounter = {
 					level: -1,
 					side: ALIGNMENT.Opponents,
 					count: 3,
-					tiePriority: PRIORITY.NPC,
 				},
 			],
 		},{
@@ -128,14 +132,12 @@ export const exampleEncounter: Encounter = {
 					level: -1,
 					side: ALIGNMENT.Opponents,
 					count: 2,
-					tiePriority: PRIORITY.NPC,
 				},
 				{
 					name: 'Elite Goblin',
 					level: 0,
 					side: ALIGNMENT.Opponents,
 					count: 2,
-					tiePriority: PRIORITY.NPC,
 				},
 			],
 		},

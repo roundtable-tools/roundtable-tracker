@@ -1,7 +1,8 @@
 import { createStore } from 'zustand/vanilla';
-import { Character, STATE } from './data';
+import { APP_MODE, AppMode, Character, STATE } from './data';
 import { generateUUID, UUID } from '@/utils/uuid';
 import { useStore } from 'zustand';
+import { Encounter } from '@/EncounterDirectory/Encounter';
 
 const characters = new Array(10).fill(0).map((_, index) => ({
 	uuid: generateUUID(),
@@ -19,10 +20,16 @@ function isCallableFunction<T>(
 }
 
 export interface EncounterStore {
+	encounterData?: Encounter;
 	charactersMap: Record<UUID, Character>;
 	charactersOrder: UUID[];
+	appMode: AppMode;
+	partyLevel: number;
+	setEncounterData: (encounterData: Encounter) => void;
 	updateCharacter: (uuid: UUID, character: ValueOrFunction<Character>) => void;
 	setCharacters: (characters: Character[]) => void;
+	setAppMode: (mode: AppMode) => void;
+	setPartyLevel: (partyLevel: number) => void;
 }
 
 function unpackValue<T>(value: ValueOrFunction<T>, currentValue: T): T {
@@ -33,8 +40,12 @@ function unpackValue<T>(value: ValueOrFunction<T>, currentValue: T): T {
 
 export const createEncounterStore = () =>
 	createStore<EncounterStore>()((set) => ({
+		encounterData: undefined,
 		charactersMap: {},
 		charactersOrder: [],
+		appMode: APP_MODE.Empty, // Initial appMode value
+		partyLevel: 0,
+		setEncounterData: (encounterData: Encounter) => set(() => ({ encounterData })),
 		setCharacters: (characters: Character[]) => {
 			set(() => {
 				const charactersMap = characters.reduce(
@@ -66,7 +77,10 @@ export const createEncounterStore = () =>
 					charactersMap: { ...state.charactersMap },
 				};
 			}),
+		setAppMode: (mode: AppMode) => set(() => ({ appMode: mode })),
+		setPartyLevel: (partyLevel: number) => set(() => ({ partyLevel })),
 	}));
+
 export const encounterStore = createEncounterStore();
 
 encounterStore.getState().setCharacters(characters);
