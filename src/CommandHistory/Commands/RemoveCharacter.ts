@@ -9,6 +9,7 @@ type CommandProps = {
 type CommandData = CommandProps & {
 	removedCharacter?: Character;
 	originalOrder?: UUID[];
+	originalCharactersWithTurn?: Set<UUID>;
 };
 
 export class RemoveCharacterCommand implements Command {
@@ -32,6 +33,7 @@ export class RemoveCharacterCommand implements Command {
 		}
 
 		this.data.originalOrder = structuredClone(state.charactersOrder);
+		this.data.originalCharactersWithTurn = new Set(state.charactersWithTurn);
 
 		encounterStore.setState((state) => {
 			const { [this.data.uuid]: removed, ...charactersMap } =
@@ -43,7 +45,10 @@ export class RemoveCharacterCommand implements Command {
 				(uuid) => uuid !== this.data.uuid
 			);
 
-			return { charactersMap, charactersOrder };
+			const charactersWithTurn = new Set(state.charactersWithTurn);
+			charactersWithTurn.delete(this.data.uuid);
+
+			return { charactersMap, charactersOrder, charactersWithTurn };
 		});
 
 		return STATUS.success;
@@ -70,6 +75,7 @@ export class RemoveCharacterCommand implements Command {
 			return {
 				charactersMap: { ...state.charactersMap },
 				charactersOrder: structuredClone(originalOrder),
+				charactersWithTurn: new Set(this.data.originalCharactersWithTurn),
 			};
 		});
 

@@ -8,3 +8,14 @@ createRoot(document.getElementById('root')!).render(
 		<App />
 	</StrictMode>
 );
+
+declare global {
+	interface Window {
+		dbg: <T>(value: T) => T;
+	}
+}
+
+window.dbg = function <T>(value: T): T {
+	console.log(value);
+	return value;
+};

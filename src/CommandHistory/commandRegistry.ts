@@ -1,3 +1,6 @@
+import { CompositeCommand } from './Commands/CompositeCommand';
+import { EndRoundCommand } from './Commands/EndRoundCommand';
+import { EndTurnCommand } from './Commands/EndTurnCommand';
 import { ReorderCharactersCommand } from './Commands/ReorderCharactersCommand';
 import { UpdateCharacterCommand } from './Commands/UpdateCharacterCommand';
 import { Command } from './common';
@@ -24,9 +27,12 @@ export const registerSerializableCommand = <T extends Command>(
 };
 
 export const registerSerializableCommands = () => {
+	registerSerializableCommand(CompositeCommand, 'CompositeCommand');
 	registerSerializableCommand(UpdateCharacterCommand, 'UpdateCharacterCommand');
 	registerSerializableCommand(
 		ReorderCharactersCommand,
 		'ReorderCharactersCommand'
 	);
+	registerSerializableCommand(EndTurnCommand, 'EndTurnCommand');
+	registerSerializableCommand(EndRoundCommand, 'EndRoundCommand');
 };

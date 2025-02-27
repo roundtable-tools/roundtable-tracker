@@ -7,6 +7,14 @@ import { type EncounterStoreJson } from './store';
 import { type createJSONStorage } from 'zustand/middleware/persist';
 import { isCommand } from '@/CommandHistory/common';
 
+const setToJSON = (set: Set<unknown>) => ({
+	type: 'Set',
+	data: Array.from(set),
+});
+
+const isSetJSON = (value: object): value is { type: 'Set'; data: unknown[] } =>
+	'type' in value && value.type === 'Set';
+
 type Conf = NonNullable<
 	Parameters<typeof createJSONStorage<EncounterStoreJson>>[1]
 >;
@@ -21,9 +29,20 @@ type Conf = NonNullable<
  * @property {Function} replacer - A function that transforms the value before stringifying it.
  */
 export const jsonConfiguration: Conf = {
-	reviver(_key, value) {
-		if (value && typeof value === 'object' && isCommandJSON(value)) {
-			return commandFromJSON(value);
+	reviver(_key, value, context) {
+		try {
+			if (value && typeof value === 'object')
+				switch (true) {
+					case isCommandJSON(value):
+						return commandFromJSON(value);
+					case isSetJSON(value):
+						return new Set(value.data);
+				}
+		} catch (e) {
+			console.log('context', context);
+			console.log('key', _key);
+			console.log('value', value);
+			throw e;
 		}
 
 		return value;
@@ -31,6 +50,8 @@ export const jsonConfiguration: Conf = {
 	replacer(_key, value) {
 		if (isCommand(value)) {
 			return commandToJSON(value);
+		} else if (value instanceof Set) {
+			return setToJSON(value);
 		}
 
 		return value;
