@@ -8,4 +8,7 @@ export interface Character {
 	name: string;
 	initiative: number;
 	state: State;
+	group: 'players' | 'enemies';
+	wounded: number;
+	knockedBy?: UUID;
 }

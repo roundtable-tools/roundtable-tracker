@@ -1,13 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ReorderCharactersCommand } from './ReorderCharactersCommand';
-import { createEncounterStore, EncounterStore } from '@/store/store';
+import { createEncounterStore } from '@/store/store';
 import { Character } from '@/store/data';
-import { STATUS } from '../CommandHistoryContext';
-import { StoreApi } from 'zustand';
+import { STATUS } from '../common';
 
 describe('ReorderCharactersCommand', () => {
 	let initialCharacters: Character[];
-	let encounterStore: StoreApi<EncounterStore>;
+	let encounterStore: ReturnType<typeof createEncounterStore>;
 
 	beforeEach(() => {
 		initialCharacters = [
@@ -16,18 +15,24 @@ describe('ReorderCharactersCommand', () => {
 				initiative: 0,
 				state: 'normal',
 				uuid: '00000000-0000-0000-0000-000000000001',
+				group: 'players',
+				wounded: 0,
 			},
 			{
 				name: 'Bob',
 				initiative: 0,
 				state: 'normal',
 				uuid: '00000000-0000-0000-0000-000000000002',
+				group: 'players',
+				wounded: 0,
 			},
 			{
 				name: 'Charlie',
 				initiative: 0,
 				state: 'normal',
 				uuid: '00000000-0000-0000-0000-000000000003',
+				group: 'players',
+				wounded: 0,
 			},
 		];
 
@@ -58,7 +63,10 @@ describe('ReorderCharactersCommand', () => {
 			initialCharacters[0].uuid,
 			initialCharacters[1].uuid,
 		];
-		const command = new ReorderCharactersCommand({ newOrder });
+		const command = new ReorderCharactersCommand(
+			{ newOrder },
+			{ encounterStore }
+		);
 		command.execute();
 
 		const status = command.undo();
@@ -75,7 +83,10 @@ describe('ReorderCharactersCommand', () => {
 			initialCharacters[0].uuid,
 			initialCharacters[1].uuid,
 		];
-		const command = new ReorderCharactersCommand({ newOrder });
+		const command = new ReorderCharactersCommand(
+			{ newOrder },
+			{ encounterStore }
+		);
 
 		const status = command.undo();
 

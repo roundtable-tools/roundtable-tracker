@@ -1,15 +1,20 @@
 import { Accordion, AccordionPanel, Box } from 'grommet';
 import { Character } from '../store/data';
-import { useRef } from 'react';
-import { motion, useInView } from 'motion/react';
+import { TypingEffect } from '@/components/TypingEffect';
 
 export const InitiativeElement = (props: {
 	character: Character;
 	open: boolean;
+	isInteractive?: boolean;
 }) => {
 	return (
 		<Accordion activeIndex={props.open ? 0 : []}>
 			<AccordionPanel
+				style={{
+					cursor: props.isInteractive ? 'pointer' : 'default',
+					pointerEvents: props.isInteractive ? 'auto' : 'none',
+					opacity: props.isInteractive ? 1 : 0.8,
+				}}
 				label={
 					<Box pad="medium" direction="row" gap="small">
 						{`[${props.character.initiative}] ${props.character.name}`}{' '}
@@ -32,23 +37,3 @@ const State = (props: { state: Character['state'] }) => {
 		</Box>
 	);
 };
-
-export function TypingEffect({ text = 'Typing Effect' }: { text: string }) {
-	const ref = useRef(null);
-	const isInView = useInView(ref, { once: true });
-
-	return (
-		<div ref={ref} style={{ position: 'relative' }}>
-			{text.split('').map((letter, index) => (
-				<motion.span
-					key={`${text}-${index}`}
-					initial={{ opacity: 0 }}
-					animate={isInView ? { opacity: 1 } : {}}
-					transition={{ duration: 0.1, delay: index * 0.05 }}
-				>
-					{letter}
-				</motion.span>
-			))}
-		</div>
-	);
-}

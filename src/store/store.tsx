@@ -1,14 +1,10 @@
 import { createStore } from 'zustand/vanilla';
-import { Character, STATE } from './data';
-import { generateUUID, UUID } from '@/utils/uuid';
-import { useStore } from 'zustand';
-
-const characters = new Array(10).fill(0).map((_, index) => ({
-	uuid: generateUUID(),
-	name: `Character ${index + 1}`,
-	initiative: Math.floor(Math.random() * 20) + 1,
-	state: STATE[Math.floor(Math.random() * STATE.length)],
-}));
+import { Character } from './data';
+import { UUID } from '@/utils/uuid';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { Command } from '@/CommandHistory/common';
+import { jsonConfiguration } from './serializer';
+import { CommandJSON } from '@/CommandHistory/serialization';
 
 type ValueOrFunction<T> = T | ((prev: T) => T);
 
@@ -21,9 +17,20 @@ function isCallableFunction<T>(
 export interface EncounterStore {
 	charactersMap: Record<UUID, Character>;
 	charactersOrder: UUID[];
+	history: Command[];
+	redoStack: Command[];
 	updateCharacter: (uuid: UUID, character: ValueOrFunction<Character>) => void;
 	setCharacters: (characters: Character[]) => void;
+	setHistory: (history: ValueOrFunction<Command[]>) => void;
+	setRedoStack: (redoStack: ValueOrFunction<Command[]>) => void;
 }
+
+export type EncounterStoreJson = {
+	charactersMap: Record<UUID, Character>;
+	charactersOrder: UUID[];
+	history: CommandJSON[];
+	redoStack: CommandJSON[];
+};
 
 function unpackValue<T>(value: ValueOrFunction<T>, currentValue: T): T {
 	if (isCallableFunction(value)) return value(currentValue);
@@ -31,45 +38,72 @@ function unpackValue<T>(value: ValueOrFunction<T>, currentValue: T): T {
 	return value;
 }
 
+function simpleSet<
+	T,
+	K extends (fn: (state: EncounterStore) => Record<string, unknown>) => void,
+>(set: K, key: keyof EncounterStore) {
+	return (value: ValueOrFunction<T>) => {
+		set((state) => {
+			const newValue = unpackValue(value, state[key] as T);
+			return { [key]: newValue };
+		});
+	};
+}
+
 export const createEncounterStore = () =>
-	createStore<EncounterStore>()((set) => ({
-		charactersMap: {},
-		charactersOrder: [],
-		setCharacters: (characters: Character[]) => {
-			set(() => {
-				const charactersMap = characters.reduce(
-					(acc, character) => {
-						acc[character.uuid] = character;
-						return acc;
-					},
-					{} as Record<UUID, Character>
-				);
+	createStore<EncounterStore>()(
+		persist(
+			(set) => ({
+				charactersMap: {},
+				charactersOrder: [],
+				history: [],
+				redoStack: [],
+				setCharacters: (characters: Character[]) => {
+					set(() => {
+						const charactersMap = characters.reduce(
+							(acc, character) => {
+								acc[character.uuid] = character;
+								return acc;
+							},
+							{} as Record<UUID, Character>
+						);
 
-				const charactersOrder = characters.map((character) => character.uuid);
+						const charactersOrder = characters.map(
+							(character) => character.uuid
+						);
 
-				return { charactersMap, charactersOrder };
-			});
-		},
-		updateCharacter: (uuid: UUID, newCharacter: ValueOrFunction<Character>) =>
-			set((state) => {
-				const character = state.charactersMap[uuid];
-				if (!character) {
-					console.error(`Character with uuid ${uuid} not found`);
-					return {};
-				}
+						return { charactersMap, charactersOrder };
+					});
+				},
+				updateCharacter: (
+					uuid: UUID,
+					newCharacter: ValueOrFunction<Character>
+				) =>
+					set((state) => {
+						const character = state.charactersMap[uuid];
+						if (!character) {
+							console.error(`Character with uuid ${uuid} not found`);
+							return {};
+						}
 
-				const newCharacterValue = unpackValue(newCharacter, character);
+						const newCharacterValue = unpackValue(newCharacter, character);
 
-				state.charactersMap[uuid] = newCharacterValue;
+						state.charactersMap[uuid] = newCharacterValue;
 
-				return {
-					charactersMap: { ...state.charactersMap },
-				};
+						return {
+							charactersMap: { ...state.charactersMap },
+						};
+					}),
+
+				setHistory: simpleSet<Command[], typeof set>(set, 'history'),
+				setRedoStack: simpleSet<Command[], typeof set>(set, 'redoStack'),
 			}),
-	}));
-export const encounterStore = createEncounterStore();
-
-encounterStore.getState().setCharacters(characters);
-
-export const useEncounterStore = <T,>(selector: (state: EncounterStore) => T) =>
-	useStore(encounterStore, selector);
+			{
+				name: 'encounter-store',
+				storage: createJSONStorage<EncounterStoreJson>(
+					() => localStorage,
+					jsonConfiguration
+				),
+			}
+		)
+	);

@@ -1,6 +1,7 @@
-import { Command, STATUS } from '../CommandHistoryContext';
+import { Command, STATUS } from '../common';
 
 export class RandomIntCommand implements Command {
+	readonly type = 'RandomIntCommand';
 	constructor(range: number = 5) {
 		this.data = {
 			number: Math.floor(Math.random() * range),
