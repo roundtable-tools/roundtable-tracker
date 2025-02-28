@@ -2,13 +2,13 @@ import { createStore } from 'zustand/vanilla';
 import { APP_MODE, AppMode, Character, STATE } from './data';
 import { generateUUID, UUID } from '@/utils/uuid';
 import { useStore } from 'zustand';
-import { Encounter } from '@/EncounterDirectory/Encounter';
+import { Encounter, InitiativeParticipant, PRIORITY } from '@/EncounterDirectory/Encounter';
 
-const characters = new Array(10).fill(0).map((_, index) => ({
+const characters: Character[] = new Array(10).fill(0).map((_, index) => ({
 	uuid: generateUUID(),
 	name: `Character ${index + 1}`,
 	initiative: Math.floor(Math.random() * 20) + 1,
-	state: STATE[Math.floor(Math.random() * STATE.length)],
+	turnState: STATE[Math.floor(Math.random() * STATE.length)],
 }));
 
 type ValueOrFunction<T> = T | ((prev: T) => T);
@@ -39,14 +39,8 @@ function unpackValue<T>(value: ValueOrFunction<T>, currentValue: T): T {
 }
 
 export const createEncounterStore = () =>
-	createStore<EncounterStore>()((set) => ({
-		encounterData: undefined,
-		charactersMap: {},
-		charactersOrder: [],
-		appMode: APP_MODE.Empty, // Initial appMode value
-		partyLevel: 0,
-		setEncounterData: (encounterData: Encounter) => set(() => ({ encounterData })),
-		setCharacters: (characters: Character[]) => {
+	createStore<EncounterStore>()((set) => {
+		const setCharacters =(characters: Character[]) => {
 			set(() => {
 				const charactersMap = characters.reduce(
 					(acc, character) => {
@@ -60,8 +54,8 @@ export const createEncounterStore = () =>
 
 				return { charactersMap, charactersOrder };
 			});
-		},
-		updateCharacter: (uuid: UUID, newCharacter: ValueOrFunction<Character>) =>
+		}
+		const updateCharacter = (uuid: UUID, newCharacter: ValueOrFunction<Character>) =>
 			set((state) => {
 				const character = state.charactersMap[uuid];
 				if (!character) {
@@ -76,10 +70,42 @@ export const createEncounterStore = () =>
 				return {
 					charactersMap: { ...state.charactersMap },
 				};
-			}),
-		setAppMode: (mode: AppMode) => set(() => ({ appMode: mode })),
-		setPartyLevel: (partyLevel: number) => set(() => ({ partyLevel })),
-	}));
+			})
+		
+		const setAppMode = (mode: AppMode) => set(() => ({ appMode: mode }))
+		const setPartyLevel = (partyLevel: number) => set(() => ({ partyLevel }))
+		const setEncounterData = (encounterData: Encounter) => set(() => ({ encounterData }));
+		const generateCharactersFromEncounterData = (encounterData: Encounter) => set((state) => {
+			
+			const totalParticipants = encounterData.participants.flatMap(({level,startingState: turnState,...participant}) =>
+				Array.from({ length: participant.count ?? 1 }).map(
+					() => ({
+						uuid: generateUUID(),
+						tiePriority: PRIORITY.NPC,
+						...participant,
+						level: Number.isInteger(level)
+							? level as number
+							: state.partyLevel + Number.parseInt(level as string),
+						initiative: 0,
+						turnState: turnState ?? 'normal',
+					})
+				)) satisfies InitiativeParticipant[]
+			setCharacters(totalParticipants)
+			return {}
+		})
+		return ({
+			encounterData: undefined,
+			charactersMap: {},
+			charactersOrder: [],
+			appMode: APP_MODE.Empty, // Initial appMode value
+			partyLevel: 0,
+			setEncounterData,
+			setCharacters,
+			updateCharacter,
+			setAppMode,
+			setPartyLevel,
+		});
+	});
 
 export const encounterStore = createEncounterStore();
 

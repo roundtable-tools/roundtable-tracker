@@ -16,7 +16,7 @@ describe('UpdateCharacterCommand', () => {
 			uuid,
 			name: 'Old Name',
 			initiative: 0,
-			state: 'normal',
+			turnState: 'normal',
 		};
 
 		encounterStore = createEncounterStore();

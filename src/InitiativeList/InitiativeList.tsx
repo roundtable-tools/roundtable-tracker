@@ -106,7 +106,7 @@ const ReorderRow = (props: {
 						executeCommand(
 							new UpdateCharacterCommand({
 								uuid: character.uuid,
-								newCharacterProps: { state },
+								newCharacterProps: { turnState: state },
 							})
 						);
 					}}
@@ -138,7 +138,7 @@ const getBackgroundColor = (index: number) => {
 	}
 };
 
-const offset: { [key in Character['state']]: number } = {
+const offset: { [key in Character['turnState']]: number } = {
 	normal: 0,
 	delayed: -50,
 	'knocked-out': 50,
@@ -162,7 +162,7 @@ const ImitativeRow = (props: {
 	onMouseDown?: () => void;
 	onMouseUp?: () => void;
 	onMouseMove?: () => void;
-	onStateChange: (state: Character['state']) => void;
+	onStateChange: (state: Character['turnState']) => void;
 }) => {
 	const x = useMotionValue(0);
 
@@ -175,7 +175,7 @@ const ImitativeRow = (props: {
 				<motion.div
 					drag={props.isInteractive ? 'x' : false}
 					style={{ x }}
-					animate={{ x: offset[props.character.state] }}
+					animate={{ x: offset[props.character.turnState] }}
 					dragConstraints={{ left: -50, right: 50 }}
 					dragElastic={0.1}
 					onMouseDown={props.onMouseDown}
@@ -185,7 +185,7 @@ const ImitativeRow = (props: {
 						const endX = x.get();
 						const newState = parseOffset(endX);
 						animate(x, offset[newState]);
-						if (newState === props.character.state) return;
+						if (newState === props.character.turnState) return;
 						props.onStateChange(newState);
 					}}
 				>

@@ -13,7 +13,7 @@ export const InitiativeElement = (props: {
 				label={
 					<Box pad="medium" direction="row" gap="small">
 						{`[${props.character.initiative}] ${props.character.name}`}{' '}
-						<State state={props.character.state} />
+						<State state={props.character.turnState} />
 					</Box>
 				}
 			>
@@ -25,7 +25,7 @@ export const InitiativeElement = (props: {
 	);
 };
 
-const State = (props: { state: Character['state'] }) => {
+const State = (props: { state: Character['turnState'] }) => {
 	return (
 		<Box as={'span'}>
 			<TypingEffect text={props.state} />

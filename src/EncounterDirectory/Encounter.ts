@@ -19,12 +19,18 @@ export const LEVEL_REPRESENTATION = {
 	'Relative': 0,
 	'Exact': 1,
 } as const
+export const INITIATIVE_STATE = {
+	'Normal': 0,
+	'Delayed': 1,
+	'Knocked-Out': 2,
+} as const
 
 type ValueOf<T> = T[keyof T]
 type Difficulty = ValueOf<typeof DIFFICULTY>
 type Alignment = ValueOf<typeof ALIGNMENT>
 type Priority = ValueOf<typeof PRIORITY>
 type LevelRepresentation = ValueOf<typeof LEVEL_REPRESENTATION>
+type State = ValueOf<typeof INITIATIVE_STATE>
 type RelativeNumber = `+${number}` | `-${number}`
 type LevelFormat = {
 	0: RelativeNumber,
@@ -44,6 +50,9 @@ export type Participant<IsAbstract extends LevelRepresentation = LevelRepresenta
 	side: Alignment;
 	count?: number;
 	tiePriority?: Priority;
+	// TEMP: Set state to @ostatni5's format until the types get unified
+	// startingState?: INITIATIVE_STATE.Normal,
+	startingState?: 'normal' | 'delayed' | 'knocked-out';
 }
 
 type ConcreteEncounterVariant = {

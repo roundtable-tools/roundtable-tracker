@@ -7,7 +7,7 @@ export interface Character {
 	uuid: UUID;
 	name: string;
 	initiative: number;
-	state: State;
+	turnState: State;
 }
 
 export const APP_MODE = {

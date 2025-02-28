@@ -27,19 +27,19 @@ export const InitiativePreview = () => {
                     return (
                         <InitiativeCard key={index} alignment={Object.entries(ALIGNMENT).find(
                             ([, value]) => value === participants[0].side
-                        )?.[0] ?? "Unknown"} participants={participants
-                                                        .flatMap(({level,...participant}) =>
-                                                            Array.from({ length: participant.count ?? 1 }).map(
-                                                                () => ({
-                                                                    uuid: generateUUID(),
-                                                                    tiePriority: PRIORITY.NPC,
-                                                                    ...participant,
-                                                                    level: Number.isInteger(level)
-                                                                        ? level as number
-                                                                        : partyLevel + Number.parseInt(level as string),
-                                                                })
-                                                            )
-                                                        )} />
+                        )?.[0] ?? "Unknown"} participants={
+                            participants.flatMap(({level,...participant}) =>
+                            Array.from({ length: participant.count ?? 1 }).map(
+                                () => ({
+                                    uuid: generateUUID(),
+                                    tiePriority: PRIORITY.NPC,
+                                    ...participant,
+                                    level: Number.isInteger(level)
+                                        ? level as number
+                                        : partyLevel + Number.parseInt(level as string),
+                                })
+                            )
+                        )} />
                     );
                 })}
             <InitiativeCard alignment="Players" participants={encounterData.partySize} />
