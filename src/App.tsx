@@ -5,7 +5,7 @@ import { AppBar } from './AppBar';
 import { CommandHistoryProvider } from './CommandHistory/CommandHistoryProvider';
 import { EncounterBar } from './EncounterBar';
 import { EncounterDirectory } from './EncounterDirectory/EncounterDirectory';
-import { InitiativeContainer } from './InitiativeList/InitiativeContainer';
+import { AppView } from './AppView';
 import { useEncounterStore } from '@/store/instance';
 
 const theme = {
@@ -53,7 +53,7 @@ function App() {
 					</AppBar>
 					<PageContent style={{ overflowY: 'auto', flexGrow: 1 }}>
 						<PageHeader title={encounterData?.name} />
-						<InitiativeContainer />
+						<AppView />
 					</PageContent>
 
 					<EncounterBar endEncounter={() => setEncounterInProgress(false)} />

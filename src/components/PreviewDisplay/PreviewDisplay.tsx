@@ -1,10 +1,10 @@
 import { ALIGNMENT, Participant, PRIORITY } from '@/EncounterDirectory/Encounter';
 import { Grid } from 'grommet';
 import { generateUUID } from '@/utils/uuid';
-import { InitiativeCard } from './InitiativeCard';
+import { PreviewCard } from './PreviewCard';
 import { useEncounterStore } from '@/store/instance';
 
-export const InitiativePreview = () => {
+export const PreviewDisplay = () => {
 	const encounterData = useEncounterStore((state) => state.encounterData);
     const partyLevel = useEncounterStore((state) => state.partyLevel);
 	return encounterData ? (
@@ -25,7 +25,7 @@ export const InitiativePreview = () => {
                 )
                 .map((participants, index) => {
                     return (
-                        <InitiativeCard key={index} alignment={Object.entries(ALIGNMENT).find(
+                        <PreviewCard key={index} alignment={Object.entries(ALIGNMENT).find(
                             ([, value]) => value === participants[0].side
                         )?.[0] ?? "Unknown"} participants={
                             participants.flatMap(({level,...participant}) =>
@@ -42,7 +42,7 @@ export const InitiativePreview = () => {
                         )} />
                     );
                 })}
-            <InitiativeCard alignment="Players" participants={encounterData.partySize} />
+            <PreviewCard alignment="Players" participants={encounterData.partySize} />
         </Grid>
 	) : (
 		<></>

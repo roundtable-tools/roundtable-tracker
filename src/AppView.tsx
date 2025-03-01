@@ -1,10 +1,10 @@
 import React from 'react';
-import { InitiativePreview } from './InitiativePreview';
 import { APP_MODE } from '@/store/data';
 import { InitiativeList } from '@/components/InitiativeList/InitiativeList';
 import { useEncounterStore } from '@/store/instance';
 import { RoundBar } from '@/components/InitiativeList/RoundBar';
-export const InitiativeContainer: React.FC = () => {
+import { PreviewDisplay } from '@/components/PreviewDisplay/PreviewDisplay';
+export const AppView: React.FC = () => {
     const appMode = useEncounterStore((state) => state.appMode);
 
     return (
@@ -12,7 +12,7 @@ export const InitiativeContainer: React.FC = () => {
             {appMode == APP_MODE.Empty 
             ? <></> : appMode === APP_MODE.Initiative 
             ? <><RoundBar /><InitiativeList /></> 
-            : <InitiativePreview />}
+            : <PreviewDisplay />}
         </div>
     );
 };

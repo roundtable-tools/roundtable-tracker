@@ -6,7 +6,7 @@ type InitiativeCardProps = {
     participants: InitiativeParticipant[] | number;
 }
 
-export const InitiativeCard = (props: InitiativeCardProps) => {
+export const PreviewCard = (props: InitiativeCardProps) => {
     return (
         <Card fill>
             <CardHeader>
