@@ -1,4 +1,4 @@
-import { InitiativeParticipant } from "@/EncounterDirectory/Encounter";
+import { InitiativeParticipant } from "@/store/data";
 import { Card, CardHeader, Text } from "grommet";
 
 type InitiativeCardProps = {

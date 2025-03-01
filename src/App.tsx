@@ -1,12 +1,13 @@
 import { Button, Grommet, Page, PageContent, PageHeader, Text } from 'grommet';
 import { Menu } from 'grommet-icons';
 import { useState } from 'react';
-import { AppBar } from './AppBar';
+import { AppNav } from './AppNav';
 import { CommandHistoryProvider } from './CommandHistory/CommandHistoryProvider';
-import { EncounterBar } from './EncounterBar';
-import { EncounterDirectory } from './EncounterDirectory/EncounterDirectory';
+import { AppFooter } from './AppFooter';
+import { EncounterDirectory } from './components/EncounterDirectory/EncounterDirectory';
 import { AppView } from './AppView';
 import { useEncounterStore } from '@/store/instance';
+import { APP_MODE } from './store/data';
 
 const theme = {
 	global: {
@@ -32,31 +33,31 @@ const theme = {
 function App() {
 	const [show, setShow] = useState<boolean>(false);
 	const encounterData = useEncounterStore((state) => state.encounterData);
-	const [encounterInProgress, setEncounterInProgress] =
-		useState<boolean>(false);
+	const appMode = useEncounterStore((state) => state.appMode);
+	const setAppMode = useEncounterStore((state) => state.setAppMode);
 	return (
 		<CommandHistoryProvider>
 			<Grommet theme={theme} full>
 				<Page fill="vertical" style={{ height: '100dvh' }}>
-					<AppBar>
+					<AppNav>
 						<Button>
 							<Menu onClick={() => setShow(true)} />
 						</Button>
-						{!encounterInProgress && (
+						{!appMode && (
 							<Button
 								primary
 								label="Start Encounter"
-								onClick={() => setEncounterInProgress(true)}
+								onClick={() => setAppMode(APP_MODE.Initiative)}
 							/>
 						)}
 						<Text size="large">My App</Text>
-					</AppBar>
+					</AppNav>
 					<PageContent style={{ overflowY: 'auto', flexGrow: 1 }}>
 						<PageHeader title={encounterData?.name} />
 						<AppView />
 					</PageContent>
 
-					<EncounterBar endEncounter={() => setEncounterInProgress(false)} />
+					<AppFooter endEncounter={() => setAppMode(APP_MODE.Empty)} />
 				</Page>
 				{show && <EncounterDirectory setShow={setShow} />}
 			</Grommet>

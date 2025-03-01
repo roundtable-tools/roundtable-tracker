@@ -1,7 +1,7 @@
 import { Header } from 'grommet';
 import { ReactNode } from 'react';
 
-export const AppBar = (props: { children: ReactNode }) => (
+export const AppNav = (props: { children: ReactNode }) => (
 	<Header
 		background="brand"
 		pad={{ left: 'medium', right: 'small', vertical: 'small' }}

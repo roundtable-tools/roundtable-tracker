@@ -1,4 +1,4 @@
-import { ALIGNMENT, Participant, PRIORITY } from '@/EncounterDirectory/Encounter';
+import { ALIGNMENT, Participant, PRIORITY } from "@/store/data";
 import { Grid } from 'grommet';
 import { generateUUID } from '@/utils/uuid';
 import { PreviewCard } from './PreviewCard';

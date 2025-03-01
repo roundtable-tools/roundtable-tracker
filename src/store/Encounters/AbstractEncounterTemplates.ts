@@ -1,4 +1,4 @@
-import { AbstractEncounter, ALIGNMENT, DIFFICULTY, LEVEL_REPRESENTATION, PRIORITY } from "../Encounter"
+import { AbstractEncounter, ALIGNMENT, DIFFICULTY, LEVEL_REPRESENTATION, PRIORITY } from "@/store/data"
 
 const SevereBossAndLackeys: AbstractEncounter = {
     id: 'e-001',

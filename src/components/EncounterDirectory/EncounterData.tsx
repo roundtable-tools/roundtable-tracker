@@ -1,4 +1,4 @@
-import { DIFFICULTY, Encounter } from './Encounter';
+import { DIFFICULTY, Encounter } from "@/store/data";
 import { Data, DataTable, NameValueList, NameValuePair, Box, Text } from 'grommet';
 
 type EncounterDataProps = {

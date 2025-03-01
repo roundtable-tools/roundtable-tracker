@@ -2,7 +2,7 @@ import { createStore } from 'zustand/vanilla';
 import { APP_MODE, AppMode, Character } from './data';
 import { generateUUID, UUID } from '@/utils/uuid';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Encounter, InitiativeParticipant, PRIORITY } from '@/EncounterDirectory/Encounter';
+import { Encounter, InitiativeParticipant, PRIORITY } from "./data";
 import { Command } from '@/CommandHistory/common';
 import { jsonConfiguration } from './serializer';
 import { CommandJSON } from '@/CommandHistory/serialization';

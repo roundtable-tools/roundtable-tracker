@@ -3,11 +3,11 @@ import { Redo, Revert } from 'grommet-icons';
 import { useContext, useState } from 'react';
 import { CommandHistoryContext } from './CommandHistory/CommandHistoryContext';
 
-type EncounterBarProps = {
+type AppFooterProps = {
 	endEncounter: () => void;
 };
 
-export const EncounterBar = (props: EncounterBarProps) => {
+export const AppFooter = (props: AppFooterProps) => {
 	const { undo, canUndo, redo, canRedo } = useContext(CommandHistoryContext);
 	const { endEncounter } = props;
 	const [time, setTime] = useState('T00:00:00');

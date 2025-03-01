@@ -1,9 +1,9 @@
 import { Button, Card, CardBody, CardFooter, CardHeader, Layer, Text } from 'grommet';
 import { Checkmark } from 'grommet-icons';
-import { EncounterData } from './EncounterData';
+import { EncounterData } from './EncounterData.tsx';
 import { useMemo, useState } from 'react';
-import AbstractEcounters from './Encounters/AbstractEncounterTemplates.ts';
-import { Encounter } from './Encounter.ts';
+import AbstractEcounters from '../../store/Encounters/AbstractEncounterTemplates.ts';
+import { Encounter } from "@/store/data.ts";
 import { useEncounterStore } from '@/store/instance.ts';
 import { APP_MODE } from '@/store/data.ts';
 
