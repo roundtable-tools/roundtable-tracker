@@ -14,7 +14,7 @@ import {
 	CardHeader,
 	Grid,
 } from 'grommet';
-import { AppFooter } from './AppFooter';
+import { HistoryFooter } from './components/HistoryFooter';
 import { EncounterDirectory } from './components/EncounterDirectory/EncounterDirectory';
 import { AppHeader } from './AppHeader';
 export const AppContainer = () => {
@@ -25,14 +25,15 @@ export const AppContainer = () => {
 		<Main>
 			{view === 'landingPage' ? (
 				<Page fill>
-					<PageContent>
+					<PageContent fill>
 						<PageHeader title="Roudtable Tools" />
 						<Grid
+							rows={['1fr', '1fr']}
 							areas={[
 								['directory', 'builder'],
 								['directory', 'initiative'],
 							]}
-							fill
+							height={{max: '100%', min: 'large'}}
 							gap="small"
 						>
 							{[
@@ -48,7 +49,7 @@ export const AppContainer = () => {
 								>
 									<Card fill pad="small" background={color}>
 										<CardHeader pad="small" fill justify="center">
-											<Text size="large">{title}</Text>
+											<Text size="xxlarge">{title}</Text>
 										</CardHeader>
 									</Card>
 								</Box>
@@ -80,7 +81,7 @@ export const AppContainer = () => {
 					</Page>
 				</>
 			)}
-            {view === 'initiative' && <AppFooter endEncounter={() => setView('preview')} />}
+            {view === 'initiative' && <HistoryFooter endEncounter={() => setView('preview')} />}
 		</Main>
 	);
 };

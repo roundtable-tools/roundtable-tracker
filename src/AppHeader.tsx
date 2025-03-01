@@ -1,4 +1,4 @@
-import { Text, Header, Box, Toolbar, Button, DropButton, TextInput } from "grommet";
+import { Header, Box, Toolbar, Button, DropButton, TextInput } from "grommet";
 import { Filter, FormPrevious, Search } from "grommet-icons/icons";
 
 type AppHeaderProps = {
