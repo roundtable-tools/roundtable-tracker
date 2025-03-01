@@ -8,7 +8,7 @@ import { useEncounterStore } from '@/store/instance.ts';
 import { APP_MODE } from '@/store/data.ts';
 
 type EncounterDirectoryProps = {
-	setShow: (value: boolean) => void;
+	setView: (view: string) => void;
 };
 
 export const EncounterDirectory = (props: EncounterDirectoryProps) => {
@@ -42,27 +42,24 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			})
 		];
 	})
-	const { setShow } = props;
+	const { setView } = props;
 	const [selected, setSelected] = useState<string | number>();
 	const selectedEncounterData = useMemo(() => data.find(({ id }) => id === `${selected}`), [selected, data]);
 	const setAppMode = useEncounterStore((state) => state.setAppMode);
 	return (
-		<Layer onEsc={() => setShow(false)} onClickOutside={() => setShow(false)}>
-			<Card background="light-1" width={'xlarge'} height={'xlarge'}>
-				<CardHeader pad="medium"><Button label="close" onClick={() => setShow(false)} /></CardHeader>
-				<CardBody pad={{horizontal: "medium"}} overflow={'auto'}>
-					<EncounterData data={data} selected={selected} setSelected={setSelected}/>
-				</CardBody>
-				<CardFooter pad="medium" background="light-2">
-					<Text>{selectedEncounterData?.description}</Text>
-					<Button disabled={!selectedEncounterData} icon={<Checkmark color="plain" />} hoverIndicator label={'Select Encounter'} onClick={() => {
-						if(selectedEncounterData) setEncounterData(selectedEncounterData)
-						setAppMode(APP_MODE.Preview)
-						setShow(false)
-						console.log(selectedEncounterData)
-					}}/>
-				</CardFooter>
-			</Card>
-		</Layer>
+		<Card background="light-1" width={'xlarge'} height={'xlarge'}>
+			<CardBody pad={{horizontal: "medium"}} overflow={'auto'}>
+				<EncounterData data={data} selected={selected} setSelected={setSelected}/>
+			</CardBody>
+			<CardFooter pad="medium" background="light-2">
+				<Text>{selectedEncounterData?.description}</Text>
+				<Button disabled={!selectedEncounterData} icon={<Checkmark color="plain" />} hoverIndicator label={'Select Encounter'} onClick={() => {
+					if(selectedEncounterData) setEncounterData(selectedEncounterData)
+					setAppMode(APP_MODE.Preview)
+					setView('preview')
+					console.log(selectedEncounterData)
+				}}/>
+			</CardFooter>
+		</Card>
 	);
 };

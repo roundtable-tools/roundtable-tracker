@@ -1,5 +1,5 @@
-import { ALIGNMENT, Participant, PRIORITY } from "@/store/data";
-import { Grid } from 'grommet';
+import { ALIGNMENT, APP_MODE, Participant, PRIORITY } from "@/store/data";
+import { Button, Grid } from 'grommet';
 import { generateUUID } from '@/utils/uuid';
 import { PreviewCard } from './PreviewCard';
 import { useEncounterStore } from '@/store/instance';
@@ -7,8 +7,9 @@ import { useEncounterStore } from '@/store/instance';
 export const PreviewDisplay = () => {
 	const encounterData = useEncounterStore((state) => state.encounterData);
     const partyLevel = useEncounterStore((state) => state.partyLevel);
+    const setAppMode = useEncounterStore((state) => state.setAppMode);
 	return encounterData ? (
-        <Grid columns={['1fr', '1fr']} gap="small">
+        <><Grid columns={['1fr', '1fr']} gap="small">
             {encounterData.participants
                 .reduce(
                     (acc, participant) => {
@@ -44,6 +45,11 @@ export const PreviewDisplay = () => {
                 })}
             <PreviewCard alignment="Players" participants={encounterData.partySize} />
         </Grid>
+        <Button
+            primary
+            label="Start Encounter"
+            onClick={() => setAppMode(APP_MODE.Initiative)}
+        /></>
 	) : (
 		<></>
 	);
