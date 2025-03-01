@@ -4,10 +4,8 @@ import { EncounterData } from './EncounterData';
 import { useMemo, useState } from 'react';
 import AbstractEcounters from './Encounters/AbstractEncounterTemplates.ts';
 import { Encounter } from './Encounter.ts';
-import { useEncounterStore } from '@/store/store.tsx';
-import { APP_MODE } from '@/store/data.tsx';
-
-
+import { useEncounterStore } from '@/store/instance.ts';
+import { APP_MODE } from '@/store/data.ts';
 
 type EncounterDirectoryProps = {
 	setShow: (value: boolean) => void;

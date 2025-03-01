@@ -5,9 +5,8 @@ import { AppBar } from './AppBar';
 import { CommandHistoryProvider } from './CommandHistory/CommandHistoryProvider';
 import { EncounterBar } from './EncounterBar';
 import { EncounterDirectory } from './EncounterDirectory/EncounterDirectory';
-import { InitiativeList } from './InitiativeList/InitiativeList';
 import { InitiativeContainer } from './InitiativeList/InitiativeContainer';
-import { useEncounterStore } from './store/store';
+import { useEncounterStore } from '@/store/instance';
 
 const theme = {
 	global: {
@@ -27,7 +26,7 @@ const theme = {
 				color: 'text',
 			},
 		},
-	}
+	},
 };
 
 function App() {
@@ -52,7 +51,7 @@ function App() {
 						)}
 						<Text size="large">My App</Text>
 					</AppBar>
-					<PageContent style={{ overflowY: 'auto' }}>
+					<PageContent style={{ overflowY: 'auto', flexGrow: 1 }}>
 						<PageHeader title={encounterData?.name} />
 						<InitiativeContainer />
 					</PageContent>

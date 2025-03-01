@@ -1,8 +1,8 @@
 import { ALIGNMENT, Participant, PRIORITY } from '@/EncounterDirectory/Encounter';
-import { useEncounterStore } from '@/store/store';
 import { Grid } from 'grommet';
 import { generateUUID } from '@/utils/uuid';
 import { InitiativeCard } from './InitiativeCard';
+import { useEncounterStore } from '@/store/instance';
 
 export const InitiativePreview = () => {
 	const encounterData = useEncounterStore((state) => state.encounterData);

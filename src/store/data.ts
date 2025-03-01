@@ -8,6 +8,9 @@ export interface Character {
 	name: string;
 	initiative: number;
 	turnState: State;
+	group?: 'players' | 'enemies';
+	wounded?: number;
+	knockedBy?: UUID;
 }
 
 export const APP_MODE = {
