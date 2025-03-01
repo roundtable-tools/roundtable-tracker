@@ -4,10 +4,14 @@ import { generateUUID } from '@/utils/uuid';
 import { PreviewCard } from './PreviewCard';
 import { useEncounterStore } from '@/store/instance';
 
-export const PreviewDisplay = () => {
+type PreviewDisplayProps = {
+	setView: (view: string) => void;
+};
+
+export const PreviewDisplay = (props:PreviewDisplayProps) => {
 	const encounterData = useEncounterStore((state) => state.encounterData);
     const partyLevel = useEncounterStore((state) => state.partyLevel);
-    const setAppMode = useEncounterStore((state) => state.setAppMode);
+    const setView = props.setView;
 	return encounterData ? (
         <><Grid columns={['1fr', '1fr']} gap="small">
             {encounterData.participants
@@ -48,7 +52,7 @@ export const PreviewDisplay = () => {
         <Button
             primary
             label="Start Encounter"
-            onClick={() => setAppMode(APP_MODE.Initiative)}
+            onClick={() => setView('initiative')}
         /></>
 	) : (
 		<></>

@@ -1,34 +1,25 @@
 import { useState } from 'react';
-import { APP_MODE } from '@/store/data';
 import { InitiativeList } from '@/components/InitiativeList/InitiativeList';
 import { useEncounterStore } from '@/store/instance';
 import { RoundBar } from '@/components/InitiativeList/RoundBar';
 import { PreviewDisplay } from '@/components/PreviewDisplay/PreviewDisplay';
 import {
-	Button,
 	Main,
 	Page,
 	Text,
 	PageContent,
 	PageHeader,
-	Header,
-	Distribution,
 	Card,
 	Box,
 	CardHeader,
 	Grid,
 } from 'grommet';
 import { AppFooter } from './AppFooter';
-import { AppNav } from './AppNav';
 import { EncounterDirectory } from './components/EncounterDirectory/EncounterDirectory';
-import { Menu } from 'grommet-icons';
 import { AppHeader } from './AppHeader';
 export const AppContainer = () => {
-	const appMode = useEncounterStore((state) => state.appMode);
 	const encounterData = useEncounterStore((state) => state.encounterData);
-	const [show, setShow] = useState<boolean>(false);
 	const [view, setView] = useState<string>('landingPage');
-	const setAppMode = useEncounterStore((state) => state.setAppMode);
 
 	return (
 		<Main>
@@ -82,14 +73,14 @@ export const AppContainer = () => {
 							{view === 'preview' && (
 								<>
 									<PageHeader title={encounterData?.name} />
-									<PreviewDisplay />
+									<PreviewDisplay setView={setView} />
 								</>
 							)}
 						</PageContent>
 					</Page>
-					<AppFooter endEncounter={() => setAppMode(APP_MODE.Empty)} />
 				</>
 			)}
+            {view === 'initiative' && <AppFooter endEncounter={() => setView('preview')} />}
 		</Main>
 	);
 };

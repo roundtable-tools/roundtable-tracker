@@ -19,7 +19,6 @@ export interface EncounterStore {
 	encounterData?: Encounter;
 	charactersMap: Record<UUID, Character>;
 	charactersOrder: UUID[];
-	appMode: AppMode;
 	partyLevel: number;
 	round: number;
 	charactersWithTurn: Set<UUID>;
@@ -28,7 +27,6 @@ export interface EncounterStore {
 	setEncounterData: (encounterData: Encounter) => void;
 	updateCharacter: (uuid: UUID, character: ValueOrFunction<Character>) => void;
 	setCharacters: (characters: Character[]) => void;
-	setAppMode: (mode: AppMode) => void;
 	setPartyLevel: (partyLevel: number) => void;
 	setHistory: (history: ValueOrFunction<Command[]>) => void;
 	setRedoStack: (redoStack: ValueOrFunction<Command[]>) => void;
@@ -106,7 +104,6 @@ export const createEncounterStore = () =>
 						charactersWithTurn: new Set(state.charactersOrder),
 					};
 				});
-				const setAppMode = (mode: AppMode) => set(() => ({ appMode: mode }))
 				const setPartyLevel = (partyLevel: number) => set(() => ({ partyLevel }))
 				const setEncounterData = (encounterData: Encounter) => set(() => ({ encounterData }));
 				const generateCharactersFromEncounterData = (encounterData: Encounter) => set((state) => {
@@ -136,7 +133,6 @@ export const createEncounterStore = () =>
 				charactersWithTurn: new Set(),
 				history: [],
 				redoStack: [],
-				appMode: APP_MODE.Empty,
 				partyLevel: 1,
 				encounterData: undefined,
 				setCharacters,
@@ -144,7 +140,6 @@ export const createEncounterStore = () =>
 				nextRound,
 				setHistory,
 				setRedoStack,
-				setAppMode,
 				setPartyLevel,
 				setEncounterData,
 				generateCharactersFromEncounterData

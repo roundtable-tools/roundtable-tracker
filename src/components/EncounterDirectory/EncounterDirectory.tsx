@@ -45,7 +45,6 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 	const { setView } = props;
 	const [selected, setSelected] = useState<string | number>();
 	const selectedEncounterData = useMemo(() => data.find(({ id }) => id === `${selected}`), [selected, data]);
-	const setAppMode = useEncounterStore((state) => state.setAppMode);
 	return (
 		<Card background="light-1" width={'xlarge'} height={'xlarge'}>
 			<CardBody pad={{horizontal: "medium"}} overflow={'auto'}>
@@ -55,7 +54,6 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 				<Text>{selectedEncounterData?.description}</Text>
 				<Button disabled={!selectedEncounterData} icon={<Checkmark color="plain" />} hoverIndicator label={'Select Encounter'} onClick={() => {
 					if(selectedEncounterData) setEncounterData(selectedEncounterData)
-					setAppMode(APP_MODE.Preview)
 					setView('preview')
 					console.log(selectedEncounterData)
 				}}/>
