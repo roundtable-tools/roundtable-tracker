@@ -1,9 +1,10 @@
 import { Text, Box, Card, CardHeader } from "grommet";
+import { ReactNode } from "react";
 
 type LandingPageOptionProps = {
     setView: (view: string) => void;
     area: string;
-    title: string; 
+    title: ReactNode; 
     color: string; 
     disabled: boolean;
 }
@@ -18,7 +19,7 @@ export const LandingPageOption = (props: LandingPageOptionProps) => {
         >
             <Card fill pad="small" background={color} elevation="medium">
                 <CardHeader pad="small" fill justify="center">
-                    <Text size="xxlarge">{title}</Text>
+                    {typeof title === 'string' ? <Text size="xxlarge">{title}</Text> : title}
                 </CardHeader>
             </Card>
         </Box>
