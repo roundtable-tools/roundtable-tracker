@@ -1,12 +1,7 @@
-import { Button, Grommet, Page, PageContent, PageHeader, Text } from 'grommet';
-import { Menu } from 'grommet-icons';
-import { useState } from 'react';
-import { AppBar } from './AppBar';
+import { Grommet } from 'grommet';
 import { CommandHistoryProvider } from './CommandHistory/CommandHistoryProvider';
-import { EncounterBar } from './EncounterBar';
-import { EncounterDirectory } from './EncounterDirectory/EncounterDirectory';
-import { InitiativeList } from './components/InitiativeList/InitiativeList';
-import { RoundBar } from './components/InitiativeList/RoundBar';
+import { AppContainer } from './AppContainer';
+
 const theme = {
 	global: {
 		colors: {
@@ -26,38 +21,18 @@ const theme = {
 			},
 		},
 	},
+	checkBox: {
+		extend: {
+			display: 'none',
+		},
+	},
 };
 
 function App() {
-	const [show, setShow] = useState<boolean>(false);
-	const [encounterInProgress, setEncounterInProgress] =
-		useState<boolean>(false);
 	return (
 		<CommandHistoryProvider>
 			<Grommet theme={theme} full>
-				<Page fill="vertical" style={{ height: '100dvh' }}>
-					<AppBar>
-						<Button>
-							<Menu onClick={() => setShow(true)} />
-						</Button>
-						{!encounterInProgress && (
-							<Button
-								primary
-								label="Start Encounter"
-								onClick={() => setEncounterInProgress(true)}
-							/>
-						)}
-						<Text size="large">My App</Text>
-					</AppBar>
-					<PageContent style={{ overflowY: 'auto', flexGrow: 1 }}>
-						<PageHeader title="Battle of the West-March" />
-						<RoundBar />
-						<InitiativeList />
-					</PageContent>
-
-					<EncounterBar endEncounter={() => setEncounterInProgress(false)} />
-				</Page>
-				{show && <EncounterDirectory setShow={setShow} />}
+				<AppContainer />
 			</Grommet>
 		</CommandHistoryProvider>
 	);

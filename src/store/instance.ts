@@ -10,7 +10,7 @@ const characters = new Array(10).fill(0).map(
 			uuid: generateUUID(),
 			name: `Character ${index + 1}`,
 			initiative: Math.floor(Math.random() * 20) + 1,
-			state: STATE[Math.floor(Math.random() * STATE.length)],
+			turnState: STATE[Math.floor(Math.random() * STATE.length)],
 			group: index % 2 === 0 ? 'players' : 'enemies',
 			wounded: 0,
 		}) as Character

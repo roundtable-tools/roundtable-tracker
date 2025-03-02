@@ -1,7 +1,8 @@
 import { createStore } from 'zustand/vanilla';
 import { Character } from './data';
-import { UUID } from '@/utils/uuid';
+import { generateUUID, UUID } from '@/utils/uuid';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { Encounter, InitiativeParticipant, PRIORITY } from './data';
 import { Command } from '@/CommandHistory/common';
 import { jsonConfiguration } from './serializer';
 import { CommandJSON } from '@/CommandHistory/serialization';
@@ -15,17 +16,22 @@ function isCallableFunction<T>(
 }
 
 export interface EncounterStore {
+	encounterData?: Encounter;
 	charactersMap: Record<UUID, Character>;
 	charactersOrder: UUID[];
+	partyLevel: number;
 	round: number;
 	charactersWithTurn: Set<UUID>;
 	history: Command[];
 	redoStack: Command[];
+	setEncounterData: (encounterData: Encounter) => void;
 	updateCharacter: (uuid: UUID, character: ValueOrFunction<Character>) => void;
 	setCharacters: (characters: Character[]) => void;
+	setPartyLevel: (partyLevel: number) => void;
 	setHistory: (history: ValueOrFunction<Command[]>) => void;
 	setRedoStack: (redoStack: ValueOrFunction<Command[]>) => void;
 	nextRound: () => void;
+	generateCharactersFromEncounterData: (encounterData: Encounter) => void;
 }
 
 export type EncounterStoreJson = {
@@ -56,14 +62,8 @@ function simpleSet<
 export const createEncounterStore = () =>
 	createStore<EncounterStore>()(
 		persist(
-			(set) => ({
-				charactersMap: {},
-				charactersOrder: [],
-				round: 0,
-				charactersWithTurn: new Set(),
-				history: [],
-				redoStack: [],
-				setCharacters: (characters: Character[]) => {
+			(set) => {
+				const setCharacters = (characters: Character[]) =>
 					set(() => {
 						const charactersMap = characters.reduce(
 							(acc, character) => {
@@ -79,8 +79,7 @@ export const createEncounterStore = () =>
 
 						return { charactersMap, charactersOrder };
 					});
-				},
-				updateCharacter: (
+				const updateCharacter = (
 					uuid: UUID,
 					newCharacter: ValueOrFunction<Character>
 				) =>
@@ -98,19 +97,59 @@ export const createEncounterStore = () =>
 						return {
 							charactersMap: { ...state.charactersMap },
 						};
-					}),
-				nextRound: () => {
+					});
+				const nextRound = () =>
 					set((state) => {
 						return {
 							round: state.round + 1,
 							charactersWithTurn: new Set(state.charactersOrder),
 						};
 					});
-				},
-
-				setHistory: simpleSet<Command[], typeof set>(set, 'history'),
-				setRedoStack: simpleSet<Command[], typeof set>(set, 'redoStack'),
-			}),
+				const setPartyLevel = (partyLevel: number) =>
+					set(() => ({ partyLevel }));
+				const setEncounterData = (encounterData: Encounter) =>
+					set(() => ({ encounterData }));
+				const generateCharactersFromEncounterData = (
+					encounterData: Encounter
+				) =>
+					set((state) => {
+						const totalParticipants = encounterData.participants.flatMap(
+							({ level, startingState: turnState, ...participant }) =>
+								Array.from({ length: participant.count ?? 1 }).map(() => ({
+									uuid: generateUUID(),
+									tiePriority: PRIORITY.NPC,
+									...participant,
+									level: Number.isInteger(level)
+										? (level as number)
+										: state.partyLevel + Number.parseInt(level as string),
+									initiative: 0,
+									turnState: turnState ?? 'normal',
+								}))
+						) satisfies InitiativeParticipant[];
+						setCharacters(totalParticipants);
+						return {};
+					});
+				const setHistory = simpleSet<Command[], typeof set>(set, 'history');
+				const setRedoStack = simpleSet<Command[], typeof set>(set, 'redoStack');
+				return {
+					charactersMap: {},
+					charactersOrder: [],
+					round: 0,
+					charactersWithTurn: new Set(),
+					history: [],
+					redoStack: [],
+					partyLevel: 1,
+					encounterData: undefined,
+					setCharacters,
+					updateCharacter,
+					nextRound,
+					setHistory,
+					setRedoStack,
+					setPartyLevel,
+					setEncounterData,
+					generateCharactersFromEncounterData,
+				};
+			},
 			{
 				name: 'encounter-store',
 				storage: createJSONStorage<EncounterStoreJson>(

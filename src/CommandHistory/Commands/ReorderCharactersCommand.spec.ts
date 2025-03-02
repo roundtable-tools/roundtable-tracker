@@ -13,7 +13,7 @@ describe('ReorderCharactersCommand', () => {
 			{
 				name: 'Alice',
 				initiative: 0,
-				state: 'normal',
+				turnState: 'normal',
 				uuid: '00000000-0000-0000-0000-000000000001',
 				group: 'players',
 				wounded: 0,
@@ -21,7 +21,7 @@ describe('ReorderCharactersCommand', () => {
 			{
 				name: 'Bob',
 				initiative: 0,
-				state: 'normal',
+				turnState: 'normal',
 				uuid: '00000000-0000-0000-0000-000000000002',
 				group: 'players',
 				wounded: 0,
@@ -29,7 +29,7 @@ describe('ReorderCharactersCommand', () => {
 			{
 				name: 'Charlie',
 				initiative: 0,
-				state: 'normal',
+				turnState: 'normal',
 				uuid: '00000000-0000-0000-0000-000000000003',
 				group: 'players',
 				wounded: 0,
