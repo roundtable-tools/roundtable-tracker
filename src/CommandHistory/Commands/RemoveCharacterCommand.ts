@@ -1,15 +1,24 @@
 import { UUID } from '@/utils/uuid';
 import { Character } from '@/store/data';
-import { Command, CommandDeps, getDeps, STATUS } from '../common';
+import {
+	Command,
+	CommandDeps,
+	getDeps,
+	STATUS,
+	undoOriginalState,
+} from '../common';
 
 type CommandProps = {
 	uuid: UUID;
 };
 
 type CommandData = CommandProps & {
-	removedCharacter?: Character;
-	originalOrder?: UUID[];
-	originalCharactersWithTurn?: Set<UUID>;
+	original?: {
+		charactersMap: Record<UUID, Character>;
+		charactersOrder: UUID[];
+		delayedOrder: UUID[];
+		charactersWithTurn: Set<UUID>;
+	};
 };
 
 export class RemoveCharacterCommand implements Command {
@@ -32,53 +41,40 @@ export class RemoveCharacterCommand implements Command {
 			return STATUS.failure;
 		}
 
-		this.data.originalOrder = structuredClone(state.charactersOrder);
-		this.data.originalCharactersWithTurn = new Set(state.charactersWithTurn);
+		this.data.original = {
+			charactersMap: structuredClone(state.charactersMap),
+			charactersOrder: structuredClone(state.charactersOrder),
+			delayedOrder: structuredClone(state.delayedOrder),
+			charactersWithTurn: structuredClone(state.charactersWithTurn),
+		};
 
 		encounterStore.setState((state) => {
-			const { [this.data.uuid]: removed, ...charactersMap } =
-				state.charactersMap;
-
-			this.data.removedCharacter = structuredClone(removed);
+			const charactersMap = { ...state.charactersMap };
+			delete charactersMap[this.data.uuid];
 
 			const charactersOrder = state.charactersOrder.filter(
+				(uuid) => uuid !== this.data.uuid
+			);
+
+			const delayedOrder = state.delayedOrder.filter(
 				(uuid) => uuid !== this.data.uuid
 			);
 
 			const charactersWithTurn = new Set(state.charactersWithTurn);
 			charactersWithTurn.delete(this.data.uuid);
 
-			return { charactersMap, charactersOrder, charactersWithTurn };
+			return {
+				charactersMap,
+				charactersOrder,
+				charactersWithTurn,
+				delayedOrder,
+			};
 		});
 
 		return STATUS.success;
 	}
 
 	undo() {
-		const { removedCharacter, originalOrder } = this.data;
-
-		if (!removedCharacter) {
-			console.error(`Character is not defined`);
-			return STATUS.failure;
-		}
-
-		if (!originalOrder) {
-			console.error(`Original order is not defined`);
-			return STATUS.failure;
-		}
-
-		const { encounterStore } = getDeps(this.deps);
-
-		encounterStore.setState((state) => {
-			state.charactersMap[removedCharacter.uuid] = removedCharacter;
-
-			return {
-				charactersMap: { ...state.charactersMap },
-				charactersOrder: structuredClone(originalOrder),
-				charactersWithTurn: new Set(this.data.originalCharactersWithTurn),
-			};
-		});
-
-		return STATUS.success;
+		return undoOriginalState(this.data.original, this.deps);
 	}
 }

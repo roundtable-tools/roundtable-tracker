@@ -11,7 +11,7 @@ type CommandData = CommandProps & {
 	oldCharacter?: Character;
 };
 
-export class UpdateCharacterCommand implements Command {
+export class UpdateCharacterDataCommand implements Command {
 	readonly type = 'UpdateCharacterCommand';
 	data: CommandData;
 	description = 'Update Character Command';

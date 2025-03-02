@@ -13,6 +13,7 @@ export const RoundBar = () => {
 		(state) => state.charactersWithTurn
 	);
 	const charactersOrder = useEncounterStore((state) => state.charactersOrder);
+	const delayedOrder = useEncounterStore((state) => state.delayedOrder);
 
 	const endRound = () => {
 		executeCommand(new EndRoundCommand());
@@ -35,8 +36,9 @@ export const RoundBar = () => {
 		>
 			<Box>Round {round}</Box>
 			<Box>
-				Characters moved: {charactersOrder.length - charactersWithTurn.size} /{' '}
-				{charactersOrder.length}
+				Characters moved:{' '}
+				{charactersOrder.length + delayedOrder.length - charactersWithTurn.size}{' '}
+				/ {charactersOrder.length + delayedOrder.length}
 			</Box>
 			<Button
 				label="End Round"
@@ -48,7 +50,7 @@ export const RoundBar = () => {
 				onClick={() => {
 					endPlayerTurn(charactersOrder[0]);
 				}}
-				disabled={charactersWithTurn.size == 0}
+				disabled={charactersWithTurn.size - delayedOrder.length <= 0}
 			/>
 		</Box>
 	);

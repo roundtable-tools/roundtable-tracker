@@ -16,11 +16,19 @@ import { ReorderCharactersCommand } from '@/CommandHistory/Commands/ReorderChara
 import { UUID } from '@/utils/uuid';
 import { useEncounterStore } from '@/store/instance';
 import { useRaisedShadow } from '@/hooks/useRisedShadow';
-import { Command } from '@/CommandHistory/common';
-import { Close, Down, InProgress, Undo, Vulnerability } from 'grommet-icons';
-import { UpdateCharacterCommand } from '@/CommandHistory/Commands/UpdateCharacterCommand';
+import {
+	Close,
+	Down,
+	InProgress,
+	Run,
+	Undo,
+	Vulnerability,
+} from 'grommet-icons';
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
-import { getKnockOutCommand } from '@/CommandHistory/Commands/composites/KnockOut';
+import {
+	canBeDelayed,
+	getChangeCharacterState,
+} from '@/CommandHistory/Commands/composites/ChangeCharacterState';
 
 const debounceOneSecond = debounce(
 	1000,
@@ -36,6 +44,8 @@ export const InitiativeList = () => {
 	const { executeCommand } = useContext(CommandHistoryContext);
 	const charactersMap = useEncounterStore((state) => state.charactersMap);
 	const charactersOrder = useEncounterStore((state) => state.charactersOrder);
+	const delayedOrder = useEncounterStore((state) => state.delayedOrder);
+
 	const charactersWithTurn = useEncounterStore(
 		(state) => state.charactersWithTurn
 	);
@@ -46,6 +56,14 @@ export const InitiativeList = () => {
 		null
 	);
 
+	const delayedCharacters = delayedOrder
+		.map((id) => charactersMap[id])
+		.filter((character) => !!character);
+
+	const chartersInOrder = charactersIds
+		.map((id) => charactersMap[id])
+		.filter((character) => !!character);
+
 	useEffect(() => {
 		setCharactersIds(charactersOrder);
 	}, [charactersOrder]);
@@ -54,7 +72,11 @@ export const InitiativeList = () => {
 		setCharactersIds((prev) => {
 			if (prev.join('') === newOrder.join('')) return prev;
 			debounceOneSecond(() => {
-				executeCommand(new ReorderCharactersCommand({ newOrder }));
+				executeCommand(
+					new ReorderCharactersCommand({
+						newOrder,
+					})
+				);
 			});
 			return newOrder;
 		});
@@ -76,44 +98,70 @@ export const InitiativeList = () => {
 		setMode('normal');
 		executeCommand(new RemoveCharacterCommand({ uuid: id }));
 	};
+	const updateCharacterState = (id: UUID, state: Character['state']) => {
+		executeCommand(
+			getChangeCharacterState(charactersMap[id], state, {
+				charactersWithTurn,
+				charactersOrder,
+				delayedOrder,
+			})
+		);
+	};
 
 	const knockOut = () => {
 		setMode('normal');
 		if (!knockedOutCharacter) throw new Error('No knocked out character');
 
-		executeCommand(
-			getKnockOutCommand(knockedOutCharacter, {
-				charactersWithTurn,
-				charactersOrder,
-			})
-		);
+		updateCharacterState(knockedOutCharacter, 'knocked-out');
+		setKnockedOutCharacter(null);
 	};
 
 	return (
-		<Reorder.Group
-			as="div"
-			axis="y"
-			values={charactersIds}
-			onReorder={updateOrder}
-		>
-			{charactersIds
-				.map((name) => charactersMap[name])
-				.filter((character) => !!character)
-				.map((character, index) => (
+		<Box gap={'medium'}>
+			<Reorder.Group
+				as="div"
+				axis="y"
+				values={delayedCharacters.map((character) => character.uuid)}
+				onReorder={() => {}}
+			>
+				{delayedCharacters.map((character, index) => (
 					<ReorderRow
 						key={character.uuid}
 						character={character}
 						moved={false}
 						index={index}
 						mode={rowMode(character.uuid)}
-						executeCommand={executeCommand}
 						onKnockedOut={onKnockedOut}
 						slayCharacter={slayCharacter}
 						knockOut={knockOut}
+						updateCharacterState={updateCharacterState}
 						cancelAction={() => setMode('normal')}
 					/>
 				))}
-		</Reorder.Group>
+			</Reorder.Group>
+
+			<Reorder.Group
+				as="div"
+				axis="y"
+				values={chartersInOrder.map((character) => character.uuid)}
+				onReorder={updateOrder}
+			>
+				{chartersInOrder.map((character, index) => (
+					<ReorderRow
+						key={character.uuid}
+						character={character}
+						moved={false}
+						index={index}
+						mode={rowMode(character.uuid)}
+						onKnockedOut={onKnockedOut}
+						slayCharacter={slayCharacter}
+						knockOut={knockOut}
+						updateCharacterState={updateCharacterState}
+						cancelAction={() => setMode('normal')}
+					/>
+				))}
+			</Reorder.Group>
+		</Box>
 	);
 };
 
@@ -124,14 +172,14 @@ const ReorderRow = (props: {
 	moved: boolean;
 	character: Character;
 	index: number;
-	executeCommand: (command: Command) => void;
 	onKnockedOut: (id: UUID) => void;
 	slayCharacter: (id: UUID) => void;
 	knockOut: (id: UUID) => void;
 	cancelAction: () => void;
+	updateCharacterState: (id: UUID, state: Character['state']) => void;
 }) => {
 	const size = useContext(ResponsiveContext);
-	const { character, index, mode, executeCommand } = props;
+	const { character, index, mode } = props;
 
 	const y = useMotionValue(0);
 	const boxShadow = useRaisedShadow(y);
@@ -146,7 +194,7 @@ const ReorderRow = (props: {
 			as="div"
 			value={character.uuid}
 			style={{ boxShadow, y, position: 'relative' }}
-			dragListener={mode === 'normal'}
+			dragListener={mode === 'normal' && character.state !== 'delayed'}
 			whileDrag={{ scale: 1.01 }}
 		>
 			{mode === 'knocked-out-receiver' && (
@@ -231,12 +279,7 @@ const ReorderRow = (props: {
 					onStateChange={(state) => {
 						if (state === 'knocked-out') props.onKnockedOut(character.uuid);
 						else {
-							executeCommand(
-								new UpdateCharacterCommand({
-									uuid: character.uuid,
-									newCharacterProps: { state },
-								})
-							);
+							props.updateCharacterState(character.uuid, state);
 						}
 					}}
 					onMouseDown={() => {
@@ -304,10 +347,23 @@ const ImitativeRow = (props: {
 			? props.previewState
 			: props.character.state) ?? props.character.state;
 
+	const charactersWithTurn = useEncounterStore(
+		(state) => state.charactersWithTurn
+	);
+
+	const canEnterState = (newState: Character['state']) => {
+		if (newState === 'delayed')
+			return canBeDelayed(props.character, charactersWithTurn);
+		return true;
+	};
+
 	return (
 		<>
 			<Button
-				disabled={!props.isInteractive}
+				disabled={
+					!props.isInteractive ||
+					!canBeDelayed(props.character, charactersWithTurn)
+				}
 				onClick={() => {
 					if (state !== 'delayed') props.onStateChange('delayed');
 				}}
@@ -322,7 +378,33 @@ const ImitativeRow = (props: {
 					<InProgress />
 				</Box>
 			</Button>
-			<Box background={'status-unknown'}>
+			<Box background={'status-unknown'} style={{ position: 'relative' }}>
+				{state != 'normal' && (
+					<Button
+						style={{
+							position: 'absolute',
+							height: '100%',
+							right: state === 'delayed' ? 0 : undefined,
+							left: state === 'knocked-out' ? 0 : undefined,
+							top: 0,
+						}}
+						disabled={!props.isInteractive}
+						onClick={() => {
+							props.onStateChange('normal');
+						}}
+					>
+						<Box
+							background={'status-ok'}
+							border={'all'}
+							align="center"
+							justify="center"
+							width={'50px'}
+							height={'100%'}
+						>
+							<Run />
+						</Box>
+					</Button>
+				)}
 				<motion.div
 					drag={props.isInteractive ? 'x' : false}
 					style={{ x }}
@@ -337,6 +419,11 @@ const ImitativeRow = (props: {
 						const newState = parseOffset(endX);
 						animate(x, offset[newState]);
 						if (newState === state) return;
+
+						if (!canEnterState(newState)) {
+							animate(x, offset[state]);
+							return;
+						}
 
 						props.onStateChange(newState);
 					}}
