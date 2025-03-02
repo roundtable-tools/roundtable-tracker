@@ -30,7 +30,7 @@ export const LandingPage = (props: LandingPageProps) => {
 					['builder', 'Create New', 'neutral-2', true],
 					['initiative', 'Continue', 'neutral-3', false], // disable if no encounter in local storage
 				] satisfies [string,string,string,boolean][]).map(([area, title, color, disabled]) => (
-					<LandingPageOption setView={setView} area={area} title={title} color={color} disabled={disabled} />
+					<LandingPageOption key={area} setView={setView} area={area} title={title} color={color} disabled={disabled} />
 				))}
 			</Grid>
 		</PageContent>);

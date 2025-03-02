@@ -13,9 +13,8 @@ export const LandingPageOption = (props: LandingPageOptionProps) => {
         <Box
             gridArea={area}
             fill
-            key={area}
             onClick={disabled ? undefined : () => setView(area)}
-            style={disabled ? {opacity: 0.3, cursor: 'default', userSelect: 'none'} : { userSelect: 'none'}}
+            style={disabled ? {opacity: 0.1, cursor: 'default', userSelect: 'none'} : { userSelect: 'none'}}
         >
             <Card fill pad="small" background={color} elevation="medium">
                 <CardHeader pad="small" fill justify="center">
