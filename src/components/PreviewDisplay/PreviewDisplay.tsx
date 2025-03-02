@@ -1,4 +1,4 @@
-import { ALIGNMENT, APP_MODE, Participant, PRIORITY } from '@/store/data';
+import { ALIGNMENT, Participant, PRIORITY } from '@/store/data';
 import { Button, Grid } from 'grommet';
 import { generateUUID } from '@/utils/uuid';
 import { PreviewCard } from './PreviewCard';

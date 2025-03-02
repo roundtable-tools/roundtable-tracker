@@ -12,14 +12,6 @@ export interface Character {
 	wounded?: number;
 	knockedBy?: UUID;
 }
-
-export const APP_MODE = {
-	Empty: 0,
-	Preview: 1,
-	Initiative: 2,
-} as const;
-
-export type AppMode = (typeof APP_MODE)[keyof typeof APP_MODE];
 export const DIFFICULTY = {
 	Trivial: 0,
 	Low: 1,

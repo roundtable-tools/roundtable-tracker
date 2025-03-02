@@ -20,6 +20,11 @@ const theme = {
 				color: 'text',
 			},
 		},
+		pinned: {
+			header: {
+				background: 'light-2',
+			},
+		}
 	},
 	checkBox: {
 		extend: {

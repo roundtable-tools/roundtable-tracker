@@ -3,84 +3,52 @@ import { InitiativeList } from '@/components/InitiativeList/InitiativeList';
 import { useEncounterStore } from '@/store/instance';
 import { RoundBar } from '@/components/InitiativeList/RoundBar';
 import { PreviewDisplay } from '@/components/PreviewDisplay/PreviewDisplay';
-import {
-	Main,
-	Page,
-	Text,
-	PageContent,
-	PageHeader,
-	Card,
-	Box,
-	CardHeader,
-	Grid,
-} from 'grommet';
+import { Box, Main, Page, PageContent, PageHeader } from 'grommet';
 import { HistoryFooter } from './components/HistoryFooter';
 import { EncounterDirectory } from './components/EncounterDirectory/EncounterDirectory';
 import { AppHeader } from './AppHeader';
+import { LandingPage } from './components/LandingPage/LandingPage';
 export const AppContainer = () => {
 	const encounterData = useEncounterStore((state) => state.encounterData);
 	const [view, setView] = useState<string>('landingPage');
 
 	return (
 		<Main>
-			{view === 'landingPage' ? (
-				<Page fill>
-					<PageContent fill>
-						<PageHeader title="Roudtable Tools" />
-						<Grid
-							rows={['1fr', '1fr']}
-							areas={[
-								['directory', 'builder'],
-								['directory', 'initiative'],
-							]}
-							height={{max: '100%', min: 'large'}}
-							gap="small"
-						>
-							{[
-								['directory', 'Select Encounter ', 'light-3'],
-								['builder', 'Create New', 'brand'],
-								['initiative', 'Continue', 'graph-0'],
-							].map(([area, title, color]) => (
-								<Box
-									gridArea={area}
-									fill
-									key={area}
-									onClick={() => setView(area)}
-								>
-									<Card fill pad="small" background={color}>
-										<CardHeader pad="small" fill justify="center">
-											<Text size="xxlarge">{title}</Text>
-										</CardHeader>
-									</Card>
-								</Box>
-							))}
-						</Grid>
-					</PageContent>
-				</Page>
-			) : (
-				<Page fill>
-					<PageContent>
-						{view === 'directory' && <EncounterDirectory setView={setView} />}
-						{view === 'builder' && <AppHeader view={view} setView={setView} />}
-						{view === 'initiative' && (
-							<>
-								<AppHeader view={view} setView={setView} />
-								<PageHeader title={encounterData?.name} />
-								<RoundBar />
+			<Page fill flex>
+				{view === 'landingPage' ? (
+					<LandingPage setView={setView} />
+				) : view === 'directory' ? (
+					<EncounterDirectory setView={setView} />
+				) : view === 'builder' ? (
+					<>
+						<AppHeader setView={setView} />
+						<PageContent fill />
+					</>
+				) : view === 'initiative' ? (
+					<>
+						{/*Move page content and app header to separate component*/}
+						<AppHeader setView={setView} />
+						<PageContent fill>
+							<PageHeader title={encounterData?.name} />
+							<RoundBar />
+							<Box overflow={{ vertical: 'auto', horizontal: 'visible'}} fill>
 								<InitiativeList />
-							</>
-						)}
-						{view === 'preview' && (
-							<>
-								<AppHeader view={view} setView={setView} />
-								<PageHeader title={encounterData?.name} />
-								<PreviewDisplay setView={setView} />
-							</>
-						)}
-					</PageContent>
-				</Page>
-		)}
-            {view === 'initiative' && <HistoryFooter endEncounter={() => setView('preview')} />}
+							</Box>
+						</PageContent>
+						<HistoryFooter endEncounter={() => setView('preview')} />
+					</>
+				) : view === 'preview' ? (
+					<>
+						<AppHeader setView={setView} />
+						<PageContent fill>
+							<PageHeader title={encounterData?.name} />
+							<PreviewDisplay setView={setView} />
+						</PageContent>
+					</>
+				) : (
+					<></>
+				)}
+			</Page>
 		</Main>
 	);
 };

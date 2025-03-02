@@ -20,7 +20,7 @@ export const HistoryFooter = (props: HistoryFooterProps) => {
 			background="brand"
 			pad={{ left: 'medium', right: 'small', vertical: 'small' }}
 			elevation="medium"
-			flex={{ shrink: 0 }}
+			// flex={{ shrink: 0 }}
 		>
 			<Button
 				disabled={!canUndo}
