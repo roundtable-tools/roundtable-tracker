@@ -5,6 +5,8 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { Command } from '@/CommandHistory/common';
 import { jsonConfiguration } from './serializer';
 import { CommandJSON } from '@/CommandHistory/serialization';
+import { splitArray } from '@/utils/array';
+import { nextRound } from './operations';
 
 type ValueOrFunction<T> = T | ((prev: T) => T);
 
@@ -17,6 +19,7 @@ function isCallableFunction<T>(
 export interface EncounterStore {
 	charactersMap: Record<UUID, Character>;
 	charactersOrder: UUID[];
+	delayedOrder: UUID[];
 	round: number;
 	charactersWithTurn: Set<UUID>;
 	history: Command[];
@@ -59,6 +62,7 @@ export const createEncounterStore = () =>
 			(set) => ({
 				charactersMap: {},
 				charactersOrder: [],
+				delayedOrder: [],
 				round: 0,
 				charactersWithTurn: new Set(),
 				history: [],
@@ -73,11 +77,13 @@ export const createEncounterStore = () =>
 							{} as Record<UUID, Character>
 						);
 
-						const charactersOrder = characters.map(
-							(character) => character.uuid
+						const charactersId = characters.map((character) => character.uuid);
+						const [delayedOrder, charactersOrder] = splitArray(
+							charactersId,
+							(uuid) => charactersMap[uuid].state === 'delayed'
 						);
 
-						return { charactersMap, charactersOrder };
+						return { charactersMap, charactersOrder, delayedOrder };
 					});
 				},
 				updateCharacter: (
@@ -100,12 +106,7 @@ export const createEncounterStore = () =>
 						};
 					}),
 				nextRound: () => {
-					set((state) => {
-						return {
-							round: state.round + 1,
-							charactersWithTurn: new Set(state.charactersOrder),
-						};
-					});
+					set((state) => nextRound(state));
 				},
 
 				setHistory: simpleSet<Command[], typeof set>(set, 'history'),

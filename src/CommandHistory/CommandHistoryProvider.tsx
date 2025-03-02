@@ -13,7 +13,15 @@ export const CommandHistoryProvider: FC<{ children: ReactNode }> = ({
 	const setHistory = useEncounterStore((state) => state.setHistory);
 
 	const executeCommand = (command: Command) => {
-		command.execute();
+		const result = command.execute();
+		if (result === 'FAILURE') {
+			const result = command.undo();
+			if (result === 'FAILURE') {
+				throw new Error('Failed to undo command');
+			}
+			throw new Error('Failed to execute command');
+		}
+
 		setHistory((prev) => [...prev, command]);
 		setRedoStack([]); // Clear redo stack after a new command is executed
 	};

@@ -3,7 +3,7 @@ import { Character } from '@/store/data';
 import { TypingEffect } from '@/components/TypingEffect';
 import { useEncounterStore } from '@/store/instance';
 import { Close } from 'grommet-icons';
-import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacter';
+import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 import { useContext } from 'react';
 import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
 

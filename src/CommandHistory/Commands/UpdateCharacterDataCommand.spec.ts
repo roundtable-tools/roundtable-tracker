@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { UpdateCharacterCommand } from './UpdateCharacterCommand';
-import { createEncounterStore } from '../../store/store';
 import { Character } from '../../store/data';
 import { STATUS } from '../common';
+import { createEncounterStore } from '@/store/store';
+import { UpdateCharacterDataCommand } from './UpdateCharacterDataCommand';
 
 describe('UpdateCharacterCommand', () => {
 	let uuid: string;
@@ -25,7 +25,7 @@ describe('UpdateCharacterCommand', () => {
 	});
 
 	it('should update character properties on execute', () => {
-		const command = new UpdateCharacterCommand(
+		const command = new UpdateCharacterDataCommand(
 			{
 				uuid,
 				newCharacterProps: { name: 'New Name' },
@@ -39,7 +39,7 @@ describe('UpdateCharacterCommand', () => {
 		expect(encounterStore.getState().charactersMap[uuid].name).toBe('New Name');
 		expect(command.data.oldCharacter).toEqual(oldCharacter);
 
-		const command2 = new UpdateCharacterCommand(
+		const command2 = new UpdateCharacterDataCommand(
 			{
 				uuid,
 				newCharacterProps: { name: 'Another Name' },
@@ -56,7 +56,7 @@ describe('UpdateCharacterCommand', () => {
 	});
 
 	it('should revert character properties on undo', () => {
-		const command = new UpdateCharacterCommand(
+		const command = new UpdateCharacterDataCommand(
 			{
 				uuid,
 				newCharacterProps: { name: 'New Name' },
@@ -72,7 +72,7 @@ describe('UpdateCharacterCommand', () => {
 	});
 
 	it('should return failure status if undo is called without calling execute', () => {
-		const command = new UpdateCharacterCommand(
+		const command = new UpdateCharacterDataCommand(
 			{
 				uuid,
 				newCharacterProps: {},

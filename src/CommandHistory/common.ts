@@ -38,3 +38,16 @@ export const getDeps = (deps?: CommandDeps) => {
 	}
 	return deps;
 };
+
+export const undoOriginalState = <T>(original: T, deps?: CommandDeps) => {
+	if (!original) {
+		console.error(`Original state is not defined`);
+		return STATUS.failure;
+	}
+
+	const { encounterStore } = getDeps(deps);
+
+	encounterStore.setState(() => structuredClone(original));
+
+	return STATUS.success;
+};

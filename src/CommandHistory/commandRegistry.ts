@@ -1,8 +1,9 @@
 import { CompositeCommand } from './Commands/CompositeCommand';
 import { EndRoundCommand } from './Commands/EndRoundCommand';
 import { EndTurnCommand } from './Commands/EndTurnCommand';
+import { RemoveCharacterCommand } from './Commands/RemoveCharacterCommand';
 import { ReorderCharactersCommand } from './Commands/ReorderCharactersCommand';
-import { UpdateCharacterCommand } from './Commands/UpdateCharacterCommand';
+import { UpdateCharacterDataCommand } from './Commands/UpdateCharacterDataCommand';
 import { Command } from './common';
 
 const commandMap: Record<string, new (data: Command['data']) => Command> = {};
@@ -28,7 +29,11 @@ export const registerSerializableCommand = <T extends Command>(
 
 export const registerSerializableCommands = () => {
 	registerSerializableCommand(CompositeCommand, 'CompositeCommand');
-	registerSerializableCommand(UpdateCharacterCommand, 'UpdateCharacterCommand');
+	registerSerializableCommand(
+		UpdateCharacterDataCommand,
+		'UpdateCharacterCommand'
+	);
+	registerSerializableCommand(RemoveCharacterCommand, 'RemoveCharacterCommand');
 	registerSerializableCommand(
 		ReorderCharactersCommand,
 		'ReorderCharactersCommand'
