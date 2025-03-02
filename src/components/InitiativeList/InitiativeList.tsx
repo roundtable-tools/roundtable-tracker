@@ -98,7 +98,7 @@ export const InitiativeList = () => {
 		setMode('normal');
 		executeCommand(new RemoveCharacterCommand({ uuid: id }));
 	};
-	const updateCharacterState = (id: UUID, state: Character['state']) => {
+	const updateCharacterState = (id: UUID, state: Character['turnState']) => {
 		executeCommand(
 			getChangeCharacterState(charactersMap[id], state, {
 				charactersWithTurn,
@@ -176,7 +176,7 @@ const ReorderRow = (props: {
 	slayCharacter: (id: UUID) => void;
 	knockOut: (id: UUID) => void;
 	cancelAction: () => void;
-	updateCharacterState: (id: UUID, state: Character['state']) => void;
+	updateCharacterState: (id: UUID, state: Character['turnState']) => void;
 }) => {
 	const size = useContext(ResponsiveContext);
 	const { character, index, mode } = props;
@@ -194,7 +194,7 @@ const ReorderRow = (props: {
 			as="div"
 			value={character.uuid}
 			style={{ boxShadow, y, position: 'relative' }}
-			dragListener={mode === 'normal' && character.state !== 'delayed'}
+			dragListener={mode === 'normal' && character.turnState !== 'delayed'}
 			whileDrag={{ scale: 1.01 }}
 		>
 			{mode === 'knocked-out-receiver' && (
@@ -346,16 +346,6 @@ const ImitativeRow = (props: {
 		(props.mode === 'preview-state'
 			? props.previewState
 			: props.character.turnState) ?? props.character.turnState;
-
-	const charactersWithTurn = useEncounterStore(
-		(state) => state.charactersWithTurn
-	);
-
-	const canEnterState = (newState: Character['turnState']) => {
-		if (newState === 'delayed')
-			return canBeDelayed(props.character, charactersWithTurn);
-		return true;
-	};
 
 	const charactersWithTurn = useEncounterStore(
 		(state) => state.charactersWithTurn
