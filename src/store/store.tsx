@@ -6,6 +6,8 @@ import { Encounter, InitiativeParticipant, PRIORITY } from './data';
 import { Command } from '@/CommandHistory/common';
 import { jsonConfiguration } from './serializer';
 import { CommandJSON } from '@/CommandHistory/serialization';
+import { splitArray } from '@/utils/array';
+import { nextRound } from './operations';
 
 type ValueOrFunction<T> = T | ((prev: T) => T);
 
@@ -19,6 +21,7 @@ export interface EncounterStore {
 	encounterData?: Encounter;
 	charactersMap: Record<UUID, Character>;
 	charactersOrder: UUID[];
+	delayedOrder: UUID[];
 	partyLevel: number;
 	round: number;
 	charactersWithTurn: Set<UUID>;
@@ -73,11 +76,13 @@ export const createEncounterStore = () =>
 							{} as Record<UUID, Character>
 						);
 
-						const charactersOrder = characters.map(
-							(character) => character.uuid
+						const charactersId = characters.map((character) => character.uuid);
+						const [delayedOrder, charactersOrder] = splitArray(
+							charactersId,
+							(uuid) => charactersMap[uuid].turnState === 'delayed'
 						);
 
-						return { charactersMap, charactersOrder };
+						return { charactersMap, charactersOrder, delayedOrder };
 					});
 				const updateCharacter = (
 					uuid: UUID,
@@ -134,6 +139,7 @@ export const createEncounterStore = () =>
 				return {
 					charactersMap: {},
 					charactersOrder: [],
+					delayedOrder: [],
 					round: 0,
 					charactersWithTurn: new Set(),
 					history: [],

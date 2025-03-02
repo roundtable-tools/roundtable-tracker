@@ -1,13 +1,21 @@
 import { UUID } from '@/utils/uuid';
-import { Command, CommandDeps, getDeps, STATUS } from '../common';
+import {
+	Command,
+	CommandDeps,
+	getDeps,
+	STATUS,
+	undoOriginalState,
+} from '../common';
 
 type CommandProps = {
 	uuid: UUID;
 };
 
 type CommandData = CommandProps & {
-	originalOrder?: UUID[];
-	originalCharactersWithTurn?: Set<UUID>;
+	original?: {
+		charactersOrder: UUID[];
+		charactersWithTurn: Set<UUID>;
+	};
 };
 
 export class EndTurnCommand implements Command {
@@ -32,8 +40,10 @@ export class EndTurnCommand implements Command {
 			return STATUS.failure;
 		}
 
-		this.data.originalOrder = [...state.charactersOrder];
-		this.data.originalCharactersWithTurn = new Set(state.charactersWithTurn);
+		this.data.original = {
+			charactersOrder: structuredClone(state.charactersOrder),
+			charactersWithTurn: structuredClone(state.charactersWithTurn),
+		};
 
 		encounterStore.setState((state) => {
 			state.charactersWithTurn.delete(this.data.uuid);
@@ -51,23 +61,6 @@ export class EndTurnCommand implements Command {
 	}
 
 	undo() {
-		if (!this.data.originalOrder || !this.data.originalCharactersWithTurn) {
-			console.error(`Original state is not defined`);
-			return STATUS.failure;
-		}
-
-		const { encounterStore } = getDeps(this.deps);
-
-		encounterStore.setState((state) => {
-			state.charactersWithTurn = new Set(this.data.originalCharactersWithTurn!);
-			state.charactersOrder = [...this.data.originalOrder!];
-
-			return {
-				charactersWithTurn: new Set(state.charactersWithTurn),
-				charactersOrder: [...state.charactersOrder],
-			};
-		});
-
-		return STATUS.success;
+		return undoOriginalState(this.data.original, this.deps);
 	}
 }

@@ -29,7 +29,7 @@ type Conf = NonNullable<
  * @property {Function} replacer - A function that transforms the value before stringifying it.
  */
 export const jsonConfiguration: Conf = {
-	reviver(_key, value, context) {
+	reviver(key, value, context) {
 		try {
 			if (value && typeof value === 'object')
 				switch (true) {
@@ -40,7 +40,7 @@ export const jsonConfiguration: Conf = {
 				}
 		} catch (e) {
 			console.log('context', context);
-			console.log('key', _key);
+			console.log('key', key);
 			console.log('value', value);
 			throw e;
 		}

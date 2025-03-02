@@ -14,7 +14,7 @@ describe('EndTurnCommand', () => {
 			uuid: '00000000-0000-0000-0000-000000000001',
 			name: 'Test Character',
 			initiative: 10,
-			state: 'normal',
+			turnState: 'normal',
 			group: 'players',
 			wounded: 0,
 		};
