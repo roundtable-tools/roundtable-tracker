@@ -35,7 +35,7 @@ const getKnockOutCommand = (
 
 export const getChangeCharacterState = (
 	character: Character,
-	newState: Character['state'],
+	newState: Character['turnState'],
 	deps: {
 		charactersWithTurn: Set<UUID>;
 		charactersOrder: UUID[];
@@ -45,7 +45,7 @@ export const getChangeCharacterState = (
 	const commands: Command[] = [
 		new UpdateCharacterDataCommand({
 			uuid: character.uuid,
-			newCharacterProps: { state: newState },
+			newCharacterProps: { turnState: newState },
 		}),
 	];
 	const removeFromInitiatives = new ReorderCharactersCommand({
@@ -63,7 +63,7 @@ export const getChangeCharacterState = (
 	});
 
 	const additionalCommands: Partial<
-		Record<Character['state'], Partial<Record<Character['state'], Command[]>>>
+		Record<Character['turnState'], Partial<Record<Character['turnState'], Command[]>>>
 	> = {
 		normal: {
 			'knocked-out': [getKnockOutCommand(character.uuid, deps)],
@@ -87,7 +87,7 @@ export const getChangeCharacterState = (
 	};
 
 	const additionalCommandsForState =
-		additionalCommands[character.state]?.[newState];
+		additionalCommands[character.turnState]?.[newState];
 
 	if (additionalCommandsForState) commands.push(...additionalCommandsForState);
 
@@ -99,10 +99,10 @@ export const getChangeCharacterState = (
 
 const validateCharacterStateChange = (
 	character: Character,
-	newState: Character['state'],
+	newState: Character['turnState'],
 	{ charactersWithTurn }: { charactersWithTurn: Set<UUID> }
 ) => {
-	if (character.state === newState) {
+	if (character.turnState === newState) {
 		return 'Character is already in that state';
 	} else if (
 		newState === 'delayed' &&

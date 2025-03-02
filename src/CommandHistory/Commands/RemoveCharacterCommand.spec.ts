@@ -15,7 +15,7 @@ describe('RemoveCharacterCommand', () => {
 			uuid,
 			name: 'Test Character',
 			initiative: 10,
-			state: 'normal',
+			turnState: 'normal',
 			group: 'players',
 			wounded: 0,
 		};
