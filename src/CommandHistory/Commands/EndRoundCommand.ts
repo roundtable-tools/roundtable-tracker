@@ -1,8 +1,14 @@
-import { Command, CommandDeps, getDeps, STATUS } from '../common';
+import { nextRound } from '@/store/operations';
+import {
+	Command,
+	CommandDeps,
+	getDeps,
+	STATUS,
+	undoOriginalState,
+} from '../common';
 
 type CommandData = {
-	originalRound?: number;
-	originalCharactersWithTurn?: Set<string>;
+	original?: ReturnType<typeof nextRound>;
 };
 
 export class EndRoundCommand implements Command {
@@ -16,39 +22,20 @@ export class EndRoundCommand implements Command {
 
 	execute() {
 		const { encounterStore } = getDeps(this.deps);
-		const state = encounterStore.getState();
-
-		this.data.originalRound = state.round;
-		this.data.originalCharactersWithTurn = new Set(state.charactersWithTurn);
 
 		encounterStore.setState((state) => {
-			return {
-				round: state.round + 1,
-				charactersWithTurn: new Set(state.charactersOrder),
+			this.data.original = {
+				round: state.round,
+				charactersWithTurn: new Set(state.charactersWithTurn),
 			};
+
+			return nextRound(state);
 		});
 
 		return STATUS.success;
 	}
 
 	undo() {
-		if (
-			this.data.originalRound === undefined ||
-			this.data.originalCharactersWithTurn === undefined
-		) {
-			console.error(`Original state is not defined`);
-			return STATUS.failure;
-		}
-
-		const { encounterStore } = getDeps(this.deps);
-
-		encounterStore.setState(() => {
-			return {
-				round: this.data.originalRound,
-				charactersWithTurn: new Set(this.data.originalCharactersWithTurn),
-			};
-		});
-
-		return STATUS.success;
+		return undoOriginalState(this.data.original, this.deps);
 	}
 }
