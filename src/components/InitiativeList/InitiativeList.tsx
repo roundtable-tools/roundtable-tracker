@@ -19,7 +19,7 @@ import { useRaisedShadow } from '@/hooks/useRisedShadow';
 import { Command } from '@/CommandHistory/common';
 import { Close, Down, InProgress, Undo, Vulnerability } from 'grommet-icons';
 import { UpdateCharacterCommand } from '@/CommandHistory/Commands/UpdateCharacterCommand';
-import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacter';
+import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 import { getKnockOutCommand } from '@/CommandHistory/Commands/composites/KnockOut';
 
 const debounceOneSecond = debounce(
