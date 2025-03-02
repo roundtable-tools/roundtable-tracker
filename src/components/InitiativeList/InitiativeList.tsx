@@ -187,7 +187,7 @@ const ReorderRow = (props: {
 	const [isOpen, setOpen] = useState(false);
 	const haveDragged = useRef(false);
 
-	const restoreRef = useRef<(state: Character['state']) => void>();
+	const restoreRef = useRef<(state: Character['turnState']) => void>();
 
 	return (
 		<Reorder.Item
@@ -234,7 +234,7 @@ const ReorderRow = (props: {
 					<Button
 						icon={<Undo />}
 						onClick={() => {
-							restoreRef.current?.(character.state);
+							restoreRef.current?.(character.turnState);
 							props.cancelAction();
 						}}
 					/>
@@ -310,7 +310,7 @@ const getBackgroundColor = (index: number) => {
 	}
 };
 
-const offset: { [key in Character['state']]: number } = {
+const offset: { [key in Character['turnState']]: number } = {
 	normal: 0,
 	delayed: -50,
 	'knocked-out': 50,
@@ -328,7 +328,7 @@ const parseOffset = (x: number) => {
 
 const ImitativeRow = (props: {
 	mode: 'normal' | 'preview-state';
-	previewState?: Character['state'];
+	previewState?: Character['turnState'];
 	character: Character;
 	index: number;
 	isInteractive?: boolean;
@@ -336,22 +336,32 @@ const ImitativeRow = (props: {
 	onMouseDown?: () => void;
 	onMouseUp?: () => void;
 	onMouseMove?: () => void;
-	onStateChange: (state: Character['state']) => void;
+	onStateChange: (state: Character['turnState']) => void;
 	onCancelStateChange?: (
-		changeState: (state: Character['state']) => void
+		changeState: (state: Character['turnState']) => void
 	) => void;
 }) => {
 	const x = useMotionValue(0);
 	const state =
 		(props.mode === 'preview-state'
 			? props.previewState
-			: props.character.state) ?? props.character.state;
+			: props.character.turnState) ?? props.character.turnState;
 
 	const charactersWithTurn = useEncounterStore(
 		(state) => state.charactersWithTurn
 	);
 
-	const canEnterState = (newState: Character['state']) => {
+	const canEnterState = (newState: Character['turnState']) => {
+		if (newState === 'delayed')
+			return canBeDelayed(props.character, charactersWithTurn);
+		return true;
+	};
+
+	const charactersWithTurn = useEncounterStore(
+		(state) => state.charactersWithTurn
+	);
+
+	const canEnterState = (newState: Character['turnState']) => {
 		if (newState === 'delayed')
 			return canBeDelayed(props.character, charactersWithTurn);
 		return true;

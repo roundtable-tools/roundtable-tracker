@@ -1,13 +1,13 @@
 import { Box, Button, Clock, Footer } from 'grommet';
 import { Redo, Revert } from 'grommet-icons';
 import { useContext, useState } from 'react';
-import { CommandHistoryContext } from './CommandHistory/CommandHistoryContext';
+import { CommandHistoryContext } from '../CommandHistory/CommandHistoryContext';
 
-type EncounterBarProps = {
+type HistoryFooterProps = {
 	endEncounter: () => void;
 };
 
-export const EncounterBar = (props: EncounterBarProps) => {
+export const HistoryFooter = (props: HistoryFooterProps) => {
 	const { undo, canUndo, redo, canRedo } = useContext(CommandHistoryContext);
 	const { endEncounter } = props;
 	const [time, setTime] = useState('T00:00:00');
