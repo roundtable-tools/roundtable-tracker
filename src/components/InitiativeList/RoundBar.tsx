@@ -43,13 +43,14 @@ export const RoundBar = () => {
 			<Button
 				label="End Round"
 				onClick={endRound}
-				style={{ opacity: charactersWithTurn.size > 0 ? 0.5 : 1 }}
+				primary={charactersWithTurn.size == 0}
 			/>
 			<Button
 				label="Next Turn"
 				onClick={() => {
 					endPlayerTurn(charactersOrder[0]);
 				}}
+				primary={charactersWithTurn.size > 0}
 				disabled={charactersWithTurn.size - delayedOrder.length <= 0}
 			/>
 		</Box>
