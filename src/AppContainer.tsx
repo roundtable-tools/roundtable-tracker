@@ -58,29 +58,28 @@ export const AppContainer = () => {
 					</PageContent>
 				</Page>
 			) : (
-				<>
-					<AppHeader view={view} setView={setView} />
-					<Page fill>
-						<PageContent>
-							{view === 'directory' && <EncounterDirectory setView={setView} />}
-							{view === 'builder' && <></>}
-							{view === 'initiative' && (
-								<>
-									<PageHeader title={encounterData?.name} />
-									<RoundBar />
-									<InitiativeList />
-								</>
-							)}
-							{view === 'preview' && (
-								<>
-									<PageHeader title={encounterData?.name} />
-									<PreviewDisplay setView={setView} />
-								</>
-							)}
-						</PageContent>
-					</Page>
-				</>
-			)}
+				<Page fill>
+					<PageContent>
+						{view === 'directory' && <EncounterDirectory setView={setView} />}
+						{view === 'builder' && <AppHeader view={view} setView={setView} />}
+						{view === 'initiative' && (
+							<>
+								<AppHeader view={view} setView={setView} />
+								<PageHeader title={encounterData?.name} />
+								<RoundBar />
+								<InitiativeList />
+							</>
+						)}
+						{view === 'preview' && (
+							<>
+								<AppHeader view={view} setView={setView} />
+								<PageHeader title={encounterData?.name} />
+								<PreviewDisplay setView={setView} />
+							</>
+						)}
+					</PageContent>
+				</Page>
+		)}
             {view === 'initiative' && <HistoryFooter endEncounter={() => setView('preview')} />}
 		</Main>
 	);
