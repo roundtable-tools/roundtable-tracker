@@ -19,6 +19,9 @@ export const DIFFICULTY = {
 	Severe: 3,
 	Extreme: 4,
 } as const;
+export const DifficultyToString = (difficulty: ValueOf<typeof DIFFICULTY>) =>
+	Object.entries(DIFFICULTY).find(([_, value]) => value == difficulty)?.[0] ??
+	'Unknown';
 export const PRIORITY = {
 	PC: 0,
 	NPC: 1,

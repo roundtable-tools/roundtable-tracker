@@ -31,11 +31,6 @@ const theme = {
 			display: 'none',
 		},
 	},
-	checkBox: {
-		extend: {
-			display: 'none',
-		},
-	},
 };
 
 function App() {

@@ -18,6 +18,7 @@ import AbstractEcounters from '../../store/Encounters/AbstractEncounterTemplates
 import { DIFFICULTY, Encounter } from '@/store/data.ts';
 import { useEncounterStore } from '@/store/instance.ts';
 import { AppHeader } from '@/AppHeader.tsx';
+import { EncounterDetailsModal } from './EncounterDetailsModal.tsx';
 
 type EncounterDirectoryProps = {
 	setView: (view: string) => void;
@@ -158,25 +159,11 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 					/>
 				</Box>
 			</PageContent>
-			<Footer
-				pad="medium"
-				justify="between"
-				direction="row"
-				color="background-back"
-			>
-				<Text>{selectedEncounterData?.description}</Text>
-				<Button
-					disabled={!selectedEncounterData}
-					icon={<Checkmark color="plain" />}
-					hoverIndicator
-					label={'Select Encounter'}
-					onClick={() => {
+			<EncounterDetailsModal closeLayer={() => setSelected(undefined)} selectedEncounter={selectedEncounterData} submit={() => {
 						if (selectedEncounterData) setEncounterData(selectedEncounterData);
 						setView('preview');
 						console.log(selectedEncounterData);
-					}}
-				/>
-			</Footer>
+					}}/>
 		</Data>
 	);
 };
