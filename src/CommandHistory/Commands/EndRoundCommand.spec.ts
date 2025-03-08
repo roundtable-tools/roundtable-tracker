@@ -28,7 +28,7 @@ describe('EndRoundCommand', () => {
 		const status = command.execute();
 
 		expect(status).toBe(STATUS.success);
-		expect(encounterStore.getState().round).toBe(2);
+		expect(encounterStore.getState().round).toBe(3);
 		expect(
 			encounterStore.getState().charactersWithTurn.has(character.uuid)
 		).toBe(true);
@@ -41,7 +41,7 @@ describe('EndRoundCommand', () => {
 		const status = command.undo();
 
 		expect(status).toBe(STATUS.success);
-		expect(encounterStore.getState().round).toBe(1);
+		expect(encounterStore.getState().round).toBe(2);
 		expect(
 			encounterStore.getState().charactersWithTurn.has(character.uuid)
 		).toBe(true);
