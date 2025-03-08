@@ -6,10 +6,13 @@ import {
 	Box,
 	Text,
 	Stack,
+	NameValuePair,
+	NameValueList,
 } from 'grommet';
 import { LandingPageOption } from './LandingPageOption';
 import { ReactNode, useContext } from 'react';
 import { FolderOpen, FormClock, PlayFill, Tools } from 'grommet-icons';
+import { useEncounterStore } from '@/store/instance';
 
 type LandingPageProps = {
 	setView: (view: string) => void;
@@ -17,6 +20,9 @@ type LandingPageProps = {
 
 export const LandingPage = (props: LandingPageProps) => {
 	const size = useContext(ResponsiveContext);
+	const encounterData = useEncounterStore((state) => state.encounterData);
+	const charactersMap = useEncounterStore((state) => state.charactersMap);
+	const history = useEncounterStore((state) => state.history);
 	const { setView } = props;
 	return (
 		<PageContent>
@@ -49,10 +55,11 @@ export const LandingPage = (props: LandingPageProps) => {
 						],
 						['builder', 'Create New', 
 							<Tools size='150%'/>, 'neutral-2', true],
-						['initiative', 'Continue', <Stack anchor='left'>
+						['initiative', history.length === 0 ? "Continue" : (<Box flex direction='column' ><Text alignSelf="center" size="xxlarge">{"Continue "}
+							</Text><Text alignSelf="center" size="large">"{encounterData?.name}"</Text></ Box>), <Stack anchor='left'>
 							<PlayFill size='150%'/>
 							<FormClock size='110%' color='neutral-3'/>
-						</Stack>, 'neutral-3', false], // disable if no encounter in local storage
+						</Stack>, 'neutral-3', history.length === 0], // disable if no encounter in local storage
 					] satisfies [string, ReactNode, ReactNode, string, boolean][]
 				).map(([area, title, icon, color, disabled]) => (
 					<LandingPageOption
