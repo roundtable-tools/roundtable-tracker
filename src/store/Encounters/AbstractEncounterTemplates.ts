@@ -122,6 +122,27 @@ const SevereBossAndLieutenant: AbstractEncounter = {
 	],
 	variants: [
 		{
+			partySize: 3,
+			description:
+				'Severe difficulty encounter for a party of three with a (+1) boss and their (-1) lieutenant',
+			participants: [
+				{
+					name: 'Elite Boss',
+					level: '+1',
+					side: ALIGNMENT.Opponents,
+					count: 1,
+					tiePriority: PRIORITY.NPC,
+				},
+				{
+					name: 'Weak Lieutenant',
+					level: '-1',
+					side: ALIGNMENT.Opponents,
+					count: 1,
+					tiePriority: PRIORITY.NPC,
+				},
+			],
+		},
+		{
 			partySize: 5,
 			description:
 				'Severe difficulty encounter for a party of five with a (+3) boss and their (-1) lieutenant',
@@ -183,6 +204,20 @@ const SevereWorthyOponents: AbstractEncounter = {
 		},
 	],
 	variants: [
+		{
+			partySize: 3,
+			description:
+				'Severe difficulty encounter for a party of three with three (-1) opponents',
+			participants: [
+				{
+					name: 'Weak Opponent',
+					level: '-1',
+					side: ALIGNMENT.Opponents,
+					count: 3,
+					tiePriority: PRIORITY.NPC,
+				},
+			],
+		},
 		{
 			partySize: 5,
 			description:
@@ -253,6 +288,27 @@ const ModerateLieutenantAndLackeys: AbstractEncounter = {
 	],
 	variants: [
 		{
+			partySize: 3,
+			description:
+				'Moderate difficulty encounter for a party of three with a (+0) lieutenant and their two (-4) lackeys',
+			participants: [
+				{
+					name: 'Lieutenant',
+					level: '+0',
+					side: ALIGNMENT.Opponents,
+					count: 1,
+					tiePriority: PRIORITY.NPC,
+				},
+				{
+					name: 'Weak Lackey',
+					level: '-4',
+					side: ALIGNMENT.Opponents,
+					count: 2,
+					tiePriority: PRIORITY.NPC,
+				},
+			],
+		},
+		{
 			partySize: 5,
 			description:
 				'Moderate difficulty encounter for a party of five with a (+1) lieutenant and their four (-3) lackeys',
@@ -314,6 +370,20 @@ const ModerateMatedPair: AbstractEncounter = {
 		},
 	],
 	variants: [
+		{
+			partySize: 3,
+			description:
+				'Moderate difficulty encounter for a party of three with a pair of (-1) weak mated opponents',
+			participants: [
+				{
+					name: 'Mated Opponent',
+					level: '-1',
+					side: ALIGNMENT.Opponents,
+					count: 2,
+					tiePriority: PRIORITY.NPC,
+				},
+			],
+		},
 		{
 			partySize: 5,
 			description:
@@ -377,6 +447,27 @@ const ModerateTroop: AbstractEncounter = {
 	],
 	variants: [
 		{
+			partySize: 3,
+			description:
+				'Moderate difficulty encounter for a party of three with a (-2) leader and their (+0) troop',
+			participants: [
+				{
+					name: 'Troop',
+					level: '+0',
+					side: ALIGNMENT.Opponents,
+					count: 1,
+					tiePriority: PRIORITY.NPC,
+				},
+				{
+					name: 'Leader',
+					level: '-2',
+					side: ALIGNMENT.Opponents,
+					count: 1,
+					tiePriority: PRIORITY.NPC,
+				}
+			],
+		},
+		{
 			partySize: 5,
 			description:
 				'Moderate difficulty encounter for a party of five with three (-2) leaders and their (+0) troop',
@@ -439,6 +530,20 @@ const LowMookSquad: AbstractEncounter = {
 	],
 	variants: [
 		{
+			partySize: 3,
+			description:
+				'Low difficulty encounter for a party of three with four (-4) mooks',
+			participants: [
+				{
+					name: 'Mook',
+					level: '-4',
+					side: ALIGNMENT.Opponents,
+					count: 4,
+					tiePriority: PRIORITY.NPC,
+				},
+			],
+		},
+		{
 			partySize: 5,
 			description:
 				'Low difficulty encounter for a party of five with two (-4) mooks and four (-3) elite mooks',
@@ -500,6 +605,20 @@ const ExtremeSoloBoss: AbstractEncounter = {
 		},
 	],
 	variants: [
+		{
+			partySize: 3,
+			description:
+				'Extreme difficulty encounter for a party of three with a (+3) boss',
+			participants: [
+				{
+					name: 'Boss',
+					level: '+3',
+					side: ALIGNMENT.Opponents,
+					count: 1,
+					tiePriority: PRIORITY.NPC,
+				},
+			],
+		},
 		{
 			partySize: 5,
 			description:

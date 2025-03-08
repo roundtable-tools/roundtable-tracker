@@ -201,7 +201,7 @@ export const PreviewDisplay = (props: PreviewDisplayProps) => {
 					primary
 					label="Start Encounter"
 					onClick={() => {
-						setCharacters([...party, ...participants.flat()].map(initiativeParticipantToCharacter));
+						setCharacters([...party, ...participants.flat()].sort((a, b) => b.initiative! - a.initiative! || b.tiePriority - a.tiePriority).map(initiativeParticipantToCharacter));
 						setHistory([]);
 						setView('initiative')
 					}}
