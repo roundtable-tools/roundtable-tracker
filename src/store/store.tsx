@@ -7,7 +7,6 @@ import { Command } from '@/CommandHistory/common';
 import { jsonConfiguration } from './serializer';
 import { CommandJSON } from '@/CommandHistory/serialization';
 import { splitArray } from '@/utils/array';
-import { nextRound } from './operations';
 
 type ValueOrFunction<T> = T | ((prev: T) => T);
 

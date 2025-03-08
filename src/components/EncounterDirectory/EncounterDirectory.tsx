@@ -1,21 +1,20 @@
 import {
 	Box,
-	Button,
 	Data,
+	DataFilter,
 	DataFilters,
 	DataSearch,
 	DataSort,
-	Footer,
-	NameValueList,
-	NameValuePair,
+	DataTableGroupBy,
 	PageContent,
+	RangeSelector,
 	Text,
 } from 'grommet';
-import { Checkmark } from 'grommet-icons';
+import { StreetView } from 'grommet-icons';
 import { EncounterData } from './EncounterData.tsx';
 import { useMemo, useState } from 'react';
 import AbstractEcounters from '../../store/Encounters/AbstractEncounterTemplates.ts';
-import { DIFFICULTY, Encounter } from '@/store/data.ts';
+import { DIFFICULTY, DifficultyToString, Encounter, participantsToLevelRange } from '@/store/data.ts';
 import { useEncounterStore } from '@/store/instance.ts';
 import { AppHeader } from '@/AppHeader.tsx';
 import { EncounterDetailsModal } from './EncounterDetailsModal.tsx';
@@ -27,24 +26,27 @@ type EncounterDirectoryProps = {
 export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 	const setEncounterData = useEncounterStore((state) => state.setEncounterData);
 	const data = AbstractEcounters.flatMap<Encounter>((encounter) => {
+		const mainVariant = {
+			id: `${encounter.id}${encounter.variants ? '-a' : ''}`,
+			name: encounter.name,
+			difficultyLabel: DifficultyToString(encounter.difficulty),
+			level: 'level' in encounter ? encounter.level : participantsToLevelRange(encounter.participants),
+			description: encounter.description,
+			difficulty: encounter.difficulty,
+			partySize: encounter.partySize,
+			participants: encounter.participants,
+			levelRepresentation: encounter.levelRepresentation,
+		}
 		return [
-			{
-				id: `${encounter.id}${encounter.variants ? '-a' : ''}`,
-				name: encounter.name,
-				searchName: encounter.searchName,
-				description: encounter.description,
-				difficulty: encounter.difficulty,
-				partySize: encounter.partySize,
-				participants: encounter.participants,
-				levelRepresentation: encounter.levelRepresentation,
-			},
+			mainVariant,
 			...(encounter.variants ?? []).map((variant, index) => {
 				const indexToLetter = (index: number) =>
 					String.fromCharCode(97 + index);
 				return {
 					id: `${encounter.id}-${indexToLetter(index + 1)}`,
 					name: encounter.name,
-					searchName: variant.searchName,
+					difficultyLabel: DifficultyToString(encounter.difficulty),
+					level: 'level' in variant ? (variant.level as [number,number]) : participantsToLevelRange(variant.participants),
 					description: variant.description,
 					difficulty: variant.difficulty ?? encounter.difficulty,
 					partySize: variant.partySize ?? encounter.partySize,
@@ -63,13 +65,39 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 		{
 			property: 'name',
 			header: <Text size="large">Name</Text>,
+		},
+		{
+			property: 'level',
+			header: <Text size="large">Level</Text>,
 			render: (datum: Encounter) => {
 				return (
-					<NameValueList pairProps={{ direction: 'column' }}>
-						<NameValuePair name={datum.name}>
-							<Text color="text-strong">{`${(Object.entries(DIFFICULTY).find(([_, value]) => value == datum.difficulty) ?? ['Unknown'])[0]} | Party ${datum.partySize}${'level' in datum ? ` | Level ${datum.level}` : ''}`}</Text>
-						</NameValuePair>
-					</NameValueList>
+					<Box pad={{ vertical: 'xsmall' }}>
+						<Text>{datum.level === undefined ? "Unknown" : (Array.isArray(datum.level) ? `${datum.level[0]}-${datum.level[1]}`: datum.level)}</Text>
+					</Box>
+				);
+			}
+		},
+		{
+			property: 'difficulty',
+			header: <Text size="large">Difficulty</Text>,
+			render: (datum: Encounter) => {
+				return (
+					<Box pad={{ vertical: 'xsmall' }}>
+						<Text>{(Object.entries(DIFFICULTY).find(([_, value]) => value == datum.difficulty) ?? ['Unknown'])[0]}</Text>
+					</Box>
+				);
+			}
+		},
+		{
+			property: 'partySize',
+			header: <Text size="large">Party Size</Text>,
+			render: (datum: Encounter) => {
+				return (
+					<Box flex direction={"row"} pad={{ vertical: 'xsmall' }}>
+						{Array.from({ length: 6 }).map((_, index) => (
+							<StreetView key={index} color={index < datum.partySize ? 'plain' : 'status-disabled'} />
+						))}
+					</Box>
 				);
 			},
 		},
@@ -88,6 +116,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 					</Box>
 				);
 			},
+			primary: true,
 		},
 	];
 	const { setView } = props;
@@ -101,6 +130,9 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			flex
 			messages={{}}
 			data={data}
+			// view={{
+			// 	columns: ['name', 'difficulty', 'partySize', 'participants'],
+			// }}
 			properties={{
 				id: {
 					label: 'ID',
@@ -108,39 +140,57 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 					sort: true,
 					filter: false,
 				},
-				searchName: {
+				name: {
 					label: 'Name',
 					search: true,
 					sort: true,
 					filter: false,
 				},
-				difficulty: {
+				level: {
+					label: 'Level',
+					search: true,
+					sort: true,
+					filter: false,
+					range: {
+						min: 1,
+						max: 20,
+						step: 1,
+					},
+				},
+				difficultyLabel: {
 					label: 'Difficulty',
-					search: false,
+					search: true,
 					sort: false,
 					filter: true,
-					options: Object.entries(DIFFICULTY).map(([label, value]) => ({
-						label,
-						value,
+					options: Object.keys(DIFFICULTY).filter(el => el != "Unknown").map((key) => ({
+						value: key,
+						label: key,
 					})),
 				},
 				partySize: {
 					label: 'Party Size',
-					search: false,
+					search: true,
 					sort: false,
 					filter: true,
 					range: {
-						min: 4,
+						min: 3,
 						max: 6,
 						step: 1,
 					},
 				},
+				participants: {
+					label: 'Participants',
+					search: true,
+					sort: false,
+					filter: false,
+				},
 			}}
 		>
-			<AppHeader setView={setView}>
+			<AppHeader setView={setView} >
 				<DataSearch />
 				<DataSort drop />
 				<DataFilters layer />
+				{/* <DataTableGroupBy options={['name', 'partySize', 'difficulty']}/> */}
 			</AppHeader>
 			<PageContent
 				align="start"
@@ -159,11 +209,15 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 					/>
 				</Box>
 			</PageContent>
-			<EncounterDetailsModal closeLayer={() => setSelected(undefined)} selectedEncounter={selectedEncounterData} submit={() => {
-						if (selectedEncounterData) setEncounterData(selectedEncounterData);
-						setView('preview');
-						console.log(selectedEncounterData);
-					}}/>
+			<EncounterDetailsModal
+				closeLayer={() => setSelected(undefined)}
+				selectedEncounter={selectedEncounterData}
+				submit={() => {
+					if (selectedEncounterData) setEncounterData(selectedEncounterData);
+					setView('preview');
+					console.log(selectedEncounterData);
+				}}
+			/>
 		</Data>
 	);
 };

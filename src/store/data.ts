@@ -13,15 +13,18 @@ export interface Character {
 	knockedBy?: UUID;
 }
 export const DIFFICULTY = {
+	Unknown: -1,
 	Trivial: 0,
 	Low: 1,
 	Moderate: 2,
 	Severe: 3,
 	Extreme: 4,
 } as const;
-export const DifficultyToString = (difficulty: ValueOf<typeof DIFFICULTY>) =>
-	Object.entries(DIFFICULTY).find(([_, value]) => value == difficulty)?.[0] ??
-	'Unknown';
+export const DifficultyToString: (
+	difficulty: Difficulty
+) => keyof typeof DIFFICULTY = (difficulty: Difficulty) =>
+	(Object.entries(DIFFICULTY).find(([_, value]) => value == difficulty)?.[0] ??
+		'Unknown') as keyof typeof DIFFICULTY;
 export const PRIORITY = {
 	PC: 0,
 	NPC: 1,
@@ -36,6 +39,22 @@ export const LEVEL_REPRESENTATION = {
 	Relative: 0,
 	Exact: 1,
 } as const;
+export const participantsToLevelRange: <T extends LevelRepresentation>(
+	participants: Participant<T>[],
+) => [number, number] = (participants) => {
+	const levels = participants.map((participant) => {
+		const level = Number.isInteger(participant.level)
+			? (participant.level as number)
+			: Number.parseInt(participant.level as string);
+		return level;
+	});
+	const participantLevelRange = [Math.min(...levels), Math.max(...levels)];
+	// Enemy levels range from -1 to 25 inclusive
+	return [
+		Math.max(-1 - participantLevelRange[0], 1),
+		Math.min(25 - participantLevelRange[1], 20),
+	];
+};
 export const INITIATIVE_STATE = {
 	Normal: 0,
 	Delayed: 1,
@@ -76,14 +95,12 @@ type ConcreteEncounterVariant = {
 	difficulty?: Difficulty;
 	partySize?: number;
 	level?: number;
-	searchName: string;
 	description: string; // Description of external conditions that trigger the variant
 	participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[];
 };
 type AbstractEncounterVariant = {
 	difficulty?: Difficulty;
 	partySize?: number;
-	searchName: string;
 	description: string; // Description of external conditions that trigger the variant
 	participants: Participant<typeof LEVEL_REPRESENTATION.Relative>[];
 };
@@ -91,6 +108,8 @@ type AbstractEncounterVariant = {
 export type AbstractEncounter = {
 	id: string; // Unique identifier for the encounter
 	name: string;
+	difficultyLabel?: keyof typeof DIFFICULTY;
+	level?: [number, number]; // Range of levels for the encounter
 	levelRepresentation: typeof LEVEL_REPRESENTATION.Relative; // Abstract encounter with participants of levels relative to the encounter level
 	variants?: AbstractEncounterVariant[];
 } & Required<AbstractEncounterVariant>;
@@ -98,6 +117,7 @@ export type AbstractEncounter = {
 export type ConcreteEncounter = {
 	id: string; // Unique identifier for the encounter
 	name: string;
+	difficultyLabel?: keyof typeof DIFFICULTY;
 	levelRepresentation: typeof LEVEL_REPRESENTATION.Exact; // Encounter with participants of specific levels
 	variants?: ConcreteEncounterVariant[];
 } & Required<ConcreteEncounterVariant>;
@@ -113,7 +133,6 @@ export const exampleEncounter: Encounter = {
 	description: 'A group of goblins ambush the party',
 	partySize: 4,
 	levelRepresentation: LEVEL_REPRESENTATION.Exact,
-	searchName: 'Goblin Ambush | Moderate | Party 4 | Level 2',
 	participants: [
 		{
 			name: 'Goblin',
@@ -126,7 +145,6 @@ export const exampleEncounter: Encounter = {
 		{
 			level: 1,
 			description: 'PCs found the goblins before level up',
-			searchName: 'Goblin Ambush | Moderate | Party 4 | Level 1',
 			participants: [
 				{
 					name: 'Weak Goblin',
@@ -139,7 +157,6 @@ export const exampleEncounter: Encounter = {
 		{
 			difficulty: DIFFICULTY.Low,
 			description: 'Scout did not report back to the main group',
-			searchName: 'Goblin Ambush | Low | Party 3 | Level 1',
 			participants: [
 				{
 					name: 'Goblin',
@@ -152,7 +169,6 @@ export const exampleEncounter: Encounter = {
 		{
 			partySize: 5,
 			description: 'Bigger party size',
-			searchName: 'Goblin Ambush | Moderate | Party 5 | Level 2',
 			participants: [
 				{
 					name: 'Goblin',

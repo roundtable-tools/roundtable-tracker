@@ -1,4 +1,5 @@
 import { DifficultyToString, Encounter } from '@/store/data';
+import { useEncounterStore } from '@/store/instance';
 import {
 	Layer,
 	Text,
@@ -7,14 +8,13 @@ import {
 	CardBody,
 	CardFooter,
 	CardHeader,
-	TextInput,
 	Heading,
 	Tag,
 	Stack,
 	MaskedInput,
-    Box,
+	Box,
 } from 'grommet';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type EncounterDetailsModalProps = {
 	closeLayer: () => void;
@@ -24,58 +24,109 @@ type EncounterDetailsModalProps = {
 
 export const EncounterDetailsModal = (props: EncounterDetailsModalProps) => {
 	const { closeLayer, selectedEncounter, submit } = props;
-	const [level, setLevel] = useState(
-		selectedEncounter && 'level' in selectedEncounter
-			? selectedEncounter.level
+	const setPartyLevel = useEncounterStore((state) => state.setPartyLevel);
+	const [level, setLevel] = useState<number>(
+		(selectedEncounter && 'level' in selectedEncounter)
+			? Array.isArray(selectedEncounter.level)
+				? selectedEncounter.level[0] as number
+				: selectedEncounter.level as number
 			: 0
 	);
+	useEffect(() => {
+		setLevel(
+			(selectedEncounter && 'level' in selectedEncounter)
+				? Array.isArray(selectedEncounter.level)
+					? selectedEncounter.level[0] as number
+					: selectedEncounter.level as number
+				: 0
+		);
+	}, [selectedEncounter]);
 	return !!selectedEncounter ? (
-		<Layer onEsc={closeLayer} onClickOutside={closeLayer}>
+		<Layer
+			background={{
+				opacity: 0,
+			}}
+			onEsc={closeLayer}
+			onClickOutside={closeLayer}
+		>
 			<Card>
-				<CardHeader>
-					<Heading level={2}>Encounter Details</Heading>
-				</CardHeader>
-				<CardBody>
-                    <Box flex direction='row' justify='between'>
-					<Text>{selectedEncounter.name}</Text>
-                    <Stack anchor="right">
-						<Tag
-							name={DifficultyToString(selectedEncounter.difficulty)}
-							value={
-								'level' in selectedEncounter ? selectedEncounter.level : '___'
-							}
-						/>
-						{!('level' in selectedEncounter) ? (
-							<MaskedInput
-								size="small"
-								height={'xxsmall'}
-								focusIndicator={true}
-								style={{ width: 45, border: 'none', lineHeight: '0', display: 'block', marginLeft: 'auto' }}
-								mask={[
-									{
-										length: [1, 2],
-										//   options: Array.from({ length: 20 }, (_, i) => i + 1),
-										regexp: /^[0-9][0-9]$|^[0-9]$/,
-										placeholder: 'lv',
-									},
-								]}
-								value={level}
-								onChange={(event) => {
-									const level = parseInt(event.target.value);
-									setLevel(Number.isNaN(level) ? 0 : level);
+				<CardHeader pad="small" background="brand">
+					<Box flex direction="row" justify="between">
+						<Heading level={3}>{selectedEncounter.name}</Heading>
+						<Stack anchor="top-right">
+							<Tag
+								name={DifficultyToString(selectedEncounter.difficulty)}
+								value={
+									'level' in selectedEncounter &&
+									Number.isInteger(selectedEncounter.level)
+										? `${selectedEncounter.level}`
+										: ''
+								}
+								pad={{
+									right:
+										'level' in selectedEncounter &&
+										Number.isInteger(selectedEncounter.level)
+											? '0'
+											: 'medium',
 								}}
 							/>
-						) : (
-							<></>
-						)}
-					</Stack>
-                    </Box>
+							{!(
+								'level' in selectedEncounter &&
+								Number.isInteger(selectedEncounter.level)
+							) ? (
+								<MaskedInput
+									plain
+									size="small"
+									height={'xxsmall'}
+									focusIndicator={false}
+									color='brand'
+									style={{
+										textDecoration: 'underline',
+										width: 45,
+										// border: 'none',
+										lineHeight: '0',
+										display: 'block',
+										marginLeft: 'auto',
+									}}
+									mask={[
+										{
+											length: [1, 2],
+											//   options: Array.from({ length: 20 }, (_, i) => i + 1),
+											regexp: /^[0-9][0-9]$|^[0-9]$/,
+											placeholder: 'lv',
+										},
+									]}
+									value={level}
+									onChange={(event) => {
+										let level = parseInt(event.target.value);
+										level = Number.isNaN(level) ? 0 : level;
+										level = Array.isArray(selectedEncounter.level)
+											? Math.min(
+													selectedEncounter.level[1],
+													Math.max(selectedEncounter.level[0], level)
+												)
+											: level;
+										setLevel(level);
+									}}
+								/>
+							) : (
+								<></>
+							)}
+						</Stack>
+					</Box>
+				</CardHeader>
+				<CardBody
+					pad={{ vertical: 'large', horizontal: 'medium' }}
+					background="light-1"
+				>
 					<Text>{selectedEncounter.description}</Text>
 					<Text>Difficulty</Text>
-					
 				</CardBody>
-				<CardFooter>
-					<Button label="Save" onClick={submit} />
+				<CardFooter pad="small" background="light-2" justify="end">
+					<Button label="Select" disabled={!level} onClick={() => {
+						setPartyLevel(level)
+						submit()
+					}} />
 				</CardFooter>
 			</Card>
 		</Layer>
@@ -83,11 +134,3 @@ export const EncounterDetailsModal = (props: EncounterDetailsModalProps) => {
 		<></>
 	);
 };
-
-// <Text>{selectedEncounterData?.description}</Text>
-// <Button
-//     disabled={!selectedEncounterData}
-//     icon={<Checkmark color="plain" />}
-//     hoverIndicator
-//     label={'Select Encounter'}
-// />

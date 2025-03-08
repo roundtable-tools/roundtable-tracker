@@ -21,7 +21,7 @@ export const AppHeader = (props: AppHeaderProps) => {
 				<FormPrevious />
 				Exit
 			</Box>
-			<Toolbar>
+			<Toolbar background="brand">
 				{children ? (
 					children
 				) : (

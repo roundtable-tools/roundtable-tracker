@@ -1,5 +1,5 @@
 import { Encounter } from '@/store/data';
-import { DataTable, ColumnConfig } from 'grommet';
+import { DataTable, ColumnConfig, ThemeContext } from 'grommet';
 
 type EncounterDataProps = {
 	selected?: string | number | undefined;
@@ -18,17 +18,40 @@ export const EncounterData = ({
 	setSelected,
 }: EncounterDataProps) => {
 	return (
-		<DataTable 
-			pin={true}
-			fill={true}
-			allowSelectAll={false}
-			select={selected ? [selected] : undefined}
-			onSelect={(arr) => {
-				const id = arr.reverse()[0];
-				if (setSelected) setSelected((prev) => (id == prev ? undefined : id));
+		<ThemeContext.Extend
+			value={{
+				dataTable: {
+					body: {
+						selected: {
+							background: 'active',
+							color: 'text',
+						},
+					},
+					pinned: {
+						header: {
+							background: 'light-2',
+						},
+					},
+				},
+				checkBox: {
+					extend: {
+						display: 'none',
+					},
+				},
 			}}
-			onClickRow={'select'}
-			columns={columns}
-		/>
+		>
+			<DataTable
+				pin={true}
+				fill={true}
+				allowSelectAll={false}
+				select={selected ? [selected] : undefined}
+				onSelect={(arr) => {
+					const id = arr.reverse()[0];
+					if (setSelected) setSelected((prev) => (id == prev ? undefined : id));
+				}}
+				onClickRow={'select'}
+				columns={columns}
+			/>
+		</ThemeContext.Extend>
 	);
 };
