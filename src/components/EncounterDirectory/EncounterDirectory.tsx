@@ -14,7 +14,7 @@ import { StreetView } from 'grommet-icons';
 import { EncounterData } from './EncounterData.tsx';
 import { useMemo, useState } from 'react';
 import AbstractEcounters from '../../store/Encounters/AbstractEncounterTemplates.ts';
-import { DIFFICULTY, DifficultyToString, Encounter, participantsToLevelRange } from '@/store/data.ts';
+import { DIFFICULTY, difficultyToString, Encounter, indexToLetter, participantsToLevelRange } from '@/store/data.ts';
 import { useEncounterStore } from '@/store/instance.ts';
 import { AppHeader } from '@/AppHeader.tsx';
 import { EncounterDetailsModal } from './EncounterDetailsModal.tsx';
@@ -29,7 +29,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 		const mainVariant = {
 			id: `${encounter.id}${encounter.variants ? '-a' : ''}`,
 			name: encounter.name,
-			difficultyLabel: DifficultyToString(encounter.difficulty),
+			difficultyLabel: difficultyToString(encounter.difficulty),
 			level: 'level' in encounter ? encounter.level : participantsToLevelRange(encounter.participants),
 			description: encounter.description,
 			difficulty: encounter.difficulty,
@@ -40,12 +40,10 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 		return [
 			mainVariant,
 			...(encounter.variants ?? []).map((variant, index) => {
-				const indexToLetter = (index: number) =>
-					String.fromCharCode(97 + index);
 				return {
 					id: `${encounter.id}-${indexToLetter(index + 1)}`,
 					name: encounter.name,
-					difficultyLabel: DifficultyToString(encounter.difficulty),
+					difficultyLabel: difficultyToString(encounter.difficulty),
 					level: 'level' in variant ? (variant.level as [number,number]) : participantsToLevelRange(variant.participants),
 					description: variant.description,
 					difficulty: variant.difficulty ?? encounter.difficulty,

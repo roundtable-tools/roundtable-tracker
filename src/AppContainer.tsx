@@ -38,13 +38,7 @@ export const AppContainer = () => {
 						<HistoryFooter endEncounter={() => setView('preview')} />
 					</>
 				) : view === 'preview' ? (
-					<>
-						<AppHeader setView={setView} />
-						<PageContent fill>
-							<PageHeader title={encounterData?.name} />
-							<PreviewDisplay setView={setView} />
-						</PageContent>
-					</>
+					<PreviewDisplay setView={setView} />
 				) : (
 					<></>
 				)}

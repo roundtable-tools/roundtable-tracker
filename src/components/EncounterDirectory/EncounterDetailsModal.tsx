@@ -1,4 +1,4 @@
-import { DifficultyToString, Encounter } from '@/store/data';
+import { difficultyToString, Encounter } from '@/store/data';
 import { useEncounterStore } from '@/store/instance';
 import {
 	Layer,
@@ -24,19 +24,14 @@ type EncounterDetailsModalProps = {
 
 export const EncounterDetailsModal = (props: EncounterDetailsModalProps) => {
 	const { closeLayer, selectedEncounter, submit } = props;
+	const partyLevel = useEncounterStore((state) => state.partyLevel);
 	const setPartyLevel = useEncounterStore((state) => state.setPartyLevel);
-	const [level, setLevel] = useState<number>(
-		(selectedEncounter && 'level' in selectedEncounter)
-			? Array.isArray(selectedEncounter.level)
-				? selectedEncounter.level[0] as number
-				: selectedEncounter.level as number
-			: 0
-	);
+	const [level, setLevel] = useState<number>(partyLevel);
 	useEffect(() => {
 		setLevel(
 			(selectedEncounter && 'level' in selectedEncounter)
 				? Array.isArray(selectedEncounter.level)
-					? selectedEncounter.level[0] as number
+					? Math.min(selectedEncounter.level[1], Math.max(selectedEncounter.level[0], partyLevel))
 					: selectedEncounter.level as number
 				: 0
 		);
@@ -55,7 +50,7 @@ export const EncounterDetailsModal = (props: EncounterDetailsModalProps) => {
 						<Heading level={3}>{selectedEncounter.name}</Heading>
 						<Stack anchor="top-right">
 							<Tag
-								name={DifficultyToString(selectedEncounter.difficulty)}
+								name={difficultyToString(selectedEncounter.difficulty)}
 								value={
 									'level' in selectedEncounter &&
 									Number.isInteger(selectedEncounter.level)

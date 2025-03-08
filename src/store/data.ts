@@ -2,7 +2,17 @@ import { UUID } from '@/utils/uuid';
 
 export const STATE = ['normal', 'delayed', 'knocked-out'] as const;
 type State = (typeof STATE)[number];
-
+export const indexToLetter = (index: number) =>
+	String.fromCharCode(97 + index);
+export const initiativeParticipantToCharacter = (
+	participant: InitiativeParticipant,
+): Character => ({
+	uuid: participant.uuid,
+	name: participant.name,
+	initiative: participant.initiative ?? 0,
+	turnState: 'normal',
+	group: participant.side === ALIGNMENT.PCs ? 'players' : 'enemies',
+});
 export interface Character {
 	uuid: UUID;
 	name: string;
@@ -20,7 +30,7 @@ export const DIFFICULTY = {
 	Severe: 3,
 	Extreme: 4,
 } as const;
-export const DifficultyToString: (
+export const difficultyToString: (
 	difficulty: Difficulty
 ) => keyof typeof DIFFICULTY = (difficulty: Difficulty) =>
 	(Object.entries(DIFFICULTY).find(([_, value]) => value == difficulty)?.[0] ??
@@ -39,6 +49,8 @@ export const LEVEL_REPRESENTATION = {
 	Relative: 0,
 	Exact: 1,
 } as const;
+export const normalizeLevel = (partyLevel: number, level: LevelFormat[0|1]) =>
+	Number.isInteger(level) ? (level as number) : partyLevel + Number.parseInt(level as string);
 export const participantsToLevelRange: <T extends LevelRepresentation>(
 	participants: Participant<T>[],
 ) => [number, number] = (participants) => {

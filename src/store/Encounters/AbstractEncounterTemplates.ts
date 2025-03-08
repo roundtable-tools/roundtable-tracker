@@ -358,17 +358,17 @@ const ModerateTroop: AbstractEncounter = {
 	partySize: 4,
 	levelRepresentation: LEVEL_REPRESENTATION.Relative,
 	description:
-		'Moderate difficulty encounter for a party of four with a pair of (-2) troops and their (+0) leader',
+		'Moderate difficulty encounter for a party of four with a pair of (-2) leaders and their (+0) troop',
 	participants: [
 		{
-			name: 'Leader',
+			name: 'Troop',
 			level: '+0',
 			side: ALIGNMENT.Opponents,
 			count: 1,
 			tiePriority: PRIORITY.NPC,
 		},
 		{
-			name: 'Troop',
+			name: 'Leader',
 			level: '-2',
 			side: ALIGNMENT.Opponents,
 			count: 2,
@@ -379,17 +379,17 @@ const ModerateTroop: AbstractEncounter = {
 		{
 			partySize: 5,
 			description:
-				'Moderate difficulty encounter for a party of five with three (-2) troops and their (+0) leader',
+				'Moderate difficulty encounter for a party of five with three (-2) leaders and their (+0) troop',
 			participants: [
 				{
-					name: 'Leader',
+					name: 'Troop',
 					level: '+0',
 					side: ALIGNMENT.Opponents,
 					count: 1,
 					tiePriority: PRIORITY.NPC,
 				},
 				{
-					name: 'Troop',
+					name: 'Leader',
 					level: '-2',
 					side: ALIGNMENT.Opponents,
 					count: 3,
@@ -400,17 +400,17 @@ const ModerateTroop: AbstractEncounter = {
 		{
 			partySize: 6,
 			description:
-				'Moderate difficulty encounter for a party of six with three (-2) troops and their (+1) leader',
+				'Moderate difficulty encounter for a party of six with three (-2) leaders and their (+1) troop',
 			participants: [
 				{
-					name: 'Elite Leader',
+					name: 'Elite Troop',
 					level: '+1',
 					side: ALIGNMENT.Opponents,
 					count: 1,
 					tiePriority: PRIORITY.NPC,
 				},
 				{
-					name: 'Troop',
+					name: 'Leader',
 					level: '-2',
 					side: ALIGNMENT.Opponents,
 					count: 3,
