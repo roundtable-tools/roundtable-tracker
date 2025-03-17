@@ -78,7 +78,6 @@ export const EncounterDetailsModal = (props: EncounterDetailsModalProps) => {
 									style={{
 										textDecoration: 'underline',
 										width: 45,
-										// border: 'none',
 										lineHeight: '0',
 										display: 'block',
 										marginLeft: 'auto',
@@ -86,7 +85,6 @@ export const EncounterDetailsModal = (props: EncounterDetailsModalProps) => {
 									mask={[
 										{
 											length: [1, 2],
-											//   options: Array.from({ length: 20 }, (_, i) => i + 1),
 											regexp: /^[0-9][0-9]$|^[0-9]$/,
 											placeholder: 'lv',
 										},

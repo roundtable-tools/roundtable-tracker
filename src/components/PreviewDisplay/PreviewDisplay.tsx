@@ -91,7 +91,6 @@ const getAligmentFlag = (side: number) => {
 
 	return (
 		<Stack anchor={'center'}>
-			{/* <Flag size={flagSize} color={flagColor} /> */}
 			<FlagFill size={flagSize} color={flagColor} />
 			{sideToIconMap[normalizedSide]}
 		</Stack>
@@ -171,30 +170,6 @@ export const PreviewDisplay = (props: PreviewDisplayProps) => {
 								/>
 							);
 						})}
-					{/* <PreviewCard
-						accentColor={getNeutralColor(0)}
-						sideFlag={getAligmentFlag(0)}
-						sideTitle={'Players'}
-						participants={encounterData.partySize}
-					/>
-					<PreviewCard
-						accentColor={getNeutralColor(1)}
-						sideFlag={getAligmentFlag(1)}
-						sideTitle={'Enemies'}
-						participants={3}
-					/>
-					<PreviewCard
-						accentColor={getNeutralColor(2)}
-						sideFlag={getAligmentFlag(2)}
-						sideTitle={'Neutral'}
-						participants={3}
-					/>
-					<PreviewCard
-						accentColor={getNeutralColor(3)}
-						sideFlag={getAligmentFlag(3)}
-						sideTitle={'Toast'}
-						participants={3}
-					/> */}
 				</Grid>
 				<Button
 				    margin={{top: 'medium'}}

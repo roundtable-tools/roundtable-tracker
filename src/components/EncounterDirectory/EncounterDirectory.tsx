@@ -128,9 +128,6 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			flex
 			messages={{}}
 			data={data}
-			// view={{
-			// 	columns: ['name', 'difficulty', 'partySize', 'participants'],
-			// }}
 			properties={{
 				id: {
 					label: 'ID',
@@ -188,7 +185,6 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 				<DataSearch />
 				<DataSort drop />
 				<DataFilters layer />
-				{/* <DataTableGroupBy options={['name', 'partySize', 'difficulty']}/> */}
 			</AppHeader>
 			<PageContent
 				align="start"
