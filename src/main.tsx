@@ -17,5 +17,6 @@ declare global {
 
 window.dbg = function <T>(value: T): T {
 	console.log(value);
+
 	return value;
 };

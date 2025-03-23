@@ -63,7 +63,10 @@ export const getChangeCharacterState = (
 	});
 
 	const additionalCommands: Partial<
-		Record<Character['turnState'], Partial<Record<Character['turnState'], Command[]>>>
+		Record<
+			Character['turnState'],
+			Partial<Record<Character['turnState'], Command[]>>
+		>
 	> = {
 		normal: {
 			'knocked-out': [getKnockOutCommand(character.uuid, deps)],

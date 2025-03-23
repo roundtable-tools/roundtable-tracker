@@ -27,6 +27,7 @@ export class UpdateCharacterDataCommand implements Command {
 			.encounterStore.getState()
 			.updateCharacter(this.data.uuid, (oldCharacter) => {
 				this.data.oldCharacter = structuredClone(oldCharacter);
+
 				return {
 					...oldCharacter,
 					...this.data.newCharacterProps,

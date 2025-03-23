@@ -104,10 +104,12 @@ describe('CompositeCommand', () => {
 		const command1: Command = {
 			execute: vi.fn().mockImplementation(() => {
 				order.push('command1.execute');
+
 				return STATUS.success;
 			}),
 			undo: vi.fn().mockImplementation(() => {
 				order.push('command1.undo');
+
 				return STATUS.success;
 			}),
 			type: '',
@@ -116,10 +118,12 @@ describe('CompositeCommand', () => {
 		const command2: Command = {
 			execute: vi.fn().mockImplementation(() => {
 				order.push('command2.execute');
+
 				return STATUS.success;
 			}),
 			undo: vi.fn().mockImplementation(() => {
 				order.push('command2.undo');
+
 				return STATUS.success;
 			}),
 			type: '',

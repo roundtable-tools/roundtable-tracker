@@ -13,6 +13,7 @@ export const getCommand = (
 	classesMap = commandMap
 ): new (data: Command['data']) => Command => {
 	if (!(type in classesMap)) throw new Error(`Invalid command type: ${type}`);
+
 	return classesMap[type];
 };
 

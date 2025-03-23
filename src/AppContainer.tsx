@@ -31,7 +31,7 @@ export const AppContainer = () => {
 						<PageContent fill>
 							<PageHeader title={encounterData?.name} />
 							<RoundBar />
-							<Box overflow={{ vertical: 'auto', horizontal: 'visible'}} fill>
+							<Box overflow={{ vertical: 'auto', horizontal: 'visible' }} fill>
 								<InitiativeList />
 							</Box>
 						</PageContent>

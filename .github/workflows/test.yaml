@@ -40,6 +40,12 @@ jobs:
       - name: 'Install Dependencies'
         run: yarn install --frozen-lockfile
 
+      - name: 'Prettier Check'
+        run: yarn prettier --check .
+
+      - name: 'Lint'
+        run: yarn lint
+
       - name: 'Test'
         run: npx vitest --coverage.enabled true
 

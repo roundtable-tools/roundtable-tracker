@@ -2,7 +2,7 @@ import { createStore } from 'zustand/vanilla';
 import { Character } from './data';
 import { UUID } from '@/utils/uuid';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Encounter, } from './data';
+import { Encounter } from './data';
 import { Command } from '@/CommandHistory/common';
 import { jsonConfiguration } from './serializer';
 import { CommandJSON } from '@/CommandHistory/serialization';
@@ -55,6 +55,7 @@ function simpleSet<
 	return (value: ValueOrFunction<T>) => {
 		set((state) => {
 			const newValue = unpackValue(value, state[key] as T);
+
 			return { [key]: newValue };
 		});
 	};
@@ -69,6 +70,7 @@ export const createEncounterStore = () =>
 						const charactersMap = characters.reduce(
 							(acc, character) => {
 								acc[character.uuid] = character;
+
 								return acc;
 							},
 							{} as Record<UUID, Character>
@@ -79,11 +81,12 @@ export const createEncounterStore = () =>
 							charactersId,
 							(uuid) => charactersMap[uuid].turnState === 'delayed'
 						);
-						
+
 						return { charactersMap, charactersOrder, delayedOrder };
 					});
+
 					return nextRound();
-				}
+				};
 				const updateCharacter = (
 					uuid: UUID,
 					newCharacter: ValueOrFunction<Character>
@@ -92,6 +95,7 @@ export const createEncounterStore = () =>
 						const character = state.charactersMap[uuid];
 						if (!character) {
 							console.error(`Character with uuid ${uuid} not found`);
+
 							return {};
 						}
 
@@ -114,9 +118,10 @@ export const createEncounterStore = () =>
 					set(() => ({ partyLevel }));
 				const setEncounterData = (encounterData: Encounter) =>
 					set(() => ({ encounterData }));
-				
+
 				const setHistory = simpleSet<Command[], typeof set>(set, 'history');
 				const setRedoStack = simpleSet<Command[], typeof set>(set, 'redoStack');
+
 				return {
 					charactersMap: {},
 					charactersOrder: [],

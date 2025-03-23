@@ -19,6 +19,7 @@ export type Command<
 
 export const isCommand = (obj: unknown): obj is Command => {
 	const command = obj as Command;
+
 	return (
 		typeof command?.type === 'string' &&
 		typeof command?.execute === 'function' &&
@@ -36,12 +37,14 @@ export const getDeps = (deps?: CommandDeps) => {
 			encounterStore: getEncounterStore(),
 		};
 	}
+
 	return deps;
 };
 
 export const undoOriginalState = <T>(original: T, deps?: CommandDeps) => {
 	if (!original) {
 		console.error(`Original state is not defined`);
+
 		return STATUS.failure;
 	}
 

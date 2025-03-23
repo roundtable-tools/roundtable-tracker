@@ -35,6 +35,7 @@ export const jsonConfiguration: Conf = {
 				switch (true) {
 					case isCommandJSON(value):
 						return commandFromJSON(value);
+
 					case isSetJSON(value):
 						return new Set(value.data);
 				}

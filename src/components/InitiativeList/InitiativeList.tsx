@@ -78,6 +78,7 @@ export const InitiativeList = () => {
 					})
 				);
 			});
+
 			return newOrder;
 		});
 	};
@@ -301,10 +302,13 @@ const getBackgroundColor = (index: number) => {
 	switch (index) {
 		case 0:
 			return 'brand';
+
 		case 1:
 			return 'light-4';
+
 		case 2:
 			return 'light-3';
+
 		default:
 			return 'light-2';
 	}
@@ -354,6 +358,7 @@ const ImitativeRow = (props: {
 	const canEnterState = (newState: Character['turnState']) => {
 		if (newState === 'delayed')
 			return canBeDelayed(props.character, charactersWithTurn);
+
 		return true;
 	};
 
@@ -422,6 +427,7 @@ const ImitativeRow = (props: {
 
 						if (!canEnterState(newState)) {
 							animate(x, offset[state]);
+
 							return;
 						}
 

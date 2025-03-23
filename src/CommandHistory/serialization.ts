@@ -5,6 +5,7 @@ export type CommandJSON<T extends Command['data'] = Command['data']> = {
 	type: string;
 	data: T;
 };
+
 export const isCommandJSON = (
 	data: object
 ): data is CommandJSON<Command['data']> => {
@@ -12,6 +13,7 @@ export const isCommandJSON = (
 	if (typeof json?.type === 'string' && 'data' in json) {
 		return json.type.startsWith('Command.');
 	}
+
 	return false;
 };
 
