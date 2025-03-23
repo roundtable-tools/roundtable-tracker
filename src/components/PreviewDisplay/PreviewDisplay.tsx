@@ -4,7 +4,6 @@ import {
 	Encounter,
 	indexToLetter,
 	InitiativeParticipant,
-	initiativeParticipantToCharacter,
 	normalizeLevel,
 	Participant,
 	PRIORITY,
@@ -25,6 +24,7 @@ import { useEncounterStore } from '@/store/instance';
 import { FlagFill, Robot, StreetView, Toast, TreeOption } from 'grommet-icons';
 import { useContext, useMemo } from 'react';
 import { AppHeader } from '@/AppHeader';
+import { participantsToEncounterCharacters } from '@/store/convert';
 
 type PreviewDisplayProps = {
 	setView: (view: string) => void;
@@ -146,8 +146,8 @@ const generateParty = (
 };
 
 export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
-	const setCharacters = useEncounterStore((state) => state.setCharacters);
-	const setHistory = useEncounterStore((state) => state.setHistory);
+	const startEncounter = useEncounterStore((state) => state.startEncounter);
+
 	const size = useContext(ResponsiveContext);
 	const encounterData = useEncounterStore((state) => state.encounterData);
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
@@ -162,6 +162,14 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 		() => generateParty(encounterData, partyLevel),
 		[encounterData, partyLevel]
 	);
+
+	const onStartEncounter = () => {
+		startEncounter(
+			participantsToEncounterCharacters([...party, ...participants.flat()])
+		);
+
+		setView('initiative');
+	};
 
 	if (!encounterData) return <></>;
 
@@ -205,19 +213,7 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 					margin={{ top: 'medium' }}
 					primary
 					label="Start Encounter"
-					onClick={() => {
-						setCharacters(
-							[...party, ...participants.flat()]
-								.sort(
-									(a, b) =>
-										b.initiative! - a.initiative! ||
-										b.tiePriority - a.tiePriority
-								)
-								.map(initiativeParticipantToCharacter)
-						);
-						setHistory([]);
-						setView('initiative');
-					}}
+					onClick={onStartEncounter}
 				/>
 			</PageContent>
 		</>

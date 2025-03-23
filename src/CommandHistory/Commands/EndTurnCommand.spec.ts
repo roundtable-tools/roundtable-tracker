@@ -18,8 +18,7 @@ describe('EndTurnCommand', () => {
 			group: 'players',
 			wounded: 0,
 		};
-		encounterStore.getState().setCharacters([character]);
-		encounterStore.getState().nextRound();
+		encounterStore.getState().startEncounter([character]);
 	});
 
 	it("should end a character's turn and return success", () => {

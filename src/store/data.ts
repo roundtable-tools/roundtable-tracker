@@ -88,12 +88,12 @@ export const INITIATIVE_STATE = {
 	Delayed: 1,
 	'Knocked-Out': 2,
 } as const;
+
 type ValueOf<T> = T[keyof T];
 type Difficulty = ValueOf<typeof DIFFICULTY>;
 type Alignment = ValueOf<typeof ALIGNMENT>;
 type Priority = ValueOf<typeof PRIORITY>;
 type LevelRepresentation = ValueOf<typeof LEVEL_REPRESENTATION>;
-// type State = ValueOf<typeof INITIATIVE_STATE>
 type RelativeNumber = `+${number}` | `-${number}`;
 type LevelFormat = {
 	0: RelativeNumber;
