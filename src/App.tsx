@@ -13,19 +13,6 @@ const theme = {
 			height: '20px',
 		},
 	},
-	dataTable: {
-		body: {
-			selected: {
-				background: 'active',
-				color: 'text',
-			},
-		},
-	},
-	checkBox: {
-		extend: {
-			display: 'none',
-		},
-	},
 };
 
 function App() {
