@@ -1,20 +1,23 @@
 import {
 	Box,
 	Data,
-	DataFilter,
 	DataFilters,
 	DataSearch,
 	DataSort,
-	DataTableGroupBy,
 	PageContent,
-	RangeSelector,
 	Text,
 } from 'grommet';
 import { StreetView } from 'grommet-icons';
 import { EncounterData } from './EncounterData.tsx';
 import { useMemo, useState } from 'react';
 import AbstractEcounters from '../../store/Encounters/AbstractEncounterTemplates.ts';
-import { DIFFICULTY, difficultyToString, Encounter, indexToLetter, participantsToLevelRange } from '@/store/data.ts';
+import {
+	DIFFICULTY,
+	difficultyToString,
+	Encounter,
+	indexToLetter,
+	participantsToLevelRange,
+} from '@/store/data.ts';
 import { useEncounterStore } from '@/store/instance.ts';
 import { AppHeader } from '@/AppHeader.tsx';
 import { EncounterDetailsModal } from './EncounterDetailsModal.tsx';
@@ -30,13 +33,17 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			id: `${encounter.id}${encounter.variants ? '-a' : ''}`,
 			name: encounter.name,
 			difficultyLabel: difficultyToString(encounter.difficulty),
-			level: 'level' in encounter ? encounter.level : participantsToLevelRange(encounter.participants),
+			level:
+				'level' in encounter
+					? encounter.level
+					: participantsToLevelRange(encounter.participants),
 			description: encounter.description,
 			difficulty: encounter.difficulty,
 			partySize: encounter.partySize,
 			participants: encounter.participants,
 			levelRepresentation: encounter.levelRepresentation,
-		}
+		};
+
 		return [
 			mainVariant,
 			...(encounter.variants ?? []).map((variant, index) => {
@@ -44,7 +51,10 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 					id: `${encounter.id}-${indexToLetter(index + 1)}`,
 					name: encounter.name,
 					difficultyLabel: difficultyToString(encounter.difficulty),
-					level: 'level' in variant ? (variant.level as [number,number]) : participantsToLevelRange(variant.participants),
+					level:
+						'level' in variant
+							? (variant.level as [number, number])
+							: participantsToLevelRange(variant.participants),
 					description: variant.description,
 					difficulty: variant.difficulty ?? encounter.difficulty,
 					partySize: variant.partySize ?? encounter.partySize,
@@ -70,10 +80,16 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			render: (datum: Encounter) => {
 				return (
 					<Box pad={{ vertical: 'xsmall' }}>
-						<Text>{datum.level === undefined ? "Unknown" : (Array.isArray(datum.level) ? `${datum.level[0]}-${datum.level[1]}`: datum.level)}</Text>
+						<Text>
+							{datum.level === undefined
+								? 'Unknown'
+								: Array.isArray(datum.level)
+									? `${datum.level[0]}-${datum.level[1]}`
+									: datum.level}
+						</Text>
 					</Box>
 				);
-			}
+			},
 		},
 		{
 			property: 'difficulty',
@@ -81,19 +97,28 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			render: (datum: Encounter) => {
 				return (
 					<Box pad={{ vertical: 'xsmall' }}>
-						<Text>{(Object.entries(DIFFICULTY).find(([_, value]) => value == datum.difficulty) ?? ['Unknown'])[0]}</Text>
+						<Text>
+							{
+								(Object.entries(DIFFICULTY).find(
+									([, value]) => value == datum.difficulty
+								) ?? ['Unknown'])[0]
+							}
+						</Text>
 					</Box>
 				);
-			}
+			},
 		},
 		{
 			property: 'partySize',
 			header: <Text size="large">Party Size</Text>,
 			render: (datum: Encounter) => {
 				return (
-					<Box flex direction={"row"} pad={{ vertical: 'xsmall' }}>
+					<Box flex direction={'row'} pad={{ vertical: 'xsmall' }}>
 						{Array.from({ length: 6 }).map((_, index) => (
-							<StreetView key={index} color={index < datum.partySize ? 'plain' : 'status-disabled'} />
+							<StreetView
+								key={index}
+								color={index < datum.partySize ? 'plain' : 'status-disabled'}
+							/>
 						))}
 					</Box>
 				);
@@ -104,6 +129,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			header: <Text size="large">Participants</Text>,
 			render: (datum: Encounter) => {
 				const { participants } = datum;
+
 				return (
 					<Box pad={{ vertical: 'xsmall' }}>
 						{participants
@@ -123,6 +149,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 		() => data.find(({ id }) => id === `${selected}`),
 		[selected, data]
 	);
+
 	return (
 		<Data
 			flex
@@ -157,10 +184,12 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 					search: true,
 					sort: false,
 					filter: true,
-					options: Object.keys(DIFFICULTY).filter(el => el != "Unknown").map((key) => ({
-						value: key,
-						label: key,
-					})),
+					options: Object.keys(DIFFICULTY)
+						.filter((el) => el != 'Unknown')
+						.map((key) => ({
+							value: key,
+							label: key,
+						})),
 				},
 				partySize: {
 					label: 'Party Size',
@@ -181,7 +210,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 				},
 			}}
 		>
-			<AppHeader setView={setView} >
+			<AppHeader setView={setView}>
 				<DataSearch />
 				<DataSort drop />
 				<DataFilters layer />

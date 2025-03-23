@@ -26,6 +26,7 @@ export const getEncounterStore = () => {
 		if (encounterStore.getState().charactersOrder.length === 0)
 			encounterStore.getState().setCharacters(characters);
 	}
+
 	return encounterStore;
 };
 

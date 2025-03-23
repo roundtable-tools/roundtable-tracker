@@ -28,12 +28,14 @@ export class ReorderCharactersCommand implements Command {
 				[getOrderName(this.data)]: structuredClone(this.data.newOrder),
 			};
 		});
+
 		return STATUS.success;
 	}
 	undo() {
 		const orderToRestore = this.data.oldOrder;
 		if (!orderToRestore) {
 			console.error(`Old Order is not defined`);
+
 			return STATUS.failure;
 		}
 
@@ -57,5 +59,6 @@ const getOrderName = (props: CommandProps) => {
 
 const getOrder = (props: CommandProps, state: EncounterStore) => {
 	const orderName = getOrderName(props);
+
 	return state[orderName];
 };

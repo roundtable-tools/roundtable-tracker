@@ -38,6 +38,7 @@ export class RemoveCharacterCommand implements Command {
 
 		if (!(this.data.uuid in state.charactersMap)) {
 			console.error(`Character with uuid ${this.data.uuid} not found`);
+
 			return STATUS.failure;
 		}
 

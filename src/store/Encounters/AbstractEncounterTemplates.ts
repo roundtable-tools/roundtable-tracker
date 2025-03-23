@@ -464,7 +464,7 @@ const ModerateTroop: AbstractEncounter = {
 					side: ALIGNMENT.Opponents,
 					count: 1,
 					tiePriority: PRIORITY.NPC,
-				}
+				},
 			],
 		},
 		{

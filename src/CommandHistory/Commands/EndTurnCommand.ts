@@ -37,6 +37,7 @@ export class EndTurnCommand implements Command {
 			console.error(
 				`Character with uuid ${this.data.uuid} does not have a turn`
 			);
+
 			return STATUS.failure;
 		}
 

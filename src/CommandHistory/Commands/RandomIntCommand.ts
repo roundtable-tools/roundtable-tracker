@@ -12,10 +12,12 @@ export class RandomIntCommand implements Command {
 	description?: string | undefined;
 	execute() {
 		console.debug(`Executing ${this.data.number}`);
+
 		return STATUS.success;
 	}
 	undo() {
 		console.debug(`Undoing ${this.data.number}`);
+
 		return STATUS.success;
 	}
 }

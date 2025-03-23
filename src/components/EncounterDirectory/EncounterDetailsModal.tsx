@@ -29,14 +29,18 @@ export const EncounterDetailsModal = (props: EncounterDetailsModalProps) => {
 	const [level, setLevel] = useState<number>(partyLevel);
 	useEffect(() => {
 		setLevel(
-			(selectedEncounter && 'level' in selectedEncounter)
+			selectedEncounter && 'level' in selectedEncounter
 				? Array.isArray(selectedEncounter.level)
-					? Math.min(selectedEncounter.level[1], Math.max(selectedEncounter.level[0], partyLevel))
-					: selectedEncounter.level as number
+					? Math.min(
+							selectedEncounter.level[1],
+							Math.max(selectedEncounter.level[0], partyLevel)
+						)
+					: (selectedEncounter.level as number)
 				: 0
 		);
-	}, [selectedEncounter]);
-	return !!selectedEncounter ? (
+	}, [partyLevel, selectedEncounter]);
+
+	return selectedEncounter ? (
 		<Layer
 			background={{
 				opacity: 0,
@@ -74,7 +78,7 @@ export const EncounterDetailsModal = (props: EncounterDetailsModalProps) => {
 									size="small"
 									height={'xxsmall'}
 									focusIndicator={false}
-									color='brand'
+									color="brand"
 									style={{
 										textDecoration: 'underline',
 										width: 45,
@@ -116,10 +120,14 @@ export const EncounterDetailsModal = (props: EncounterDetailsModalProps) => {
 					<Text>Difficulty</Text>
 				</CardBody>
 				<CardFooter pad="small" background="light-2" justify="end">
-					<Button label="Select" disabled={!level} onClick={() => {
-						setPartyLevel(level)
-						submit()
-					}} />
+					<Button
+						label="Select"
+						disabled={!level}
+						onClick={() => {
+							setPartyLevel(level);
+							submit();
+						}}
+					/>
 				</CardFooter>
 			</Card>
 		</Layer>

@@ -33,6 +33,7 @@ export const CommandHistoryProvider: FC<{ children: ReactNode }> = ({
 				lastCommand.undo();
 				setRedoStack((redo) => [lastCommand, ...redo]);
 			}
+
 			return [...prev];
 		});
 	};
@@ -44,6 +45,7 @@ export const CommandHistoryProvider: FC<{ children: ReactNode }> = ({
 				lastCommand.execute();
 				setHistory((history) => [...history, lastCommand]);
 			}
+
 			return [...prev];
 		});
 	};

@@ -1,6 +1,5 @@
 import { Header, Box, Toolbar, Button, DropButton, TextInput } from 'grommet';
 import { Filter, FormPrevious, Search } from 'grommet-icons/icons';
-import { EdgeType } from 'grommet/utils';
 import { ReactNode } from 'react';
 
 type AppHeaderProps = {
@@ -10,6 +9,7 @@ type AppHeaderProps = {
 
 export const AppHeader = (props: AppHeaderProps) => {
 	const { setView, children } = props;
+
 	return (
 		<Header background="brand" justify="center" fill="horizontal" pad="small">
 			<Box

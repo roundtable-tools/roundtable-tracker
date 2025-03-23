@@ -2,10 +2,10 @@ import { UUID } from '@/utils/uuid';
 
 export const STATE = ['normal', 'delayed', 'knocked-out'] as const;
 type State = (typeof STATE)[number];
-export const indexToLetter = (index: number) =>
-	String.fromCharCode(97 + index);
+export const indexToLetter = (index: number) => String.fromCharCode(97 + index);
+
 export const initiativeParticipantToCharacter = (
-	participant: InitiativeParticipant,
+	participant: InitiativeParticipant
 ): Character => ({
 	uuid: participant.uuid,
 	name: participant.name,
@@ -13,6 +13,7 @@ export const initiativeParticipantToCharacter = (
 	turnState: 'normal',
 	group: participant.side === ALIGNMENT.PCs ? 'players' : 'enemies',
 });
+
 export interface Character {
 	uuid: UUID;
 	name: string;
@@ -22,6 +23,7 @@ export interface Character {
 	wounded?: number;
 	knockedBy?: UUID;
 }
+
 export const DIFFICULTY = {
 	Unknown: -1,
 	Trivial: 0,
@@ -30,43 +32,57 @@ export const DIFFICULTY = {
 	Severe: 3,
 	Extreme: 4,
 } as const;
+
 export const difficultyToString: (
 	difficulty: Difficulty
 ) => keyof typeof DIFFICULTY = (difficulty: Difficulty) =>
-	(Object.entries(DIFFICULTY).find(([_, value]) => value == difficulty)?.[0] ??
+	(Object.entries(DIFFICULTY).find(([, value]) => value == difficulty)?.[0] ??
 		'Unknown') as keyof typeof DIFFICULTY;
+
 export const PRIORITY = {
 	PC: 0,
 	NPC: 1,
 	SPECIAL: 2,
 } as const;
+
 export const ALIGNMENT = {
 	PCs: 0,
 	Opponents: 1,
 	Neutral: 2,
 } as const;
+
 export const LEVEL_REPRESENTATION = {
 	Relative: 0,
 	Exact: 1,
 } as const;
-export const normalizeLevel = (partyLevel: number, level: LevelFormat[0|1]) =>
-	Number.isInteger(level) ? (level as number) : partyLevel + Number.parseInt(level as string);
+
+export const normalizeLevel = (
+	partyLevel: number,
+	level: LevelFormat[0 | 1]
+) =>
+	Number.isInteger(level)
+		? (level as number)
+		: partyLevel + Number.parseInt(level as string);
+
 export const participantsToLevelRange: <T extends LevelRepresentation>(
-	participants: Participant<T>[],
+	participants: Participant<T>[]
 ) => [number, number] = (participants) => {
 	const levels = participants.map((participant) => {
 		const level = Number.isInteger(participant.level)
 			? (participant.level as number)
 			: Number.parseInt(participant.level as string);
+
 		return level;
 	});
 	const participantLevelRange = [Math.min(...levels), Math.max(...levels)];
+
 	// Enemy levels range from -1 to 25 inclusive
 	return [
 		Math.max(-1 - participantLevelRange[0], 1),
 		Math.min(25 - participantLevelRange[1], 20),
 	];
 };
+
 export const INITIATIVE_STATE = {
 	Normal: 0,
 	Delayed: 1,
