@@ -22,27 +22,33 @@ export const InitiativeElement = (props: {
 		executeCommand(new RemoveCharacterCommand({ uuid: props.character.uuid }));
 	};
 
-	const [healthChange, setHealthChange] = useState<number | undefined>(undefined);
-	const [tempHealthChange, setTempHealthChange] = useState<number | undefined>(undefined);
+	const [healthChange, setHealthChange] = useState<string | undefined>(undefined);
+	const [tempHealthChange, setTempHealthChange] = useState<string | undefined>(undefined);
 	const handleTempHealthChange = () => {
-		const newTempHealth = props.character.tempHealth ?? 0 + (tempHealthChange ?? 0);
+		const tempHealthChangeValue = parseInt(tempHealthChange ?? '0');
+		if (isNaN(tempHealthChangeValue)) return;
+		console.log('Temp health change:', tempHealthChangeValue);
+		const newTempHealth = props.character.tempHealth + tempHealthChangeValue ;
 		console.log('New temp health:', newTempHealth);
 		executeCommand(new UpdateCharacterDataCommand({
 			uuid: props.character.uuid,
-			tempHealth: newTempHealth,
+			newCharacterProps: {tempHealth: newTempHealth},
 		}));
 		setTempHealthChange(undefined);
 	};
 
 	const handleHealthChange = () => {
-		const newTempHealth = (healthChange && healthChange < 0) ? (props.character.tempHealth ?? 0) - (healthChange ?? 0) : (props.character.tempHealth ?? 0);
-		const newHealth = (healthChange && healthChange >= 0) ? (props.character.health ?? 0) + (healthChange ?? 0) : (newTempHealth >= 0) ? (props.character.health ?? 0) : (props.character.health ?? 0) + (healthChange ?? 0);
+		const healthChangeValue = parseInt(healthChange ?? '0');
+		if (isNaN(healthChangeValue)) return;
+		console.log('Health change:', healthChangeValue);
+		const newTempHealth = (healthChangeValue < 0) ? props.character.tempHealth + healthChangeValue : props.character.tempHealth;
+		const newHealth = (healthChangeValue >= 0) ? props.character.health + healthChangeValue : (newTempHealth >= 0) ? props.character.health :  props.character.health + newTempHealth;
 		console.log('New health:', newHealth);
 		console.log('New temp health:', newTempHealth);
 		executeCommand(new UpdateCharacterDataCommand({
 			uuid: props.character.uuid,
-			health: newHealth,
-			tempHealth: newTempHealth,
+			newCharacterProps: {health: newHealth,
+			tempHealth: Math.max(newTempHealth,0)},
 		}));
 		setHealthChange(undefined);
 	};
@@ -81,7 +87,7 @@ export const InitiativeElement = (props: {
 					alignContent="center"
 				>
 					<Box>
-						<Text size='xxlarge' gridArea="value" alignSelf='center'>{(props.character.health ?? 0) + (props.character.tempHealth ?? 0)}/{props.character.maxHealth ?? 0}</Text>
+						<Text size='xxlarge' gridArea="value" alignSelf='center'>{(props.character.health) + (props.character.tempHealth)}/{props.character.maxHealth}</Text>
 						<Grid columns={['3fr', '1fr']} gap="small">
 							<MaskedInput
 								mask={[
@@ -97,7 +103,7 @@ export const InitiativeElement = (props: {
 									if (value === '') {
 										setHealthChange(undefined);
 									} else {
-										setHealthChange(parseInt(value));
+										setHealthChange(value);
 									}
 								}}
 							/>
@@ -122,7 +128,7 @@ export const InitiativeElement = (props: {
 									if (value === '') {
 										setTempHealthChange(undefined);
 									} else {
-										setTempHealthChange(parseInt(value));
+										setTempHealthChange(value);
 									}
 								}}
 							/>
