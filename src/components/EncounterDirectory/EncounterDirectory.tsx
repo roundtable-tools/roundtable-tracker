@@ -238,7 +238,6 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 				submit={() => {
 					if (selectedEncounterData) setEncounterData(selectedEncounterData);
 					setView('preview');
-					console.log(selectedEncounterData);
 				}}
 			/>
 		</Data>

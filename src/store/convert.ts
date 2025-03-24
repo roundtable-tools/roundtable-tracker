@@ -1,15 +1,11 @@
-import {
-	InitiativeParticipant,
-	Character,
-	initiativeParticipantToCharacter,
-} from './data';
+import { Character, CharacterConfig, characterConfigToCharacter } from './data';
 
 export const participantsToEncounterCharacters = (
-	participants: InitiativeParticipant[]
+	participants: CharacterConfig[]
 ): Character[] => {
 	return participants
 		.sort(
 			(a, b) => b.initiative! - a.initiative! || b.tiePriority - a.tiePriority
 		)
-		.map(initiativeParticipantToCharacter);
+		.map(characterConfigToCharacter);
 };

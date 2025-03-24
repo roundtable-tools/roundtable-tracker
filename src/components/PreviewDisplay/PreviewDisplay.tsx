@@ -1,5 +1,6 @@
 import {
 	ALIGNMENT,
+	CharacterConfig,
 	difficultyToString,
 	Encounter,
 	indexToLetter,
@@ -25,6 +26,7 @@ import { FlagFill, Robot, StreetView, Toast, TreeOption } from 'grommet-icons';
 import { useContext, useMemo } from 'react';
 import { AppHeader } from '@/AppHeader';
 import { participantsToEncounterCharacters } from '@/store/convert';
+import { useFieldArray, useForm } from 'react-hook-form';
 
 type PreviewDisplayProps = {
 	setView: (view: string) => void;
@@ -145,6 +147,13 @@ const generateParty = (
 	);
 };
 
+export type Inputs = {
+	teams: {
+		side: number;
+		characters: CharacterConfig[];
+	}[];
+};
+
 export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	const startEncounter = useEncounterStore((state) => state.startEncounter);
 
@@ -163,13 +172,42 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 		[encounterData, partyLevel]
 	);
 
-	const onStartEncounter = () => {
-		startEncounter(
-			participantsToEncounterCharacters([...party, ...participants.flat()])
-		);
+	const fullParty = [party, ...participants];
 
-		setView('initiative');
+	const { control, register, getFieldState, handleSubmit } = useForm<Inputs>({
+		mode: 'onChange',
+		defaultValues: {
+			teams: fullParty.map((participants) => ({
+				side: participants[0].side,
+				characters: participants.map((participant) => ({
+					...participant,
+					initiative: participant.initiative ?? 0,
+					maxHealth: 0,
+					health: 0,
+					tempHealth: 0,
+				})),
+			})),
+		},
+	});
+
+	const onStartEncounter = () => {
+		handleSubmit(
+			(data) => {
+				const participants = data.teams.flatMap(({ characters }) => characters);
+
+				startEncounter(participantsToEncounterCharacters(participants));
+				setView('initiative');
+			},
+			(errors) => {
+				console.log(errors);
+			}
+		)();
 	};
+
+	const { fields: teamFields } = useFieldArray({
+		control,
+		name: 'teams',
+	});
 
 	if (!encounterData) return <></>;
 
@@ -188,27 +226,32 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 						</Box>
 					}
 				/>
-				<Grid
-					columns={size === 'small' ? ['1fr'] : ['1fr', '1fr']}
-					gap="medium"
-					pad={{ horizontal: 'medium', vertical: 'small' }}
-				>
-					{[party, ...participants].map((participants, index) => {
-						return (
-							<PreviewCard
-								accentColor={getNeutralColor(participants[0].side)}
-								key={index}
-								sideFlag={getAligmentFlag(participants[0].side)}
-								sideTitle={
-									Object.entries(ALIGNMENT).find(
-										([, value]) => value === participants[0].side
-									)?.[0] ?? 'Unknown'
-								}
-								participants={participants}
-							/>
-						);
-					})}
-				</Grid>
+				<form>
+					<Grid
+						columns={size === 'small' ? ['1fr'] : ['1fr', '1fr']}
+						gap="medium"
+						pad={{ horizontal: 'medium', vertical: 'small' }}
+					>
+						{teamFields.map((teamField, index) => {
+							return (
+								<PreviewCard
+									register={register}
+									getFieldState={getFieldState}
+									accentColor={getNeutralColor(teamField.side)}
+									key={index}
+									teamIndex={index}
+									sideFlag={getAligmentFlag(teamField.side)}
+									sideTitle={
+										Object.entries(ALIGNMENT).find(
+											([, value]) => value === teamField.side
+										)?.[0] ?? 'Unknown'
+									}
+									participants={teamField.characters}
+								/>
+							);
+						})}
+					</Grid>
+				</form>
 				<Button
 					margin={{ top: 'medium' }}
 					primary

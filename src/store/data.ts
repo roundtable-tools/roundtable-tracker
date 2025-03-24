@@ -4,12 +4,22 @@ export const STATE = ['normal', 'delayed', 'knocked-out'] as const;
 type State = (typeof STATE)[number];
 export const indexToLetter = (index: number) => String.fromCharCode(97 + index);
 
-export const initiativeParticipantToCharacter = (
-	participant: InitiativeParticipant
+export type CharacterConfig = {
+	maxHealth: number;
+	health: number;
+	tempHealth: number;
+	initiative: number;
+} & InitiativeParticipant;
+
+export const characterConfigToCharacter = (
+	participant: CharacterConfig
 ): Character => ({
 	uuid: participant.uuid,
 	name: participant.name,
 	initiative: participant.initiative ?? 0,
+	health: participant.maxHealth,
+	maxHealth: participant.maxHealth,
+	tempHealth: participant.tempHealth,
 	turnState: 'normal',
 	group: participant.side === ALIGNMENT.PCs ? 'players' : 'enemies',
 });
@@ -19,6 +29,9 @@ export interface Character {
 	name: string;
 	initiative: number;
 	turnState: State;
+	health: number;
+	maxHealth: number;
+	tempHealth: number;
 	group?: 'players' | 'enemies';
 	wounded?: number;
 	knockedBy?: UUID;
