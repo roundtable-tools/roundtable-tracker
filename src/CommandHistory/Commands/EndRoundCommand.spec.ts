@@ -18,8 +18,7 @@ describe('EndRoundCommand', () => {
 			group: 'players',
 			wounded: 0,
 		};
-		encounterStore.getState().setCharacters([character]);
-		encounterStore.getState().nextRound();
+		encounterStore.getState().startEncounter([character]);
 	});
 
 	it('should end the current round and return success', () => {
@@ -28,7 +27,7 @@ describe('EndRoundCommand', () => {
 		const status = command.execute();
 
 		expect(status).toBe(STATUS.success);
-		expect(encounterStore.getState().round).toBe(3);
+		expect(encounterStore.getState().round).toBe(2);
 		expect(
 			encounterStore.getState().charactersWithTurn.has(character.uuid)
 		).toBe(true);
@@ -41,7 +40,7 @@ describe('EndRoundCommand', () => {
 		const status = command.undo();
 
 		expect(status).toBe(STATUS.success);
-		expect(encounterStore.getState().round).toBe(2);
+		expect(encounterStore.getState().round).toBe(1);
 		expect(
 			encounterStore.getState().charactersWithTurn.has(character.uuid)
 		).toBe(true);
