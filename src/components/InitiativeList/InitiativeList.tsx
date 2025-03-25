@@ -1,4 +1,4 @@
-import { Box, Button, Grid, ResponsiveContext } from 'grommet';
+import { Box, Button, Grid, ResponsiveContext, ThemeContext } from 'grommet';
 import { InitiativeElement } from './InitiativeElement';
 
 import {
@@ -191,110 +191,121 @@ const ReorderRow = (props: {
 	const restoreRef = useRef<(state: Character['turnState']) => void>();
 
 	return (
-		<Reorder.Item
-			as="div"
-			value={character.uuid}
-			style={{ boxShadow, y, position: 'relative' }}
-			dragListener={mode === 'normal' && character.turnState !== 'delayed'}
-			whileDrag={{ scale: 1.01 }}
+		<ThemeContext.Extend
+			value={{
+				maskedInput: {
+					extend: {
+						background: 'white',
+						color: 'black',
+					},
+				},
+			}}
 		>
-			{mode === 'knocked-out-receiver' && (
-				<Box
-					background={'rgba(0,0,0,.8)'}
-					style={{
-						position: 'absolute',
-						right: 0,
-						top: 0,
-						bottom: 0,
-						zIndex: 1,
-					}}
-					justify="end"
-					align="center"
-					direction="row"
-					pad={{ horizontal: 'small' }}
-				>
-					{size !== 'small' && (
-						<Box
-							gap={'medium'}
-							direction="row"
-							style={{
-								position: 'absolute',
-								pointerEvents: 'none',
-								top: 0,
-								right: 0,
-								width: 'calc(100% + 100px)',
-								maxWidth: 'unset',
-								height: '100%',
-								zIndex: -1,
-								background:
-									'linear-gradient(90deg, rgba(0,0,0,0) 0%,rgba(0,0,0,0.8) 100px, rgba(0,0,0,0) 100px)',
+			<Reorder.Item
+				as="div"
+				value={character.uuid}
+				style={{ boxShadow, y, position: 'relative' }}
+				dragListener={mode === 'normal' && character.turnState !== 'delayed'}
+				whileDrag={{ scale: 1.01 }}
+			>
+				{mode === 'knocked-out-receiver' && (
+					<Box
+						background={'rgba(0,0,0,.8)'}
+						style={{
+							position: 'absolute',
+							right: 0,
+							top: 0,
+							bottom: 0,
+							zIndex: 1,
+						}}
+						justify="end"
+						align="center"
+						direction="row"
+						pad={{ horizontal: 'small' }}
+					>
+						{size !== 'small' && (
+							<Box
+								gap={'medium'}
+								direction="row"
+								style={{
+									position: 'absolute',
+									pointerEvents: 'none',
+									top: 0,
+									right: 0,
+									width: 'calc(100% + 100px)',
+									maxWidth: 'unset',
+									height: '100%',
+									zIndex: -1,
+									background:
+										'linear-gradient(90deg, rgba(0,0,0,0) 0%,rgba(0,0,0,0.8) 100px, rgba(0,0,0,0) 100px)',
+								}}
+							/>
+						)}
+
+						<Button
+							icon={<Undo />}
+							onClick={() => {
+								restoreRef.current?.(character.turnState);
+								props.cancelAction();
 							}}
 						/>
-					)}
+						<Button
+							primary
+							icon={<Close />}
+							label="Slay"
+							color={'status-critical'}
+							onClick={() => props.slayCharacter(character.uuid)}
+						/>
+						<Button
+							secondary
+							icon={<Down />}
+							color={'status-warning'}
+							onClick={() => props.knockOut(character.uuid)}
+							label="K.O."
+						/>
+					</Box>
+				)}
 
-					<Button
-						icon={<Undo />}
-						onClick={() => {
-							restoreRef.current?.(character.turnState);
-							props.cancelAction();
+				<Grid
+					rows={['xsmall', '...']}
+					columns={['50px', '1fr', '50px']}
+					gap="none"
+					style={{ cursor: mode !== 'normal' ? 'pointer' : 'default' }}
+					onClick={() => {
+						if (mode !== 'normal') props.cancelAction();
+					}}
+				>
+					<ImitativeRow
+						mode={mode === 'knocked-out-receiver' ? 'preview-state' : 'normal'}
+						previewState={
+							mode === 'knocked-out-receiver' ? 'knocked-out' : undefined
+						}
+						character={character}
+						index={index}
+						isInteractive={mode === 'normal'}
+						open={isOpen}
+						onCancelStateChange={(changeState) => {
+							restoreRef.current = changeState;
+						}}
+						onStateChange={(state) => {
+							if (state === 'knocked-out') props.onKnockedOut(character.uuid);
+							else {
+								props.updateCharacterState(character.uuid, state);
+							}
+						}}
+						onMouseDown={() => {
+							haveDragged.current = false;
+						}}
+						onMouseMove={() => {
+							haveDragged.current = isDragActive() || haveDragged.current;
+						}}
+						onMouseUp={() => {
+							if (!haveDragged.current && mode === 'normal') setOpen(!isOpen);
 						}}
 					/>
-					<Button
-						primary
-						icon={<Close />}
-						label="Slay"
-						color={'status-critical'}
-						onClick={() => props.slayCharacter(character.uuid)}
-					/>
-					<Button
-						secondary
-						icon={<Down />}
-						color={'status-warning'}
-						onClick={() => props.knockOut(character.uuid)}
-						label="K.O."
-					/>
-				</Box>
-			)}
-
-			<Grid
-				rows={['xsmall', '...']}
-				columns={['50px', '1fr', '50px']}
-				gap="none"
-				style={{ cursor: mode !== 'normal' ? 'pointer' : 'default' }}
-				onClick={() => {
-					if (mode !== 'normal') props.cancelAction();
-				}}
-			>
-				<ImitativeRow
-					mode={mode === 'knocked-out-receiver' ? 'preview-state' : 'normal'}
-					previewState={
-						mode === 'knocked-out-receiver' ? 'knocked-out' : undefined
-					}
-					character={character}
-					index={index}
-					isInteractive={mode === 'normal'}
-					open={isOpen}
-					onCancelStateChange={(changeState) => {
-						restoreRef.current = changeState;
-					}}
-					onStateChange={(state) => {
-						if (state === 'knocked-out') props.onKnockedOut(character.uuid);
-						else {
-							props.updateCharacterState(character.uuid, state);
-						}
-					}}
-					onMouseDown={() => {
-						haveDragged.current = false;
-					}}
-					onMouseMove={() => {
-						haveDragged.current = isDragActive() || haveDragged.current;
-					}}
-					onMouseUp={() => {
-						if (!haveDragged.current && mode === 'normal') setOpen(!isOpen);
-					}}
-				/>
-			</Grid>
-		</Reorder.Item>
+				</Grid>
+			</Reorder.Item>
+		</ThemeContext.Extend>
 	);
 };
 
