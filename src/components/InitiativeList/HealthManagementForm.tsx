@@ -59,7 +59,7 @@ export const HealthManagementForm = (props: HealthManagementFormProps) => {
 			new UpdateCharacterDataCommand({
 				uuid: characterUuid,
 				newCharacterProps: {
-					health: Math.max(0,Math.min(newHealth,characterMaxHealth)),
+					health: Math.max(0, Math.min(newHealth, characterMaxHealth)),
 					tempHealth: Math.max(newTempHealth, 0),
 				},
 			})
