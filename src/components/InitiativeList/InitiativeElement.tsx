@@ -1,25 +1,18 @@
-import { Accordion, AccordionPanel, Box, Button } from 'grommet';
+import { Accordion, AccordionPanel, Box, Grid } from 'grommet';
 import { Character } from '@/store/data';
 import { TypingEffect } from '@/components/TypingEffect';
 import { useEncounterStore } from '@/store/instance';
-import { Close } from 'grommet-icons';
-import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
-import { useContext } from 'react';
-import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
+import { HealthManagementForm } from './HealthManagementForm';
+import { CharacterManagementForm } from './CharacterManagementForm';
 
 export const InitiativeElement = (props: {
 	character: Character;
 	open: boolean;
 	isInteractive?: boolean;
 }) => {
-	const { executeCommand } = useContext(CommandHistoryContext);
 	const charactersWithTurn = useEncounterStore(
 		(state) => state.charactersWithTurn
 	);
-
-	const slayCharacter = () => {
-		executeCommand(new RemoveCharacterCommand({ uuid: props.character.uuid }));
-	};
 
 	return (
 		<Accordion activeIndex={props.open ? 0 : []}>
@@ -46,13 +39,20 @@ export const InitiativeElement = (props: {
 					</Box>
 				}
 			>
-				<Button
-					primary
-					icon={<Close />}
-					label="Slay"
-					color={'status-critical'}
-					onClick={slayCharacter}
-				/>
+				<Grid
+					onMouseUp={(e) => e.stopPropagation()}
+					columns={['1fr', '1fr']}
+					gap="small"
+					pad={{ horizontal: 'medium', vertical: 'small' }}
+					justifyContent="between"
+					alignContent="center"
+				>
+					<HealthManagementForm {...props.character} />
+					<CharacterManagementForm
+						{...props.character}
+						hasTurn={charactersWithTurn.has(props.character.uuid)}
+					/>
+				</Grid>
 			</AccordionPanel>
 		</Accordion>
 	);
