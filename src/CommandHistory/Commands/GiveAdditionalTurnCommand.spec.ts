@@ -4,8 +4,6 @@ import { createEncounterStore } from '@/store/store';
 import { Character } from '@/store/data';
 import { STATUS } from '../common';
 
-// filepath: /root/repositories/roundtable-tracker/src/CommandHistory/Commands/GiveAdditionalTurnCommand.test.ts
-
 describe('GiveAdditionalTurnCommand', () => {
 	let encounterStore: ReturnType<typeof createEncounterStore>;
 	let character: Character;
