@@ -57,7 +57,7 @@ jobs:
         uses: davelosert/vitest-coverage-report-action@v2
 
   deploy:
-    if: github.event_name == 'push' && github.ref == github.repository.default_branch
+    # if: github.event_name == 'push' && github.ref == github.repository.default_branch
     needs: test
 
     # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
