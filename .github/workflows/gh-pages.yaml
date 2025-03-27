@@ -58,7 +58,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: 'Build'
-        run: yarn build
+        run: yarn build --base="/roundtable-tracker/"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
