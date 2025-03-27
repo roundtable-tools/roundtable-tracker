@@ -62,7 +62,6 @@ jobs:
         run: yarn build
 
   deploy:
-    if: github.event_name == 'push' && github.ref == github.repository.default_branch
     needs: build
 
     # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
