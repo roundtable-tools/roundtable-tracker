@@ -1,0 +1,6 @@
+{
+	"aliases": {
+		"components": "@/components/base",
+		"lib": "@/components/base/lib"
+	}
+}
