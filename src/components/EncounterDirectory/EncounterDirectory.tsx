@@ -1,5 +1,6 @@
 import {
 	Box,
+	Button,
 	Data,
 	DataFilters,
 	DataSearch,
@@ -7,7 +8,7 @@ import {
 	PageContent,
 	Text,
 } from 'grommet';
-import { StreetView } from 'grommet-icons';
+import { DocumentUpload, StreetView } from 'grommet-icons';
 import { EncounterData } from './EncounterData.tsx';
 import { useMemo, useState } from 'react';
 import AbstractEcounters from '../../store/Encounters/AbstractEncounterTemplates.ts';
@@ -20,7 +21,8 @@ import {
 } from '@/store/data.ts';
 import { useEncounterStore } from '@/store/instance.ts';
 import { AppHeader } from '@/AppHeader.tsx';
-import { EncounterDetailsModal } from './EncounterDetailsModal.tsx';
+import { EncounterDetailsModal } from './EncounterDetails/EncounterDetailsModal.tsx';
+import { EncounterImportModal } from './EncounterDetails/EncounterImportModal.tsx';
 
 type EncounterDirectoryProps = {
 	setView: (view: string) => void;
@@ -145,6 +147,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 	];
 	const { setView } = props;
 	const [selected, setSelected] = useState<string | number>();
+	const [showImportLayer, setShowImportLayer] = useState(false);
 	const selectedEncounterData = useMemo(
 		() => data.find(({ id }) => id === `${selected}`),
 		[selected, data]
@@ -211,6 +214,11 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			}}
 		>
 			<AppHeader setView={setView}>
+				<Button
+					icon={<DocumentUpload />}
+					plain
+					onClick={() => setShowImportLayer(true)}
+				/>
 				<DataSearch />
 				<DataSort drop />
 				<DataFilters layer />
@@ -239,6 +247,14 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 					if (selectedEncounterData) setEncounterData(selectedEncounterData);
 					setView('preview');
 				}}
+			/>
+			<EncounterImportModal
+				closeLayer={() => setShowImportLayer(false)}
+				submit={(encounterData: Encounter) => {
+					setEncounterData(encounterData);
+					setView('preview');
+				}}
+				showLayer={showImportLayer}
 			/>
 		</Data>
 	);
