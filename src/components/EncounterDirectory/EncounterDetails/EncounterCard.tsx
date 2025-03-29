@@ -38,7 +38,7 @@ export const EncounterCard = (props: EncounterCardProps) => {
 				: 0
 		);
 	}, [partyLevel, selectedEncounter]);
-	
+
 	return (
 		<Card>
 			<CardHeader pad="small" background="brand">

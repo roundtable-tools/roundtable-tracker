@@ -181,7 +181,7 @@ export const ConcreteEncounterSchema = z.object({
 			tiePriority: z.nativeEnum(PRIORITY).optional(),
 		})
 	),
-})
+});
 
 export type Encounter = AbstractEncounter | ConcreteEncounter;
 // Example usage
