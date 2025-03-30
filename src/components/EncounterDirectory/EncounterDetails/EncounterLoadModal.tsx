@@ -7,6 +7,7 @@ type EncounterLoadModalProps = {
 
 export const EncounterLoadModal = (props: EncounterLoadModalProps) => {
 	const { closeLayer } = props;
+
 	return (
 		<Layer
 			background={{
