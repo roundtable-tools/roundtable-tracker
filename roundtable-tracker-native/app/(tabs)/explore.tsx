@@ -8,7 +8,7 @@ import {
 	AvatarImage,
 	AvatarFallback,
 } from '@/components/base/ui/avatar';
-import { Button } from '@/components/base/ui/button';
+import { Button } from '@/components/base/ui/button/button';
 import { Text } from '@/components/base/ui/text';
 
 export default function TabTwoScreen() {

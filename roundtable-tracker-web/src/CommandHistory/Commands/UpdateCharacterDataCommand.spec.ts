@@ -18,6 +18,9 @@ describe('UpdateCharacterCommand', () => {
 			turnState: 'normal',
 			group: 'players',
 			wounded: 0,
+			health: 100,
+			maxHealth: 100,
+			tempHealth: 0,
 		};
 
 		encounterStore = createEncounterStore();
