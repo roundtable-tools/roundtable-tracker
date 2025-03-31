@@ -182,8 +182,8 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 				characters: participants.map((participant) => ({
 					...participant,
 					initiative: participant.initiative ?? 0,
-					maxHealth: 0,
-					health: 0,
+					maxHealth: 1,
+					health: 1,
 					tempHealth: 0,
 				})),
 			})),
@@ -194,7 +194,6 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 		handleSubmit(
 			(data) => {
 				const participants = data.teams.flatMap(({ characters }) => characters);
-
 				startEncounter(participantsToEncounterCharacters(participants));
 				setView('initiative');
 			},

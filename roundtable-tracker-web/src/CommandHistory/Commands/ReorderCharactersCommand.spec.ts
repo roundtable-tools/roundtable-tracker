@@ -17,8 +17,8 @@ describe('ReorderCharactersCommand', () => {
 				uuid: '00000000-0000-0000-0000-000000000001',
 				group: 'players',
 				wounded: 0,
-				health: 0,
-				maxHealth: 0,
+				health: 100,
+				maxHealth: 100,
 				tempHealth: 0,
 			},
 			{
@@ -28,8 +28,8 @@ describe('ReorderCharactersCommand', () => {
 				uuid: '00000000-0000-0000-0000-000000000002',
 				group: 'players',
 				wounded: 0,
-				health: 0,
-				maxHealth: 0,
+				health: 100,
+				maxHealth: 100,
 				tempHealth: 0,
 			},
 			{
@@ -39,8 +39,8 @@ describe('ReorderCharactersCommand', () => {
 				uuid: '00000000-0000-0000-0000-000000000003',
 				group: 'players',
 				wounded: 0,
-				health: 0,
-				maxHealth: 0,
+				health: 100,
+				maxHealth: 100,
 				tempHealth: 0,
 			},
 		];

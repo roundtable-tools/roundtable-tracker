@@ -17,7 +17,7 @@ export const characterConfigToCharacter = (
 	uuid: participant.uuid,
 	name: participant.name,
 	initiative: participant.initiative ?? 0,
-	health: participant.maxHealth,
+	health: participant.health,
 	maxHealth: participant.maxHealth,
 	tempHealth: participant.tempHealth,
 	turnState: 'normal',
