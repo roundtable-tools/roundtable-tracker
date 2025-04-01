@@ -55,12 +55,14 @@ jobs:
 
       - name: "Test"
         if: ${{ matrix.workspace == 'roundtable-tracker-web' }}
-        run: npx vitest --coverage.enabled true
+        run: yarn workspace ${{ matrix.workspace }} coverage
 
       - name: "Build"
         if: ${{ matrix.workspace == 'roundtable-tracker-web' }}
-        run: yarn build
+        run: yarn workspace ${{ matrix.workspace }} build
 
       - name: "Report Coverage"
         if: ${{ matrix.workspace == 'roundtable-tracker-web' && always() }}
         uses: davelosert/vitest-coverage-report-action@v2
+        with:
+          working-directory: ./roundtable-tracker-web

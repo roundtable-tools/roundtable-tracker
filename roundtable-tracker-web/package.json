@@ -9,7 +9,8 @@
 		"lint": "eslint .",
 		"preview": "vite preview",
 		"test": "vitest run",
-		"prettier": "prettier --check ."
+		"prettier": "prettier --check .",
+		"coverage": "npx vitest --coverage.enabled true"
 	},
 	"dependencies": {
 		"grommet": "^2.43.0",
