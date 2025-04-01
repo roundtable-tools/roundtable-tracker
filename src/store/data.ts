@@ -1,4 +1,5 @@
 import { UUID } from '@/utils/uuid';
+import { z } from 'zod';
 
 export const STATE = ['normal', 'delayed', 'knocked-out'] as const;
 type State = (typeof STATE)[number];
@@ -162,6 +163,25 @@ export type ConcreteEncounter = {
 	levelRepresentation: typeof LEVEL_REPRESENTATION.Exact; // Encounter with participants of specific levels
 	variants?: ConcreteEncounterVariant[];
 } & Required<ConcreteEncounterVariant>;
+
+export const ConcreteEncounterSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	difficulty: z.nativeEnum(DIFFICULTY),
+	level: z.number(),
+	levelRepresentation: z.literal(LEVEL_REPRESENTATION.Exact),
+	partySize: z.number(),
+	description: z.string(),
+	participants: z.array(
+		z.object({
+			name: z.string(),
+			level: z.number(),
+			side: z.nativeEnum(ALIGNMENT),
+			count: z.number().optional(),
+			tiePriority: z.nativeEnum(PRIORITY).optional(),
+		})
+	),
+});
 
 export type Encounter = AbstractEncounter | ConcreteEncounter;
 // Example usage
