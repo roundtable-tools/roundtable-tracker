@@ -214,14 +214,12 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			}}
 		>
 			<AppHeader setView={setView}>
-				<Box
-					pad='small' 
-				>
-				<Button
-					icon={<DocumentUpload />}
-					plain
-					onClick={() => setShowImportLayer(true)}
-				/>
+				<Box pad="small">
+					<Button
+						icon={<DocumentUpload />}
+						plain
+						onClick={() => setShowImportLayer(true)}
+					/>
 				</Box>
 				<DataSearch />
 				<DataSort drop />
