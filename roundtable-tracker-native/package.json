@@ -11,7 +11,8 @@
 		"test": "jest --watchAll",
 		"lint": "expo lint",
 		"prettier": "prettier --write .",
-		"lint:fix": "expo lint --fix"
+		"lint:fix": "expo lint --fix",
+		"build": "expo build"
 	},
 	"jest": {
 		"preset": "jest-expo"

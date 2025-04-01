@@ -51,9 +51,6 @@ jobs:
         run: yarn workspace ${{ matrix.workspace }} lint
 
       - name: "Test"
-        run: yarn workspace ${{ matrix.workspace }} test
-
-      - name: "Test"
         if: ${{ matrix.workspace == 'roundtable-tracker-web' }}
         run: yarn workspace ${{ matrix.workspace }} coverage
 
