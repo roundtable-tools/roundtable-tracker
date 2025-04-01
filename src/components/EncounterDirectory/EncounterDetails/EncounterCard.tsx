@@ -27,16 +27,13 @@ export const EncounterCard = (props: EncounterCardProps) => {
 	const setPartyLevel = useEncounterStore((state) => state.setPartyLevel);
 	const [level, setLevel] = useState<number>(partyLevel);
 	useEffect(() => {
-		setLevel(
-			selectedEncounter && 'level' in selectedEncounter
-				? Array.isArray(selectedEncounter.level)
-					? Math.min(
-							selectedEncounter.level[1],
-							Math.max(selectedEncounter.level[0], partyLevel)
-						)
-					: (selectedEncounter.level as number)
-				: 0
-		);
+		const level = Array.isArray(selectedEncounter.level)
+			? Math.max(
+					selectedEncounter.level[0],
+					Math.min(selectedEncounter.level[1], partyLevel)
+				)
+			: selectedEncounter.level || 0;
+		setLevel(level);
 	}, [partyLevel, selectedEncounter]);
 
 	return (
