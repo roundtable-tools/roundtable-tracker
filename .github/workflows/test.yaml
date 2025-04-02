@@ -14,20 +14,24 @@ permissions:
 
 jobs:
   test:
+    name: Test ${{ matrix.workspace }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        workspace: [roundtable-tracker-web, roundtable-tracker-native]
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: 'Install Node'
+      - name: "Install Node 🔧"
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: "20.x"
 
-      - name: Setup yarn
+      - name: "Setup yarn 📦"
         run: npm install -g yarn
 
-      - name: Cache node modules
+      - name: "Cache node modules 🗂️"
         uses: actions/cache@v3
         with:
           path: |
@@ -37,21 +41,28 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: 'Install Dependencies'
-        run: yarn install --frozen-lockfile
+      - name: "Install Dependencies 📥"
+        run: yarn workspace ${{ matrix.workspace }} install --frozen-lockfile
 
-      - name: 'Prettier Check'
-        run: yarn prettier --check .
+      - name: "Prettier Check 🎨"
+        run: yarn workspace ${{ matrix.workspace }} prettier --check .
 
-      - name: 'Lint'
-        run: yarn lint
+      - name: "Lint 🕵️"
+        run: yarn workspace ${{ matrix.workspace }} lint
 
-      - name: 'Test'
-        run: npx vitest --coverage.enabled true
+      - name: "Typecheck ✅"
+        run: yarn workspace ${{ matrix.workspace }} typecheck
 
-      - name: 'Build'
-        run: yarn build
+      - name: "Test 🧪"
+        if: ${{ matrix.workspace == 'roundtable-tracker-web' }}
+        run: yarn workspace ${{ matrix.workspace }} coverage
 
-      - name: 'Report Coverage'
-        if: always()
+      - name: "Build 🏗️"
+        if: ${{ matrix.workspace == 'roundtable-tracker-web' }}
+        run: yarn workspace ${{ matrix.workspace }} build
+
+      - name: "Report Coverage 📊"
+        if: ${{ matrix.workspace == 'roundtable-tracker-web' && always() }}
         uses: davelosert/vitest-coverage-report-action@v2
+        with:
+          working-directory: ./roundtable-tracker-web

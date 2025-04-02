@@ -18,11 +18,11 @@ permissions:
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
-  group: 'pages'
+  group: "pages"
   cancel-in-progress: false
 
 env:
-  BUILD_PATH: '.' # default value when not using subfolders
+  BUILD_PATH: "." # default value when not using subfolders
 
 jobs:
   build:
@@ -30,21 +30,21 @@ jobs:
     name: Build
 
     steps:
-      - name: Setup Pages
+      - name: "Setup Pages 🛠️"
         id: pages
         uses: actions/configure-pages@v5
 
       - uses: actions/checkout@v4
 
-      - name: 'Install Node'
+      - name: "Install Node 🔧"
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: "20.x"
 
-      - name: Setup yarn
+      - name: "Setup yarn 📦"
         run: npm install -g yarn
 
-      - name: Cache node modules
+      - name: "Cache node modules 🗂️"
         uses: actions/cache@v3
         with:
           path: |
@@ -54,13 +54,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: 'Install Dependencies'
+      - name: "Install Dependencies 📥"
         run: yarn install --frozen-lockfile
 
-      - name: 'Build'
+      - name: "Build 🏗️"
         run: yarn build --base="/roundtable-tracker/"
 
-      - name: Upload artifact
+      - name: "Upload artifact 📤"
         uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ env.BUILD_PATH }}/dist
@@ -81,6 +81,6 @@ jobs:
     # Specify runner + deployment step
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to GitHub Pages
+      - name: "Deploy to GitHub Pages 🚀"
         id: deployment
         uses: actions/deploy-pages@v4 # or specific "vX.X.X" version tag for this action
