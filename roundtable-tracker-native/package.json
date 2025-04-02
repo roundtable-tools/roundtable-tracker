@@ -12,6 +12,7 @@
 		"lint": "expo lint",
 		"prettier": "prettier --write .",
 		"lint:fix": "expo lint --fix",
+		"typecheck": "tsc --noEmit",
 		"build": "expo build"
 	},
 	"jest": {

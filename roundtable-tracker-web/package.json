@@ -10,7 +10,8 @@
 		"preview": "vite preview",
 		"test": "vitest run",
 		"prettier": "prettier --check .",
-		"coverage": "npx vitest --coverage.enabled true"
+		"coverage": "npx vitest --coverage.enabled true",
+		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
 		"grommet": "^2.43.0",
