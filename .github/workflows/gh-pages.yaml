@@ -42,7 +42,7 @@ jobs:
           node-version: "20.x"
 
       - name: "Setup yarn 📦"
-        run: npm install -g yarn
+        run: npm install -g yarn yarn@4.9.0
 
       - name: "Cache node modules 🗂️"
         uses: actions/cache@v3
