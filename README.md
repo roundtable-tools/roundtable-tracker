@@ -29,7 +29,7 @@ This repository is a monorepo containing the following workspaces:
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/roundtable-tracker.git
+   git clone https://github.com/roundtable-tools/roundtable-tracker.git
    cd roundtable-tracker
    ```
 
