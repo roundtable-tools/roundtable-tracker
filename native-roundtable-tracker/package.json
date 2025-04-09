@@ -1,5 +1,5 @@
 {
-	"name": "roundtable-tracker-native",
+	"name": "native-roundtable-tracker",
 	"main": "expo-router/entry",
 	"version": "0.0.0",
 	"scripts": {
