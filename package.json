@@ -1,8 +1,12 @@
 {
   "private": true,
   "workspaces": [
-    "roundtable-tracker-web",
-    "roundtable-tracker-native"
+    "web-roundtable-tracker",
+    "native-roundtable-tracker"
   ],
-  "packageManager": "yarn@4.9.0"
+  "packageManager": "yarn@4.9.0",
+  "scripts": {
+    "dev": "yarn workspace web-roundtable-tracker dev",
+    "start": "yarn workspace native-roundtable-tracker start"
+  }
 }

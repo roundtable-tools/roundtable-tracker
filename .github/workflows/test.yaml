@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        workspace: [roundtable-tracker-web, roundtable-tracker-native]
+        workspace: [web-roundtable-tracker, native-roundtable-tracker]
 
     steps:
       - uses: actions/checkout@v4
@@ -57,15 +57,15 @@ jobs:
         run: yarn workspace ${{ matrix.workspace }} typecheck
 
       - name: "Test 🧪"
-        if: ${{ matrix.workspace == 'roundtable-tracker-web' }}
+        if: ${{ matrix.workspace == 'web-roundtable-tracker' }}
         run: yarn workspace ${{ matrix.workspace }} coverage
 
       - name: "Build 🏗️"
-        if: ${{ matrix.workspace == 'roundtable-tracker-web' }}
+        if: ${{ matrix.workspace == 'web-roundtable-tracker' }}
         run: yarn workspace ${{ matrix.workspace }} build
 
       - name: "Report Coverage 📊"
-        if: ${{ matrix.workspace == 'roundtable-tracker-web' && always() }}
+        if: ${{ matrix.workspace == 'web-roundtable-tracker' && always() }}
         uses: davelosert/vitest-coverage-report-action@v2
         with:
-          working-directory: ./roundtable-tracker-web
+          working-directory: ./web-roundtable-tracker
