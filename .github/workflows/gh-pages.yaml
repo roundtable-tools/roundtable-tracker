@@ -61,7 +61,7 @@ jobs:
         run: yarn install --check-cache
 
       - name: "Build 🏗️"
-        run: yarn workspace web-roundtable-tracker --base="/roundtable-tracker/"
+        run: yarn workspace web-roundtable-tracker build --base="/roundtable-tracker/"
 
       - name: "Upload artifact 📤"
         uses: actions/upload-pages-artifact@v3
