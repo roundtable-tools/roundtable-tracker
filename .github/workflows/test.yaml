@@ -28,8 +28,11 @@ jobs:
         with:
           node-version: "20.x"
 
+      - name: "Enable Corepack 🛠️"
+        run: corepack enable
+
       - name: "Setup yarn 📦"
-        run: npm install -g yarn
+        run: corepack prepare yarn@4.9.0 --activate
 
       - name: "Cache node modules 🗂️"
         uses: actions/cache@v3
@@ -42,7 +45,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: "Install Dependencies 📥"
-        run: yarn workspace ${{ matrix.workspace }} install --frozen-lockfile
+        run: yarn workspace ${{ matrix.workspace }} install --check-cache
 
       - name: "Prettier Check 🎨"
         run: yarn workspace ${{ matrix.workspace }} prettier --check .
