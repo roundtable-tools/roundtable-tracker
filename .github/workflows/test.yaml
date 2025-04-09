@@ -42,7 +42,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: "Install Dependencies 📥"
-        run: yarn workspace ${{ matrix.workspace }} install --frozen-lockfile
+        run: yarn workspace ${{ matrix.workspace }} install --immutable
 
       - name: "Prettier Check 🎨"
         run: yarn workspace ${{ matrix.workspace }} prettier --check .
