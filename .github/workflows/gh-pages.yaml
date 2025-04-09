@@ -58,7 +58,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: "Install Dependencies 📥"
-        run: yarn install --immutable --check-cache
+        run: yarn install
 
       - name: "Build 🏗️"
         run: yarn build --base="/roundtable-tracker/"

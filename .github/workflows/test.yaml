@@ -45,7 +45,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: "Install Dependencies 📥"
-        run: yarn workspace ${{ matrix.workspace }} install --immutable --check-cache
+        run: yarn workspace ${{ matrix.workspace }} install
 
       - name: "Prettier Check 🎨"
         run: yarn workspace ${{ matrix.workspace }} prettier --check .
