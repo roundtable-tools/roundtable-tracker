@@ -72,6 +72,3 @@ export async function initializeAuthentication() {
 		}
 	}
 }
-
-// Call the initialization logic when your app starts
-initializeAuthentication();

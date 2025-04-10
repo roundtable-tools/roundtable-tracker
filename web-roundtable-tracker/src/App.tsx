@@ -1,6 +1,8 @@
 import { Grommet } from 'grommet';
 import { CommandHistoryProvider } from './CommandHistory/CommandHistoryProvider';
 import { AppContainer } from './AppContainer';
+import { initializeAuthentication } from './store/supbase';
+import { useEffectOnce } from './hooks/useEffectOnce';
 
 const theme = {
 	global: {
@@ -16,6 +18,17 @@ const theme = {
 };
 
 function App() {
+	useEffectOnce(() => {
+		console.log('Initializing authentication...');
+		initializeAuthentication()
+			.then(() => {
+				console.log('Authentication initialized successfully.');
+			})
+			.catch((error) => {
+				console.error('Error initializing authentication:', error);
+			});
+	});
+
 	return (
 		<CommandHistoryProvider>
 			<Grommet theme={theme} full>
