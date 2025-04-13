@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 // 1. Initialize your Supabase client (replace with your actual URL and Key)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey);
 
 // 2. Define an async function to handle the anonymous login
 export async function loginAnonymously() {
