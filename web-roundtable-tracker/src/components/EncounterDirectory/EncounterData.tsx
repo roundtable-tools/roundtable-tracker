@@ -1,5 +1,6 @@
 import { Encounter } from '@/store/data';
-import { DataTable, ColumnConfig, ThemeContext } from 'grommet';
+import { DataTable, ColumnConfig } from 'grommet';
+import { ThemeContext } from 'grommet/contexts/ThemeContext/index'
 
 type EncounterDataProps = {
 	selected?: string | number | undefined;
