@@ -1,12 +1,12 @@
 {
+  "name": "roundtable-tools",
   "private": true,
   "workspaces": [
-    "web-roundtable-tracker",
-    "native-roundtable-tracker"
+    "apps/*"
   ],
   "packageManager": "yarn@4.9.0",
   "scripts": {
-    "dev": "yarn workspace web-roundtable-tracker dev",
-    "start": "yarn workspace native-roundtable-tracker start"
+    "dev": "yarn workspace @rt/tracker-web dev",
+    "start": "yarn workspace @rt/tracker-native start"
   }
 }
