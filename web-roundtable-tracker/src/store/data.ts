@@ -21,7 +21,7 @@ export const characterConfigToCharacter = (
 	health: participant.health,
 	maxHealth: participant.maxHealth,
 	tempHealth: participant.tempHealth,
-	turnState: 'normal',
+	turnState: participant.startingState ?? 'normal',
 	group: participant.side === ALIGNMENT.PCs ? 'players' : 'enemies',
 });
 
@@ -129,6 +129,9 @@ export type Participant<
 	side: Alignment;
 	count?: number;
 	tiePriority?: Priority;
+	maxHealth?: number;
+	health?: number;
+	tempHealth?: number;
 	// TEMP: Set state to @ostatni5's format until the types get unified
 	// startingState?: INITIATIVE_STATE.Normal,
 	startingState?: 'normal' | 'delayed' | 'knocked-out';
@@ -179,6 +182,12 @@ export const ConcreteEncounterSchema = z.object({
 			side: z.nativeEnum(ALIGNMENT),
 			count: z.number().optional(),
 			tiePriority: z.nativeEnum(PRIORITY).optional(),
+			maxHealth: z.number().optional(),
+			health: z.number().optional(),
+			tempHealth: z.number().optional(),
+			// TEMP: Set state to @ostatni5's format until the types get unified
+			// startingState: z.nativeEnum(INITIATIVE_STATE).optional(),
+			startingState: z.enum(['normal', 'delayed', 'knocked-out']).optional(),
 		})
 	),
 });

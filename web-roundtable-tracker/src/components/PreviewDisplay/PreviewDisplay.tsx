@@ -180,11 +180,11 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 			teams: fullParty.map((participants) => ({
 				side: participants[0].side,
 				characters: participants.map((participant) => ({
-					...participant,
-					initiative: participant.initiative ?? 0,
+					initiative: 0,
 					maxHealth: 1,
-					health: 1,
 					tempHealth: 0,
+					...participant,
+					health: participant.health ?? participant.maxHealth ?? 1,
 				})),
 			})),
 		},
