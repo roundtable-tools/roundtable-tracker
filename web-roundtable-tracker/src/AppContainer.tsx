@@ -11,7 +11,7 @@ import { LandingPage } from './components/LandingPage/LandingPage';
 export const AppContainer = () => {
 	const encounterData = useEncounterStore((state) => state.encounterData);
 	const [view, setView] = useState<string>('landingPage');
-	
+
 	return (
 		<Main>
 			<Page fill flex>

@@ -1,6 +1,6 @@
 import { Box, Button, Grid, ResponsiveContext } from 'grommet';
 import { InitiativeElement } from './InitiativeElement';
-import { ThemeContext } from 'grommet/contexts/ThemeContext/index'
+import { ThemeContext } from 'grommet/contexts/ThemeContext/index';
 
 import {
 	animate,
