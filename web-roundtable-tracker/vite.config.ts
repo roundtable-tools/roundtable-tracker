@@ -1,7 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
-import eslint from 'vite-plugin-eslint';
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite';
 import tailwindcss from '@tailwindcss/vite';
 
@@ -13,7 +12,6 @@ export default defineConfig({
 		TanStackRouterVite({ target: 'react', autoCodeSplitting: true }),
 		tsconfigPaths(),
 		react(),
-		eslint(),
 	],
 	build: {
 		sourcemap: true,

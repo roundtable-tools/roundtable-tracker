@@ -1,6 +1,13 @@
+import {
+	useRouter,
+	Link,
+	useMatch,
+	useMatchRoute,
+} from '@tanstack/react-router';
 import * as React from 'react';
 
 import { SearchForm } from 'src/components/search-form';
+import { FileRoutesByFullPath } from 'src/routeTree.gen';
 
 import {
 	Sidebar,
@@ -15,28 +22,41 @@ import {
 	SidebarRail,
 } from 'src/components/ui/sidebar';
 
-// This is sample data.
-const data = {
-	navMain: [
-		{
-			title: 'Getting Started',
-			url: '#',
-			items: [
-				{
-					isActive: true,
-					title: 'Installation',
-					url: '#',
-				},
-				{
-					title: 'Project Structure',
-					url: '#',
-				},
-			],
-		},
-	],
-};
+function MenuItem({
+	item,
+}: {
+	item: { title: string; url: keyof FileRoutesByFullPath };
+}) {
+	const matchRoute = useMatchRoute();
+	const isActive = !!matchRoute({ to: item.url });
+
+	return (
+		<SidebarMenuItem key={item.title}>
+			<SidebarMenuButton asChild isActive={isActive}>
+				<Link to={item.url}>{item.title}</Link>
+			</SidebarMenuButton>
+		</SidebarMenuItem>
+	);
+}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+	const { routesByPath, state } = useRouter();
+
+	const data = {
+		navMain: [
+			{
+				title: 'Routes',
+				items: Object.keys(routesByPath as FileRoutesByFullPath).map(
+					(path) => ({
+						title: path,
+						url: path as keyof FileRoutesByFullPath,
+						isActive: state.location.pathname === path,
+					})
+				),
+			},
+		],
+	};
+
 	return (
 		<Sidebar {...props}>
 			<SidebarHeader>
@@ -50,11 +70,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 						<SidebarGroupContent>
 							<SidebarMenu>
 								{item.items.map((item) => (
-									<SidebarMenuItem key={item.title}>
-										<SidebarMenuButton asChild isActive={item.isActive}>
-											<a href={item.url}>{item.title}</a>
-										</SidebarMenuButton>
-									</SidebarMenuItem>
+									<MenuItem key={item.title} item={item} />
 								))}
 							</SidebarMenu>
 						</SidebarGroupContent>
