@@ -2,10 +2,17 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import eslint from 'vite-plugin-eslint';
+import { TanStackRouterVite } from '@tanstack/router-plugin/vite';
 
 // https://vite.dev/config/
 export default defineConfig({
-	plugins: [tsconfigPaths(), react(), eslint()],
+	plugins: [
+		// Please make sure that '@tanstack/router-plugin' is passed before '@vitejs/plugin-react'
+		TanStackRouterVite({ target: 'react', autoCodeSplitting: true }),
+		tsconfigPaths(),
+		react(),
+		eslint(),
+	],
 	build: {
 		sourcemap: true,
 	},
