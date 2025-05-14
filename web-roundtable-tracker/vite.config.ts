@@ -3,10 +3,12 @@ import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import eslint from 'vite-plugin-eslint';
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite';
+import tailwindcss from '@tailwindcss/vite';
 
 // https://vite.dev/config/
 export default defineConfig({
 	plugins: [
+		tailwindcss(),
 		// Please make sure that '@tanstack/router-plugin' is passed before '@vitejs/plugin-react'
 		TanStackRouterVite({ target: 'react', autoCodeSplitting: true }),
 		tsconfigPaths(),
