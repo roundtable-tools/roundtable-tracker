@@ -1,7 +1,6 @@
 import { useRouter, Link, useMatchRoute } from '@tanstack/react-router';
 import * as React from 'react';
 
-import { SearchForm } from 'src/components/search-form';
 import { FileRoutesByFullPath } from 'src/routeTree.gen';
 
 import {
@@ -55,7 +54,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	return (
 		<Sidebar {...props}>
 			<SidebarHeader>
-				<SearchForm />
+				<h1> RoundTable Tracker</h1>
 			</SidebarHeader>
 			<SidebarContent>
 				{/* We create a SidebarGroup for each parent. */}
