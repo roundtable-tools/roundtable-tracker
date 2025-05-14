@@ -1,3 +1,4 @@
+import { ModeToggle } from '@/components/mode-toggle';
 import {
 	Card,
 	CardContent,
@@ -14,17 +15,20 @@ export const Route = createFileRoute('/')({
 
 function Index() {
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle>Card Title</CardTitle>
-				<CardDescription>Card Description</CardDescription>
-			</CardHeader>
-			<CardContent>
-				<p>Card Content</p>
-			</CardContent>
-			<CardFooter>
-				<p>Card Footer</p>
-			</CardFooter>
-		</Card>
+		<>
+			<ModeToggle />
+			<Card>
+				<CardHeader>
+					<CardTitle>Card Title</CardTitle>
+					<CardDescription>Card Description</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<p>Card Content</p>
+				</CardContent>
+				<CardFooter>
+					<p>Card Footer</p>
+				</CardFooter>
+			</Card>
+		</>
 	);
 }
