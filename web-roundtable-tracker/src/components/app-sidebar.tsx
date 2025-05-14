@@ -1,9 +1,4 @@
-import {
-	useRouter,
-	Link,
-	useMatch,
-	useMatchRoute,
-} from '@tanstack/react-router';
+import { useRouter, Link, useMatchRoute } from '@tanstack/react-router';
 import * as React from 'react';
 
 import { SearchForm } from 'src/components/search-form';
