@@ -2798,6 +2798,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@legendapp/state@npm:^3.0.0-beta.30":
+  version: 3.0.0-beta.30
+  resolution: "@legendapp/state@npm:3.0.0-beta.30"
+  dependencies:
+    use-sync-external-store: "npm:^1.2.2"
+  peerDependencies:
+    expo-sqlite: ^15.0.0
+  peerDependenciesMeta:
+    expo-sqlite:
+      optional: true
+  checksum: 10c0/f6227417956cf349c08c4bc630713081ccf4c1ecf8e12dc78e52f1306e2e7f158f674c8d461dc88668a4d4da33966b4ca935a2548de447e05aa5fbec8c3118fd
+  languageName: node
+  linkType: hard
+
 "@napi-rs/wasm-runtime@npm:^0.2.8":
   version: 0.2.8
   resolution: "@napi-rs/wasm-runtime@npm:0.2.8"
@@ -15663,6 +15677,7 @@ __metadata:
   resolution: "web-roundtable-tracker@workspace:web-roundtable-tracker"
   dependencies:
     "@eslint/js": "npm:^9.17.0"
+    "@legendapp/state": "npm:^3.0.0-beta.30"
     "@radix-ui/react-dialog": "npm:^1.1.13"
     "@radix-ui/react-dropdown-menu": "npm:^2.1.14"
     "@radix-ui/react-label": "npm:^2.1.6"
