@@ -1,4 +1,4 @@
-import { observable, computed } from '@legendapp/state';
+import { observable } from '@legendapp/state';
 import {
 	configureSyncedSupabase,
 	syncedSupabase,
@@ -7,6 +7,11 @@ import { generateUUID, UUID } from '@/utils/uuid';
 import supabase from './supabase';
 
 import { observablePersistIndexedDB } from '@legendapp/state/persist-plugins/indexeddb';
+import { enableReactTracking } from '@legendapp/state/config/enableReactTracking';
+enableReactTracking({
+	auto: true,
+	warnUnobserved: true,
+});
 
 const generateId = () => generateUUID();
 
@@ -30,8 +35,9 @@ export type Todo = {
 };
 
 // Supabase expects a record keyed by id, so we use an object
-const todosTable$ = observable(
-	syncedSupabase({
+
+export const store$ = observable({
+	todosTable: syncedSupabase({
 		supabase,
 		collection: 'todos',
 		select: (from) =>
@@ -41,6 +47,7 @@ const todosTable$ = observable(
 		fieldCreatedAt: 'created_at',
 		fieldUpdatedAt: 'updated_at',
 		fieldDeleted: 'deleted',
+		realtime: { schema: 'public' },
 		persist: {
 			plugin: observablePersistIndexedDB({
 				databaseName: 'Legend',
@@ -49,56 +56,30 @@ const todosTable$ = observable(
 			}),
 			name: 'todos',
 		},
-	})
-);
+	}),
+	todos: () => Object.values(store$.todosTable.get() || {}),
+	numCompleted: () => store$.todos().filter((todo) => todo.completed).length,
+	total: () => store$.todos().length,
+	addTodo: () => {
+		const id = generateId(); // Use a UUID as a temporary key
 
-// Helper to get todos as an array
-function todosArray() {
-	const obj = todosTable$.get();
-
-	return Object.values(obj ?? {}) as Todo[];
-}
-
-// Create the main store observable
-export const store$ = computed(() => {
-	const todos = todosArray();
-
-	return {
-		todos,
-		total: todos.length,
-		numCompleted: todos.filter((todo) => todo.completed).length,
-		addTodo: () => {
-			const id = generateId(); // Use a UUID as a temporary key
-			const todo = {
-				id,
-				text: '',
-				completed: false,
-				created_at: null,
-				updated_at: null,
-				deleted: null,
-			};
-			todosTable$[id].set(todo);
-		},
-		clearTodos: () => {
-			todosTable$.set({});
-		},
-		updateTodo: (id: UUID, text: string) => {
-			const todo = todosTable$[id].get();
-			if (todo) {
-				todosTable$.set({
-					...todosTable$.get(),
-					[id]: { ...todo, text, updated_at: new Date().toISOString() },
-				});
-			}
-		},
-		checkTodo: (id: UUID, completed: boolean) => {
-			const todo = todosTable$[id].get();
-			if (todo) {
-				todosTable$.set({
-					...todosTable$.get(),
-					[id]: { ...todo, completed, updated_at: new Date().toISOString() },
-				});
-			}
-		},
-	};
+		store$.todosTable[id].assign({
+			id,
+			text: '',
+			completed: false,
+		});
+	},
+	clearTodos: () => {
+		store$.todosTable.set({});
+	},
+	updateTodo: (id: UUID, text: string) => {
+		store$.todosTable[id].assign({
+			text,
+		});
+	},
+	checkTodo: (id: UUID, completed: boolean) => {
+		store$.todosTable[id].assign({
+			completed,
+		});
+	},
 });

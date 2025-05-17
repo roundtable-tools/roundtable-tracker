@@ -43,9 +43,11 @@ function Index() {
 
 function App() {
 	// Use computed observables directly
-	const total = use$(store$.total);
-	const completed = use$(store$.numCompleted);
-	const todosArray = use$(store$.todos);
+
+	const todosArray = Object.values(use$(store$.todosTable) || {});
+
+	const total = todosArray.length;
+	const completed = todosArray.filter((todo) => todo.completed).length;
 
 	const onClickClear = () => store$.clearTodos();
 
