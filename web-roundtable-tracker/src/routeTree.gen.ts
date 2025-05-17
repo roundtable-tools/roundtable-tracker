@@ -11,14 +11,35 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as AboutImport } from './routes/about'
+import { Route as PreviewImport } from './routes/preview'
+import { Route as InitiativeImport } from './routes/initiative'
+import { Route as EncountersImport } from './routes/encounters'
+import { Route as BuilderImport } from './routes/builder'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
 
-const AboutRoute = AboutImport.update({
-  id: '/about',
-  path: '/about',
+const PreviewRoute = PreviewImport.update({
+  id: '/preview',
+  path: '/preview',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const InitiativeRoute = InitiativeImport.update({
+  id: '/initiative',
+  path: '/initiative',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const EncountersRoute = EncountersImport.update({
+  id: '/encounters',
+  path: '/encounters',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const BuilderRoute = BuilderImport.update({
+  id: '/builder',
+  path: '/builder',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -39,11 +60,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutImport
+    '/builder': {
+      id: '/builder'
+      path: '/builder'
+      fullPath: '/builder'
+      preLoaderRoute: typeof BuilderImport
+      parentRoute: typeof rootRoute
+    }
+    '/encounters': {
+      id: '/encounters'
+      path: '/encounters'
+      fullPath: '/encounters'
+      preLoaderRoute: typeof EncountersImport
+      parentRoute: typeof rootRoute
+    }
+    '/initiative': {
+      id: '/initiative'
+      path: '/initiative'
+      fullPath: '/initiative'
+      preLoaderRoute: typeof InitiativeImport
+      parentRoute: typeof rootRoute
+    }
+    '/preview': {
+      id: '/preview'
+      path: '/preview'
+      fullPath: '/preview'
+      preLoaderRoute: typeof PreviewImport
       parentRoute: typeof rootRoute
     }
   }
@@ -53,37 +95,52 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/builder': typeof BuilderRoute
+  '/encounters': typeof EncountersRoute
+  '/initiative': typeof InitiativeRoute
+  '/preview': typeof PreviewRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/builder': typeof BuilderRoute
+  '/encounters': typeof EncountersRoute
+  '/initiative': typeof InitiativeRoute
+  '/preview': typeof PreviewRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/builder': typeof BuilderRoute
+  '/encounters': typeof EncountersRoute
+  '/initiative': typeof InitiativeRoute
+  '/preview': typeof PreviewRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about'
+  fullPaths: '/' | '/builder' | '/encounters' | '/initiative' | '/preview'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about'
-  id: '__root__' | '/' | '/about'
+  to: '/' | '/builder' | '/encounters' | '/initiative' | '/preview'
+  id: '__root__' | '/' | '/builder' | '/encounters' | '/initiative' | '/preview'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
+  BuilderRoute: typeof BuilderRoute
+  EncountersRoute: typeof EncountersRoute
+  InitiativeRoute: typeof InitiativeRoute
+  PreviewRoute: typeof PreviewRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
+  BuilderRoute: BuilderRoute,
+  EncountersRoute: EncountersRoute,
+  InitiativeRoute: InitiativeRoute,
+  PreviewRoute: PreviewRoute,
 }
 
 export const routeTree = rootRoute
@@ -97,14 +154,26 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/about"
+        "/builder",
+        "/encounters",
+        "/initiative",
+        "/preview"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
-    "/about": {
-      "filePath": "about.tsx"
+    "/builder": {
+      "filePath": "builder.tsx"
+    },
+    "/encounters": {
+      "filePath": "encounters.tsx"
+    },
+    "/initiative": {
+      "filePath": "initiative.tsx"
+    },
+    "/preview": {
+      "filePath": "preview.tsx"
     }
   }
 }

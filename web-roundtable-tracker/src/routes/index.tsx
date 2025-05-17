@@ -19,19 +19,19 @@ function Index() {
 		<div className="flex flex-col items-center justify-center h-screen">
 			<div className="flex gap-4 p-4 flex-wrap items-center justify-center">
 				<Button asChild className="text-xl h-auto">
-					<Link to="/about">
+					<Link to="/initiative">
 						<Play size={48} /> Continue
 					</Link>
 				</Button>
 
 				<Button asChild className="text-xl h-auto" variant="secondary">
-					<Link to="/about">
+					<Link to="/encounters">
 						<FolderOpen size={48} /> Encounters
 					</Link>
 				</Button>
 
 				<Button asChild className="text-xl h-auto" variant="secondary">
-					<Link to="/about">
+					<Link to="/builder">
 						<PencilRuler size={48} /> Create New
 					</Link>
 				</Button>
