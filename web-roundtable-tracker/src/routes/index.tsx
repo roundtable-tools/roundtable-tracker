@@ -5,7 +5,6 @@ import { $React } from '@legendapp/state/react-web';
 
 import { FolderOpen, PencilRuler, Play } from 'lucide-react';
 import { store$ } from '@/storage/store';
-import type { Observable } from '@legendapp/state';
 import type { Todo } from '@/storage/store';
 
 export const Route = createFileRoute('/')({
@@ -43,18 +42,19 @@ function Index() {
 }
 
 function App() {
-	// Consume the computed observables from the global store$
+	// Use computed observables directly
 	const total = use$(store$.total);
 	const completed = use$(store$.numCompleted);
+	const todosArray = use$(store$.todos);
 
-	const onClickClear = () => store$.todos.set([]);
+	const onClickClear = () => store$.clearTodos();
 
 	return (
 		<div>
 			<p>Total: {total}</p>
 			<p>Completed: {completed}</p>
-			{store$.todos.get().map((todo, idx) => (
-				<TodoItem key={todo.id} item$={store$.todos[idx]} />
+			{todosArray.map((todo) => (
+				<TodoItem key={todo.id} todo={todo} />
 			))}
 			<div style={{ display: 'flex', justifyContent: 'space-between' }}>
 				<button type="button" onClick={store$.addTodo}>
@@ -69,20 +69,26 @@ function App() {
 }
 
 // Receives item$ prop from the For component
-function TodoItem({ item$ }: { item$: Observable<Todo> }) {
+function TodoItem({ todo }: { todo: Todo }) {
 	const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		// Call addTodo from the global store$
 		if (e.key === 'Enter') store$.addTodo();
 	};
 
 	return (
-		<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-			<input
+		<div className="flex items-center gap-2">
+			<$React.input
 				type="checkbox"
-				checked={!!item$.completed.get?.()}
-				onChange={(e) => item$.completed.set?.(e.target.checked)}
+				checked={!!todo.completed}
+				onChange={(e) => store$.checkTodo(todo.id, e.target.checked)}
+				className="form-checkbox h-5 w-5 text-blue-600"
 			/>
-			<$React.input $value={item$.text} onKeyDown={onKeyDown} />
+			<$React.input
+				$value={todo.text ?? ''}
+				onKeyDown={onKeyDown}
+				onChange={(e) => store$.updateTodo(todo.id, e.target.value)}
+				className="border rounded px-2 py-1"
+			/>
 		</div>
 	);
 }
