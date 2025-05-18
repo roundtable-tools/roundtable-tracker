@@ -36,6 +36,7 @@ export interface Character {
 	group?: 'players' | 'enemies';
 	wounded?: number;
 	knockedBy?: UUID;
+	level?: number; // Optional level property
 }
 
 export const DIFFICULTY = {
