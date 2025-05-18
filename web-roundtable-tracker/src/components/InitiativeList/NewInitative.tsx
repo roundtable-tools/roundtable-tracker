@@ -1,8 +1,8 @@
 import { useEncounterStore } from '@/store/instance';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Timeline, TimelineEvent } from './Timeline';
 import { Button } from '@/components/ui/button';
-import { Clock } from './Clock';
+import { Clock, TimeDisplay } from './Clock';
 import { generateUUID, UUID } from '@/utils/uuid';
 import { CharacterCard, QuickAccessGrid } from './CharacterCard';
 import { Character } from '@/store/data';
@@ -25,6 +25,12 @@ export function NewInitiative() {
 		duration?: number;
 	};
 	const [roundTimestamps, setRoundTimestamps] = useState<RoundTimestamps[]>([]);
+
+	// Track character turn timings
+	const [characterTurnTimestamps, setCharacterTurnTimestamps] = useState<
+		Record<string, { start: number; end?: number; duration?: number }>
+	>({});
+	const activeCharacterRef = useRef<string | null>(null);
 
 	// Example events for demonstration
 	const events: TimelineEvent[] = [
@@ -73,6 +79,48 @@ export function NewInitiative() {
 		console.log('Set', uuid, 'to', newState);
 	};
 
+	// Helper to get the current character (first in list for now)
+	const currentCharacter = characters[0];
+	const lastCharacter = characters[characters.length - 1];
+
+	// Start timing when a character becomes active
+	useEffect(() => {
+		if (!currentCharacter) return;
+		if (activeCharacterRef.current !== currentCharacter.uuid) {
+			// End previous character's turn
+			if (activeCharacterRef.current) {
+				setCharacterTurnTimestamps((prev) => {
+					const prevData = prev[activeCharacterRef.current!];
+					if (!prevData || prevData.end) return prev;
+
+					return {
+						...prev,
+						[activeCharacterRef.current!]: {
+							...prevData,
+							end: Date.now(),
+							duration: Date.now() - prevData.start,
+						},
+					};
+				});
+			}
+			// Start new character's turn
+			setCharacterTurnTimestamps((prev) => ({
+				...prev,
+				[currentCharacter.uuid]: { start: Date.now() },
+			}));
+			activeCharacterRef.current = currentCharacter.uuid;
+		}
+	}, [currentCharacter, currentCharacter.uuid]);
+
+	// Helper to get current turn time for a character
+	function getCurrentTurnTime(uuid: string) {
+		const data = characterTurnTimestamps[uuid];
+		if (!data) return 0;
+		if (data.end) return data.duration ?? 0;
+
+		return Date.now() - data.start;
+	}
+
 	return (
 		<main className="p-4 flex flex-col gap-4">
 			<header className="flex items-center justify-between border-b pb-2">
@@ -102,8 +150,25 @@ export function NewInitiative() {
 				<h3 className="font-semibold text-base mb-2">Encounter Order</h3>
 				<ul className="flex flex-col gap-2">
 					{characters.map((character) => (
-						<li key={character.uuid}>
+						<li key={character.uuid} className="flex items-center gap-2">
 							<CharacterCard character={character} />
+							{/* Show current turn time for all characters */}
+							<span className="text-xs text-muted-foreground font-mono ml-2">
+								{character.uuid === currentCharacter?.uuid ? (
+									<Clock
+										startTimestamp={
+											characterTurnTimestamps[character.uuid]?.start ??
+											Date.now()
+										}
+									/>
+								) : (
+									<TimeDisplay
+										seconds={Math.floor(
+											getCurrentTurnTime(character.uuid) / 1000
+										)}
+									/>
+								)}
+							</span>
 						</li>
 					))}
 				</ul>
