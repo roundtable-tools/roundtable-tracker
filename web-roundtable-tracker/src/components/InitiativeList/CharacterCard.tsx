@@ -8,6 +8,7 @@ import {
 	CollapsibleTrigger,
 	CollapsibleContent,
 } from '../ui/collapsible';
+import { Button } from '../ui/button';
 
 // Map character state to shadcn/ui badge color using shadcn palette classes
 const STATE_BADGE_COLOR: Record<Character['turnState'], string> = {
@@ -36,6 +37,15 @@ function CharacterDetailRow({
 	);
 }
 
+// Returns the badge class for a character's state
+function getBadgeClass(turnState: Character['turnState']): string {
+	return (
+		STATE_BADGE_COLOR[
+			(turnState?.toLowerCase?.() as keyof typeof STATE_BADGE_COLOR) ?? 'normal'
+		] || 'bg-gray-200 text-gray-800'
+	);
+}
+
 export function CharacterCard({
 	character,
 	defaultOpen = false,
@@ -44,11 +54,7 @@ export function CharacterCard({
 	defaultOpen?: boolean;
 }) {
 	const [open, setOpen] = useState(defaultOpen);
-	const badgeClass =
-		STATE_BADGE_COLOR[
-			(character.turnState?.toLowerCase?.() as keyof typeof STATE_BADGE_COLOR) ??
-				'normal'
-		] ?? 'bg-gray-200 text-gray-800';
+	const badgeClass = getBadgeClass(character.turnState);
 
 	return (
 		<Card className="w-full max-w-md  p-2 px-4">
@@ -100,5 +106,44 @@ export function CharacterCard({
 				</CollapsibleContent>
 			</Collapsible>
 		</Card>
+	);
+}
+
+// QuickAccessGrid: shows buttons for characters on hold or delayed
+export function QuickAccessGrid({
+	characters,
+	onStateChange,
+}: {
+	characters: Character[];
+	onStateChange: (uuid: string, newState: Character['turnState']) => void;
+}) {
+	if (!characters.length) return null;
+
+	return (
+		<section className="mb-4">
+			<h3 className="font-semibold text-base mb-2">Return to Initiative</h3>
+			<div className="flex flex-wrap gap-2">
+				{characters.map((char) => {
+					const badgeClass = getBadgeClass(char.turnState) + ' opacity-50';
+
+					return (
+						<Button
+							key={char.uuid}
+							variant="outline"
+							onClick={() => onStateChange(char.uuid, 'active')}
+							title={`Return ${char.name} to initiative`}
+							className="flex items-center gap-1 px-2 py-1 text-xs min-w-0"
+						>
+							<span className="" title={char.name}>
+								{char.name}
+							</span>
+							<Badge className={badgeClass} variant={undefined}>
+								{char.turnState}
+							</Badge>
+						</Button>
+					);
+				})}
+			</div>
+		</section>
 	);
 }

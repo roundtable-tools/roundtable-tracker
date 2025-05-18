@@ -4,7 +4,8 @@ import { Timeline, TimelineEvent } from './Timeline';
 import { Button } from '@/components/ui/button';
 import { Clock } from './Clock';
 import { generateUUID, UUID } from '@/utils/uuid';
-import { CharacterCard } from './CharacterCard';
+import { CharacterCard, QuickAccessGrid } from './CharacterCard';
+import { Character } from '@/store/data';
 
 export function NewInitiative() {
 	const encounterData = useEncounterStore((state) => state.encounterData);
@@ -56,6 +57,22 @@ export function NewInitiative() {
 		};
 	}, [currentRound]);
 
+	// Filter characters for quick access (on hold or delayed)
+	const quickAccessCharacters = characters.filter(
+		(c) => c.turnState === 'on-hold' || c.turnState === 'delayed'
+	);
+
+	// Handler to set character to active
+	const handleQuickAccess = (
+		uuid: string,
+		newState: Character['turnState']
+	) => {
+		// You may need to update the store here, this is a placeholder
+		// e.g. useEncounterStore.getState().setCharacterState(uuid, newState)
+		// For now, just log
+		console.log('Set', uuid, 'to', newState);
+	};
+
 	return (
 		<main className="p-4 flex flex-col gap-4">
 			<header className="flex items-center justify-between border-b pb-2">
@@ -74,7 +91,15 @@ export function NewInitiative() {
 				<Button onClick={handleNextRound}>Next Round</Button>
 			</section>
 
+			<section>
+				<QuickAccessGrid
+					characters={quickAccessCharacters}
+					onStateChange={handleQuickAccess}
+				/>
+			</section>
+
 			<section className="mt-4">
+				<h3 className="font-semibold text-base mb-2">Encounter Order</h3>
 				<ul className="flex flex-col gap-2">
 					{characters.map((character) => (
 						<li key={character.uuid}>
