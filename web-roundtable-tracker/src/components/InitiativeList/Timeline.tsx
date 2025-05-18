@@ -7,7 +7,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 
 export type TimelineEvent = {
-	turn: number;
+	round: number;
 	label: string;
 	description?: string;
 };
@@ -78,11 +78,10 @@ export function Timeline({
 	events,
 	futureTurns = 4,
 }: TimelineProps) {
-	// Map turn -> TimelineEvent[]
 	const eventMap: Record<number, TimelineEvent[]> = {};
 	events.forEach((e) => {
-		if (!eventMap[e.turn]) eventMap[e.turn] = [];
-		eventMap[e.turn].push(e);
+		if (!eventMap[e.round]) eventMap[e.round] = [];
+		eventMap[e.round].push(e);
 	});
 	const startTurn = currentTurn;
 	const endTurn = currentTurn + futureTurns;
@@ -92,7 +91,7 @@ export function Timeline({
 	);
 
 	return (
-		<div className="relative flex items-center gap-0 py-2 pl-2 overflow-x-hidden">
+		<div className="relative flex items-center gap-0 w-full py-2 pl-2 overflow-x-hidden">
 			{turns.map((turn, idx) => (
 				<TimelineItem
 					key={turn}
