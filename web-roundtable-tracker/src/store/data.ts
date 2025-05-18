@@ -1,7 +1,13 @@
 import { UUID } from '@/utils/uuid';
 import { z } from 'zod';
 
-export const STATE = ['normal', 'delayed', 'knocked-out'] as const;
+export const STATE = [
+	'normal',
+	'active',
+	'on-hold',
+	'delayed',
+	'knocked-out',
+] as const;
 type State = (typeof STATE)[number];
 export const indexToLetter = (index: number) => String.fromCharCode(97 + index);
 

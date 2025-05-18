@@ -4,6 +4,7 @@ import { Timeline, TimelineEvent } from './Timeline';
 import { Button } from '@/components/ui/button';
 import { Clock } from './Clock';
 import { generateUUID, UUID } from '@/utils/uuid';
+import { CharacterCard } from './CharacterCard';
 
 export function NewInitiative() {
 	const encounterData = useEncounterStore((state) => state.encounterData);
@@ -74,11 +75,10 @@ export function NewInitiative() {
 			</section>
 
 			<section className="mt-4">
-				<ul className="mt-2">
+				<ul className="flex flex-col gap-2">
 					{characters.map((character) => (
-						<li key={character.uuid} className="py-2">
-							<span>{character.name}</span>
-							<span className="ml-4">{character.initiative}</span>
+						<li key={character.uuid}>
+							<CharacterCard character={character} />
 						</li>
 					))}
 				</ul>
