@@ -12,6 +12,7 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as PreviewImport } from './routes/preview'
+import { Route as NewinitiativeImport } from './routes/new_initiative'
 import { Route as InitiativeImport } from './routes/initiative'
 import { Route as Initaitive2Import } from './routes/initaitive2'
 import { Route as EncountersImport } from './routes/encounters'
@@ -23,6 +24,12 @@ import { Route as IndexImport } from './routes/index'
 const PreviewRoute = PreviewImport.update({
   id: '/preview',
   path: '/preview',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const NewinitiativeRoute = NewinitiativeImport.update({
+  id: '/new_initiative',
+  path: '/new_initiative',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -95,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InitiativeImport
       parentRoute: typeof rootRoute
     }
+    '/new_initiative': {
+      id: '/new_initiative'
+      path: '/new_initiative'
+      fullPath: '/new_initiative'
+      preLoaderRoute: typeof NewinitiativeImport
+      parentRoute: typeof rootRoute
+    }
     '/preview': {
       id: '/preview'
       path: '/preview'
@@ -113,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/encounters': typeof EncountersRoute
   '/initaitive2': typeof Initaitive2Route
   '/initiative': typeof InitiativeRoute
+  '/new_initiative': typeof NewinitiativeRoute
   '/preview': typeof PreviewRoute
 }
 
@@ -122,6 +137,7 @@ export interface FileRoutesByTo {
   '/encounters': typeof EncountersRoute
   '/initaitive2': typeof Initaitive2Route
   '/initiative': typeof InitiativeRoute
+  '/new_initiative': typeof NewinitiativeRoute
   '/preview': typeof PreviewRoute
 }
 
@@ -132,6 +148,7 @@ export interface FileRoutesById {
   '/encounters': typeof EncountersRoute
   '/initaitive2': typeof Initaitive2Route
   '/initiative': typeof InitiativeRoute
+  '/new_initiative': typeof NewinitiativeRoute
   '/preview': typeof PreviewRoute
 }
 
@@ -143,6 +160,7 @@ export interface FileRouteTypes {
     | '/encounters'
     | '/initaitive2'
     | '/initiative'
+    | '/new_initiative'
     | '/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -151,6 +169,7 @@ export interface FileRouteTypes {
     | '/encounters'
     | '/initaitive2'
     | '/initiative'
+    | '/new_initiative'
     | '/preview'
   id:
     | '__root__'
@@ -159,6 +178,7 @@ export interface FileRouteTypes {
     | '/encounters'
     | '/initaitive2'
     | '/initiative'
+    | '/new_initiative'
     | '/preview'
   fileRoutesById: FileRoutesById
 }
@@ -169,6 +189,7 @@ export interface RootRouteChildren {
   EncountersRoute: typeof EncountersRoute
   Initaitive2Route: typeof Initaitive2Route
   InitiativeRoute: typeof InitiativeRoute
+  NewinitiativeRoute: typeof NewinitiativeRoute
   PreviewRoute: typeof PreviewRoute
 }
 
@@ -178,6 +199,7 @@ const rootRouteChildren: RootRouteChildren = {
   EncountersRoute: EncountersRoute,
   Initaitive2Route: Initaitive2Route,
   InitiativeRoute: InitiativeRoute,
+  NewinitiativeRoute: NewinitiativeRoute,
   PreviewRoute: PreviewRoute,
 }
 
@@ -196,6 +218,7 @@ export const routeTree = rootRoute
         "/encounters",
         "/initaitive2",
         "/initiative",
+        "/new_initiative",
         "/preview"
       ]
     },
@@ -213,6 +236,9 @@ export const routeTree = rootRoute
     },
     "/initiative": {
       "filePath": "initiative.tsx"
+    },
+    "/new_initiative": {
+      "filePath": "new_initiative.tsx"
     },
     "/preview": {
       "filePath": "preview.tsx"

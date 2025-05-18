@@ -13675,8 +13675,6 @@ __metadata:
 "root-workspace-0b6124@workspace:.":
   version: 0.0.0-use.local
   resolution: "root-workspace-0b6124@workspace:."
-  dependencies:
-    "@legendapp/state": "npm:^3.0.0-beta.30"
   languageName: unknown
   linkType: soft
 

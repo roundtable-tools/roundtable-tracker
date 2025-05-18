@@ -8,6 +8,7 @@ import supabase from './supabase';
 
 import { observablePersistIndexedDB } from '@legendapp/state/persist-plugins/indexeddb';
 import { enableReactTracking } from '@legendapp/state/config/enableReactTracking';
+import { configureSynced, syncObservable } from '@legendapp/state/sync';
 enableReactTracking({
 	auto: true,
 	warnUnobserved: true,
@@ -83,3 +84,26 @@ export const store$ = observable({
 		});
 	},
 });
+
+const persistOptions = configureSynced({
+	persist: {
+		plugin: observablePersistIndexedDB({
+			databaseName: 'Legend-Local',
+			version: 1,
+			tableNames: ['encounterStore'],
+		}),
+	},
+});
+
+export const encounterStore$ = observable({
+	encounter: {},
+});
+
+syncObservable(
+	encounterStore$,
+	persistOptions({
+		persist: {
+			name: 'encounterStore',
+		},
+	})
+);
