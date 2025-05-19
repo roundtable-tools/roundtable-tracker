@@ -9,6 +9,7 @@ import {
 	CollapsibleContent,
 } from '../ui/collapsible';
 import { Button } from '../ui/button';
+import { cn } from '@/lib/utils';
 
 // Map character state to shadcn/ui badge color using shadcn palette classes
 const STATE_BADGE_COLOR: Record<Character['turnState'], string> = {
@@ -55,9 +56,12 @@ export function CharacterCard({
 }) {
 	const [open, setOpen] = useState(defaultOpen);
 	const badgeClass = getBadgeClass(character.turnState);
+	const activeClass =
+		character.turnState === 'active' ? '' : 'ring-transparent';
 
 	return (
-		<Card className="w-full max-w-md  p-2 px-4">
+		<Card className={cn('w-full max-w-md p-2 px-4 ring-2', activeClass)}>
+			{/* Collapsible component for character details */}
 			<Collapsible open={open} onOpenChange={setOpen}>
 				<CollapsibleTrigger asChild>
 					<button

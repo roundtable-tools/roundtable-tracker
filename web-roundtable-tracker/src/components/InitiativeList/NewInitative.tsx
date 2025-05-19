@@ -6,24 +6,67 @@ import { Clock, TimeDisplay } from './Clock';
 import { generateUUID, UUID } from '@/utils/uuid';
 import { CharacterCard, QuickAccessGrid } from './CharacterCard';
 import { Character } from '@/store/data';
+import { observable } from '@legendapp/state';
+import { Card } from '../ui/card';
+
+type InitiativeElement =
+	| {
+			type: 'character';
+			element: Character;
+	  }
+	| {
+			type: 'roundDisplay';
+			element: {
+				uuid: string;
+			};
+	  };
+
+const encounterStore$ = observable({
+	initiativeQueue: [] as InitiativeElement[],
+	populateInitiativeQueue: (characters: Character[]) => {
+		encounterStore$.initiativeQueue.set(
+			characters.map(
+				(character) =>
+					({
+						type: 'character',
+						element: { ...character },
+					}) as const
+			)
+		);
+
+		encounterStore$.initiativeQueue.push({
+			type: 'roundDisplay',
+			element: {
+				uuid: generateUUID(),
+			},
+		});
+	},
+});
+
+// Track start and end timestamps for each round
+type RoundTimestamps = {
+	id: UUID;
+	round: number;
+	start: number;
+	end?: number;
+	duration?: number;
+};
 
 export function NewInitiative() {
 	const encounterData = useEncounterStore((state) => state.encounterData);
 	const charactersMap = useEncounterStore((state) => state.charactersMap);
 
-	const characters = Object.values(charactersMap);
-
 	const [startTimestamp] = useState<number>(new Date().getTime());
 	const [currentRound, setCurrentRound] = useState(1);
 
-	// Track start and end timestamps for each round
-	type RoundTimestamps = {
-		id: UUID;
-		round: number;
-		start: number;
-		end?: number;
-		duration?: number;
-	};
+	const characters = Object.values(charactersMap);
+
+	useEffect(() => {
+		encounterStore$.populateInitiativeQueue(Object.values(charactersMap));
+	}, [charactersMap]);
+
+	const initiativeQueue = encounterStore$.initiativeQueue.get();
+
 	const [roundTimestamps, setRoundTimestamps] = useState<RoundTimestamps[]>([]);
 
 	// Track character turn timings
@@ -110,7 +153,7 @@ export function NewInitiative() {
 			}));
 			activeCharacterRef.current = currentCharacter.uuid;
 		}
-	}, [currentCharacter, currentCharacter.uuid]);
+	}, [currentCharacter, currentCharacter?.uuid]);
 
 	// Helper to get current turn time for a character
 	function getCurrentTurnTime(uuid: string) {
@@ -136,7 +179,7 @@ export function NewInitiative() {
 				</h2>
 				<Timeline currentTurn={currentRound} events={events} />
 
-				<Button onClick={handleNextRound}>Next Round</Button>
+				<Button onClick={handleNextRound}>Next Turn</Button>
 			</section>
 
 			<section>
@@ -149,28 +192,28 @@ export function NewInitiative() {
 			<section className="mt-4">
 				<h3 className="font-semibold text-base mb-2">Encounter Order</h3>
 				<ul className="flex flex-col gap-2">
-					{characters.map((character) => (
-						<li key={character.uuid} className="flex items-center gap-2">
-							<CharacterCard character={character} />
-							{/* Show current turn time for all characters */}
-							<span className="text-xs text-muted-foreground font-mono ml-2">
-								{character.uuid === currentCharacter?.uuid ? (
-									<Clock
-										startTimestamp={
-											characterTurnTimestamps[character.uuid]?.start ??
-											Date.now()
-										}
+					{initiativeQueue.map((item) => {
+						if (item.type === 'roundDisplay') {
+							return (
+								<li key={item.element.uuid} className="flex items-center gap-2">
+									<RoundDisplay round={currentRound} />
+								</li>
+							);
+						} else if (item.type === 'character') {
+							return (
+								<li key={item.element.uuid} className="flex items-center gap-2">
+									<CharacterCard character={item.element} />
+
+									<CharacterTimer
+										uuid={item.element.uuid}
+										currentCharacterUuid={currentCharacter?.uuid}
+										characterTurnTimestamps={characterTurnTimestamps}
+										getCurrentTurnTime={getCurrentTurnTime}
 									/>
-								) : (
-									<TimeDisplay
-										seconds={Math.floor(
-											getCurrentTurnTime(character.uuid) / 1000
-										)}
-									/>
-								)}
-							</span>
-						</li>
-					))}
+								</li>
+							);
+						}
+					})}
 				</ul>
 			</section>
 			{/* Example: show round durations for debugging */}
@@ -185,5 +228,42 @@ export function NewInitiative() {
 				</ul>
 			</section>
 		</main>
+	);
+}
+
+function RoundDisplay({ round }: { round: number }) {
+	return (
+		<Card className={'w-full max-w-md p-2 px-4'}>
+			<span className="font-semibold m-auto">Round {round}</span>
+		</Card>
+	);
+}
+
+function CharacterTimer({
+	uuid,
+	currentCharacterUuid,
+	characterTurnTimestamps,
+	getCurrentTurnTime,
+}: {
+	uuid: string;
+	currentCharacterUuid?: string;
+	characterTurnTimestamps: Record<
+		string,
+		{ start: number; end?: number; duration?: number }
+	>;
+	getCurrentTurnTime: (uuid: string) => number;
+}) {
+	const isCurrent = uuid === currentCharacterUuid;
+
+	return (
+		<span className="text-xs text-muted-foreground font-mono ml-2">
+			{isCurrent ? (
+				<Clock
+					startTimestamp={characterTurnTimestamps[uuid]?.start ?? Date.now()}
+				/>
+			) : (
+				<TimeDisplay seconds={Math.floor(getCurrentTurnTime(uuid) / 1000)} />
+			)}
+		</span>
 	);
 }
