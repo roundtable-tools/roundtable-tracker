@@ -7,6 +7,7 @@
   "packageManager": "yarn@4.9.0",
   "scripts": {
     "dev": "yarn workspace web-roundtable-tracker dev",
-    "start": "yarn workspace native-roundtable-tracker start"
+    "start": "yarn workspace native-roundtable-tracker start",
+    "test": "yarn workspace web-roundtable-tracker test"
   }
 }
