@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 
 // Map character state to shadcn/ui badge color using shadcn palette classes
 const STATE_BADGE_COLOR: Record<Character['turnState'], string> = {
-	normal: 'bg-green-200 text-green-800',
+	normal: 'bg-green-200 text-green-800 hidden',
 	delayed: 'bg-yellow-100 text-yellow-800',
 	active: 'bg-blue-200 text-blue-800',
 	'knocked-out': 'bg-red-200 text-red-800',
@@ -56,11 +56,9 @@ export function CharacterCard({
 }) {
 	const [open, setOpen] = useState(defaultOpen);
 	const badgeClass = getBadgeClass(character.turnState);
-	const activeClass =
-		character.turnState === 'active' ? '' : 'ring-transparent';
 
 	return (
-		<Card className={cn('w-full max-w-md p-2 px-4 ring-2', activeClass)}>
+		<Card className={cn('w-full max-w-md p-2 px-4')}>
 			{/* Collapsible component for character details */}
 			<Collapsible open={open} onOpenChange={setOpen}>
 				<CollapsibleTrigger asChild>
@@ -73,12 +71,8 @@ export function CharacterCard({
 							<span className="font-bold text-lg truncate max-w-[10ch] md:max-w-none">
 								{character.name}
 							</span>
-							<Badge
-								className={badgeClass}
-								variant={undefined /* override variant to allow custom bg */}
-							>
-								{character.turnState}
-							</Badge>
+
+							<Badge className={badgeClass}>{character.turnState}</Badge>
 						</div>
 						<span className="text-base font-mono whitespace-nowrap">
 							{character.health ?? 0}

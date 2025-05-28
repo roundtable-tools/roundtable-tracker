@@ -1,13 +1,17 @@
 import { useEncounterStore } from '@/store/instance';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Timeline, TimelineEvent } from './Timeline';
 import { Button } from '@/components/ui/button';
-import { Clock, TimeDisplay } from './Clock';
+import { Clock } from './Clock';
 import { generateUUID, UUID } from '@/utils/uuid';
 import { CharacterCard, QuickAccessGrid } from './CharacterCard';
 import { Character } from '@/store/data';
 import { observable } from '@legendapp/state';
 import { Card } from '../ui/card';
+import { use$ } from '@legendapp/state/react';
+import { CharacterTimer } from './CharacterTimer';
+import type { InitiativeElement } from './InitiativeElement';
+import { cn } from '@/lib/utils';
 
 type InitiativeElement =
 	| {
@@ -23,13 +27,15 @@ type InitiativeElement =
 
 const encounterStore$ = observable({
 	initiativeQueue: [] as InitiativeElement[],
+	activeCharacter: null as Character | null,
+	round: 1,
 	populateInitiativeQueue: (characters: Character[]) => {
 		encounterStore$.initiativeQueue.set(
 			characters.map(
 				(character) =>
 					({
 						type: 'character',
-						element: { ...character },
+						element: { ...character, hasTurn: true },
 					}) as const
 			)
 		);
@@ -40,8 +46,115 @@ const encounterStore$ = observable({
 				uuid: generateUUID(),
 			},
 		});
+
+		goToNextActive();
+	},
+	nextTurn: () => {
+		console.log('Next Turn');
+
+		if (encounterStore$.initiativeQueue.length === 0) return;
+
+		const item = encounterStore$.initiativeQueue.shift()!;
+		if (isRoundDisplay(item)) {
+			encounterStore$.round.set(encounterStore$.round.peek() + 1);
+			encounterStore$.initiativeQueue.push({
+				type: 'roundDisplay',
+				element: {
+					uuid: generateUUID(),
+				},
+			});
+
+			for (const character of encounterStore$.initiativeQueue) {
+				if (isCharacter(character.peek())) {
+					character.element.assign({
+						hasTurn: true,
+					});
+				}
+			}
+
+			console.log('Round:', encounterStore$.initiativeQueue.peek());
+		} else if (isCharacter(item)) {
+			item.element.hasTurn = false;
+			encounterStore$.initiativeQueue.push({
+				...item,
+				element: {
+					...item.element,
+					turnState:
+						item.element.turnState == 'active'
+							? 'normal'
+							: item.element.turnState,
+					hasTurn: false,
+				},
+			});
+		}
+		goToNextActive();
+		console.log(
+			'Initiative Queue next:',
+			encounterStore$.initiativeQueue.peek()
+		);
 	},
 });
+
+const isCharacter = (
+	item: InitiativeElement
+): item is InitiativeElement & { type: 'character' } =>
+	item.type === 'character';
+const isRoundDisplay = (
+	item: InitiativeElement
+): item is InitiativeElement & { type: 'roundDisplay' } =>
+	item.type === 'roundDisplay';
+
+function goToNextActive() {
+	const queue = encounterStore$.initiativeQueue.peek();
+	let result = '';
+	while (result != 'endRound' && result !== 'makeActive') {
+		if (queue.length === 0) break;
+		const item = queue.shift()!;
+		result = processInitiativeQueueItem(item);
+		if (result === 'makeActive' && isCharacter(item)) {
+			encounterStore$.initiativeQueue.unshift({
+				...item,
+				element: {
+					...item.element,
+					turnState: 'active',
+				},
+			});
+			console.log('Active Character:');
+			encounterStore$.activeCharacter.set(item.element);
+		}
+		if (result === 'skip' && isCharacter(item)) {
+			encounterStore$.initiativeQueue.push({
+				...item,
+				element: {
+					...item.element,
+					hasTurn: false,
+				},
+			});
+		}
+		if (result === 'endRound') {
+			encounterStore$.initiativeQueue.unshift(item);
+			console.log('End of round');
+			encounterStore$.activeCharacter.set(null);
+		}
+		console.log('Result:', result);
+	}
+}
+function processInitiativeQueueItem(item: InitiativeElement) {
+	if (item.type === 'roundDisplay') return 'endRound';
+
+	const character = item.element;
+	if (canBeMadeActive(character)) return 'makeActive';
+
+	return 'skip';
+}
+
+function canBeMadeActive(character: Character) {
+	if (!character.hasTurn) return false;
+
+	const validStates: Character['turnState'][] = ['active', 'normal', 'delayed'];
+
+	return validStates.includes(character.turnState);
+}
 
 // Track start and end timestamps for each round
 type RoundTimestamps = {
@@ -57,15 +170,18 @@ export function NewInitiative() {
 	const charactersMap = useEncounterStore((state) => state.charactersMap);
 
 	const [startTimestamp] = useState<number>(new Date().getTime());
-	const [currentRound, setCurrentRound] = useState(1);
-
-	const characters = Object.values(charactersMap);
+	const currentRound = use$(encounterStore$.round);
 
 	useEffect(() => {
 		encounterStore$.populateInitiativeQueue(Object.values(charactersMap));
 	}, [charactersMap]);
 
-	const initiativeQueue = encounterStore$.initiativeQueue.get();
+	const initiativeQueue = use$(encounterStore$.initiativeQueue);
+	const activeCharacter = use$(encounterStore$.activeCharacter);
+
+	const characters = initiativeQueue
+		.filter(isCharacter)
+		.map((item) => item.element);
 
 	const [roundTimestamps, setRoundTimestamps] = useState<RoundTimestamps[]>([]);
 
@@ -73,7 +189,6 @@ export function NewInitiative() {
 	const [characterTurnTimestamps, setCharacterTurnTimestamps] = useState<
 		Record<string, { start: number; end?: number; duration?: number }>
 	>({});
-	const activeCharacterRef = useRef<string | null>(null);
 
 	// Example events for demonstration
 	const events: TimelineEvent[] = [
@@ -85,11 +200,6 @@ export function NewInitiative() {
 		{ round: 4, label: 'Reinforcements', description: 'More enemies arrive.' },
 		{ round: 4, label: 'Reinforcements', description: 'More enemies arrive.' },
 	];
-
-	// Advance to next round, recording end/start timestamps
-	const handleNextRound = () => {
-		setCurrentRound((prev) => prev + 1);
-	};
 
 	useEffect(() => {
 		const roundDuration: RoundTimestamps = {
@@ -106,6 +216,26 @@ export function NewInitiative() {
 		};
 	}, [currentRound]);
 
+	useEffect(() => {
+		const characterTurnDuration = {
+			start: Date.now(),
+		};
+		console.log('Character Turn Duration:', activeCharacter?.name);
+
+		return () => {
+			if (activeCharacter) {
+				setCharacterTurnTimestamps((prev) => ({
+					...prev,
+					[activeCharacter.uuid]: {
+						start: characterTurnDuration.start,
+						end: Date.now(),
+						duration: Date.now() - characterTurnDuration.start,
+					},
+				}));
+			}
+		};
+	}, [activeCharacter]);
+
 	// Filter characters for quick access (on hold or delayed)
 	const quickAccessCharacters = characters.filter(
 		(c) => c.turnState === 'on-hold' || c.turnState === 'delayed'
@@ -121,39 +251,6 @@ export function NewInitiative() {
 		// For now, just log
 		console.log('Set', uuid, 'to', newState);
 	};
-
-	// Helper to get the current character (first in list for now)
-	const currentCharacter = characters[0];
-	const lastCharacter = characters[characters.length - 1];
-
-	// Start timing when a character becomes active
-	useEffect(() => {
-		if (!currentCharacter) return;
-		if (activeCharacterRef.current !== currentCharacter.uuid) {
-			// End previous character's turn
-			if (activeCharacterRef.current) {
-				setCharacterTurnTimestamps((prev) => {
-					const prevData = prev[activeCharacterRef.current!];
-					if (!prevData || prevData.end) return prev;
-
-					return {
-						...prev,
-						[activeCharacterRef.current!]: {
-							...prevData,
-							end: Date.now(),
-							duration: Date.now() - prevData.start,
-						},
-					};
-				});
-			}
-			// Start new character's turn
-			setCharacterTurnTimestamps((prev) => ({
-				...prev,
-				[currentCharacter.uuid]: { start: Date.now() },
-			}));
-			activeCharacterRef.current = currentCharacter.uuid;
-		}
-	}, [currentCharacter, currentCharacter?.uuid]);
 
 	// Helper to get current turn time for a character
 	function getCurrentTurnTime(uuid: string) {
@@ -179,7 +276,7 @@ export function NewInitiative() {
 				</h2>
 				<Timeline currentTurn={currentRound} events={events} />
 
-				<Button onClick={handleNextRound}>Next Turn</Button>
+				<Button onClick={encounterStore$.nextTurn}>Next Turn</Button>
 			</section>
 
 			<section>
@@ -191,30 +288,42 @@ export function NewInitiative() {
 
 			<section className="mt-4">
 				<h3 className="font-semibold text-base mb-2">Encounter Order</h3>
-				<ul className="flex flex-col gap-2">
-					{initiativeQueue.map((item) => {
-						if (item.type === 'roundDisplay') {
-							return (
-								<li key={item.element.uuid} className="flex items-center gap-2">
+				<InitiativeQueueList
+					queue={initiativeQueue}
+					mapTypeToElement={{
+						roundDisplay: (item, isFirstClass) => (
+							<li key={item.element.uuid} className="flex items-center gap-2">
+								<div
+									className={cn(
+										'w-full  rounded-xl max-w-md ring-2',
+										isFirstClass
+									)}
+								>
 									<RoundDisplay round={currentRound} />
-								</li>
-							);
-						} else if (item.type === 'character') {
-							return (
-								<li key={item.element.uuid} className="flex items-center gap-2">
+								</div>
+							</li>
+						),
+						character: (item, isFirstClass) => (
+							<li key={item.element.uuid} className="flex items-center gap-2">
+								<div
+									className={cn(
+										'w-full max-w-md rounded-xl ring-2',
+										isFirstClass
+									)}
+								>
 									<CharacterCard character={item.element} />
+								</div>
 
-									<CharacterTimer
-										uuid={item.element.uuid}
-										currentCharacterUuid={currentCharacter?.uuid}
-										characterTurnTimestamps={characterTurnTimestamps}
-										getCurrentTurnTime={getCurrentTurnTime}
-									/>
-								</li>
-							);
-						}
-					})}
-				</ul>
+								<CharacterTimer
+									uuid={item.element.uuid}
+									currentCharacterUuid={activeCharacter?.uuid}
+									characterTurnTimestamps={characterTurnTimestamps}
+									getCurrentTurnTime={getCurrentTurnTime}
+								/>
+							</li>
+						),
+					}}
+				/>
 			</section>
 			{/* Example: show round durations for debugging */}
 			<section className="mt-4">
@@ -239,31 +348,29 @@ function RoundDisplay({ round }: { round: number }) {
 	);
 }
 
-function CharacterTimer({
-	uuid,
-	currentCharacterUuid,
-	characterTurnTimestamps,
-	getCurrentTurnTime,
-}: {
-	uuid: string;
-	currentCharacterUuid?: string;
-	characterTurnTimestamps: Record<
-		string,
-		{ start: number; end?: number; duration?: number }
-	>;
-	getCurrentTurnTime: (uuid: string) => number;
-}) {
-	const isCurrent = uuid === currentCharacterUuid;
+type ExtractFromUnionByType<T, U> = T extends { type: U } ? T : never;
 
+interface InitiativeQueueListProps {
+	queue: InitiativeElement[];
+	mapTypeToElement: {
+		[K in InitiativeElement['type']]: (
+			item: ExtractFromUnionByType<InitiativeElement, K>,
+			isFirstClass?: string
+		) => JSX.Element;
+	};
+}
+
+function InitiativeQueueList({
+	queue,
+	mapTypeToElement,
+}: InitiativeQueueListProps) {
 	return (
-		<span className="text-xs text-muted-foreground font-mono ml-2">
-			{isCurrent ? (
-				<Clock
-					startTimestamp={characterTurnTimestamps[uuid]?.start ?? Date.now()}
-				/>
-			) : (
-				<TimeDisplay seconds={Math.floor(getCurrentTurnTime(uuid) / 1000)} />
-			)}
-		</span>
+		<ul className="flex flex-col gap-2">
+			{queue.map((item, index) => {
+				const isFirstClass = index === 0 ? '' : 'ring-transparent';
+
+				return mapTypeToElement[item.type]?.(item as never, isFirstClass);
+			})}
+		</ul>
 	);
 }
