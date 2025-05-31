@@ -4,8 +4,7 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"predev": "echo \"VITE_SUPABASE_URL=https://sokprlktqsvftmanxtkz.supabase.co/\" > .env && echo \"VITE_SUPABASE_ANON_KEY=<>\" >> .env",
-		"dev": "npm run predev && vite",
+		"dev": "vite",
 		"build": "tsc -b && vite build",
 		"lint": "eslint .",
 		"preview": "vite preview",
