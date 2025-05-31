@@ -1,7 +1,13 @@
-import { UUID } from '@/utils/uuid';
-import { z } from 'zod';
+import { UUID } from "@/utils/uuid";
+import { z } from "zod";
 
-export const STATE = ['normal', 'delayed', 'knocked-out'] as const;
+export const STATE = [
+	"normal",
+	"active",
+	"on-hold",
+	"delayed",
+	"knocked-out",
+] as const;
 type State = (typeof STATE)[number];
 export const indexToLetter = (index: number) => String.fromCharCode(97 + index);
 
@@ -13,7 +19,7 @@ export type CharacterConfig = {
 } & InitiativeParticipant;
 
 export const characterConfigToCharacter = (
-	participant: CharacterConfig
+	participant: CharacterConfig,
 ): Character => ({
 	uuid: participant.uuid,
 	name: participant.name,
@@ -21,8 +27,9 @@ export const characterConfigToCharacter = (
 	health: participant.health,
 	maxHealth: participant.maxHealth,
 	tempHealth: participant.tempHealth,
-	turnState: participant.startingState ?? 'normal',
-	group: participant.side === ALIGNMENT.PCs ? 'players' : 'enemies',
+	turnState: participant.startingState ?? "normal",
+	group: participant.side === ALIGNMENT.PCs ? "players" : "enemies",
+	hasTurn: false,
 });
 
 export interface Character {
@@ -30,12 +37,14 @@ export interface Character {
 	name: string;
 	initiative: number;
 	turnState: State;
+	hasTurn: boolean;
 	health: number;
 	maxHealth: number;
 	tempHealth: number;
-	group?: 'players' | 'enemies';
+	group?: "players" | "enemies";
 	wounded?: number;
 	knockedBy?: UUID;
+	level?: number; // Optional level property
 }
 
 export const DIFFICULTY = {
@@ -48,10 +57,10 @@ export const DIFFICULTY = {
 } as const;
 
 export const difficultyToString: (
-	difficulty: Difficulty
+	difficulty: Difficulty,
 ) => keyof typeof DIFFICULTY = (difficulty: Difficulty) =>
 	(Object.entries(DIFFICULTY).find(([, value]) => value == difficulty)?.[0] ??
-		'Unknown') as keyof typeof DIFFICULTY;
+		"Unknown") as keyof typeof DIFFICULTY;
 
 export const PRIORITY = {
 	PC: 0,
@@ -72,14 +81,13 @@ export const LEVEL_REPRESENTATION = {
 
 export const normalizeLevel = (
 	partyLevel: number,
-	level: LevelFormat[0 | 1]
-) =>
-	Number.isInteger(level)
-		? (level as number)
-		: partyLevel + Number.parseInt(level as string);
+	level: LevelFormat[0 | 1],
+) => Number.isInteger(level)
+	? (level as number)
+	: partyLevel + Number.parseInt(level as string);
 
 export const participantsToLevelRange: <T extends LevelRepresentation>(
-	participants: Participant<T>[]
+	participants: Participant<T>[],
 ) => [number, number] = (participants) => {
 	const levels = participants.map((participant) => {
 		const level = Number.isInteger(participant.level)
@@ -100,7 +108,7 @@ export const participantsToLevelRange: <T extends LevelRepresentation>(
 export const INITIATIVE_STATE = {
 	Normal: 0,
 	Delayed: 1,
-	'Knocked-Out': 2,
+	"Knocked-Out": 2,
 } as const;
 
 type ValueOf<T> = T[keyof T];
@@ -119,7 +127,7 @@ export type InitiativeParticipant = {
 	tiePriority: Priority;
 	initiative?: number;
 	level: number;
-} & Omit<Participant<typeof LEVEL_REPRESENTATION.Exact>, 'count'>;
+} & Omit<Participant<typeof LEVEL_REPRESENTATION.Exact>, "count">;
 
 export type Participant<
 	IsAbstract extends LevelRepresentation = LevelRepresentation,
@@ -134,7 +142,7 @@ export type Participant<
 	tempHealth?: number;
 	// TEMP: Set state to @ostatni5's format until the types get unified
 	// startingState?: INITIATIVE_STATE.Normal,
-	startingState?: 'normal' | 'delayed' | 'knocked-out';
+	startingState?: "normal" | "delayed" | "knocked-out";
 };
 type ConcreteEncounterVariant = {
 	difficulty?: Difficulty;
@@ -187,8 +195,9 @@ export const ConcreteEncounterSchema = z.object({
 			tempHealth: z.number().optional(),
 			// TEMP: Set state to @ostatni5's format until the types get unified
 			// startingState: z.nativeEnum(INITIATIVE_STATE).optional(),
-			startingState: z.enum(['normal', 'delayed', 'knocked-out']).optional(),
-		})
+			startingState: z.enum(["normal", "delayed", "knocked-out"])
+				.optional(),
+		}),
 	),
 });
 
@@ -196,16 +205,16 @@ export type Encounter = AbstractEncounter | ConcreteEncounter;
 // Example usage
 
 export const exampleEncounter: Encounter = {
-	id: 'encounter-001',
-	name: 'Goblin Ambush',
+	id: "encounter-001",
+	name: "Goblin Ambush",
 	level: 2,
 	difficulty: DIFFICULTY.Moderate,
-	description: 'A group of goblins ambush the party',
+	description: "A group of goblins ambush the party",
 	partySize: 4,
 	levelRepresentation: LEVEL_REPRESENTATION.Exact,
 	participants: [
 		{
-			name: 'Goblin',
+			name: "Goblin",
 			level: -1,
 			side: ALIGNMENT.Opponents,
 			count: 4,
@@ -214,10 +223,10 @@ export const exampleEncounter: Encounter = {
 	variants: [
 		{
 			level: 1,
-			description: 'PCs found the goblins before level up',
+			description: "PCs found the goblins before level up",
 			participants: [
 				{
-					name: 'Weak Goblin',
+					name: "Weak Goblin",
 					level: -2,
 					side: ALIGNMENT.Opponents,
 					count: 4,
@@ -226,10 +235,10 @@ export const exampleEncounter: Encounter = {
 		},
 		{
 			difficulty: DIFFICULTY.Low,
-			description: 'Scout did not report back to the main group',
+			description: "Scout did not report back to the main group",
 			participants: [
 				{
-					name: 'Goblin',
+					name: "Goblin",
 					level: -1,
 					side: ALIGNMENT.Opponents,
 					count: 3,
@@ -238,16 +247,16 @@ export const exampleEncounter: Encounter = {
 		},
 		{
 			partySize: 5,
-			description: 'Bigger party size',
+			description: "Bigger party size",
 			participants: [
 				{
-					name: 'Goblin',
+					name: "Goblin",
 					level: -1,
 					side: ALIGNMENT.Opponents,
 					count: 2,
 				},
 				{
-					name: 'Elite Goblin',
+					name: "Elite Goblin",
 					level: 0,
 					side: ALIGNMENT.Opponents,
 					count: 2,
