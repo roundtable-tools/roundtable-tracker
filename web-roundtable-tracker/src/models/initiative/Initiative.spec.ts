@@ -3,25 +3,18 @@ import { TrackedInitiative } from './TrackedInitiative.class';
 import { InitiativeParticipant } from './InitiativeParticipant.class';
 import { Command } from '@/CommandHistory/common';
 import { Encounter } from '../encounters/Encounter.class';
-import { RoundParticipant } from '../actors/participant/RoundParticipant.class';
+import { EncounterSlot } from '../encounters/EncounterSlot.class';
 
-// Mocks for dependencies
-class MockEncounter {
-	toEncounterParticipantList() {
-		return [new InitiativeParticipant({
-            initiative: 0,
-            actor: {} as RoundParticipant,
-        })];
-	}
-}
 
 describe('TrackedInitiative', () => {
 	it('should set properties from props', () => {
-		const participants = [
-			{} as InitiativeParticipant,
-			{} as InitiativeParticipant,
-		];
-		const encounter = new MockEncounter() as unknown as Encounter;
+		const participants = [] as InitiativeParticipant[];
+		const encounter = new Encounter({
+			name: 'Test Encounter',
+			description: 'A test encounter for unit testing',
+			partySize: 4,
+			slots: [],
+		})
 		const history = [] as Command[];
 		const tracked = new TrackedInitiative({
 			participants,
@@ -36,7 +29,21 @@ describe('TrackedInitiative', () => {
 
 	it('startInitiative should create TrackedInitiative with correct participants', () => {
 		// Arrange
-		const encounter = new MockEncounter() as unknown as Encounter;
+		const encounter =  new Encounter({
+			name: 'Test Encounter',
+			description: 'A test encounter for unit testing',
+			partySize: 4,
+			slots: [
+				new EncounterSlot({
+					name: 'Creature 1',
+					description: 'A test creature',
+				}),
+				new EncounterSlot({
+					name: 'Creature 2',
+					description: 'A test creature',
+				})
+			],
+		})
 		const initiativeList = [15, 10, 5];
 
 		// Act
@@ -48,7 +55,7 @@ describe('TrackedInitiative', () => {
 		// Assert
 		expect(tracked.encounter).toBe(encounter);
 		expect(Array.isArray(tracked.participants)).toBe(true);
-		expect(tracked.participants.length).toBe(3);
+		expect(tracked.participants.length).toBe(2);
 		tracked.participants.forEach((p, i) => {
 			expect(p).toBeInstanceOf(InitiativeParticipant);
 			expect(p.initiative).toBe(initiativeList[i]);
