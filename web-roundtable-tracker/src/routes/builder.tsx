@@ -1,6 +1,5 @@
-import { AppHeader } from '@/AppHeader';
+import { BuilderForm } from '@/components/BuilderForm/BuilderForm';
 import { createFileRoute } from '@tanstack/react-router';
-import { PageContent } from 'grommet/components/PageContent';
 
 export const Route = createFileRoute('/builder')({
 	component: RouteComponent,
@@ -9,8 +8,7 @@ export const Route = createFileRoute('/builder')({
 function RouteComponent() {
 	return (
 		<>
-			<AppHeader setView={() => {}} />
-			<PageContent fill />
+			<BuilderForm />
 		</>
 	);
 }
