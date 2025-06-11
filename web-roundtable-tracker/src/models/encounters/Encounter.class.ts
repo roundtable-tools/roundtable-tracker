@@ -3,14 +3,14 @@ import { EncounterTemplate, EncounterTemplateProps } from "../templates/Encounte
 import { EncounterSlot } from "./EncounterSlot.class";
 
 interface EncounterProps extends EncounterTemplateProps {
-    template: EncounterTemplate;
+    template?: EncounterTemplate;
     slots: EncounterSlot[];
 }
 
 export class Encounter extends EncounterTemplate {
     public slots: EncounterSlot[];
-    public template: EncounterTemplate;
-    
+    public template?: EncounterTemplate;
+
     constructor(props: EncounterProps) {
         super(props);
         this.slots = props.slots;
