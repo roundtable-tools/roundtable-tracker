@@ -1,4 +1,4 @@
-import { observable, event } from '@legendapp/state';
+import { observable, event, observe, ObserveEvent } from '@legendapp/state';
 import { generateUUID } from '@/utils/uuid';
 import { Character } from '@/store/data';
 import { InitiativeElement } from './initiativeTypes';
@@ -117,5 +117,19 @@ const encounterStore$ = observable({
 events.onNextTurn$.on(() => {
 	encounterStore$.resolveActiveItem();
 });
+
+const handleCharacterTurn = (e: ObserveEvent<void>) => {
+	const activeCharacter = encounterStore$.activeCharacter.get(true);
+
+	if (activeCharacter) {
+		encounterStore$.startCharacterTurn(activeCharacter.uuid);
+
+		e.onCleanup = () => {
+			encounterStore$.endCharacterTurn(activeCharacter.uuid);
+		};
+	}
+};
+
+observe(handleCharacterTurn);
 
 export default encounterStore$;

@@ -33,18 +33,6 @@ export function NewInitiative() {
 
 	const characterTurnTimestamps = use$(encounterStore$.characterTurnTimestamps);
 
-	useEffect(() => {
-		if (activeCharacter) {
-			console.log(
-				`Starting turn for character: ${activeCharacter.name} (${activeCharacter.uuid})`
-			);
-			encounterStore$.startCharacterTurn(activeCharacter.uuid);
-			return () => {
-				encounterStore$.endCharacterTurn(activeCharacter.uuid);
-			};
-		}
-	}, [activeCharacter]);
-
 	const quickAccessCharacters = characters.filter(
 		(c) => c.turnState === 'on-hold' || c.turnState === 'delayed'
 	);
