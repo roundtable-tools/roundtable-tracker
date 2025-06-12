@@ -8,11 +8,38 @@ const events = {
 	onNextTurn$: event(),
 };
 
+const initializeRoundTimer = (round: number, start: number) => {
+	encounterStore$.roundTimestamps[round].set({
+		start,
+	});
+};
+
+const finalizeRoundTimer = (currentRound: number, nextRound: number) => {
+	const start =
+		encounterStore$.roundTimestamps[currentRound]?.start.peek() || Date.now();
+	const end = Date.now();
+	const duration = end - start;
+
+	encounterStore$.roundTimestamps[currentRound].set({
+		start,
+		end,
+		duration,
+	});
+
+	encounterStore$.roundTimestamps[nextRound].set({
+		start: end,
+	});
+};
+
 const encounterStore$ = observable({
 	initiativeQueue: [] as InitiativeElement[],
 	activeCharacter: null as Character | null,
 	round: 0,
 	characterTurnTimestamps: {} as Record<
+		string,
+		{ start: number; end?: number; duration?: number }
+	>,
+	roundTimestamps: {} as Record<
 		string,
 		{ start: number; end?: number; duration?: number }
 	>,
@@ -37,6 +64,7 @@ const encounterStore$ = observable({
 		items.push(...characterItems);
 
 		encounterStore$.initiativeQueue.set(items);
+		initializeRoundTimer(0, Date.now());
 	},
 	nextTurn: () => {
 		console.log('Next Turn');
@@ -45,7 +73,9 @@ const encounterStore$ = observable({
 
 		const item = encounterStore$.initiativeQueue.shift()!;
 		if (isRoundDisplay(item)) {
-			encounterStore$.round.set(encounterStore$.round.peek() + 1);
+			const round = encounterStore$.round.peek();
+			const nextRound = round + 1;
+			encounterStore$.round.set(nextRound);
 			encounterStore$.initiativeQueue.push({
 				type: 'roundDisplay',
 				element: {
@@ -60,6 +90,8 @@ const encounterStore$ = observable({
 					});
 				}
 			}
+
+			finalizeRoundTimer(round, nextRound);
 		} else if (isCharacter(item)) {
 			item.element.hasTurn = false;
 			encounterStore$.initiativeQueue.push({
@@ -99,7 +131,7 @@ const encounterStore$ = observable({
 		encounterStore$.characterTurnTimestamps[uuid].set({ start: Date.now() });
 	},
 	endCharacterTurn: (uuid: string) => {
-		const start = encounterStore$.characterTurnTimestamps[uuid]?.start.peek();
+		const start = encounterStore$.characterTurnTimestamps[uuid]?.start?.peek();
 		const end = Date.now();
 		if (!start) {
 			console.warn(`No start time found for character with UUID: ${uuid}`);

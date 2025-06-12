@@ -32,6 +32,7 @@ export function NewInitiative() {
 		.map((item) => item.element);
 
 	const characterTurnTimestamps = use$(encounterStore$.characterTurnTimestamps);
+	const roundTimestamps = use$(encounterStore$.roundTimestamps);
 
 	const quickAccessCharacters = characters.filter(
 		(c) => c.turnState === 'on-hold' || c.turnState === 'delayed'
@@ -90,6 +91,9 @@ export function NewInitiative() {
 								>
 									<RoundDisplay round={currentRound} />
 								</div>
+								<RoundTimer
+									startTimestamp={roundTimestamps[currentRound].start}
+								/>
 							</li>
 						),
 						character: (item, isFirstClass) => (
@@ -124,5 +128,13 @@ function RoundDisplay({ round }: { round: number }) {
 				{round > 0 ? `Round ${round}` : 'Start of Encounter'}
 			</span>
 		</Card>
+	);
+}
+
+function RoundTimer({ startTimestamp }: { startTimestamp: number }) {
+	return (
+		<span className="text-xs text-muted-foreground font-mono ml-2">
+			<Clock startTimestamp={startTimestamp} />
+		</span>
 	);
 }
