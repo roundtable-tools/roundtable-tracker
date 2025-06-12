@@ -56,19 +56,22 @@ export function NewInitiative() {
 	const initiativeRenderQueue = (
 		<InitiativeQueueList
 			queue={initiativeQueue}
+			onReorder={(queue) => {
+				encounterStore$.initiativeQueue.set(queue);
+			}}
 			mapTypeToElement={{
-				roundDisplay: (item, isFirstClass) => (
-					<li key={item.element.uuid} className="flex items-center gap-2">
+				roundDisplay: (_item, isFirstClass) => (
+					<>
 						<div
 							className={cn('w-full  rounded-xl max-w-md ring-2', isFirstClass)}
 						>
 							<RoundDisplay round={currentRound} />
 						</div>
 						<RoundTimer startTimestamp={roundTimestamps[currentRound].start} />
-					</li>
+					</>
 				),
 				character: (item, isFirstClass) => (
-					<li key={item.element.uuid} className="flex items-center gap-2">
+					<>
 						<div
 							className={cn('w-full max-w-md rounded-xl ring-2', isFirstClass)}
 						>
@@ -80,7 +83,7 @@ export function NewInitiative() {
 							characterTurnTimestamps={characterTurnTimestamps}
 							getCurrentTurnTime={getCurrentTurnTime}
 						/>
-					</li>
+					</>
 				),
 			}}
 		/>
