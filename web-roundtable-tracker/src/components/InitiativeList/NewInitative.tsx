@@ -53,6 +53,39 @@ export function NewInitiative() {
 			: Date.now() - timestamp.start;
 	};
 
+	const initiativeRenderQueue = (
+		<InitiativeQueueList
+			queue={initiativeQueue}
+			mapTypeToElement={{
+				roundDisplay: (item, isFirstClass) => (
+					<li key={item.element.uuid} className="flex items-center gap-2">
+						<div
+							className={cn('w-full  rounded-xl max-w-md ring-2', isFirstClass)}
+						>
+							<RoundDisplay round={currentRound} />
+						</div>
+						<RoundTimer startTimestamp={roundTimestamps[currentRound].start} />
+					</li>
+				),
+				character: (item, isFirstClass) => (
+					<li key={item.element.uuid} className="flex items-center gap-2">
+						<div
+							className={cn('w-full max-w-md rounded-xl ring-2', isFirstClass)}
+						>
+							<CharacterCard character={item.element} />
+						</div>
+						<CharacterTimer
+							uuid={item.element.uuid}
+							currentCharacterUuid={activeCharacter?.uuid}
+							characterTurnTimestamps={characterTurnTimestamps}
+							getCurrentTurnTime={getCurrentTurnTime}
+						/>
+					</li>
+				),
+			}}
+		/>
+	);
+
 	return (
 		<main className="p-4 flex flex-col gap-4">
 			<header className="flex items-center justify-between border-b pb-2">
@@ -78,44 +111,7 @@ export function NewInitiative() {
 			</section>
 			<section className="mt-4">
 				<h3 className="font-semibold text-base mb-2">Encounter Order</h3>
-				<InitiativeQueueList
-					queue={initiativeQueue}
-					mapTypeToElement={{
-						roundDisplay: (item, isFirstClass) => (
-							<li key={item.element.uuid} className="flex items-center gap-2">
-								<div
-									className={cn(
-										'w-full  rounded-xl max-w-md ring-2',
-										isFirstClass
-									)}
-								>
-									<RoundDisplay round={currentRound} />
-								</div>
-								<RoundTimer
-									startTimestamp={roundTimestamps[currentRound].start}
-								/>
-							</li>
-						),
-						character: (item, isFirstClass) => (
-							<li key={item.element.uuid} className="flex items-center gap-2">
-								<div
-									className={cn(
-										'w-full max-w-md rounded-xl ring-2',
-										isFirstClass
-									)}
-								>
-									<CharacterCard character={item.element} />
-								</div>
-								<CharacterTimer
-									uuid={item.element.uuid}
-									currentCharacterUuid={activeCharacter?.uuid}
-									characterTurnTimestamps={characterTurnTimestamps}
-									getCurrentTurnTime={getCurrentTurnTime}
-								/>
-							</li>
-						),
-					}}
-				/>
+				{initiativeRenderQueue}
 			</section>
 		</main>
 	);
