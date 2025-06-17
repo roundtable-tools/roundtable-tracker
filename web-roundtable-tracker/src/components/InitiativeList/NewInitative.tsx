@@ -11,8 +11,18 @@ import { cn } from '@/lib/utils';
 import encounterStore$ from './initiativeStore';
 import { isCharacter } from './initiativeHelpers';
 import { InitiativeQueueList } from './InitiativeQueueList';
+import { useObserve } from '@legendapp/state/react';
 
 import { Character } from '@/store/data';
+import { debounce } from 'throttle-debounce';
+
+const debounceOneSecond = debounce(
+	1000,
+	(executeFn: () => void) => {
+		executeFn();
+	},
+	{ atBegin: false }
+);
 
 export function NewInitiative() {
 	const encounterData = useEncounterStore((state) => state.encounterData);
@@ -26,6 +36,12 @@ export function NewInitiative() {
 
 	const initiativeQueue = use$(encounterStore$.initiativeQueue);
 	const activeCharacter = use$(encounterStore$.activeCharacter);
+
+	const [displayedQueue, setDisplayedQueue] = useState(initiativeQueue);
+
+	useObserve(() => {
+		setDisplayedQueue(encounterStore$.initiativeQueue.get());
+	});
 
 	const characters = initiativeQueue
 		.filter(isCharacter)
@@ -55,9 +71,12 @@ export function NewInitiative() {
 
 	const initiativeRenderQueue = (
 		<InitiativeQueueList
-			queue={initiativeQueue}
+			queue={displayedQueue}
 			onReorder={(queue) => {
-				encounterStore$.initiativeQueue.set(queue);
+				setDisplayedQueue(queue);
+				debounceOneSecond(() => {
+					encounterStore$.initiativeQueue.set(queue);
+				});
 			}}
 			mapTypeToElement={{
 				roundDisplay: (_item, isFirstClass) => (
