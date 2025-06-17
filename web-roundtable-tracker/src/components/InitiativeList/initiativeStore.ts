@@ -144,6 +144,32 @@ const encounterStore$ = observable({
 			duration: end - start,
 		});
 	},
+	returnFromDelay: (uuid: string) => {
+		const characterIndex = encounterStore$.initiativeQueue
+			.peek()
+			.findIndex((item) => item.element.uuid === uuid);
+
+		if (characterIndex === -1)
+			return console.warn(
+				`Character with UUID ${uuid} not found in initiative queue.`
+			);
+
+		const character = encounterStore$.initiativeQueue.splice(
+			characterIndex,
+			1
+		)[0];
+
+		if (!isCharacter(character))
+			return console.warn(`Item with UUID ${uuid} is not a character.`);
+
+		if (!character.element.hasTurn)
+			return console.warn(
+				`Character ${character.element.name} does not have a turn.`
+			);
+
+		character.element.turnState = 'normal';
+		encounterStore$.initiativeQueue.unshift(character);
+	},
 });
 
 events.onNextTurn$.on(() => {

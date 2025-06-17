@@ -131,13 +131,12 @@ export function QuickAccessGrid({
 							onClick={() => onStateChange(char.uuid, 'active')}
 							title={`Return ${char.name} to initiative`}
 							className="flex items-center gap-1 px-2 py-1 text-xs min-w-0"
+							disabled={!char.hasTurn}
 						>
 							<span className="" title={char.name}>
 								{char.name}
 							</span>
-							<Badge className={badgeClass} variant={undefined}>
-								{char.turnState}
-							</Badge>
+							<Badge className={badgeClass}>{char.turnState}</Badge>
 						</Button>
 					);
 				})}

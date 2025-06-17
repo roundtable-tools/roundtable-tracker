@@ -58,7 +58,7 @@ export function NewInitiative() {
 		uuid: string,
 		newState: Character['turnState']
 	) => {
-		// Placeholder for state update
+		encounterStore$.returnFromDelay(uuid);
 	};
 
 	const getCurrentTurnTime = (uuid: string): number => {
