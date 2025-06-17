@@ -88,8 +88,9 @@ export function CharacterCard({
 							<span className="font-bold text-lg truncate max-w-[10ch] md:max-w-none">
 								{character.name}
 							</span>
-
-							<Badge className={badgeClass}>{character.turnState}</Badge>
+							{character.turnState != 'normal' && (
+								<Badge className={badgeClass}>{character.turnState}</Badge>
+							)}
 						</div>
 						<span className="text-base font-mono whitespace-nowrap">
 							{character.health ?? 0}
@@ -181,9 +182,8 @@ export function QuickAccessGrid({
 							<span className="" title={char.name}>
 								{char.name}
 							</span>
-							{char.turnState != 'normal' && (
-								<Badge className={badgeClass}>{char.turnState}</Badge>
-							)}
+
+							<Badge className={badgeClass}>{char.turnState}</Badge>
 						</Button>
 					);
 				})}
