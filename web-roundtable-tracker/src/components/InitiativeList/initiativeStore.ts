@@ -170,6 +170,25 @@ const encounterStore$ = observable({
 		character.element.turnState = 'normal';
 		encounterStore$.initiativeQueue.unshift(character);
 	},
+	forceUpdateState: (uuid: string, newState: Character['turnState']) => {
+		const characterIndex = encounterStore$.initiativeQueue
+			.peek()
+			.findIndex((item) => item.element.uuid === uuid);
+
+		if (characterIndex === -1)
+			return console.warn(
+				`Character with UUID ${uuid} not found in initiative queue.`
+			);
+
+		const character = encounterStore$.initiativeQueue.peek()[characterIndex];
+
+		if (!isCharacter(character))
+			return console.warn(`Item with UUID ${uuid} is not a character.`);
+
+		encounterStore$.initiativeQueue[characterIndex].element.assign({
+			turnState: newState,
+		});
+	},
 });
 
 events.onNextTurn$.on(() => {

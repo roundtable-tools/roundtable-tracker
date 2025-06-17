@@ -69,6 +69,10 @@ export function NewInitiative() {
 			: Date.now() - timestamp.start;
 	};
 
+	const updateState = (uuid: string, newState: Character['turnState']) => {
+		encounterStore$.forceUpdateState(uuid, newState);
+	};
+
 	const initiativeRenderQueue = (
 		<InitiativeQueueList
 			queue={displayedQueue}
@@ -94,7 +98,10 @@ export function NewInitiative() {
 						<div
 							className={cn('w-full max-w-md rounded-xl ring-2', isFirstClass)}
 						>
-							<CharacterCard character={item.element} />
+							<CharacterCard
+								character={item.element}
+								onStateChange={updateState}
+							/>
 						</div>
 						<CharacterTimer
 							uuid={item.element.uuid}
