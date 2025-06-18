@@ -8,16 +8,24 @@ import { Card } from '../ui/card';
 import { use$ } from '@legendapp/state/react';
 import { CharacterTimer } from './CharacterTimer';
 import { cn } from '@/lib/utils';
-import encounterStore$ from './initiativeStore';
+import encounterStore$ from './iniativeStore/initiativeStore';
 import { isCharacter } from './initiativeHelpers';
 import { InitiativeQueueList } from './InitiativeQueueList';
 import { useObserve } from '@legendapp/state/react';
+import {
+	PopulateInitiativeQueueCommand,
+	NextTurnCommand,
+	ReturnFromDelayCommand,
+	ForceUpdateStateCommand,
+	ReorderInitiativeQueueCommand,
+} from './iniativeStore/commands';
+import { Undo2, Redo2 } from 'lucide-react';
 
 import { Character } from '@/store/data';
 import { debounce } from 'throttle-debounce';
 
 const debounceOneSecond = debounce(
-	1000,
+	100,
 	(executeFn: () => void) => {
 		executeFn();
 	},
@@ -31,11 +39,15 @@ export function NewInitiative() {
 	const currentRound = use$(encounterStore$.round);
 
 	useEffect(() => {
-		encounterStore$.populateInitiativeQueue(Object.values(charactersMap));
+		encounterStore$.executeCommand(
+			new PopulateInitiativeQueueCommand(Object.values(charactersMap))
+		);
 	}, [charactersMap]);
 
 	const initiativeQueue = use$(encounterStore$.initiativeQueue);
 	const activeCharacter = use$(encounterStore$.activeCharacter);
+	const undoQueue = use$(encounterStore$.undoQueue);
+	const redoQueue = use$(encounterStore$.redoQueue);
 
 	const [displayedQueue, setDisplayedQueue] = useState(initiativeQueue);
 
@@ -58,19 +70,21 @@ export function NewInitiative() {
 		uuid: string,
 		newState: Character['turnState']
 	) => {
-		encounterStore$.returnFromDelay(uuid);
+		encounterStore$.executeCommand(new ReturnFromDelayCommand(uuid));
 	};
 
 	const getCurrentTurnTime = (uuid: string): number => {
 		const timestamp = characterTurnTimestamps[uuid];
+
 		if (!timestamp) return 0;
-		return timestamp.end
-			? timestamp.end - timestamp.start
+
+		return timestamp.duration
+			? timestamp.duration
 			: Date.now() - timestamp.start;
 	};
 
 	const updateState = (uuid: string, newState: Character['turnState']) => {
-		encounterStore$.forceUpdateState(uuid, newState);
+		encounterStore$.executeCommand(new ForceUpdateStateCommand(uuid, newState));
 	};
 
 	const initiativeRenderQueue = (
@@ -79,7 +93,9 @@ export function NewInitiative() {
 			onReorder={(queue) => {
 				setDisplayedQueue(queue);
 				debounceOneSecond(() => {
-					encounterStore$.initiativeQueue.set(queue);
+					encounterStore$.executeCommand(
+						new ReorderInitiativeQueueCommand(queue)
+					);
 				});
 			}}
 			mapTypeToElement={{
@@ -128,8 +144,24 @@ export function NewInitiative() {
 					Round
 				</h2>
 				<Timeline currentTurn={currentRound} events={[]} />
-				<Button onClick={encounterStore$.nextTurn}>
+				<Button
+					onClick={() => encounterStore$.executeCommand(new NextTurnCommand())}
+				>
 					{currentRound > 0 ? 'Next Turn' : 'Start Encounter'}
+				</Button>
+				<Button
+					variant="outline"
+					onClick={() => encounterStore$.undo()}
+					disabled={undoQueue.length === 0}
+				>
+					<Undo2 className="mr-1" /> Undo
+				</Button>
+				<Button
+					variant="outline"
+					onClick={() => encounterStore$.redo()}
+					disabled={redoQueue.length === 0}
+				>
+					<Redo2 className="mr-1" /> Redo
 				</Button>
 			</section>
 			<section>
@@ -142,6 +174,33 @@ export function NewInitiative() {
 				<h3 className="font-semibold text-base mb-2">Encounter Order</h3>
 				{initiativeRenderQueue}
 			</section>
+			<details className="mt-4">
+				<summary className="cursor-pointer font-mono text-xs">
+					Command Stack Debug
+				</summary>
+				<div className="flex flex-col gap-2 mt-2">
+					<div>
+						<strong>Undo Stack:</strong>
+						<ol className="list-disc pl-4 text-xs">
+							{undoQueue.map((cmd, i) => (
+								<li key={i}>
+									{cmd?.type || cmd?.constructor?.name || 'Unknown'}
+								</li>
+							))}
+						</ol>
+					</div>
+					<div>
+						<strong>Redo Stack:</strong>
+						<ol className="list-disc pl-4 text-xs">
+							{redoQueue.map((cmd, i) => (
+								<li key={i}>
+									{cmd?.type || cmd?.constructor?.name || 'Unknown'}
+								</li>
+							))}
+						</ol>
+					</div>
+				</div>
+			</details>
 		</main>
 	);
 }
