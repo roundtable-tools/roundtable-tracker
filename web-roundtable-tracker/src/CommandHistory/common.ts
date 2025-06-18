@@ -10,6 +10,7 @@ export type Command<
 	T extends Record<string, unknown> = Record<string, unknown>,
 > = {
 	readonly type: string;
+	partOfTransaction?: boolean;
 	description?: string;
 	data: T;
 

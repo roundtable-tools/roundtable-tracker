@@ -14,8 +14,10 @@ export const CommandHistoryProvider: FC<{ children: ReactNode }> = ({
 
 	const executeCommand = (command: Command) => {
 		const result = command.execute();
+
 		if (result === 'FAILURE') {
 			const result = command.undo();
+
 			if (result === 'FAILURE') {
 				throw new Error('Failed to undo command');
 			}
@@ -29,6 +31,7 @@ export const CommandHistoryProvider: FC<{ children: ReactNode }> = ({
 	const undo = () => {
 		setHistory((prev) => {
 			const lastCommand = prev.pop();
+
 			if (lastCommand) {
 				lastCommand.undo();
 				setRedoStack((redo) => [lastCommand, ...redo]);
@@ -41,6 +44,7 @@ export const CommandHistoryProvider: FC<{ children: ReactNode }> = ({
 	const redo = () => {
 		setRedoStack((prev) => {
 			const lastCommand = prev.shift();
+
 			if (lastCommand) {
 				lastCommand.execute();
 				setHistory((history) => [...history, lastCommand]);

@@ -59,6 +59,7 @@ export class Threat {
     }
     static fromExperienceBudget(budget: ExperienceBudget, partySize:number = 4): Threat {
         const normalized = new ExperienceBudget(budget.valueOf()*4/partySize);
+        
         switch (true) {
             case normalized.valueOf() < 40: return Threat.TrivialMinus;
 

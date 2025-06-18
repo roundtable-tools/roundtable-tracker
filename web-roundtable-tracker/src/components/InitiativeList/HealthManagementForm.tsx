@@ -26,6 +26,7 @@ export const HealthManagementForm = (props: HealthManagementFormProps) => {
 	);
 	const handleTempHealthChange = () => {
 		const tempHealthChangeValue = parseInt(tempHealthChange ?? '0');
+
 		if (isNaN(tempHealthChangeValue)) return;
 		console.log('Temp health change:', tempHealthChangeValue);
 		const newTempHealth = characterTempHealth + tempHealthChangeValue;
@@ -41,6 +42,7 @@ export const HealthManagementForm = (props: HealthManagementFormProps) => {
 
 	const handleHealthChange = () => {
 		const healthChangeValue = parseInt(healthChange ?? '0');
+
 		if (isNaN(healthChangeValue)) return;
 		console.log('Health change:', healthChangeValue);
 		const newTempHealth =
@@ -97,6 +99,7 @@ export const HealthManagementForm = (props: HealthManagementFormProps) => {
 					value={`${healthChange ?? ''}`}
 					onChange={(e) => {
 						const value = e.target.value;
+
 						if (value === '') {
 							setHealthChange(undefined);
 						} else {
@@ -122,6 +125,7 @@ export const HealthManagementForm = (props: HealthManagementFormProps) => {
 					value={`${tempHealthChange ?? ''}`}
 					onChange={(e) => {
 						const value = e.target.value;
+
 						if (value === '') {
 							setTempHealthChange(undefined);
 						} else {

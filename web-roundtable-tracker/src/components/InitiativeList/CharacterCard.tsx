@@ -10,10 +10,17 @@ import {
 } from '../ui/collapsible';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
+import {
+	Select,
+	SelectTrigger,
+	SelectValue,
+	SelectContent,
+	SelectItem,
+} from '../ui/select';
 
 // Map character state to shadcn/ui badge color using shadcn palette classes
 const STATE_BADGE_COLOR: Record<Character['turnState'], string> = {
-	normal: 'bg-green-200 text-green-800 hidden',
+	normal: 'bg-green-200 text-green-800',
 	delayed: 'bg-yellow-100 text-yellow-800',
 	active: 'bg-blue-200 text-blue-800',
 	'knocked-out': 'bg-red-200 text-red-800',
@@ -50,12 +57,22 @@ function getBadgeClass(turnState: Character['turnState']): string {
 export function CharacterCard({
 	character,
 	defaultOpen = false,
+	onStateChange,
 }: {
 	character: Character;
 	defaultOpen?: boolean;
+	onStateChange?: (uuid: string, newState: Character['turnState']) => void;
 }) {
 	const [open, setOpen] = useState(defaultOpen);
 	const badgeClass = getBadgeClass(character.turnState);
+
+	const turnStates: Character['turnState'][] = [
+		'normal',
+		'delayed',
+		'active',
+		'knocked-out',
+		'on-hold',
+	];
 
 	return (
 		<Card className={cn('w-full max-w-md p-2 px-4')}>
@@ -71,8 +88,9 @@ export function CharacterCard({
 							<span className="font-bold text-lg truncate max-w-[10ch] md:max-w-none">
 								{character.name}
 							</span>
-
-							<Badge className={badgeClass}>{character.turnState}</Badge>
+							{character.turnState != 'normal' && (
+								<Badge className={badgeClass}>{character.turnState}</Badge>
+							)}
 						</div>
 						<span className="text-base font-mono whitespace-nowrap">
 							{character.health ?? 0}
@@ -99,6 +117,34 @@ export function CharacterCard({
 								value={character.knockedBy}
 							/>
 							{/* Add more details as needed */}
+							<div className="flex items-center gap-2 mt-2">
+								<label className="font-semibold flex gap-2 items-center">
+									State:
+									<Select
+										value={character.turnState}
+										disabled={!onStateChange}
+										onValueChange={(value) =>
+											onStateChange?.(
+												character.uuid,
+												value as Character['turnState']
+											)
+										}
+									>
+										<SelectTrigger className="border rounded px-2 py-1 text-xs">
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											{turnStates.map((state) => (
+												<SelectItem key={state} value={state}>
+													<Badge className={getBadgeClass(state)}>
+														{state}
+													</Badge>
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</label>
+							</div>
 						</div>
 					</CardContent>
 				</CollapsibleContent>
@@ -131,13 +177,13 @@ export function QuickAccessGrid({
 							onClick={() => onStateChange(char.uuid, 'active')}
 							title={`Return ${char.name} to initiative`}
 							className="flex items-center gap-1 px-2 py-1 text-xs min-w-0"
+							disabled={!char.hasTurn}
 						>
 							<span className="" title={char.name}>
 								{char.name}
 							</span>
-							<Badge className={badgeClass} variant={undefined}>
-								{char.turnState}
-							</Badge>
+
+							<Badge className={badgeClass}>{char.turnState}</Badge>
 						</Button>
 					);
 				})}

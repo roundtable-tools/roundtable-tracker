@@ -33,6 +33,7 @@ export class ReorderCharactersCommand implements Command {
 	}
 	undo() {
 		const orderToRestore = this.data.oldOrder;
+
 		if (!orderToRestore) {
 			console.error(`Old Order is not defined`);
 

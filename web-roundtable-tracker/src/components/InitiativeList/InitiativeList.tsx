@@ -112,6 +112,7 @@ export const InitiativeList = () => {
 
 	const knockOut = () => {
 		setMode('normal');
+
 		if (!knockedOutCharacter) throw new Error('No knocked out character');
 
 		updateCharacterState(knockedOutCharacter, 'knocked-out');
@@ -435,6 +436,7 @@ const ImitativeRow = (props: {
 						const endX = x.get();
 						const newState = parseOffset(endX);
 						animate(x, offset[newState]);
+
 						if (newState === state) return;
 
 						if (!canEnterState(newState)) {
