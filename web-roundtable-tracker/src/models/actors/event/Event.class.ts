@@ -8,6 +8,7 @@ export interface EventProps extends ActorProps {
 export class Event extends Actor  {
     private _description: string;
     private _round: number;
+    private _name?: string;
     pauseLabel = "Disable event";
     resumeLabel = "Re-enable event";
     startLabel = "Trigger now";
@@ -36,11 +37,15 @@ export class Event extends Actor  {
         super(props);
         this._description = props.description;
         this._round = props.round;
+        this._name = props.name
     }
     get description(): string {
         return this._description;
     }
     get round(): number {
         return this._round;
+    }
+    get name(): string {
+        return this._name || "Event";
     }
 }

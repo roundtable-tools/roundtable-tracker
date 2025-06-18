@@ -5,7 +5,7 @@ import { LevelDifference } from "./LevelDifference";
 export class LevelRange {
     public min: number;
     public max: number;
-    constructor(min: number, max: number) {
+    constructor(min: number, max: number = min) {
         this.min = min;
         this.max = max;
     }
@@ -54,5 +54,8 @@ export class LevelRange {
     }
     toString(): string {
         return `${this.min} - ${this.max}`;
+    }
+    static fromLevel(level: Level): LevelRange {
+        return new LevelRange(level.valueOf());
     }
 }

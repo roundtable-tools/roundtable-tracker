@@ -1,4 +1,5 @@
 import { generateUUID, UUID } from "@/utils/uuid";
+import { z } from "zod";
 
 export interface UuidElementProps {
     id?: UUID;
@@ -10,4 +11,7 @@ export abstract class UuidElement {
     constructor({id}: UuidElementProps) {
         this.id = id ?? generateUUID();
     }
+    static Schema = z.object({
+        id: z.string().uuid().optional(),
+    })
 }

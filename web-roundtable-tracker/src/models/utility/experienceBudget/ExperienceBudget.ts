@@ -37,6 +37,7 @@ export class ExperienceBudget extends Number {
     static budgetToCharacterAdjustment = (xpBudget: ExperienceBudget, partySize: number = 4): ExperienceBudget => {
         return new ExperienceBudget((xpBudget.valueOf() - (partySize-4)*xpBudget.valueOf()/partySize)/4).roundIfHigher(10);
     }
+    static get TrivialMinus(): ExperienceBudget { return new ExperienceBudget(20); }
     static get Trivial(): ExperienceBudget { return new ExperienceBudget(40); }
     static get Low(): ExperienceBudget { return new ExperienceBudget(60); }
     static get Moderate(): ExperienceBudget { return new ExperienceBudget(80); }

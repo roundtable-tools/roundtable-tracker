@@ -19,4 +19,7 @@ export class EncounterSlot extends TemplateSlot {
             encounterSlot: this,
         });
     }
+    static Schema = TemplateSlot.Schema.extend({
+        templateSlotId: TemplateSlot.Schema.shape.id.optional(),
+    });
 }

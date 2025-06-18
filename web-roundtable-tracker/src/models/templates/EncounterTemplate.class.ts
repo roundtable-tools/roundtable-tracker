@@ -3,10 +3,11 @@ import { ExperienceBudget } from "../utility/experienceBudget/ExperienceBudget";
 import { Threat } from "../utility/threat/Threat.class";
 import { UuidElement, UuidElementProps } from "../utility/uuidElement/UuidElement.class";
 import { TemplateSlot } from "./TemplateSlot.class";
+import { z } from "zod";
 
 export interface EncounterTemplateProps extends UuidElementProps {
     name: string;
-    description: string;
+    description?: string;
     slots: TemplateSlot[];
     partySize: number;
 }
@@ -31,8 +32,14 @@ export class EncounterTemplate extends UuidElement {
     constructor(props: EncounterTemplateProps) { 
         super(props);
         this.name = props.name;
-        this.description = props.description;
+        this.description = props.description || "";
         this.slots = props.slots;
         this.partySize = props.partySize;
     }
+    static Schema = UuidElement.Schema.extend({
+        name: z.string().min(1, "Name is required"),
+        description: z.string().optional(),
+        slots: z.array(TemplateSlot.Schema),
+        partySize: z.number().int().min(1, "Party size must be at least 1"),
+    });
 }

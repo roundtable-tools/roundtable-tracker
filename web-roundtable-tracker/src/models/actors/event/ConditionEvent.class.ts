@@ -7,6 +7,7 @@ export interface ConditionEventProps extends ActorProps {
 
 export class ConditionEvent extends Actor  {
     private _condition: Condition;
+    private _name?: string;
     pauseLabel = "Disable event";
     resumeLabel = "Re-enable event";
     startLabel = "Trigger now";
@@ -32,8 +33,12 @@ export class ConditionEvent extends Actor  {
     constructor(props: ConditionEventProps) {
         super(props);
         this._condition = props.condition;
+        this._name = props.name;
     }
     get condition(): Condition {
         return this._condition;
+    }
+    get name(): string {
+        return this._name || "Condition Event";
     }
 }
