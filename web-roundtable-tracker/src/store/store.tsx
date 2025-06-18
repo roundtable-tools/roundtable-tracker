@@ -105,6 +105,7 @@ const updateCharacter =
 	(uuid: UUID, newCharacter: ValueOrFunction<Character>) =>
 		set((state) => {
 			const character = state.charactersMap[uuid];
+
 			if (!character) {
 				console.error(`Character with uuid ${uuid} not found`);
 

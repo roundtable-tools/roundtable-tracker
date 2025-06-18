@@ -42,6 +42,13 @@ export default tseslint.config(
         { blankLine: "any", prev: ["import"], next: ["import"] },
         { blankLine: "always", prev: ["export"], next: ["export"] },
         { blankLine: "always", prev: ["*"], next: ["return"] },
+        { blankLine: "always", prev: "*", next: "if" },
+        { blankLine: "always", prev: "*", next: "for" },
+        { blankLine: "always", prev: "*", next: "while" },
+        { blankLine: "always", prev: "*", next: "switch" },
+        { blankLine: "always", prev: "*", next: "try" },
+        { blankLine: "always", prev: "*", next: "function" },
+        { blankLine: "always", prev: "*", next: "class" },
       ],
     },
   }

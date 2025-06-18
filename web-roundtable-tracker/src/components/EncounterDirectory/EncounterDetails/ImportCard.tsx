@@ -74,6 +74,7 @@ export const ImportCard = (props: ImportCardProps) => {
 					primary
 					onClick={() => {
 						const [encounterData, validationError] = ValidateEncounter(value);
+
 						if (encounterData) {
 							submit(encounterData); // Pass the validated encounter data to the parent
 						} else {

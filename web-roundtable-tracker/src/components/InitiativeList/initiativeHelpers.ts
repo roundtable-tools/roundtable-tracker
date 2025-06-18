@@ -15,6 +15,7 @@ export function processInitiativeQueueItem(item: InitiativeElement) {
   if (item.type === 'roundDisplay') return 'endRound';
 
   const character = item.element;
+
   if (canBeMadeActive(character)) return 'makeActive';
 
   return 'skip';
