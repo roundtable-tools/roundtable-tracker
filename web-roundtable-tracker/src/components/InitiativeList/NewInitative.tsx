@@ -22,15 +22,6 @@ import {
 import { Undo2, Redo2 } from 'lucide-react';
 
 import { Character } from '@/store/data';
-import { debounce } from 'throttle-debounce';
-
-const debounceOneSecond = debounce(
-	100,
-	(executeFn: () => void) => {
-		executeFn();
-	},
-	{ atBegin: false }
-);
 
 export function NewInitiative() {
 	const encounterData = useEncounterStore((state) => state.encounterData);
@@ -102,7 +93,7 @@ export function NewInitiative() {
 				roundDisplay: (_item, isFirstClass) => (
 					<>
 						<div
-							className={cn('w-full  rounded-xl max-w-md ring-2', isFirstClass)}
+							className={cn('w-full rounded-xl max-w-md ring-2', isFirstClass)}
 						>
 							<RoundDisplay round={currentRound} />
 						</div>
