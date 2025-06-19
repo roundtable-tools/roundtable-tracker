@@ -83,8 +83,8 @@ export function NewInitiative() {
 			: Date.now() - timestamp.start;
 	};
 
-	const updateState = (uuid: string, newState: Character['turnState']) => {
-		encounterStore$.executeCommand(new ForceUpdateStateCommand(uuid, newState));
+	const updateState = (uuid: string, update: Partial<Character>) => {
+		encounterStore$.executeCommand(new ForceUpdateStateCommand(uuid, update));
 	};
 
 	const initiativeRenderQueue = (
@@ -92,11 +92,11 @@ export function NewInitiative() {
 			queue={displayedQueue}
 			onReorder={(queue) => {
 				setDisplayedQueue(queue);
-				debounceOneSecond(() => {
-					encounterStore$.executeCommand(
-						new ReorderInitiativeQueueCommand(queue)
-					);
-				});
+			}}
+			onDragEnd={() => {
+				encounterStore$.executeCommand(
+					new ReorderInitiativeQueueCommand(displayedQueue)
+				);
 			}}
 			mapTypeToElement={{
 				roundDisplay: (_item, isFirstClass) => (

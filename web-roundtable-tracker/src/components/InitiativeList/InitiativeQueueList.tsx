@@ -13,12 +13,14 @@ export interface InitiativeQueueListProps {
 		) => JSX.Element;
 	};
 	onReorder: (queue: InitiativeElement[]) => void;
+	onDragEnd?: () => void;
 }
 
 export function InitiativeQueueList({
 	queue,
 	mapTypeToElement,
 	onReorder,
+	onDragEnd,
 }: InitiativeQueueListProps) {
 	return (
 		<Reorder.Group
@@ -36,7 +38,7 @@ export function InitiativeQueueList({
 				) => JSX.Element;
 
 				return (
-					<QueueItem key={item.element.uuid} item={item}>
+					<QueueItem key={item.element.uuid} item={item} onDragEnd={onDragEnd}>
 						{fn(item, isFirstClass)}
 					</QueueItem>
 				);
@@ -48,9 +50,11 @@ export function InitiativeQueueList({
 function QueueItem({
 	item,
 	children,
+	onDragEnd,
 }: {
 	item: InitiativeElement;
 	children: React.ReactNode;
+	onDragEnd?: () => void;
 }) {
 	const controls = useDragControls();
 
@@ -60,6 +64,7 @@ function QueueItem({
 			dragListener={false}
 			dragControls={controls}
 			className="flex items-center gap-2"
+			onDragEnd={onDragEnd}
 		>
 			<MoveVertical
 				onPointerDown={(e) => controls.start(e)}

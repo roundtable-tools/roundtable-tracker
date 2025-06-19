@@ -17,6 +17,7 @@ import {
 	SelectContent,
 	SelectItem,
 } from '../ui/select';
+import { Input } from '../ui/input';
 
 // Map character state to shadcn/ui badge color using shadcn palette classes
 const STATE_BADGE_COLOR: Record<Character['turnState'], string> = {
@@ -54,18 +55,119 @@ function getBadgeClass(turnState: Character['turnState']): string {
 	);
 }
 
-export function CharacterCard({
+// Health status indicator component
+function HealthStatus({
+	health,
+	maxHealth,
+}: {
+	health: number;
+	maxHealth: number;
+}) {
+	if (
+		typeof health !== 'number' ||
+		typeof maxHealth !== 'number' ||
+		maxHealth <= 0
+	)
+		return null;
+	const ratio = health / maxHealth;
+	let color = 'text-red-700';
+	if (ratio > 0.75) color = 'text-green-700';
+	else if (ratio > 0.5) color = 'text-yellow-500';
+	else if (ratio > 0.25) color = 'text-amber-500';
+	return (
+		<span className={`font-semibold ml-2 ${color}`}>
+			{`(${Math.round(ratio * 100)}%)`}
+		</span>
+	);
+}
+
+function HealthControls({
 	character,
-	defaultOpen = false,
 	onStateChange,
 }: {
 	character: Character;
-	defaultOpen?: boolean;
-	onStateChange?: (uuid: string, newState: Character['turnState']) => void;
+	onStateChange?: (uuid: string, update: Partial<Character>) => void;
 }) {
-	const [open, setOpen] = useState(defaultOpen);
-	const badgeClass = getBadgeClass(character.turnState);
+	const [damage, setDamage] = useState('');
+	function handleDealDamage(e: React.FormEvent) {
+		e.preventDefault();
+		const dmg = Number(damage);
+		if (isNaN(dmg) || dmg <= 0) return;
+		let temp = character.tempHealth ?? 0;
+		let health = character.health ?? 0;
+		let tempUsed = Math.min(temp, dmg);
+		let healthUsed = Math.max(0, dmg - tempUsed);
+		onStateChange?.(character.uuid, {
+			tempHealth: temp - tempUsed,
+			health: Math.max(0, health - healthUsed),
+		});
+		setDamage('');
+	}
+	return (
+		<div className="flex flex-wrap items-center gap-2 mt-2">
+			<label className="font-semibold flex gap-2 items-center">
+				Health:
+				<Input
+					type="number"
+					className="w-16 text-xs px-1 py-0.5"
+					value={character.health ?? 0}
+					onChange={(e) =>
+						onStateChange?.(character.uuid, {
+							health: Number(e.target.value),
+						})
+					}
+				/>
+			</label>
+			<label className="font-semibold flex gap-2 items-center">
+				Temp:
+				<Input
+					type="number"
+					className="w-16 text-xs px-1 py-0.5"
+					value={character.tempHealth ?? 0}
+					onChange={(e) =>
+						onStateChange?.(character.uuid, {
+							tempHealth: Number(e.target.value),
+						})
+					}
+				/>
+			</label>
+			<label className="font-semibold flex gap-2 items-center">
+				Max:
+				<Input
+					type="number"
+					className="w-16 text-xs px-1 py-0.5"
+					value={character.maxHealth ?? 0}
+					onChange={(e) =>
+						onStateChange?.(character.uuid, {
+							maxHealth: Number(e.target.value),
+						})
+					}
+				/>
+			</label>
+			<form onSubmit={handleDealDamage} className="flex gap-1 items-center">
+				<Input
+					type="number"
+					min={1}
+					placeholder="Damage"
+					className="w-16 text-xs px-1 py-0.5"
+					value={damage}
+					onChange={(e) => setDamage(e.target.value)}
+				/>
+				<Button type="submit" size="sm" className="px-2 py-1 text-xs">
+					Deal
+				</Button>
+			</form>
+		</div>
+	);
+}
 
+function StateSelect({
+	character,
+	onStateChange,
+}: {
+	character: Character;
+	onStateChange?: (uuid: string, update: Partial<Character>) => void;
+}) {
 	const turnStates: Character['turnState'][] = [
 		'normal',
 		'delayed',
@@ -73,6 +175,46 @@ export function CharacterCard({
 		'knocked-out',
 		'on-hold',
 	];
+	return (
+		<div className="flex items-center gap-2 mt-2">
+			<label className="font-semibold flex gap-2 items-center">
+				State:
+				<Select
+					value={character.turnState}
+					disabled={!onStateChange}
+					onValueChange={(value) =>
+						onStateChange?.(character.uuid, {
+							turnState: value as Character['turnState'],
+						})
+					}
+				>
+					<SelectTrigger className="border rounded px-2 py-1 text-xs">
+						<SelectValue />
+					</SelectTrigger>
+					<SelectContent>
+						{turnStates.map((state) => (
+							<SelectItem key={state} value={state}>
+								<Badge className={getBadgeClass(state)}>{state}</Badge>
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+			</label>
+		</div>
+	);
+}
+
+export function CharacterCard({
+	character,
+	defaultOpen = false,
+	onStateChange,
+}: {
+	character: Character;
+	defaultOpen?: boolean;
+	onStateChange?: (uuid: string, update: Partial<Character>) => void;
+}) {
+	const [open, setOpen] = useState(defaultOpen);
+	const badgeClass = getBadgeClass(character.turnState);
 
 	return (
 		<Card className={cn('w-full max-w-md p-2 px-4')}>
@@ -97,6 +239,10 @@ export function CharacterCard({
 							{character.tempHealth ? ` +${character.tempHealth}` : ''}
 							{' / '}
 							{character.maxHealth ?? 0}
+							<HealthStatus
+								health={character.health ?? 0}
+								maxHealth={character.maxHealth ?? 0}
+							/>
 						</span>
 						<ChevronDown
 							className={`ml-2 w-5 h-5 transition-transform duration-200 ${
@@ -116,35 +262,16 @@ export function CharacterCard({
 								label="Knocked By"
 								value={character.knockedBy}
 							/>
-							{/* Add more details as needed */}
-							<div className="flex items-center gap-2 mt-2">
-								<label className="font-semibold flex gap-2 items-center">
-									State:
-									<Select
-										value={character.turnState}
-										disabled={!onStateChange}
-										onValueChange={(value) =>
-											onStateChange?.(
-												character.uuid,
-												value as Character['turnState']
-											)
-										}
-									>
-										<SelectTrigger className="border rounded px-2 py-1 text-xs">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											{turnStates.map((state) => (
-												<SelectItem key={state} value={state}>
-													<Badge className={getBadgeClass(state)}>
-														{state}
-													</Badge>
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</label>
-							</div>
+							{onStateChange && (
+								<HealthControls
+									character={character}
+									onStateChange={onStateChange}
+								/>
+							)}
+							<StateSelect
+								character={character}
+								onStateChange={onStateChange}
+							/>
 						</div>
 					</CardContent>
 				</CollapsibleContent>

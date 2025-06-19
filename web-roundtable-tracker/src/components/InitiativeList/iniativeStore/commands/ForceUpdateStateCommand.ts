@@ -5,15 +5,15 @@ import { Command, STATUS } from '@/CommandHistory/common';
 
 export class ForceUpdateStateCommand implements Command {
 	readonly type = 'ForceUpdateStateCommand';
-	description = 'Force update character state';
+	description = 'Force update character fields';
 	data: {
 		uuid: string;
-		newState: Character['turnState'];
-		oldState?: Character['turnState'];
+		update: Partial<Character>;
+		oldValues?: Partial<Character>;
 	};
 
-	constructor(uuid: string, newState: Character['turnState']) {
-		this.data = { uuid, newState };
+	constructor(uuid: string, update: Partial<Character>) {
+		this.data = { uuid, update };
 	}
 
 	execute() {
@@ -25,10 +25,19 @@ export class ForceUpdateStateCommand implements Command {
 		const character = encounterStore$.initiativeQueue.peek()[characterIndex];
 
 		if (!isCharacter(character)) return STATUS.failure;
-		this.data.oldState = character.element.turnState;
-		encounterStore$.initiativeQueue[characterIndex].element.assign({
-			turnState: this.data.newState,
-		});
+
+		// Store old values for undo
+		const old: Record<string, unknown> = {};
+		const keys = Object.keys(this.data.update) as (keyof Character)[];
+		for (const key of keys) {
+			if (!this.data.oldValues) this.data.oldValues = {} as Partial<Character>;
+			old[key] = character.element[key];
+		}
+		this.data.oldValues = old;
+
+		encounterStore$.initiativeQueue[characterIndex].element.assign(
+			this.data.update
+		);
 
 		return STATUS.success;
 	}
@@ -38,11 +47,10 @@ export class ForceUpdateStateCommand implements Command {
 			.peek()
 			.findIndex((item) => item.element.uuid === this.data.uuid);
 
-		if (characterIndex === -1 || this.data.oldState === undefined)
-			return STATUS.failure;
-		encounterStore$.initiativeQueue[characterIndex].element.assign({
-			turnState: this.data.oldState,
-		});
+		if (characterIndex === -1 || !this.data.oldValues) return STATUS.failure;
+		encounterStore$.initiativeQueue[characterIndex].element.assign(
+			this.data.oldValues
+		);
 
 		return STATUS.success;
 	}
