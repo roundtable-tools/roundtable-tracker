@@ -1,6 +1,6 @@
 import { Character } from '@/store/data';
 import { isCharacter } from '../../initiativeHelpers';
-import encounterStore$ from '../initiativeStore';
+import { getInitiativeStore } from '../initiativeStore';
 import { Command, STATUS } from '@/CommandHistory/common';
 
 export class ResolveActiveItemCommand implements Command {
@@ -11,6 +11,7 @@ export class ResolveActiveItemCommand implements Command {
 	data: { oldActive?: Character | null } = {};
 
 	execute() {
+		const { encounterStore$ } = getInitiativeStore();
 		this.data.oldActive = encounterStore$.activeCharacter.peek();
 		const list = encounterStore$.initiativeQueue.peek();
 
@@ -26,6 +27,7 @@ export class ResolveActiveItemCommand implements Command {
 		return STATUS.success;
 	}
 	undo() {
+		const { encounterStore$ } = getInitiativeStore();
 		encounterStore$.activeCharacter.set(this.data.oldActive ?? null);
 
 		return STATUS.success;

@@ -1,7 +1,7 @@
 import { generateUUID } from '@/utils/uuid';
 import { Character } from '@/store/data';
 import { InitiativeElement } from '../../initiativeTypes';
-import encounterStore$ from '../initiativeStore';
+import { getInitiativeStore } from '../initiativeStore';
 
 import { Command, STATUS } from '@/CommandHistory/common';
 import { initializeRoundTimer } from './utils';
@@ -16,6 +16,7 @@ export class PopulateInitiativeQueueCommand implements Command {
 	}
 
 	execute() {
+		const { encounterStore$ } = getInitiativeStore();
 		this.data.removedItems = encounterStore$.initiativeQueue
 			.peek()
 			.map((item) => structuredClone(item));
@@ -39,6 +40,7 @@ export class PopulateInitiativeQueueCommand implements Command {
 		return STATUS.success;
 	}
 	undo() {
+		const { encounterStore$ } = getInitiativeStore();
 		if (!this.data.removedItems) return STATUS.failure;
 		encounterStore$.initiativeQueue.set(this.data.removedItems);
 
