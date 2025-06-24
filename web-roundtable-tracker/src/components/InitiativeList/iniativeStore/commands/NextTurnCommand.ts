@@ -2,10 +2,9 @@ import { generateUUID } from '@/utils/uuid';
 import { Character } from '@/store/data';
 import { InitiativeElement } from '../../initiativeTypes';
 import { isCharacter, isRoundDisplay } from '../../initiativeHelpers';
-import encounterStore$, { events } from '../initiativeStore';
-
 import { Command, STATUS } from '@/CommandHistory/common';
 import { finalizeRoundTimer } from './utils';
+import { getIninitativeStore } from '../initiativeStore';
 
 export class NextTurnCommand implements Command {
 	readonly type = 'NextTurnCommand';
@@ -23,7 +22,8 @@ export class NextTurnCommand implements Command {
 	}
 
 	execute() {
-		this.data.oldRound = encounterStore$.round.peek();
+		const { encounterStore$, events } = getIninitativeStore();
+		this.data.oldRound = encounterStore$.peek().round;
 		this.data.oldActive = encounterStore$.activeCharacter.peek();
 
 		if (encounterStore$.initiativeQueue.length === 0) return STATUS.failure;
@@ -70,6 +70,8 @@ export class NextTurnCommand implements Command {
 		return STATUS.success;
 	}
 	undo() {
+		const { encounterStore$ } = getIninitativeStore();
+
 		if (this.data.addedItem) {
 			const idx = encounterStore$.initiativeQueue
 				.peek()

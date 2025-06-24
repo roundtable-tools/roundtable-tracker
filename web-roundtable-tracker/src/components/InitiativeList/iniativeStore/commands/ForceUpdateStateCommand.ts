@@ -1,6 +1,6 @@
 import { Character } from '@/store/data';
 import { isCharacter } from '../../initiativeHelpers';
-import encounterStore$ from '../initiativeStore';
+import { getIninitativeStore } from '../initiativeStore';
 import { Command, STATUS } from '@/CommandHistory/common';
 
 export class ForceUpdateStateCommand implements Command {
@@ -17,6 +17,7 @@ export class ForceUpdateStateCommand implements Command {
 	}
 
 	execute() {
+		const { encounterStore$ } = getIninitativeStore();
 		const characterIndex = encounterStore$.initiativeQueue
 			.peek()
 			.findIndex((item) => item.element.uuid === this.data.uuid);
@@ -43,6 +44,7 @@ export class ForceUpdateStateCommand implements Command {
 	}
 
 	undo() {
+		const { encounterStore$ } = getIninitativeStore();
 		const characterIndex = encounterStore$.initiativeQueue
 			.peek()
 			.findIndex((item) => item.element.uuid === this.data.uuid);

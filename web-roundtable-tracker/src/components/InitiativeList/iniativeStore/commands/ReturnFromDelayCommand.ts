@@ -1,6 +1,6 @@
 import { InitiativeElement } from '../../initiativeTypes';
 import { isCharacter } from '../../initiativeHelpers';
-import encounterStore$ from '../initiativeStore';
+import { getIninitativeStore } from '../initiativeStore';
 import { Command, STATUS } from '@/CommandHistory/common';
 
 export class ReturnFromDelayCommand implements Command {
@@ -13,6 +13,7 @@ export class ReturnFromDelayCommand implements Command {
 	}
 
 	execute() {
+		const { encounterStore$ } = getIninitativeStore();
 		const characterIndex = encounterStore$.initiativeQueue
 			.peek()
 			.findIndex((item) => item.element.uuid === this.data.uuid);
@@ -34,6 +35,7 @@ export class ReturnFromDelayCommand implements Command {
 		return STATUS.success;
 	}
 	undo() {
+		const { encounterStore$ } = getIninitativeStore();
 		const front = encounterStore$.initiativeQueue.peek()[0];
 
 		if (front && front.element.uuid === this.data.uuid) {
