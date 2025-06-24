@@ -126,11 +126,11 @@ const createInitiativeStore = () => {
 
 const { encounterStore$, events } = createInitiativeStore();
 
-const getIninitativeStore = () => ({
+const getInitiativeStore = () => ({
 	encounterStore$,
 	events,
 });
 
-export { encounterStore$, event, getIninitativeStore, createInitiativeStore };
+export { encounterStore$, event, getInitiativeStore, createInitiativeStore };
 
 export default encounterStore$;

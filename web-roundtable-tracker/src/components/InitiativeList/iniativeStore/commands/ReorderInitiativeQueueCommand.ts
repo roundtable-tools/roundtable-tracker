@@ -1,4 +1,4 @@
-import { getIninitativeStore } from '../initiativeStore';
+import { getInitiativeStore } from '../initiativeStore';
 import { InitiativeElement } from '../../initiativeTypes';
 import { Command, STATUS } from '@/CommandHistory/common';
 
@@ -12,7 +12,7 @@ export class ReorderInitiativeQueueCommand implements Command {
 	}
 
 	execute() {
-		const { encounterStore$ } = getIninitativeStore();
+		const { encounterStore$ } = getInitiativeStore();
 		this.data.prevQueue = encounterStore$.initiativeQueue
 			.peek()
 			.map((item) => structuredClone(item));
@@ -22,7 +22,7 @@ export class ReorderInitiativeQueueCommand implements Command {
 	}
 
 	undo() {
-		const { encounterStore$ } = getIninitativeStore();
+		const { encounterStore$ } = getInitiativeStore();
 		if (!this.data.prevQueue) return STATUS.failure;
 		encounterStore$.initiativeQueue.set(this.data.prevQueue);
 

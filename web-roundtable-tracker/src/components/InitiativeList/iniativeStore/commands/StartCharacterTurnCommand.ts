@@ -1,4 +1,4 @@
-import { getIninitativeStore } from '../initiativeStore';
+import { getInitiativeStore } from '../initiativeStore';
 import { Command, STATUS } from '@/CommandHistory/common';
 
 export class StartCharacterTurnCommand implements Command {
@@ -11,7 +11,7 @@ export class StartCharacterTurnCommand implements Command {
 	}
 
 	execute() {
-		const { encounterStore$ } = getIninitativeStore();
+		const { encounterStore$ } = getInitiativeStore();
 		this.data.oldTimestamps = structuredClone(
 			encounterStore$.characterTurnTimestamps[this.data.uuid].peek()
 		);
@@ -22,7 +22,7 @@ export class StartCharacterTurnCommand implements Command {
 		return STATUS.success;
 	}
 	undo() {
-		const { encounterStore$ } = getIninitativeStore();
+		const { encounterStore$ } = getInitiativeStore();
 		if (this.data.oldTimestamps) {
 			encounterStore$.characterTurnTimestamps[this.data.uuid].set(
 				this.data.oldTimestamps
