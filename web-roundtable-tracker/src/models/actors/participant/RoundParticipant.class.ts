@@ -1,4 +1,4 @@
-import { EncounterSlot } from "@/models/encounters/EncounterSlot.class";
+import { EncounterSlot } from "@/models/encounters/slots/EncounterSlot.class";
 import { Actor, ActorProps } from "../Actor.class";
 
 export interface RoundParticipantProps extends ActorProps {

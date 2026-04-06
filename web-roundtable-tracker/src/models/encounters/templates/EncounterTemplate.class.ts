@@ -1,8 +1,12 @@
 import { UUID } from "@/utils/uuid";
-import { ExperienceBudget } from "../utility/experienceBudget/ExperienceBudget";
-import { Threat } from "../utility/threat/Threat.class";
-import { UuidElement, UuidElementProps } from "../utility/uuidElement/UuidElement.class";
-import { TemplateSlot } from "./TemplateSlot.class";
+import { ExperienceBudget } from "../../utility/experienceBudget/ExperienceBudget";
+import { Threat } from "../../utility/threat/Threat.class";
+import { UuidElement, UuidElementProps } from "../../utility/uuidElement/UuidElement.class";
+import { TemplateSlot } from "../slots/TemplateSlot.class";
+import { CreatureSlot } from "../slots/CreatureSlot";
+import { ReinforcementSlot } from "../slots/ReinforcementSlot";
+import { NarrativeSlot } from "../slots/NarrativeSlot";
+import { AuraSlot } from "../slots/AuraSlot";
 import { z } from "zod";
 
 export interface EncounterTemplateProps extends UuidElementProps {
@@ -39,7 +43,14 @@ export class EncounterTemplate extends UuidElement {
     static Schema = UuidElement.Schema.extend({
         name: z.string().min(1, "Name is required"),
         description: z.string().optional(),
-        slots: z.array(TemplateSlot.Schema),
+        slots: z.array(
+            z.discriminatedUnion("type", [
+                CreatureSlot.Schema,
+                ReinforcementSlot.Schema,
+                NarrativeSlot.Schema,
+                AuraSlot.Schema,
+            ])
+        ),
         partySize: z.number().int().min(1, "Party size must be at least 1"),
     });
 }

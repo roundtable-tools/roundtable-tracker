@@ -3,7 +3,7 @@ import { TrackedInitiative } from './TrackedInitiative.class';
 import { InitiativeParticipant } from './InitiativeParticipant.class';
 import { Command } from '@/CommandHistory/common';
 import { Encounter } from '../encounters/Encounter.class';
-import { EncounterSlot } from '../encounters/EncounterSlot.class';
+import { EncounterSlot } from '../encounters/slots/EncounterSlot.class';
 
 
 describe('TrackedInitiative', () => {

@@ -1,8 +1,9 @@
 import { RoundParticipant } from "../actors/participant/RoundParticipant.class";
-import { EncounterTemplate, EncounterTemplateProps } from "../templates/EncounterTemplate.class";
 import { Level } from "../utility/level/Level";
-import { EncounterSlot } from "./EncounterSlot.class";
+import { EncounterSlot } from "./slots/EncounterSlot.class";
 import { z } from "zod";
+import { EncounterTemplate, EncounterTemplateProps } from "./templates/EncounterTemplate.class";
+import { TemplateSlot } from "./slots/TemplateSlot.class";
 
 interface EncounterProps extends EncounterTemplateProps {
     template?: EncounterTemplate;
@@ -32,7 +33,7 @@ export class Encounter extends EncounterTemplate {
         });
     }
     static Schema = EncounterTemplate.Schema.extend({
-        slots: EncounterSlot.Schema.array(),
+        slots: TemplateSlot.Schema.array(),
         template: EncounterTemplate.Schema.optional(),
         partyLevel: z.instanceof(Level),
         offset: z.never()

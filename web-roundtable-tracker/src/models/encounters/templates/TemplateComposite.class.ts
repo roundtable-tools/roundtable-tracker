@@ -1,8 +1,8 @@
-import { ExperienceBudget } from "../utility/experienceBudget/ExperienceBudget";
-import { Threat } from "../utility/threat/Threat.class";
-import { UuidElement, UuidElementProps } from "../utility/uuidElement/UuidElement.class";
+import { ExperienceBudget } from "../../utility/experienceBudget/ExperienceBudget";
+import { Threat } from "../../utility/threat/Threat.class";
+import { UuidElement, UuidElementProps } from "../../utility/uuidElement/UuidElement.class";
 import { EncounterTemplate } from "./EncounterTemplate.class";
-import { TemplateSlot } from "./TemplateSlot.class";
+import { TemplateSlot } from "../slots/TemplateSlot.class";
 
 interface TemplateCompositeProps extends UuidElementProps {
     variants: EncounterTemplate[];

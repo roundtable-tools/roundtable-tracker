@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { EncounterTemplate } from './EncounterTemplate.class';
 import { TemplateComposite } from './TemplateComposite.class';
-import { TemplateSlot } from './TemplateSlot.class';
+import { TemplateSlot } from '../slots/TemplateSlot.class';
 import { TemplateEvent } from './TemplateEvent.class';
-import { Threat } from '../utility/threat/Threat.class';
-import { LevelDifference } from '../utility/level/LevelDifference';
+import { Threat } from '../../utility/threat/Threat.class';
+import { LevelDifference } from '../../utility/level/LevelDifference';
 
 describe('EncounterTemplate', () => {
     it('should construct with correct properties', () => {

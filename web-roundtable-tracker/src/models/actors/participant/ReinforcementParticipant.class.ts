@@ -3,7 +3,7 @@ import { Actor } from "../Actor.class";
 import { HitPoints } from "@/models/utility/hitPoints/HitPoints.class";
 import { Statblock } from "@/models/utility/statblock/Statblock.class";
 import { RoundParticipantProps, RoundTimer } from "./RoundParticipant.class";
-import { EncounterSlot } from "@/models/encounters/EncounterSlot.class";
+import { EncounterSlot } from "@/models/encounters/slots/EncounterSlot.class";
 
 interface ReinforcementParticipantProps extends Omit<RoundParticipantProps, "encounterSlot"> {
     participant: Participant;

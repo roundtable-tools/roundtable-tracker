@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { UuidElement, UuidElementProps } from "../utility/uuidElement/UuidElement.class";
+import { UuidElement, UuidElementProps } from "../../utility/uuidElement/UuidElement.class";
 
 interface TemplateEventProps extends UuidElementProps {
     turn: number;

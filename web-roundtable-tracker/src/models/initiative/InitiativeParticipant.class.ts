@@ -1,5 +1,5 @@
 import { RoundParticipant, RoundParticipantProps, RoundTimer } from "../actors/participant/RoundParticipant.class";
-import { EncounterSlot } from "../encounters/EncounterSlot.class";
+import { EncounterSlot } from "../encounters/slots/EncounterSlot.class";
 import { UuidElement, UuidElementProps } from "../utility/uuidElement/UuidElement.class";
 
 export interface InitiativeParticipantProps extends UuidElementProps {

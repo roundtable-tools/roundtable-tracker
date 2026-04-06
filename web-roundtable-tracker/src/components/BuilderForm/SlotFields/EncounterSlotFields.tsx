@@ -9,11 +9,17 @@ import { EncounterSlotFieldsAura } from './EncounterSlotFieldsAura';
 import { EncounterSlotFieldsCreature } from './EncounterSlotFieldsCreature';
 import { EncounterSlotFieldsNarrative } from './EncounterSlotFieldsNarrative';
 import { EncounterSlotFieldsReinforcement } from './EncounterSlotFieldsReinforcement';
+import { SlotSelectField } from './SlotSelectField';
 
 type EncounterSlotFieldsProps = {
     fields: FieldArrayWithId<any, 'slots', 'id'>[];
     form: UseFormReturn<any>;
     remove: UseFieldArrayRemove;
+};
+
+export type EncounterSlotFieldsVariantProps = {
+    form: UseFormReturn<any>;
+    index: number;
 };
 
 const SLOT_TYPE_OPTIONS = [
@@ -36,21 +42,14 @@ export function EncounterSlotFields({
                 const slotType = form.getValues(`slots.${index}.type`) || 'creature';
                 return (
                     <div key={field.id} className="flex gap-2 items-start mb-2 flex-wrap">
-                        <div className="flex-2 min-w-[140px]">
-                            <FormItem>
-                                <FormLabel>Type</FormLabel>
-                                <FormControl>
-                                    <select
-                                        className="border rounded px-2 py-1 w-full"
-                                        {...form.register(`slots.${index}.type`)}
-                                    >
-                                        {SLOT_TYPE_OPTIONS.map(opt => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                        ))}
-                                    </select>
-                                </FormControl>
-                            </FormItem>
-                        </div>
+                        <SlotSelectField
+                            form={form}
+                            index={index}
+                            options={SLOT_TYPE_OPTIONS}
+                            placeholder="Select type..."
+                            name={(idx: number) => `slots.${idx}.type`}
+                            label="Slot Type"
+                        />
                         {slotType === 'creature' && (
                             <EncounterSlotFieldsCreature control={form.control} index={index} />
                         )}
@@ -61,7 +60,7 @@ export function EncounterSlotFields({
                             <EncounterSlotFieldsNarrative control={form.control} index={index} />
                         )}
                         {slotType === 'aura' && (
-                            <EncounterSlotFieldsAura control={form.control} index={index} />
+                            <EncounterSlotFieldsAura form={form} index={index} />
                         )}
                         <div className="flex-1 min-w-[80px]">
                             <FormItem>

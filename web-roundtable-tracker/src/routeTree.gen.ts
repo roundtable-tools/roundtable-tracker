@@ -8,118 +8,50 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-// Import Routes
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as PreviewRouteImport } from './routes/preview'
+import { Route as New_initiativeRouteImport } from './routes/new_initiative'
+import { Route as InitiativeRouteImport } from './routes/initiative'
+import { Route as Initaitive2RouteImport } from './routes/initaitive2'
+import { Route as EncountersRouteImport } from './routes/encounters'
+import { Route as BuilderRouteImport } from './routes/builder'
+import { Route as IndexRouteImport } from './routes/index'
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as PreviewImport } from './routes/preview'
-import { Route as NewinitiativeImport } from './routes/new_initiative'
-import { Route as InitiativeImport } from './routes/initiative'
-import { Route as Initaitive2Import } from './routes/initaitive2'
-import { Route as EncountersImport } from './routes/encounters'
-import { Route as BuilderImport } from './routes/builder'
-import { Route as IndexImport } from './routes/index'
-
-// Create/Update Routes
-
-const PreviewRoute = PreviewImport.update({
+const PreviewRoute = PreviewRouteImport.update({
   id: '/preview',
   path: '/preview',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const NewinitiativeRoute = NewinitiativeImport.update({
+const New_initiativeRoute = New_initiativeRouteImport.update({
   id: '/new_initiative',
   path: '/new_initiative',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const InitiativeRoute = InitiativeImport.update({
+const InitiativeRoute = InitiativeRouteImport.update({
   id: '/initiative',
   path: '/initiative',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const Initaitive2Route = Initaitive2Import.update({
+const Initaitive2Route = Initaitive2RouteImport.update({
   id: '/initaitive2',
   path: '/initaitive2',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const EncountersRoute = EncountersImport.update({
+const EncountersRoute = EncountersRouteImport.update({
   id: '/encounters',
   path: '/encounters',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const BuilderRoute = BuilderImport.update({
+const BuilderRoute = BuilderRouteImport.update({
   id: '/builder',
   path: '/builder',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const IndexRoute = IndexImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-// Populate the FileRoutesByPath interface
-
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/builder': {
-      id: '/builder'
-      path: '/builder'
-      fullPath: '/builder'
-      preLoaderRoute: typeof BuilderImport
-      parentRoute: typeof rootRoute
-    }
-    '/encounters': {
-      id: '/encounters'
-      path: '/encounters'
-      fullPath: '/encounters'
-      preLoaderRoute: typeof EncountersImport
-      parentRoute: typeof rootRoute
-    }
-    '/initaitive2': {
-      id: '/initaitive2'
-      path: '/initaitive2'
-      fullPath: '/initaitive2'
-      preLoaderRoute: typeof Initaitive2Import
-      parentRoute: typeof rootRoute
-    }
-    '/initiative': {
-      id: '/initiative'
-      path: '/initiative'
-      fullPath: '/initiative'
-      preLoaderRoute: typeof InitiativeImport
-      parentRoute: typeof rootRoute
-    }
-    '/new_initiative': {
-      id: '/new_initiative'
-      path: '/new_initiative'
-      fullPath: '/new_initiative'
-      preLoaderRoute: typeof NewinitiativeImport
-      parentRoute: typeof rootRoute
-    }
-    '/preview': {
-      id: '/preview'
-      path: '/preview'
-      fullPath: '/preview'
-      preLoaderRoute: typeof PreviewImport
-      parentRoute: typeof rootRoute
-    }
-  }
-}
-
-// Create and export the route tree
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -127,31 +59,28 @@ export interface FileRoutesByFullPath {
   '/encounters': typeof EncountersRoute
   '/initaitive2': typeof Initaitive2Route
   '/initiative': typeof InitiativeRoute
-  '/new_initiative': typeof NewinitiativeRoute
+  '/new_initiative': typeof New_initiativeRoute
   '/preview': typeof PreviewRoute
 }
-
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/encounters': typeof EncountersRoute
   '/initaitive2': typeof Initaitive2Route
   '/initiative': typeof InitiativeRoute
-  '/new_initiative': typeof NewinitiativeRoute
+  '/new_initiative': typeof New_initiativeRoute
   '/preview': typeof PreviewRoute
 }
-
 export interface FileRoutesById {
-  __root__: typeof rootRoute
+  __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/encounters': typeof EncountersRoute
   '/initaitive2': typeof Initaitive2Route
   '/initiative': typeof InitiativeRoute
-  '/new_initiative': typeof NewinitiativeRoute
+  '/new_initiative': typeof New_initiativeRoute
   '/preview': typeof PreviewRoute
 }
-
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
@@ -182,15 +111,68 @@ export interface FileRouteTypes {
     | '/preview'
   fileRoutesById: FileRoutesById
 }
-
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BuilderRoute: typeof BuilderRoute
   EncountersRoute: typeof EncountersRoute
   Initaitive2Route: typeof Initaitive2Route
   InitiativeRoute: typeof InitiativeRoute
-  NewinitiativeRoute: typeof NewinitiativeRoute
+  New_initiativeRoute: typeof New_initiativeRoute
   PreviewRoute: typeof PreviewRoute
+}
+
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/preview': {
+      id: '/preview'
+      path: '/preview'
+      fullPath: '/preview'
+      preLoaderRoute: typeof PreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/new_initiative': {
+      id: '/new_initiative'
+      path: '/new_initiative'
+      fullPath: '/new_initiative'
+      preLoaderRoute: typeof New_initiativeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/initiative': {
+      id: '/initiative'
+      path: '/initiative'
+      fullPath: '/initiative'
+      preLoaderRoute: typeof InitiativeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/initaitive2': {
+      id: '/initaitive2'
+      path: '/initaitive2'
+      fullPath: '/initaitive2'
+      preLoaderRoute: typeof Initaitive2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/encounters': {
+      id: '/encounters'
+      path: '/encounters'
+      fullPath: '/encounters'
+      preLoaderRoute: typeof EncountersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/builder': {
+      id: '/builder'
+      path: '/builder'
+      fullPath: '/builder'
+      preLoaderRoute: typeof BuilderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+  }
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -199,50 +181,9 @@ const rootRouteChildren: RootRouteChildren = {
   EncountersRoute: EncountersRoute,
   Initaitive2Route: Initaitive2Route,
   InitiativeRoute: InitiativeRoute,
-  NewinitiativeRoute: NewinitiativeRoute,
+  New_initiativeRoute: New_initiativeRoute,
   PreviewRoute: PreviewRoute,
 }
-
-export const routeTree = rootRoute
+export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/",
-        "/builder",
-        "/encounters",
-        "/initaitive2",
-        "/initiative",
-        "/new_initiative",
-        "/preview"
-      ]
-    },
-    "/": {
-      "filePath": "index.tsx"
-    },
-    "/builder": {
-      "filePath": "builder.tsx"
-    },
-    "/encounters": {
-      "filePath": "encounters.tsx"
-    },
-    "/initaitive2": {
-      "filePath": "initaitive2.tsx"
-    },
-    "/initiative": {
-      "filePath": "initiative.tsx"
-    },
-    "/new_initiative": {
-      "filePath": "new_initiative.tsx"
-    },
-    "/preview": {
-      "filePath": "preview.tsx"
-    }
-  }
-}
-ROUTE_MANIFEST_END */
