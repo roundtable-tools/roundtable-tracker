@@ -29,6 +29,7 @@ export class LevelDifference {
             }
         }
         const rawExp = baseCost * getMultiplier() / (simpleHazardModdifier ? 5 : 1); // Simple hazard modifier for smaller exp gain
+
         switch (true){
             case rawExp >= 10:
                 return new ExperienceBudget(rawExp).round(10); // Round up to the nearest tens

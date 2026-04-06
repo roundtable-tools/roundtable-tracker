@@ -30,15 +30,19 @@ export class LevelRange {
             const [offsetAcc, levelAcc] = acc;
             const [origin, bound] = [minLevel, maxLevel].map(v => v - offset?.valueOf());
             const levelBound = level !== undefined ? offset.toLevel(level.valueOf()).valueOf() : Number.NaN;
+
             if (origin > offsetAcc[0]) {
                 offsetAcc[0] = origin;
             }
+
             if (bound < offsetAcc[1]) {
                 offsetAcc[1] = bound;
             }
+
             if (levelAcc[0] > levelBound) {
                 levelAcc[0] = levelBound;
             }
+
             if (levelAcc[1] < levelBound) {
                 levelAcc[1] = levelBound;
             }

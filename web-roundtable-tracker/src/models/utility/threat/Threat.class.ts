@@ -53,6 +53,7 @@ export class Threat {
     }
     static fromExperienceBudget(budget: ExperienceBudget, partySize:number = 4): Threat {
         const baseReward = ExperienceBudget.budgetToBaseReward(budget, partySize);
+
         switch (true) {
             case baseReward.valueOf() <= 40: return Threat.Trivial;
 
