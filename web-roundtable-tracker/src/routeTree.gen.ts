@@ -13,8 +13,8 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as PreviewImport } from './routes/preview'
 import { Route as NewinitiativeImport } from './routes/new_initiative'
+import { Route as Initiative2Import } from './routes/initiative2'
 import { Route as InitiativeImport } from './routes/initiative'
-import { Route as Initaitive2Import } from './routes/initaitive2'
 import { Route as EncountersImport } from './routes/encounters'
 import { Route as BuilderImport } from './routes/builder'
 import { Route as IndexImport } from './routes/index'
@@ -33,15 +33,15 @@ const NewinitiativeRoute = NewinitiativeImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const InitiativeRoute = InitiativeImport.update({
-  id: '/initiative',
-  path: '/initiative',
+const Initiative2Route = Initiative2Import.update({
+  id: '/initiative2',
+  path: '/initiative2',
   getParentRoute: () => rootRoute,
 } as any)
 
-const Initaitive2Route = Initaitive2Import.update({
-  id: '/initaitive2',
-  path: '/initaitive2',
+const InitiativeRoute = InitiativeImport.update({
+  id: '/initiative',
+  path: '/initiative',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -88,18 +88,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EncountersImport
       parentRoute: typeof rootRoute
     }
-    '/initaitive2': {
-      id: '/initaitive2'
-      path: '/initaitive2'
-      fullPath: '/initaitive2'
-      preLoaderRoute: typeof Initaitive2Import
-      parentRoute: typeof rootRoute
-    }
     '/initiative': {
       id: '/initiative'
       path: '/initiative'
       fullPath: '/initiative'
       preLoaderRoute: typeof InitiativeImport
+      parentRoute: typeof rootRoute
+    }
+    '/initiative2': {
+      id: '/initiative2'
+      path: '/initiative2'
+      fullPath: '/initiative2'
+      preLoaderRoute: typeof Initiative2Import
       parentRoute: typeof rootRoute
     }
     '/new_initiative': {
@@ -125,8 +125,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/encounters': typeof EncountersRoute
-  '/initaitive2': typeof Initaitive2Route
   '/initiative': typeof InitiativeRoute
+  '/initiative2': typeof Initiative2Route
   '/new_initiative': typeof NewinitiativeRoute
   '/preview': typeof PreviewRoute
 }
@@ -135,8 +135,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/encounters': typeof EncountersRoute
-  '/initaitive2': typeof Initaitive2Route
   '/initiative': typeof InitiativeRoute
+  '/initiative2': typeof Initiative2Route
   '/new_initiative': typeof NewinitiativeRoute
   '/preview': typeof PreviewRoute
 }
@@ -146,8 +146,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/encounters': typeof EncountersRoute
-  '/initaitive2': typeof Initaitive2Route
   '/initiative': typeof InitiativeRoute
+  '/initiative2': typeof Initiative2Route
   '/new_initiative': typeof NewinitiativeRoute
   '/preview': typeof PreviewRoute
 }
@@ -158,8 +158,8 @@ export interface FileRouteTypes {
     | '/'
     | '/builder'
     | '/encounters'
-    | '/initaitive2'
     | '/initiative'
+    | '/initiative2'
     | '/new_initiative'
     | '/preview'
   fileRoutesByTo: FileRoutesByTo
@@ -167,8 +167,8 @@ export interface FileRouteTypes {
     | '/'
     | '/builder'
     | '/encounters'
-    | '/initaitive2'
     | '/initiative'
+    | '/initiative2'
     | '/new_initiative'
     | '/preview'
   id:
@@ -176,8 +176,8 @@ export interface FileRouteTypes {
     | '/'
     | '/builder'
     | '/encounters'
-    | '/initaitive2'
     | '/initiative'
+    | '/initiative2'
     | '/new_initiative'
     | '/preview'
   fileRoutesById: FileRoutesById
@@ -187,8 +187,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BuilderRoute: typeof BuilderRoute
   EncountersRoute: typeof EncountersRoute
-  Initaitive2Route: typeof Initaitive2Route
   InitiativeRoute: typeof InitiativeRoute
+  Initiative2Route: typeof Initiative2Route
   NewinitiativeRoute: typeof NewinitiativeRoute
   PreviewRoute: typeof PreviewRoute
 }
@@ -197,8 +197,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BuilderRoute: BuilderRoute,
   EncountersRoute: EncountersRoute,
-  Initaitive2Route: Initaitive2Route,
   InitiativeRoute: InitiativeRoute,
+  Initiative2Route: Initiative2Route,
   NewinitiativeRoute: NewinitiativeRoute,
   PreviewRoute: PreviewRoute,
 }
@@ -216,8 +216,8 @@ export const routeTree = rootRoute
         "/",
         "/builder",
         "/encounters",
-        "/initaitive2",
         "/initiative",
+        "/initiative2",
         "/new_initiative",
         "/preview"
       ]
@@ -231,11 +231,11 @@ export const routeTree = rootRoute
     "/encounters": {
       "filePath": "encounters.tsx"
     },
-    "/initaitive2": {
-      "filePath": "initaitive2.tsx"
-    },
     "/initiative": {
       "filePath": "initiative.tsx"
+    },
+    "/initiative2": {
+      "filePath": "initiative2.tsx"
     },
     "/new_initiative": {
       "filePath": "new_initiative.tsx"

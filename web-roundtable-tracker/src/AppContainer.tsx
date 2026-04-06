@@ -8,6 +8,8 @@ import { HistoryFooter } from './components/HistoryFooter';
 import { EncounterDirectory } from './components/EncounterDirectory/EncounterDirectory';
 import { AppHeader } from './AppHeader';
 import { LandingPage } from './components/LandingPage/LandingPage';
+import { NewInitiative } from './components/InitiativeList/NewInitiative';
+import { AlternativeList } from './components/InitiativeList/AlternativeList';
 export const AppContainer = () => {
 	const encounterData = useEncounterStore((state) => state.encounterData);
 	const [view, setView] = useState<string>('landingPage');
@@ -35,6 +37,16 @@ export const AppContainer = () => {
 								<InitiativeList />
 							</Box>
 						</PageContent>
+						<HistoryFooter endEncounter={() => setView('preview')} />
+					</>
+				) : view === 'newInitiative' ? (
+					<>
+						<NewInitiative />
+						<HistoryFooter endEncounter={() => setView('preview')} />
+					</>
+				) : view === 'initiative2' ? (
+					<>
+						<AlternativeList />
 						<HistoryFooter endEncounter={() => setView('preview')} />
 					</>
 				) : view === 'preview' ? (

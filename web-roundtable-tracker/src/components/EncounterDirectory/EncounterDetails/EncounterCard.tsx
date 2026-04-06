@@ -112,9 +112,9 @@ export const EncounterCard = (props: EncounterCardProps) => {
 				<Button label="Back" onClick={close}></Button>
 				<Button
 					label="Select"
-					disabled={!level}
+					disabled={level <= 0}
 					onClick={() => {
-						setPartyLevel(level);
+						setPartyLevel(Math.max(1, level));
 						submit();
 					}}
 				/>

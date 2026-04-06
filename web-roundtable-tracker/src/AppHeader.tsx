@@ -1,6 +1,7 @@
 import { Header, Box, Toolbar, Button, DropButton, TextInput } from 'grommet';
 import { Filter, FormPrevious, Search } from 'grommet-icons/icons';
 import { ReactNode } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 
 type AppHeaderProps = {
 	setView: (view: string) => void;
@@ -9,11 +10,15 @@ type AppHeaderProps = {
 
 export const AppHeader = (props: AppHeaderProps) => {
 	const { setView, children } = props;
+	const navigate = useNavigate();
 
 	return (
 		<Header background="brand" justify="center" fill="horizontal" pad="small">
 			<Box
-				onClick={() => setView('landingPage')}
+				onClick={() => {
+					setView('landingPage');
+					navigate({ to: '/' });
+				}}
 				style={{ cursor: 'pointer', position: 'absolute', left: 10 }}
 				direction="row"
 				align="center"

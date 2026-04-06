@@ -20,17 +20,23 @@ export type CharacterConfig = {
 
 export const characterConfigToCharacter = (
 	participant: CharacterConfig,
-): Character => ({
-	uuid: participant.uuid,
-	name: participant.name,
-	initiative: participant.initiative ?? 0,
-	health: participant.health,
-	maxHealth: participant.maxHealth,
-	tempHealth: participant.tempHealth,
-	turnState: participant.startingState ?? "normal",
-	group: participant.side === ALIGNMENT.PCs ? "players" : "enemies",
-	hasTurn: false,
-});
+): Character => {
+	const maxHealth = participant.maxHealth ?? 1;
+	const health = participant.health ?? maxHealth;
+	const tempHealth = participant.tempHealth ?? 0;
+
+	return {
+		uuid: participant.uuid,
+		name: participant.name,
+		initiative: participant.initiative ?? 0,
+		health,
+		maxHealth,
+		tempHealth,
+		turnState: participant.startingState ?? "normal",
+		group: participant.side === ALIGNMENT.PCs ? "players" : "enemies",
+		hasTurn: false,
+	};
+};
 
 export interface Character {
 	uuid: UUID;
@@ -164,16 +170,25 @@ export type AbstractEncounter = {
 	difficultyLabel?: keyof typeof DIFFICULTY;
 	level?: [number, number]; // Range of levels for the encounter
 	levelRepresentation: typeof LEVEL_REPRESENTATION.Relative; // Abstract encounter with participants of levels relative to the encounter level
+	difficulty?: Difficulty; // Optional difficulty for abstract encounters
+	partySize?: number; // Optional party size for abstract encounters
+	description: string; // Description of the encounter
+	participants: Participant<typeof LEVEL_REPRESENTATION.Relative>[]; // List of participants
 	variants?: AbstractEncounterVariant[];
-} & Required<AbstractEncounterVariant>;
+};
 
 export type ConcreteEncounter = {
 	id: string; // Unique identifier for the encounter
 	name: string;
 	difficultyLabel?: keyof typeof DIFFICULTY;
 	levelRepresentation: typeof LEVEL_REPRESENTATION.Exact; // Encounter with participants of specific levels
+	level: number; // Concrete level for the encounter
+	partySize: number; // Number of party members
+	difficulty: Difficulty; // Difficulty setting
+	description: string; // Description of the encounter
+	participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[]; // List of participants
 	variants?: ConcreteEncounterVariant[];
-} & Required<ConcreteEncounterVariant>;
+};
 
 export const ConcreteEncounterSchema = z.object({
 	id: z.string(),

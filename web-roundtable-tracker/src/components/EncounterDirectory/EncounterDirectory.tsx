@@ -10,6 +10,7 @@ import {
 } from 'grommet';
 import { DocumentUpload, StreetView } from 'grommet-icons';
 import { EncounterData } from './EncounterData.tsx';
+import { useNavigate } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import AbstractEcounters from '../../store/Encounters/AbstractEncounterTemplates.ts';
 import {
@@ -29,19 +30,21 @@ type EncounterDirectoryProps = {
 };
 
 export const EncounterDirectory = (props: EncounterDirectoryProps) => {
+	const { setView } = props;
+	const navigate = useNavigate();
 	const setEncounterData = useEncounterStore((state) => state.setEncounterData);
 	const data = AbstractEcounters.flatMap<Encounter>((encounter) => {
 		const mainVariant = {
 			id: `${encounter.id}${encounter.variants ? '-a' : ''}`,
 			name: encounter.name,
-			difficultyLabel: difficultyToString(encounter.difficulty),
+			difficultyLabel: difficultyToString(encounter.difficulty ?? DIFFICULTY.Low),
 			level:
 				'level' in encounter
 					? encounter.level
 					: participantsToLevelRange(encounter.participants),
 			description: encounter.description,
-			difficulty: encounter.difficulty,
-			partySize: encounter.partySize,
+			difficulty: encounter.difficulty ?? DIFFICULTY.Low,
+			partySize: encounter.partySize ?? 4,
 			participants: encounter.participants,
 			levelRepresentation: encounter.levelRepresentation,
 		};
@@ -52,14 +55,16 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 				return {
 					id: `${encounter.id}-${indexToLetter(index + 1)}`,
 					name: encounter.name,
-					difficultyLabel: difficultyToString(encounter.difficulty),
+					difficultyLabel: difficultyToString(
+						(encounter.difficulty ?? DIFFICULTY.Low)
+					),
 					level:
 						'level' in variant
 							? (variant.level as [number, number])
 							: participantsToLevelRange(variant.participants),
 					description: variant.description,
-					difficulty: variant.difficulty ?? encounter.difficulty,
-					partySize: variant.partySize ?? encounter.partySize,
+					difficulty: variant.difficulty ?? encounter.difficulty ?? DIFFICULTY.Low,
+					partySize: variant.partySize ?? encounter.partySize ?? 4,
 					participants: variant.participants,
 					levelRepresentation: encounter.levelRepresentation,
 				};
@@ -114,12 +119,14 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			property: 'partySize',
 			header: <Text size="large">Party Size</Text>,
 			render: (datum: Encounter) => {
+				const partySize = datum.partySize ?? 4;
+
 				return (
 					<Box flex direction={'row'} pad={{ vertical: 'xsmall' }}>
 						{Array.from({ length: 6 }).map((_, index) => (
 							<StreetView
 								key={index}
-								color={index < datum.partySize ? 'plain' : 'status-disabled'}
+								color={index < partySize ? 'plain' : 'status-disabled'}
 							/>
 						))}
 					</Box>
@@ -134,18 +141,24 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 
 				return (
 					<Box pad={{ vertical: 'xsmall' }}>
-						{participants
-							? participants.reduce<string>((acc, participant) => {
-									return `${acc}${acc ? ', ' : ''}${participant.name}${participant.count ? ` (x${participant.count})` : ''}`;
-								}, '')
-							: ''}
+						<Text>
+							{participants
+								? participants.reduce<string>((acc, participant) => {
+										return `${acc}${acc ? ', ' : ''}${participant.name}${participant.count ? ` (x${participant.count})` : ''}`;
+									}, '')
+								: ''}
+						</Text>
 					</Box>
 				);
 			},
-			primary: true,
 		},
 	];
-	const { setView } = props;
+
+	const openPreview = () => {
+		setView('preview');
+		navigate({ to: '/preview' });
+	};
+
 	const [selected, setSelected] = useState<string | number>();
 	const [showImportLayer, setShowImportLayer] = useState(false);
 	const selectedEncounterData = useMemo(
@@ -247,14 +260,16 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 				selectedEncounter={selectedEncounterData}
 				submit={() => {
 					if (selectedEncounterData) setEncounterData(selectedEncounterData);
-					setView('preview');
+					setSelected(undefined);
+					openPreview();
 				}}
 			/>
 			<EncounterImportModal
 				closeLayer={() => setShowImportLayer(false)}
 				submit={(encounterData: Encounter) => {
 					setEncounterData(encounterData);
-					setView('preview');
+					setShowImportLayer(false);
+					openPreview();
 				}}
 				showLayer={showImportLayer}
 			/>

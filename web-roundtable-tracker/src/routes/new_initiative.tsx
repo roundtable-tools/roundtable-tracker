@@ -1,4 +1,4 @@
-import { NewInitiative } from '@/components/InitiativeList/NewInitative';
+import { NewInitiative } from '@/components/InitiativeList/NewInitiative';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/new_initiative')({
