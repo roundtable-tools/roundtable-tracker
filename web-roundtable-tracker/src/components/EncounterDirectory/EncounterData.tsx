@@ -48,6 +48,7 @@ export const EncounterData = ({
 				select={selected ? [selected] : undefined}
 				onSelect={(arr) => {
 					const id = arr.reverse()[0];
+
 					if (setSelected) setSelected((prev) => (id == prev ? undefined : id));
 				}}
 				onClickRow={'select'}

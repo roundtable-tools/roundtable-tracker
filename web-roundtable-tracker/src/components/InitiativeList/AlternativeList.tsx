@@ -314,6 +314,7 @@ export const AlternativeList = () => {
 	const handleGiveTurn = useCallback(
 		(id: string) => {
 			const idx = charactersIds.indexOf(id);
+
 			if (idx === -1 || idx === charactersIds.length - 1) return;
 			const newOrder = [...charactersIds];
 			newOrder.splice(idx, 1);
@@ -326,8 +327,10 @@ export const AlternativeList = () => {
 	const handleSetHp = useCallback(
 		(id: string) => {
 			const character = charactersMap[id];
+
 			if (!character) return;
 			const value = parseInt(hpInput, 10);
+
 			if (isNaN(value)) return;
 			updateCharacter(id, {
 				...character,
@@ -344,8 +347,10 @@ export const AlternativeList = () => {
 	const handleSetTempHp = useCallback(
 		(id: string) => {
 			const character = charactersMap[id];
+
 			if (!character) return;
 			const value = parseInt(tempHpInput, 10);
+
 			if (isNaN(value)) return;
 			updateCharacter(id, { ...character, tempHealth: Math.max(0, value) });
 			setTempHpInput('');
@@ -356,7 +361,9 @@ export const AlternativeList = () => {
 	const handleDelay = useCallback(
 		(id: string) => {
 			const character = charactersMap[id];
+
 			if (!character) return;
+
 			if (character.turnState !== 'delayed') {
 				updateCharacter(id, { ...character, turnState: 'delayed' });
 				setDelayedIds((prev) => [...prev, id]);
