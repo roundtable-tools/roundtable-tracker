@@ -1,6 +1,7 @@
 import {
 	ALIGNMENT,
 	CharacterConfig,
+	DIFFICULTY,
 	difficultyToString,
 	Encounter,
 	indexToLetter,
@@ -12,21 +13,28 @@ import {
 import {
 	Box,
 	Button,
+	Card,
+	CardBody,
+	CardFooter,
+	CardHeader,
 	Grid,
 	Heading,
+	Layer,
 	PageContent,
 	PageHeader,
 	ResponsiveContext,
 	Stack,
+	Text,
 } from 'grommet';
 import { generateUUID } from '@/utils/uuid';
 import { PreviewCard } from './PreviewCard';
 import { useEncounterStore } from '@/store/instance';
 import { FlagFill, Robot, StreetView, Toast, TreeOption } from 'grommet-icons';
-import { useContext, useMemo } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { AppHeader } from '@/AppHeader';
 import { participantsToEncounterCharacters } from '@/store/convert';
 import { useFieldArray, useForm } from 'react-hook-form';
+import { useNavigate } from '@tanstack/react-router';
 
 type PreviewDisplayProps = {
 	setView: (view: string) => void;
@@ -156,11 +164,16 @@ export type Inputs = {
 
 export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	const startEncounter = useEncounterStore((state) => state.startEncounter);
+	const navigate = useNavigate();
 
 	const size = useContext(ResponsiveContext);
 	const encounterData = useEncounterStore((state) => state.encounterData);
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
 	const setView = props.setView;
+	const [showInitiativeChoice, setShowInitiativeChoice] = useState(false);
+	const [preparedParticipants, setPreparedParticipants] = useState<
+		CharacterConfig[]
+	>([]);
 
 	const participants = useMemo(
 		() => generateParticipants(encounterData, partyLevel),
@@ -194,13 +207,35 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 		handleSubmit(
 			(data) => {
 				const participants = data.teams.flatMap(({ characters }) => characters);
-				startEncounter(participantsToEncounterCharacters(participants));
-				setView('initiative');
+				setPreparedParticipants(participants);
+				setShowInitiativeChoice(true);
 			},
 			(errors) => {
 				console.log(errors);
 			}
 		)();
+	};
+
+	const onSelectInitiativeView = (
+		view: 'initiative' | 'newInitiative' | 'initaitive2'
+	) => {
+		startEncounter(participantsToEncounterCharacters(preparedParticipants));
+		setShowInitiativeChoice(false);
+		setView(view);
+
+		if (view === 'newInitiative') {
+			navigate({ to: '/new_initiative' });
+
+			return;
+		}
+
+		if (view === 'initaitive2') {
+			navigate({ to: '/initaitive2' });
+
+			return;
+		}
+
+		navigate({ to: '/initiative' });
 	};
 
 	const { fields: teamFields } = useFieldArray({
@@ -212,6 +247,50 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 
 	return (
 		<>
+			{showInitiativeChoice && (
+				<Layer
+					onEsc={() => setShowInitiativeChoice(false)}
+					onClickOutside={() => setShowInitiativeChoice(false)}
+				>
+					<Card width="medium">
+						<CardHeader pad="small" background="brand">
+							<Heading level={3} margin="none">
+								Choose Initiative View
+							</Heading>
+						</CardHeader>
+						<CardBody pad="medium" gap="small">
+							<Text>
+								Select which initiative experience you want to use for this
+								encounter.
+							</Text>
+						</CardBody>
+						<CardFooter
+							pad="small"
+							background="light-2"
+							justify="end"
+							gap="small"
+						>
+							<Button
+								label="Cancel"
+								onClick={() => setShowInitiativeChoice(false)}
+							/>
+							<Button
+								label="Classic Initiative"
+								onClick={() => onSelectInitiativeView('initiative')}
+							/>
+							<Button
+								label="Initiative 2"
+								onClick={() => onSelectInitiativeView('initaitive2')}
+							/>
+							<Button
+								primary
+								label="New Initiative"
+								onClick={() => onSelectInitiativeView('newInitiative')}
+							/>
+						</CardFooter>
+					</Card>
+				</Layer>
+			)}
 			<AppHeader setView={setView} />
 			<PageContent fill>
 				<PageHeader
@@ -221,7 +300,7 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 							<Heading
 								level={2}
 								color={'brand'}
-							>{`${difficultyToString(encounterData?.difficulty)} ${partyLevel}`}</Heading>
+							>{`${difficultyToString(encounterData?.difficulty ?? DIFFICULTY.Moderate)} ${partyLevel}`}</Heading>
 						</Box>
 					}
 				/>

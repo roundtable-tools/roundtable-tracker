@@ -34,6 +34,8 @@ export const EncounterImportModal = (props: EncounterImportModalProps) => {
 					selectedEncounter={importedEncounter}
 					submit={() => {
 						submit(importedEncounter);
+						setImportedEncounter(null);
+						closeLayer();
 					}}
 					close={() => setImportedEncounter(null)}
 				/>

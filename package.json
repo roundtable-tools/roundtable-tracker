@@ -9,5 +9,8 @@
     "dev": "yarn workspace web-roundtable-tracker dev",
     "start": "yarn workspace native-roundtable-tracker start",
     "test": "yarn workspace web-roundtable-tracker test"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.2"
   }
 }
