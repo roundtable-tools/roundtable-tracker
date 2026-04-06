@@ -8,7 +8,7 @@ import { HistoryFooter } from './components/HistoryFooter';
 import { EncounterDirectory } from './components/EncounterDirectory/EncounterDirectory';
 import { AppHeader } from './AppHeader';
 import { LandingPage } from './components/LandingPage/LandingPage';
-import { NewInitiative } from './components/InitiativeList/NewInitative';
+import { NewInitiative } from './components/InitiativeList/NewInitiative';
 import { AlternativeList } from './components/InitiativeList/AlternativeList';
 export const AppContainer = () => {
 	const encounterData = useEncounterStore((state) => state.encounterData);
