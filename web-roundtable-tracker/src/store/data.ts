@@ -92,6 +92,42 @@ export const normalizeLevel = (
 	? (level as number)
 	: partyLevel + Number.parseInt(level as string);
 
+export type ParticipantAdjustment =
+	| "weak"
+	| "elite"
+	| "elite-offense"
+	| "elite-defense"
+	| "none";
+
+export const adjustedLevel = (
+	baseLevel: number,
+	adjustment?: ParticipantAdjustment,
+): number => {
+	switch (adjustment) {
+		case "elite":
+			return baseLevel + (baseLevel <= 0 ? 2 : 1);
+		case "weak":
+			return baseLevel - (baseLevel === 1 ? 2 : 1);
+		case "elite-offense":
+		case "elite-defense":
+			return baseLevel + (baseLevel <= 0 ? 1 : 0.5);
+		default:
+			return baseLevel;
+	}
+};
+
+export const formatAdjustedLevel = (level: number): string => {
+	if (Number.isInteger(level)) {
+		return `${level}`;
+	}
+
+	const lower = Math.floor(level);
+	const upper = Math.ceil(level);
+	const midpoint = (lower + upper) / 2;
+
+	return level <= midpoint ? `${lower}(+)` : `${upper}(-)`;
+};
+
 export const participantsToLevelRange: <T extends LevelRepresentation>(
 	participants: Participant<T>[],
 ) => [number, number] = (participants) => {
@@ -128,22 +164,13 @@ type LevelFormat = {
 	1: number;
 };
 
-export type InitiativeParticipant = {
-	uuid: string;
-	tiePriority: Priority;
-	initiative?: number;
-	level: number;
-} & Omit<Participant<typeof LEVEL_REPRESENTATION.Exact>, "count">;
-
-export type Participant<
+export type CombatantParticipant<
 	IsAbstract extends LevelRepresentation = LevelRepresentation,
 > = {
 	name: string;
 	level: LevelFormat[IsAbstract];
 	side: Alignment;
 	count?: number;
-	isSimpleHazard?: boolean;
-	adjustment?: "weak" | "elite" | "none";
 	tiePriority?: Priority;
 	maxHealth?: number;
 	health?: number;
@@ -151,6 +178,36 @@ export type Participant<
 	// TEMP: Set state to @ostatni5's format until the types get unified
 	// startingState?: INITIATIVE_STATE.Normal,
 	startingState?: "normal" | "delayed" | "knocked-out";
+	description?: string;
+	dcs?: Array<{ inline: string; value: number }>;
+};
+
+export type Creature<
+	IsAbstract extends LevelRepresentation = LevelRepresentation,
+> = CombatantParticipant<IsAbstract> & {
+	type: "creature";
+	adjustment?: ParticipantAdjustment;
+};
+
+export type Hazard<
+	IsAbstract extends LevelRepresentation = LevelRepresentation,
+> = CombatantParticipant<IsAbstract> & {
+	type: "hazard";
+	successesToDisable: number;
+	isComplexHazard?: boolean;
+};
+
+export type Participant<
+	IsAbstract extends LevelRepresentation = LevelRepresentation,
+> = Creature<IsAbstract> | Hazard<IsAbstract>;
+
+export type InitiativeParticipant = {
+	uuid: string;
+	tiePriority: Priority;
+	initiative?: number;
+	level: number;
+} & Omit<Creature<typeof LEVEL_REPRESENTATION.Exact>, "type" | "adjustment"> & {
+	adjustment?: ParticipantAdjustment;
 };
 type ConcreteEncounterVariant = {
 	difficulty?: Difficulty;
@@ -166,13 +223,13 @@ type EncounterTemplateVariant = {
 	participants: Participant<typeof LEVEL_REPRESENTATION.Relative>[];
 };
 
-export type AuraElement = {
+export type NarrativeSlot = {
 	id: string;
-	type: "reinforcement" | "skill-check" | "gm-description";
-	description: string;
+	type: "default" | "reinforcement" | "ongoing";
+	description?: string;
 	trigger: {
 		round: number;
-		recurring?: boolean;
+		frequency?: number;
 	};
 	participants?: Participant<typeof LEVEL_REPRESENTATION.Relative>[];
 };
@@ -187,7 +244,7 @@ export type EncounterTemplate = {
 	partySize?: number; // Optional party size for abstract encounters
 	description: string; // Description of the encounter
 	participants: Participant<typeof LEVEL_REPRESENTATION.Relative>[]; // List of participants
-	auras?: AuraElement[];
+	narrativeSlots?: NarrativeSlot[];
 	variants?: EncounterTemplateVariant[];
 };
 
@@ -203,17 +260,22 @@ export type ConcreteEncounter = {
 	difficulty: Difficulty; // Difficulty setting
 	description: string; // Description of the encounter
 	participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[]; // List of participants
-	auras?: AuraElement[];
+	narrativeSlots?: NarrativeSlot[];
 	variants?: ConcreteEncounterVariant[];
 };
 
-const participantSchema = z.object({
+const dcsSchema = z.array(
+	z.object({
+		inline: z.string(),
+		value: z.number(),
+	})
+);
+
+const combatantParticipantSchema = z.object({
 	name: z.string(),
 	level: z.number(),
 	side: z.nativeEnum(ALIGNMENT),
 	count: z.number().optional(),
-	isSimpleHazard: z.boolean().optional(),
-	adjustment: z.enum(["weak", "elite", "none"]).optional(),
 	tiePriority: z.nativeEnum(PRIORITY).optional(),
 	maxHealth: z.number().optional(),
 	health: z.number().optional(),
@@ -221,15 +283,32 @@ const participantSchema = z.object({
 	// TEMP: Set state to @ostatni5's format until the types get unified
 	// startingState: z.nativeEnum(INITIATIVE_STATE).optional(),
 	startingState: z.enum(["normal", "delayed", "knocked-out"]).optional(),
+	description: z.string().optional(),
+	dcs: dcsSchema.optional(),
 });
 
-const auraSchema = z.object({
+const creatureSchema = combatantParticipantSchema.extend({
+	type: z.literal("creature"),
+	adjustment: z
+		.enum(["weak", "elite", "elite-offense", "elite-defense", "none"])
+		.optional(),
+});
+
+const hazardSchema = combatantParticipantSchema.extend({
+	type: z.literal("hazard"),
+	successesToDisable: z.number(),
+	isComplexHazard: z.boolean().optional(),
+});
+
+const participantSchema = z.union([creatureSchema, hazardSchema]);
+
+const narrativeSlotSchema = z.object({
 	id: z.string(),
-	type: z.enum(["reinforcement", "skill-check", "gm-description"]),
-	description: z.string(),
+	type: z.enum(["default", "reinforcement", "ongoing"]),
+	description: z.string().optional(),
 	trigger: z.object({
 		round: z.number(),
-		recurring: z.boolean().optional(),
+		frequency: z.number().optional(),
 	}),
 	participants: z.array(participantSchema).optional(),
 });
@@ -243,7 +322,7 @@ export const ConcreteEncounterSchema = z.object({
 	partySize: z.number(),
 	description: z.string(),
 	participants: z.array(participantSchema),
-	auras: z.array(auraSchema).optional(),
+	narrativeSlots: z.array(narrativeSlotSchema).optional(),
 });
 
 export type Encounter = EncounterTemplate | ConcreteEncounter;
@@ -262,6 +341,7 @@ export const exampleEncounter: Encounter = {
 			name: "Goblin",
 			level: -1,
 			side: ALIGNMENT.Opponents,
+			type: "creature",
 			count: 4,
 		},
 	],
@@ -274,6 +354,7 @@ export const exampleEncounter: Encounter = {
 					name: "Weak Goblin",
 					level: -2,
 					side: ALIGNMENT.Opponents,
+					type: "creature",
 					count: 4,
 				},
 			],
@@ -286,6 +367,7 @@ export const exampleEncounter: Encounter = {
 					name: "Goblin",
 					level: -1,
 					side: ALIGNMENT.Opponents,
+					type: "creature",
 					count: 3,
 				},
 			],
@@ -298,12 +380,14 @@ export const exampleEncounter: Encounter = {
 					name: "Goblin",
 					level: -1,
 					side: ALIGNMENT.Opponents,
+					type: "creature",
 					count: 2,
 				},
 				{
 					name: "Elite Goblin",
 					level: 0,
 					side: ALIGNMENT.Opponents,
+					type: "creature",
 					count: 2,
 				},
 			],

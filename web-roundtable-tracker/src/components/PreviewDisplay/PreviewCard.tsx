@@ -10,7 +10,7 @@ import { Aed, Favorite, Run } from 'grommet-icons/icons';
 import { ReactNode, useContext } from 'react';
 import { Inputs } from './PreviewDisplay';
 import { UseFormGetFieldState, UseFormRegister } from 'react-hook-form';
-import { CharacterConfig } from '@/store/data';
+import { adjustedLevel, CharacterConfig, formatAdjustedLevel } from '@/store/data';
 
 type InitiativeCardProps = {
 	accentColor: string;
@@ -113,7 +113,11 @@ export const PreviewCard = (props: InitiativeCardProps) => {
 									placeholder="Character Name"
 									{...register(`teams.${teamIndex}.characters.${index}.name`)}
 								/>
-								<Text>{`(${participant.level})`}</Text>
+								<Text>
+									{`(${formatAdjustedLevel(
+										adjustedLevel(participant.level, participant.adjustment)
+									)})`}
+								</Text>
 								<Box
 									cssGap
 									flex

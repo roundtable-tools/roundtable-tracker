@@ -41,8 +41,9 @@ describe('Import encounter validation gap', () => {
 					name: 'Simple Trap',
 					level: 2,
 					side: ALIGNMENT.Opponents,
-					isSimpleHazard: true,
-					adjustment: 'elite',
+					type: 'hazard',
+					successesToDisable: 2,
+					isComplexHazard: false,
 				},
 			],
 		};
@@ -52,8 +53,8 @@ describe('Import encounter validation gap', () => {
 		};
 
 		expect(parsed.participants).toHaveLength(1);
-		expect(parsed.participants[0].isSimpleHazard).toBe(true);
-		expect(parsed.participants[0].adjustment).toBe('elite');
+		expect(parsed.participants[0].type).toBe('hazard');
+		expect(parsed.participants[0].isComplexHazard).toBe(false);
 	});
 
 	it('rejects invalid participant adjustment values', () => {
@@ -64,6 +65,7 @@ describe('Import encounter validation gap', () => {
 					name: 'Bandit',
 					level: 2,
 					side: ALIGNMENT.Opponents,
+					type: 'creature',
 					adjustment: 'mythic',
 				},
 			],
@@ -74,23 +76,24 @@ describe('Import encounter validation gap', () => {
 		expect(parsed.success).toBe(false);
 	});
 
-	it('accepts and preserves aura elements', () => {
+	it('accepts and preserves narrative slot elements', () => {
 		const importPayload = {
 			...createBaseImportPayload(),
-			auras: [
+			narrativeSlots: [
 				{
-					id: 'aura-1',
+					id: 'slot-1',
 					type: 'reinforcement',
 					description: 'More enemies arrive at the start of round 2.',
 					trigger: {
 						round: 2,
-						recurring: false,
+						frequency: 1,
 					},
 					participants: [
 						{
 							name: 'Reinforcement Scout',
 							level: 1,
 							side: ALIGNMENT.Opponents,
+							type: 'creature',
 							count: 1,
 						},
 					],
@@ -99,20 +102,20 @@ describe('Import encounter validation gap', () => {
 		};
 
 		const parsed = ConcreteEncounterSchema.parse(importPayload) as {
-			auras?: Array<Record<string, unknown>>;
+			narrativeSlots?: Array<Record<string, unknown>>;
 		};
 
-		expect(parsed.auras).toHaveLength(1);
-		expect(parsed.auras?.[0].type).toBe('reinforcement');
-		expect(parsed.auras?.[0].trigger).toEqual({ round: 2, recurring: false });
+		expect(parsed.narrativeSlots).toHaveLength(1);
+		expect(parsed.narrativeSlots?.[0].type).toBe('reinforcement');
+		expect(parsed.narrativeSlots?.[0].trigger).toEqual({ round: 2, frequency: 1 });
 	});
 
-	it('rejects aura elements with invalid type', () => {
+	it('rejects narrative slot elements with invalid type', () => {
 		const importPayload = {
 			...createBaseImportPayload(),
-			auras: [
+			narrativeSlots: [
 				{
-					id: 'aura-2',
+					id: 'slot-2',
 					type: 'weather',
 					description: 'Heavy rain starts.',
 					trigger: {
@@ -141,6 +144,7 @@ describe('Import encounter validation gap', () => {
 					name: 'Bandit',
 					level: 2,
 					side: ALIGNMENT.Opponents,
+					type: 'creature',
 					count: 1,
 				},
 			],

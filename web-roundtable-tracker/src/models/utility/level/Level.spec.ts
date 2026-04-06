@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Level } from './Level';
+import { formatAdjustedLevel, getAdjustedLevel, Level } from './Level';
 import { LevelDifference } from './LevelDifference';
 import { LevelRange } from './LevelRange';
 import { TemplateSlot } from '@/models/templates/TemplateSlot.class';
@@ -48,6 +48,26 @@ describe('Level', () => {
             const difference = level1.levelDifference(level2);
             expect(difference).toBeInstanceOf(LevelDifference);
             expect(difference.valueOf()).toBeNaN();
+        });
+
+        it('should calculate level difference from adjusted level', () => {
+            const creatureLevel = new Level(0);
+            const partyLevel = new Level(0);
+            const difference = creatureLevel.levelDifference(partyLevel, 'elite');
+
+            expect(difference.valueOf()).toBe(2);
+        });
+    });
+
+    describe('adjusted level helpers', () => {
+        it('should apply elite/weak low-level special cases', () => {
+            expect(getAdjustedLevel(0, 'elite')).toBe(2);
+            expect(getAdjustedLevel(1, 'weak')).toBe(-1);
+        });
+
+        it('should format fractional levels as n(+) / n(-)', () => {
+            expect(formatAdjustedLevel(10.5)).toBe('10(+)');
+            expect(formatAdjustedLevel(10.6)).toBe('11(-)');
         });
     });
 
@@ -104,7 +124,7 @@ describe('Level', () => {
         it('should apply the simple hazard modifier', () => {
             const diff = new LevelDifference(0);
             const regularExp = diff.toExperience().valueOf();
-            const simpleHazardExp = diff.toExperience(true).valueOf();
+            const simpleHazardExp = diff.toExperience(false).valueOf();
 
             expect(regularExp).toBe(40);
             expect(simpleHazardExp).toBe(8);
