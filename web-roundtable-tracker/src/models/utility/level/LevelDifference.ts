@@ -10,7 +10,7 @@ export class LevelDifference {
         return `${this.value >= 0 ? '+' : ''}${this.value}`;
     }
     toExperience(simpleHazardModdifier:boolean = false): ExperienceBudget {
-        if (this.value <= -7) {
+        if (this.value < -4) {
             return new ExperienceBudget(0); // Default case for too low level difference
         }
         const baseCost = 40; // Base cost for equivalent levels
@@ -29,6 +29,10 @@ export class LevelDifference {
             }
         }
         const rawExp = baseCost * getMultiplier() / (simpleHazardModdifier ? 5 : 1); // Simple hazard modifier for smaller exp gain
+
+        if (simpleHazardModdifier) {
+            return new ExperienceBudget(rawExp);
+        }
 
         switch (true){
             case rawExp >= 10:

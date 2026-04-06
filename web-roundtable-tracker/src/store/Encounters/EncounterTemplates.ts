@@ -1,12 +1,12 @@
 import {
-	AbstractEncounter,
+	EncounterTemplate,
 	ALIGNMENT,
 	DIFFICULTY,
 	LEVEL_REPRESENTATION,
 	PRIORITY,
 } from '@/store/data';
 
-const SevereBossAndLackeys: AbstractEncounter = {
+const SevereBossAndLackeys: EncounterTemplate = {
 	id: 'e-001',
 	name: 'Boss and Lackeys',
 	difficulty: DIFFICULTY.Severe,
@@ -96,7 +96,7 @@ const SevereBossAndLackeys: AbstractEncounter = {
 		},
 	],
 };
-const SevereBossAndLieutenant: AbstractEncounter = {
+const SevereBossAndLieutenant: EncounterTemplate = {
 	id: 'e-002',
 	name: 'Boss and Lieutenant',
 	difficulty: DIFFICULTY.Severe,
@@ -186,7 +186,7 @@ const SevereBossAndLieutenant: AbstractEncounter = {
 		},
 	],
 };
-const SevereWorthyOponents: AbstractEncounter = {
+const SevereWorthyOponents: EncounterTemplate = {
 	id: 'e-003',
 	name: 'Worthy Opponents',
 	difficulty: DIFFICULTY.Severe,
@@ -262,7 +262,7 @@ const SevereWorthyOponents: AbstractEncounter = {
 		},
 	],
 };
-const ModerateLieutenantAndLackeys: AbstractEncounter = {
+const ModerateLieutenantAndLackeys: EncounterTemplate = {
 	id: 'e-004',
 	name: 'Lieutenant and Lackeys',
 	difficulty: DIFFICULTY.Moderate,
@@ -352,7 +352,7 @@ const ModerateLieutenantAndLackeys: AbstractEncounter = {
 		},
 	],
 };
-const ModerateMatedPair: AbstractEncounter = {
+const ModerateMatedPair: EncounterTemplate = {
 	id: 'e-005',
 	name: 'Mated Pair',
 	difficulty: DIFFICULTY.Moderate,
@@ -421,7 +421,7 @@ const ModerateMatedPair: AbstractEncounter = {
 		},
 	],
 };
-const ModerateTroop: AbstractEncounter = {
+const ModerateTroop: EncounterTemplate = {
 	id: 'e-006',
 	name: 'Troop',
 	difficulty: DIFFICULTY.Moderate,
@@ -511,7 +511,7 @@ const ModerateTroop: AbstractEncounter = {
 		},
 	],
 };
-const LowMookSquad: AbstractEncounter = {
+const LowMookSquad: EncounterTemplate = {
 	id: 'e-007',
 	name: 'Mook Squad',
 	difficulty: DIFFICULTY.Low,
@@ -587,7 +587,7 @@ const LowMookSquad: AbstractEncounter = {
 		},
 	],
 };
-const ExtremeSoloBoss: AbstractEncounter = {
+const ExtremeSoloBoss: EncounterTemplate = {
 	id: 'e-008',
 	name: 'Solo Boss',
 	difficulty: DIFFICULTY.Extreme,

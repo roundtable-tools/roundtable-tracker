@@ -12,23 +12,119 @@ import { participantsToEncounterCharacters } from './convert';
 import { createEncounterStore } from './store';
 
 describe('Import encounter validation gap', () => {
+	const createBaseImportPayload = () => ({
+		id: 'imported-encounter',
+		name: 'Imported Encounter',
+		description: 'Imported Encounter',
+		difficulty: DIFFICULTY.Trivial,
+		level: 1,
+		partySize: 4,
+		levelRepresentation: LEVEL_REPRESENTATION.Exact,
+		participants: [],
+	});
+
 	it('accepts the default Import Encounter payload', () => {
-		const importPayload = {
-			id: 'imported-encounter',
-			name: 'Imported Encounter',
-			description: 'Imported Encounter',
-			difficulty: DIFFICULTY.Trivial,
-			level: 1,
-			partySize: 4,
-			levelRepresentation: LEVEL_REPRESENTATION.Exact,
-			participants: [],
-		};
+		const importPayload = createBaseImportPayload();
 
 		const parsed = ConcreteEncounterSchema.parse(importPayload);
 
 		expect(parsed.name).toBe('Imported Encounter');
 		expect(parsed.participants).toEqual([]);
 		expect(parsed.partySize).toBe(4);
+	});
+
+	it('accepts participant simple hazard and adjustment fields', () => {
+		const importPayload = {
+			...createBaseImportPayload(),
+			participants: [
+				{
+					name: 'Simple Trap',
+					level: 2,
+					side: ALIGNMENT.Opponents,
+					isSimpleHazard: true,
+					adjustment: 'elite',
+				},
+			],
+		};
+
+		const parsed = ConcreteEncounterSchema.parse(importPayload) as {
+			participants: Array<Record<string, unknown>>;
+		};
+
+		expect(parsed.participants).toHaveLength(1);
+		expect(parsed.participants[0].isSimpleHazard).toBe(true);
+		expect(parsed.participants[0].adjustment).toBe('elite');
+	});
+
+	it('rejects invalid participant adjustment values', () => {
+		const importPayload = {
+			...createBaseImportPayload(),
+			participants: [
+				{
+					name: 'Bandit',
+					level: 2,
+					side: ALIGNMENT.Opponents,
+					adjustment: 'mythic',
+				},
+			],
+		};
+
+		const parsed = ConcreteEncounterSchema.safeParse(importPayload);
+
+		expect(parsed.success).toBe(false);
+	});
+
+	it('accepts and preserves aura elements', () => {
+		const importPayload = {
+			...createBaseImportPayload(),
+			auras: [
+				{
+					id: 'aura-1',
+					type: 'reinforcement',
+					description: 'More enemies arrive at the start of round 2.',
+					trigger: {
+						round: 2,
+						recurring: false,
+					},
+					participants: [
+						{
+							name: 'Reinforcement Scout',
+							level: 1,
+							side: ALIGNMENT.Opponents,
+							count: 1,
+						},
+					],
+				},
+			],
+		};
+
+		const parsed = ConcreteEncounterSchema.parse(importPayload) as {
+			auras?: Array<Record<string, unknown>>;
+		};
+
+		expect(parsed.auras).toHaveLength(1);
+		expect(parsed.auras?.[0].type).toBe('reinforcement');
+		expect(parsed.auras?.[0].trigger).toEqual({ round: 2, recurring: false });
+	});
+
+	it('rejects aura elements with invalid type', () => {
+		const importPayload = {
+			...createBaseImportPayload(),
+			auras: [
+				{
+					id: 'aura-2',
+					type: 'weather',
+					description: 'Heavy rain starts.',
+					trigger: {
+						round: 3,
+					},
+				},
+			],
+		};
+
+		const parsed = ConcreteEncounterSchema.safeParse(importPayload);
+
+		expect(parsed.success).toBe(false);
 	});
 
 	it('accepts participants without health fields', () => {

@@ -142,6 +142,8 @@ export type Participant<
 	level: LevelFormat[IsAbstract];
 	side: Alignment;
 	count?: number;
+	isSimpleHazard?: boolean;
+	adjustment?: "weak" | "elite" | "none";
 	tiePriority?: Priority;
 	maxHealth?: number;
 	health?: number;
@@ -157,14 +159,25 @@ type ConcreteEncounterVariant = {
 	description: string; // Description of external conditions that trigger the variant
 	participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[];
 };
-type AbstractEncounterVariant = {
+type EncounterTemplateVariant = {
 	difficulty?: Difficulty;
 	partySize?: number;
 	description: string; // Description of external conditions that trigger the variant
 	participants: Participant<typeof LEVEL_REPRESENTATION.Relative>[];
 };
 
-export type AbstractEncounter = {
+export type AuraElement = {
+	id: string;
+	type: "reinforcement" | "skill-check" | "gm-description";
+	description: string;
+	trigger: {
+		round: number;
+		recurring?: boolean;
+	};
+	participants?: Participant<typeof LEVEL_REPRESENTATION.Relative>[];
+};
+
+export type EncounterTemplate = {
 	id: string; // Unique identifier for the encounter
 	name: string;
 	difficultyLabel?: keyof typeof DIFFICULTY;
@@ -174,8 +187,11 @@ export type AbstractEncounter = {
 	partySize?: number; // Optional party size for abstract encounters
 	description: string; // Description of the encounter
 	participants: Participant<typeof LEVEL_REPRESENTATION.Relative>[]; // List of participants
-	variants?: AbstractEncounterVariant[];
+	auras?: AuraElement[];
+	variants?: EncounterTemplateVariant[];
 };
+
+export type AbstractEncounter = EncounterTemplate;
 
 export type ConcreteEncounter = {
 	id: string; // Unique identifier for the encounter
@@ -187,8 +203,36 @@ export type ConcreteEncounter = {
 	difficulty: Difficulty; // Difficulty setting
 	description: string; // Description of the encounter
 	participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[]; // List of participants
+	auras?: AuraElement[];
 	variants?: ConcreteEncounterVariant[];
 };
+
+const participantSchema = z.object({
+	name: z.string(),
+	level: z.number(),
+	side: z.nativeEnum(ALIGNMENT),
+	count: z.number().optional(),
+	isSimpleHazard: z.boolean().optional(),
+	adjustment: z.enum(["weak", "elite", "none"]).optional(),
+	tiePriority: z.nativeEnum(PRIORITY).optional(),
+	maxHealth: z.number().optional(),
+	health: z.number().optional(),
+	tempHealth: z.number().optional(),
+	// TEMP: Set state to @ostatni5's format until the types get unified
+	// startingState: z.nativeEnum(INITIATIVE_STATE).optional(),
+	startingState: z.enum(["normal", "delayed", "knocked-out"]).optional(),
+});
+
+const auraSchema = z.object({
+	id: z.string(),
+	type: z.enum(["reinforcement", "skill-check", "gm-description"]),
+	description: z.string(),
+	trigger: z.object({
+		round: z.number(),
+		recurring: z.boolean().optional(),
+	}),
+	participants: z.array(participantSchema).optional(),
+});
 
 export const ConcreteEncounterSchema = z.object({
 	id: z.string(),
@@ -198,25 +242,11 @@ export const ConcreteEncounterSchema = z.object({
 	levelRepresentation: z.literal(LEVEL_REPRESENTATION.Exact),
 	partySize: z.number(),
 	description: z.string(),
-	participants: z.array(
-		z.object({
-			name: z.string(),
-			level: z.number(),
-			side: z.nativeEnum(ALIGNMENT),
-			count: z.number().optional(),
-			tiePriority: z.nativeEnum(PRIORITY).optional(),
-			maxHealth: z.number().optional(),
-			health: z.number().optional(),
-			tempHealth: z.number().optional(),
-			// TEMP: Set state to @ostatni5's format until the types get unified
-			// startingState: z.nativeEnum(INITIATIVE_STATE).optional(),
-			startingState: z.enum(["normal", "delayed", "knocked-out"])
-				.optional(),
-		}),
-	),
+	participants: z.array(participantSchema),
+	auras: z.array(auraSchema).optional(),
 });
 
-export type Encounter = AbstractEncounter | ConcreteEncounter;
+export type Encounter = EncounterTemplate | ConcreteEncounter;
 // Example usage
 
 export const exampleEncounter: Encounter = {

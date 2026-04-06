@@ -12,7 +12,7 @@ import { DocumentUpload, StreetView } from 'grommet-icons';
 import { EncounterData } from './EncounterData.tsx';
 import { useNavigate } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
-import AbstractEcounters from '../../store/Encounters/AbstractEncounterTemplates.ts';
+import AbstractEcounters from '../../store/Encounters/EncounterTemplates.ts';
 import {
 	DIFFICULTY,
 	difficultyToString,

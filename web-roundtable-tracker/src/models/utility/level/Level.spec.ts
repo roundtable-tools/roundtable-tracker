@@ -76,10 +76,16 @@ describe('Level', () => {
             expect(new LevelDifference(4).valueOf()).toBe(4);
         });
 
-        it('should return 0 experience for difference <= -7', () => {
-            const diff = new LevelDifference(-7);
+        it('should return 0 experience for difference below -4', () => {
+            const diff = new LevelDifference(-5);
             const exp = diff.toExperience();
             expect(exp.valueOf()).toBe(0);
+        });
+
+        it('should still award XP at difference -4', () => {
+            const diff = new LevelDifference(-4);
+            const exp = diff.toExperience();
+            expect(exp.valueOf()).toBeGreaterThan(0);
         });
 
         it('should return rounded experience for positive difference', () => {
@@ -95,8 +101,17 @@ describe('Level', () => {
             expect(exp.valueOf()).toBeGreaterThan(0);
         });
 
-        it('should return 0 for very small experience', () => {
-            const diff = new LevelDifference(-7);
+        it('should apply the simple hazard modifier', () => {
+            const diff = new LevelDifference(0);
+            const regularExp = diff.toExperience().valueOf();
+            const simpleHazardExp = diff.toExperience(true).valueOf();
+
+            expect(regularExp).toBe(40);
+            expect(simpleHazardExp).toBe(8);
+        });
+
+        it('should return 0 for very low level differences', () => {
+            const diff = new LevelDifference(-6);
             const exp = diff.toExperience();
             expect(exp.valueOf()).toBe(0);
         });
