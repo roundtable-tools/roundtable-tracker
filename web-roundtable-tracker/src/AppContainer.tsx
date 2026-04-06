@@ -44,7 +44,7 @@ export const AppContainer = () => {
 						<NewInitiative />
 						<HistoryFooter endEncounter={() => setView('preview')} />
 					</>
-				) : view === 'initaitive2' ? (
+				) : view === 'initiative2' ? (
 					<>
 						<AlternativeList />
 						<HistoryFooter endEncounter={() => setView('preview')} />

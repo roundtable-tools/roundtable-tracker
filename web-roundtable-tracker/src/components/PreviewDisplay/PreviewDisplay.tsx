@@ -217,7 +217,7 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	};
 
 	const onSelectInitiativeView = (
-		view: 'initiative' | 'newInitiative' | 'initaitive2'
+		view: 'initiative' | 'newInitiative' | 'initiative2'
 	) => {
 		startEncounter(participantsToEncounterCharacters(preparedParticipants));
 		setShowInitiativeChoice(false);
@@ -229,8 +229,8 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 			return;
 		}
 
-		if (view === 'initaitive2') {
-			navigate({ to: '/initaitive2' });
+		if (view === 'initiative2') {
+			navigate({ to: '/initiative2' });
 
 			return;
 		}
@@ -280,7 +280,7 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 							/>
 							<Button
 								label="Initiative 2"
-								onClick={() => onSelectInitiativeView('initaitive2')}
+								onClick={() => onSelectInitiativeView('initiative2')}
 							/>
 							<Button
 								primary
