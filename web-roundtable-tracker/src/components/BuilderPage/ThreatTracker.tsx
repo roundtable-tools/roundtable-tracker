@@ -14,14 +14,42 @@ const ADDITIONAL_TRIVIAL_UNITS = 1;
 type ThresholdGroup = {
 	keys: number[];
 	baseLabel: string;
-	min: number;
-	max: number;
-	width: number;
+	minXp: number;
+	maxXp: number;
 	color: string;
 };
 
-function getMergedThresholds(
-	threatEntries: [number, string][]
+const CHARACTER_ADJUSTMENT_BY_THREAT: Record<string, number> = {
+	Trivial: 10,
+	Low: 20,
+	Moderate: 20,
+	Severe: 30,
+	Extreme: 40,
+	Impossible: 40,
+};
+
+function getBaseXpFromThreatKey(key: number): number {
+	return 40 + key * 20;
+}
+
+function getCharacterAdjustmentForThreat(baseLabel: string): number {
+	return CHARACTER_ADJUSTMENT_BY_THREAT[baseLabel] ?? 40;
+}
+
+function getAdjustedXpForThreat(
+	threatKey: number,
+	baseLabel: string,
+	partySize: number
+): number {
+	const baseXp = getBaseXpFromThreatKey(threatKey);
+	const adjustment = getCharacterAdjustmentForThreat(baseLabel);
+
+	return Math.max(0, baseXp + adjustment * (partySize - 4));
+}
+
+export function getMergedThresholds(
+	threatEntries: [number, string][],
+	partySize: number
 ): ThresholdGroup[] {
 	const colors = [
 		'bg-green-400',
@@ -47,41 +75,38 @@ function getMergedThresholds(
 		group.keys.push(key);
 	});
 
-	if (groups.length > 0) {
-		const lastGroup = groups[groups.length - 1];
-		const lastKey = lastGroup.keys[lastGroup.keys.length - 1];
-		lastGroup.keys.push(
-			...Array.from({ length: ADDITIONAL_IMPOSSIBLE_UNITS }, () => lastKey)
+	let previousMaxXp = 0;
+	const merged = groups.map((group, i) => {
+		const computedMaxXp = Math.max(
+			...group.keys.map((key) => getAdjustedXpForThreat(key, group.baseLabel, partySize))
 		);
-		const firstGroup = groups[0];
-		firstGroup.keys.unshift(
-			...Array.from({ length: ADDITIONAL_TRIVIAL_UNITS }, () => firstGroup.keys[0])
-		);
-	}
-
-	const units = groups.map((g) => g.keys.length);
-	const totalUnits = units.reduce((a, b) => a + b, 0);
-	const percentages = units.map((u) => (u / totalUnits) * 100);
-
-	let acc = 0;
-
-	return groups.map((group, i) => {
-		const min = acc;
-		const width = percentages[i];
-		let max = min + width;
-
-		if (i === groups.length - 1) max = 100;
-
-		acc = max;
-
-		return {
+		const maxXp = Math.max(computedMaxXp, previousMaxXp);
+		const threshold: ThresholdGroup = {
 			...group,
-			min,
-			max,
-			width: max - min,
+			minXp: previousMaxXp,
+			maxXp: maxXp,
 			color: colors[i % colors.length],
 		};
+
+		previousMaxXp = maxXp;
+
+		return threshold;
 	});
+
+	if (merged.length > 0) {
+		const firstThreshold = merged[0];
+		const lastThreshold = merged[merged.length - 1];
+		const firstAdjustment = getCharacterAdjustmentForThreat(firstThreshold.baseLabel);
+		const lastAdjustment = getCharacterAdjustmentForThreat(lastThreshold.baseLabel);
+
+		firstThreshold.minXp = Math.max(
+			0,
+			firstThreshold.minXp - firstAdjustment * ADDITIONAL_TRIVIAL_UNITS
+		);
+		lastThreshold.maxXp += lastAdjustment * ADDITIONAL_IMPOSSIBLE_UNITS;
+	}
+
+	return merged;
 }
 
 export function ThreatTracker({
@@ -92,17 +117,7 @@ export function ThreatTracker({
 		parseInt(key),
 		label,
 	]) as [number, string][];
-	const merged = getMergedThresholds(threatEntries);
-
-	const normalizedValue = Math.max(
-		0,
-		Math.min(
-			100,
-			((budget.valueOf() ?? 0) /
-				((12 + ADDITIONAL_IMPOSSIBLE_UNITS + ADDITIONAL_TRIVIAL_UNITS) * 20)) *
-				100
-		)
-	);
+	const merged = getMergedThresholds(threatEntries, partySize);
 
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [isSmall, setIsSmall] = useState(false);
@@ -121,11 +136,12 @@ export function ThreatTracker({
 	}, []);
 
 	const achievedThreat = Threat.fromExperienceBudget(budget, partySize);
+	const currentBudgetXp = budget.valueOf() ?? 0;
 	const currentThresholdIdx = merged.findIndex((group) =>
 		group.keys.includes(Number(achievedThreat.threat))
 	);
 
-	const distance = isSmall ? 1 : 2;
+	const distance = isSmall ? 1 : 1;
 	const start = Math.max(0, currentThresholdIdx - distance);
 	const end = Math.min(merged.length - 1, currentThresholdIdx + distance);
 
@@ -139,38 +155,37 @@ export function ThreatTracker({
 
 	const TRIMMED_SEGMENT_PCT = isSmall ? 75 : 15;
 
-	let visibleMin = visibleThresholds[0].min;
-	let visibleMax = visibleThresholds[visibleThresholds.length - 1].max;
+	let visibleMin = visibleThresholds[0].minXp;
+	let visibleMax = visibleThresholds[visibleThresholds.length - 1].maxXp;
 
 	if (lastVisibleIsLast && !lastIsCurrent) {
 		const prev = visibleThresholds[lastVisibleIdx - 1];
 		visibleMax =
-			prev.max +
-			(visibleThresholds[lastVisibleIdx].max - prev.max) *
+			prev.maxXp +
+			(visibleThresholds[lastVisibleIdx].maxXp - prev.maxXp) *
 				(TRIMMED_SEGMENT_PCT / 100);
 		visibleThresholds = [
 			...visibleThresholds.slice(0, -1),
 			{
 				...visibleThresholds[lastVisibleIdx],
-				min: prev.max,
-				max: visibleMax,
-				width: visibleMax - prev.max,
+				minXp: prev.maxXp,
+				maxXp: visibleMax,
 			},
 		];
 	}
 
 	const scaledValue =
-		((normalizedValue - visibleMin) / (visibleMax - visibleMin)) * 100;
+		((currentBudgetXp - visibleMin) / (visibleMax - visibleMin)) * 100;
 
 	return (
-		<div ref={containerRef} className="relative h-8 w-full overflow-visible" title={`${achievedThreat.toLabel()} — ${budget.valueOf()} XP`}>
-			<Progress value={scaledValue} className="h-3" />
-			<div className="absolute inset-0 flex h-3 w-full pointer-events-none">
+		<div ref={containerRef} className="relative h-10 w-full overflow-visible" title={`${achievedThreat.toLabel()} — ${budget.valueOf()} XP`}>
+			<Progress value={Math.max(0, Math.min(100, scaledValue))} className="h-4" />
+			<div className="absolute inset-0 flex h-4 w-full pointer-events-none">
 				{visibleThresholds.map((t, i) => {
 					const left =
-						((t.min - visibleMin) / (visibleMax - visibleMin)) * 100;
+						((t.minXp - visibleMin) / (visibleMax - visibleMin)) * 100;
 					const width =
-						((t.max - t.min) / (visibleMax - visibleMin)) * 100;
+						((t.maxXp - t.minXp) / (visibleMax - visibleMin)) * 100;
 
 					return (
 						<div
@@ -188,12 +203,12 @@ export function ThreatTracker({
 					);
 				})}
 			</div>
-			<div className="absolute left-0 w-full h-5 pointer-events-none">
+			<div className="absolute left-0 top-4 w-full h-6 pointer-events-none">
 				{visibleThresholds.map((t, i) => {
 					const left =
-						((t.min - visibleMin) / (visibleMax - visibleMin)) * 100;
+						((t.minXp - visibleMin) / (visibleMax - visibleMin)) * 100;
 					const width =
-						((t.max - t.min) / (visibleMax - visibleMin)) * 100;
+						((t.maxXp - t.minXp) / (visibleMax - visibleMin)) * 100;
 					const isCurrent = merged.indexOf(t) === currentThresholdIdx;
 					const label = isCurrent ? achievedThreat.toLabel() : t.baseLabel;
 
