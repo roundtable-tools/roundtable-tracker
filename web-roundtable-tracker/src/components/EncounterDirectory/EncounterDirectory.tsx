@@ -1,6 +1,7 @@
 import {
 	Box,
 	Button,
+	CheckBox,
 	Data,
 	DataFilters,
 	DataSearch,
@@ -8,12 +9,14 @@ import {
 	PageContent,
 	Text,
 } from 'grommet';
-import { DocumentUpload, StreetView } from 'grommet-icons';
+import { Add, DocumentUpload, StreetView } from 'grommet-icons';
 import { EncounterData } from './EncounterData.tsx';
 import { useNavigate } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import AbstractEcounters from '../../store/Encounters/EncounterTemplates.ts';
 import {
+	AbstractEncounter,
+	CombatantParticipant,
 	DIFFICULTY,
 	difficultyToString,
 	Encounter,
@@ -24,18 +27,28 @@ import { useEncounterStore } from '@/store/instance.ts';
 import { AppHeader } from '@/AppHeader.tsx';
 import { EncounterDetailsModal } from './EncounterDetails/EncounterDetailsModal.tsx';
 import { EncounterImportModal } from './EncounterDetails/EncounterImportModal.tsx';
+import { SavedConcreteEncounter } from '@/store/savedEncounters.ts';
+import { useSavedEncountersStore } from '@/store/savedEncounterInstance.ts';
+import { ColumnConfig } from 'grommet/components/DataTable';
 
 type EncounterDirectoryProps = {
 	setView: (view: string) => void;
 };
 
-export const EncounterDirectory = (props: EncounterDirectoryProps) => {
-	const { setView } = props;
-	const navigate = useNavigate();
-	const setEncounterData = useEncounterStore((state) => state.setEncounterData);
-	const data = AbstractEcounters.flatMap<Encounter>((encounter) => {
-		const mainVariant = {
+type EncounterDirectoryEntry = Encounter & {
+	directoryId: string;
+	source: 'template' | 'saved';
+	difficultyLabel: string;
+};
+
+const toTemplateEntries = (
+	templates: AbstractEncounter[]
+): EncounterDirectoryEntry[] => {
+	return templates.flatMap<EncounterDirectoryEntry>((encounter) => {
+		const mainVariant: EncounterDirectoryEntry = {
 			id: `${encounter.id}${encounter.variants ? '-a' : ''}`,
+			directoryId: `template:${encounter.id}${encounter.variants ? '-a' : ''}`,
+			source: 'template',
 			name: encounter.name,
 			difficultyLabel: difficultyToString(encounter.difficulty ?? DIFFICULTY.Low),
 			level:
@@ -52,8 +65,12 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 		return [
 			mainVariant,
 			...(encounter.variants ?? []).map((variant, index) => {
+				const id = `${encounter.id}-${indexToLetter(index + 1)}`;
+
 				return {
-					id: `${encounter.id}-${indexToLetter(index + 1)}`,
+					id,
+					directoryId: `template:${id}`,
+					source: 'template' as const,
 					name: encounter.name,
 					difficultyLabel: difficultyToString(
 						(encounter.difficulty ?? DIFFICULTY.Low)
@@ -63,7 +80,8 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 							? (variant.level as [number, number])
 							: participantsToLevelRange(variant.participants),
 					description: variant.description,
-					difficulty: variant.difficulty ?? encounter.difficulty ?? DIFFICULTY.Low,
+					difficulty:
+						variant.difficulty ?? encounter.difficulty ?? DIFFICULTY.Low,
 					partySize: variant.partySize ?? encounter.partySize ?? 4,
 					participants: variant.participants,
 					levelRepresentation: encounter.levelRepresentation,
@@ -71,11 +89,70 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			}),
 		];
 	});
-	const columns = [
+};
+
+const toSavedEntries = (
+	savedEncounters: SavedConcreteEncounter[]
+): EncounterDirectoryEntry[] => {
+	return savedEncounters.map((encounter) => ({
+		...encounter,
+		directoryId: `saved:${encounter.id}`,
+		source: 'saved',
+		difficultyLabel: difficultyToString(encounter.difficulty ?? DIFFICULTY.Low),
+	}));
+};
+
+export const getDefaultShowTemplates = (savedCount: number) => savedCount === 0;
+
+export const createDirectoryEntries = (
+	templates: AbstractEncounter[],
+	savedEncounters: SavedConcreteEncounter[],
+	showTemplates: boolean
+): EncounterDirectoryEntry[] => {
+	const savedEntries = toSavedEntries(savedEncounters);
+	const templateEntries = showTemplates ? toTemplateEntries(templates) : [];
+
+	return [...savedEntries, ...templateEntries];
+};
+
+export const toEncounter = (entry: EncounterDirectoryEntry): Encounter => {
+	const { directoryId, source, ...encounter } = entry;
+	void directoryId;
+	void source;
+
+	return encounter;
+};
+
+export const EncounterDirectory = (props: EncounterDirectoryProps) => {
+	const { setView } = props;
+	const navigate = useNavigate();
+	const setEncounterData = useEncounterStore((state) => state.setEncounterData);
+	const savedEncounters = useSavedEncountersStore((state) => state.savedEncounters);
+	const [showTemplates, setShowTemplates] = useState(
+		getDefaultShowTemplates(savedEncounters.length)
+	);
+	const data = useMemo(
+		() =>
+			createDirectoryEntries(AbstractEcounters, savedEncounters, showTemplates),
+		[savedEncounters, showTemplates]
+	);
+	const columns: ColumnConfig<EncounterDirectoryEntry>[] = [
 		{
-			property: 'id',
+			property: 'directoryId',
 			header: <Text size="large">ID</Text>,
 			primary: true,
+			render: (datum: EncounterDirectoryEntry) => {
+				return (
+					<Box pad={{ vertical: 'xsmall' }} direction="row" gap="xsmall">
+						<Text>{datum.id}</Text>
+						{datum.source === 'saved' ? (
+							<Text size="small" color="status-ok">
+								Saved
+							</Text>
+						) : null}
+					</Box>
+				);
+			},
 		},
 		{
 			property: 'name',
@@ -84,7 +161,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 		{
 			property: 'level',
 			header: <Text size="large">Level</Text>,
-			render: (datum: Encounter) => {
+			render: (datum: EncounterDirectoryEntry) => {
 				return (
 					<Box pad={{ vertical: 'xsmall' }}>
 						<Text>
@@ -101,7 +178,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 		{
 			property: 'difficulty',
 			header: <Text size="large">Difficulty</Text>,
-			render: (datum: Encounter) => {
+			render: (datum: EncounterDirectoryEntry) => {
 				return (
 					<Box pad={{ vertical: 'xsmall' }}>
 						<Text>
@@ -136,14 +213,17 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 		{
 			property: 'participants',
 			header: <Text size="large">Participants</Text>,
-			render: (datum: Encounter) => {
+			render: (datum: EncounterDirectoryEntry) => {
 				const { participants } = datum;
 
 				return (
 					<Box pad={{ vertical: 'xsmall' }}>
 						<Text>
 							{participants
-								? participants.reduce<string>((acc, participant) => {
+								? participants.reduce<string>((
+										acc,
+										participant: CombatantParticipant
+								  ) => {
 										return `${acc}${acc ? ', ' : ''}${participant.name}${participant.count ? ` (x${participant.count})` : ''}`;
 									}, '')
 								: ''}
@@ -159,10 +239,15 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 		navigate({ to: '/preview' });
 	};
 
+	const openBuilder = () => {
+		setView('builder');
+		navigate({ to: '/builder' });
+	};
+
 	const [selected, setSelected] = useState<string | number>();
 	const [showImportLayer, setShowImportLayer] = useState(false);
 	const selectedEncounterData = useMemo(
-		() => data.find(({ id }) => id === `${selected}`),
+		() => data.find(({ directoryId }) => directoryId === `${selected}`),
 		[selected, data]
 	);
 
@@ -172,7 +257,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			messages={{}}
 			data={data}
 			properties={{
-				id: {
+				directoryId: {
 					label: 'ID',
 					search: false,
 					sort: true,
@@ -229,11 +314,26 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			<AppHeader setView={setView}>
 				<Box pad="small">
 					<Button
+						icon={<Add />}
+						label="New Encounter"
+						onClick={openBuilder}
+					/>
+				</Box>
+				<Box pad="small">
+					<Button
 						icon={<DocumentUpload />}
 						plain
 						onClick={() => setShowImportLayer(true)}
 					/>
 				</Box>
+				{savedEncounters.length > 0 ? (
+					<CheckBox
+						toggle
+						label="Show Templates"
+						checked={showTemplates}
+						onChange={(event) => setShowTemplates(event.target.checked)}
+					/>
+				) : null}
 				<DataSearch />
 				<DataSort drop />
 				<DataFilters layer />
@@ -258,8 +358,11 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			<EncounterDetailsModal
 				closeLayer={() => setSelected(undefined)}
 				selectedEncounter={selectedEncounterData}
+				source={selectedEncounterData?.source}
+				encounterId={selectedEncounterData?.id}
 				submit={() => {
-					if (selectedEncounterData) setEncounterData(selectedEncounterData);
+					if (selectedEncounterData)
+						setEncounterData(toEncounter(selectedEncounterData));
 					setSelected(undefined);
 					openPreview();
 				}}

@@ -1,6 +1,6 @@
 import { ExperienceBudget } from "../experienceBudget/ExperienceBudget";
 
-const THREAT_TYPE = {
+export const THREAT_TYPE = {
     0: 'Trivial',
     1: 'Low',
     2: 'Moderate',

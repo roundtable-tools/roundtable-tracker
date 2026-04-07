@@ -5,11 +5,13 @@ import { EncounterCard } from './EncounterCard'; // Import the new component
 type EncounterDetailsModalProps = {
 	closeLayer: () => void;
 	selectedEncounter?: Encounter;
+	source?: 'template' | 'saved';
+	encounterId?: string;
 	submit: () => void;
 };
 
 export const EncounterDetailsModal = (props: EncounterDetailsModalProps) => {
-	const { closeLayer, selectedEncounter, submit } = props;
+	const { closeLayer, selectedEncounter, source, encounterId, submit } = props;
 
 	return selectedEncounter ? (
 		<Layer
@@ -21,6 +23,8 @@ export const EncounterDetailsModal = (props: EncounterDetailsModalProps) => {
 		>
 			<EncounterCard
 				selectedEncounter={selectedEncounter}
+				source={source}
+				encounterId={encounterId}
 				submit={submit}
 				close={closeLayer}
 			/>

@@ -68,7 +68,7 @@ describe('TemplateComposite', () => {
         const slot2 = new TemplateSlot({
             name: 'Bear',
             description: 'A big bear',
-            offset: new LevelDifference(1)
+            offset: new LevelDifference(3)
         });
         const variant1 = new EncounterTemplate({
             name: 'Wolf Encounter',

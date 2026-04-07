@@ -1,8 +1,7 @@
-import { Encounter } from '@/store/data';
 import { DataTable, ColumnConfig } from 'grommet';
 import { ThemeContext } from 'grommet/contexts/ThemeContext/index';
 
-type EncounterDataProps = {
+type EncounterDataProps<T extends object> = {
 	selected?: string | number | undefined;
 	setSelected?: (
 		value:
@@ -11,13 +10,14 @@ type EncounterDataProps = {
 			| undefined
 			| ((prev: string | number | undefined) => string | number | undefined)
 	) => void;
-	columns: ColumnConfig<Encounter>[];
+	columns: ColumnConfig<T>[];
 };
-export const EncounterData = ({
+
+export const EncounterData = <T extends object>({
 	columns,
 	selected,
 	setSelected,
-}: EncounterDataProps) => {
+}: EncounterDataProps<T>) => {
 	return (
 		<ThemeContext.Extend
 			value={{

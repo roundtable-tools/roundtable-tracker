@@ -72,6 +72,18 @@ describe('Level', () => {
     });
 
     describe('levelDifference class', () => {
+        const xpByDifference = [
+            { difference: -4, complexHazardXp: 10, simpleHazardXp: 2 },
+            { difference: -3, complexHazardXp: 15, simpleHazardXp: 3 },
+            { difference: -2, complexHazardXp: 20, simpleHazardXp: 4 },
+            { difference: -1, complexHazardXp: 30, simpleHazardXp: 6 },
+            { difference: 0, complexHazardXp: 40, simpleHazardXp: 8 },
+            { difference: 1, complexHazardXp: 60, simpleHazardXp: 12 },
+            { difference: 2, complexHazardXp: 80, simpleHazardXp: 16 },
+            { difference: 3, complexHazardXp: 120, simpleHazardXp: 24 },
+            { difference: 4, complexHazardXp: 160, simpleHazardXp: 32 },
+        ] as const;
+
         it('should return correct string with sign', () => {
             expect(new LevelDifference(3).toString()).toBe('+3');
             expect(new LevelDifference(-2).toString()).toBe('-2');
@@ -108,6 +120,24 @@ describe('Level', () => {
             expect(exp.valueOf()).toBeGreaterThan(0);
         });
 
+        it.each(xpByDifference)(
+            'should match complex hazard XP table at difference $difference',
+            ({ difference, complexHazardXp }) => {
+                const diff = new LevelDifference(difference);
+
+                expect(diff.toExperience().valueOf()).toBe(complexHazardXp);
+            }
+        );
+
+        it.each(xpByDifference)(
+            'should match simple hazard XP table at difference $difference',
+            ({ difference, simpleHazardXp }) => {
+                const diff = new LevelDifference(difference);
+
+                expect(diff.toExperience(false).valueOf()).toBe(simpleHazardXp);
+            }
+        );
+
         it('should return rounded experience for positive difference', () => {
             const diff = new LevelDifference(3);
             const exp = diff.toExperience();
@@ -133,6 +163,13 @@ describe('Level', () => {
         it('should return 0 for very low level differences', () => {
             const diff = new LevelDifference(-6);
             const exp = diff.toExperience();
+            expect(exp.valueOf()).toBe(0);
+        });
+
+        it('should return 0 simple hazard XP for differences below -4', () => {
+            const diff = new LevelDifference(-6);
+            const exp = diff.toExperience(false);
+
             expect(exp.valueOf()).toBe(0);
         });
     });

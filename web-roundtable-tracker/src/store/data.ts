@@ -250,6 +250,12 @@ export type EncounterTemplate = {
 
 export type AbstractEncounter = EncounterTemplate;
 
+export type EncounterNotes = {
+	gm?: string;
+	monster?: string;
+	player?: string;
+};
+
 export type ConcreteEncounter = {
 	id: string; // Unique identifier for the encounter
 	name: string;
@@ -262,6 +268,7 @@ export type ConcreteEncounter = {
 	participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[]; // List of participants
 	narrativeSlots?: NarrativeSlot[];
 	variants?: ConcreteEncounterVariant[];
+	notes?: EncounterNotes;
 };
 
 const dcsSchema = z.array(
@@ -313,6 +320,12 @@ const narrativeSlotSchema = z.object({
 	participants: z.array(participantSchema).optional(),
 });
 
+const encounterNotesSchema = z.object({
+	gm: z.string().optional(),
+	monster: z.string().optional(),
+	player: z.string().optional(),
+});
+
 export const ConcreteEncounterSchema = z.object({
 	id: z.string(),
 	name: z.string(),
@@ -323,6 +336,7 @@ export const ConcreteEncounterSchema = z.object({
 	description: z.string(),
 	participants: z.array(participantSchema),
 	narrativeSlots: z.array(narrativeSlotSchema).optional(),
+	notes: encounterNotesSchema.optional(),
 });
 
 export type Encounter = EncounterTemplate | ConcreteEncounter;

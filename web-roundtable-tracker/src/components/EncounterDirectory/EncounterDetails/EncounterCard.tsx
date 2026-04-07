@@ -11,18 +11,22 @@ import {
 	Button,
 	Text,
 } from 'grommet';
-import { difficultyToString, Encounter } from '@/store/data';
+import { DIFFICULTY, difficultyToString, Encounter } from '@/store/data';
 import { useEffect, useState } from 'react';
 import { useEncounterStore } from '@/store/instance';
+import { useNavigate } from '@tanstack/react-router';
 
 type EncounterCardProps = {
 	selectedEncounter: Encounter;
+	source?: 'template' | 'saved';
+	encounterId?: string;
 	submit: (encounter?: Encounter) => void;
 	close: () => void;
 };
 
 export const EncounterCard = (props: EncounterCardProps) => {
-	const { selectedEncounter, submit, close } = props;
+	const { selectedEncounter, source, encounterId, submit, close } = props;
+	const navigate = useNavigate();
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
 	const setPartyLevel = useEncounterStore((state) => state.setPartyLevel);
 	const [level, setLevel] = useState<number>(partyLevel);
@@ -43,7 +47,7 @@ export const EncounterCard = (props: EncounterCardProps) => {
 					<Heading level={3}>{selectedEncounter.name}</Heading>
 					<Stack anchor="top-right">
 						<Tag
-							name={difficultyToString(selectedEncounter.difficulty)}
+							name={difficultyToString(selectedEncounter.difficulty || DIFFICULTY.Moderate)}
 							value={
 								'level' in selectedEncounter &&
 								Number.isInteger(selectedEncounter.level)
@@ -110,6 +114,15 @@ export const EncounterCard = (props: EncounterCardProps) => {
 			</CardBody>
 			<CardFooter pad="small" background="light-2" justify="end">
 				<Button label="Back" onClick={close}></Button>
+				{source === 'saved' && encounterId ? (
+					<Button
+						label="Edit"
+						onClick={() => {
+							close();
+							navigate({ to: '/builder', search: { encounterId } });
+						}}
+					/>
+				) : null}
 				<Button
 					label="Select"
 					disabled={level <= 0}
