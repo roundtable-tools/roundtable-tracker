@@ -1,4 +1,9 @@
 import { Progress } from '@/components/ui/progress';
+import {
+	HoverCard,
+	HoverCardContent,
+	HoverCardTrigger,
+} from '@/components/ui/hover-card';
 import { ExperienceBudget } from '@/models/utility/experienceBudget/ExperienceBudget';
 import { THREAT_TYPE, Threat } from '@/models/utility/threat/Threat.class';
 import { useEffect, useRef, useState } from 'react';
@@ -213,8 +218,10 @@ export function ThreatTracker({
 		((currentBudgetXp - visibleMin) / (visibleMax - visibleMin)) * 100;
 
 	return (
-		<div ref={containerRef} className="relative h-10 w-full overflow-visible" title={`${currentDisplayLabel} — ${budget.valueOf()} XP`}>
-			<div className="absolute left-0 w-full pointer-events-none h-4">
+		<HoverCard>
+			<HoverCardTrigger asChild>
+				<div ref={containerRef} className="relative h-10 w-full overflow-visible">
+					<div className="absolute left-0 w-full pointer-events-none h-4">
 				{visibleThresholds.map((t, i) => {
 					const left =
 						((t.minXp - visibleMin) / (visibleMax - visibleMin)) * 100;
@@ -239,9 +246,9 @@ export function ThreatTracker({
 						</div>
 					);
 				})}
-			</div>
-			<Progress value={Math.max(0, Math.min(100, scaledValue))} className="h-4" />
-			<div className="absolute inset-0 flex h-4 w-full pointer-events-none">
+					</div>
+					<Progress value={Math.max(0, Math.min(100, scaledValue))} className="h-4" />
+					<div className="absolute inset-0 flex h-4 w-full pointer-events-none">
 				{visibleThresholds.map((t, i) => {
 					const left =
 						((t.minXp - visibleMin) / (visibleMax - visibleMin)) * 100;
@@ -263,8 +270,8 @@ export function ThreatTracker({
 						/>
 					);
 				})}
-			</div>
-			<div className="absolute left-0 top-4 w-full h-6 pointer-events-none">
+					</div>
+					<div className="absolute left-0 top-4 w-full h-6 pointer-events-none">
 				{visibleThresholds.map((t, i) => {
 					const left =
 						((t.minXp - visibleMin) / (visibleMax - visibleMin)) * 100;
@@ -294,7 +301,12 @@ export function ThreatTracker({
 						</span>
 					);
 				})}
-			</div>
-		</div>
+					</div>
+				</div>
+			</HoverCardTrigger>
+			<HoverCardContent className="w-fit">
+				{currentDisplayLabel} - {budget.valueOf()} XP
+			</HoverCardContent>
+		</HoverCard>
 	);
 }
