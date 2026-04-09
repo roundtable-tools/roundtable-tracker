@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Toggle } from '@/components/ui/toggle';
 import {
 	FormControl,
 	FormField,
@@ -19,17 +20,25 @@ import {
 	UseFieldArrayUpdate,
 	UseFormReturn,
 } from 'react-hook-form';
+import {
+	ShieldPlus,
+	Skull,
+	Sparkles,
+	ScrollText,
+	TriangleAlert,
+	type LucideIcon,
+} from 'lucide-react';
 import type { BuilderFormValues } from './builderConvert';
 import { defaultSlot } from './builderConvert';
 import type { BuilderSlot, SlotType, SideType } from './builderXp';
 import type { LevelAdjustment } from '@/models/utility/level/Level';
 
-const SLOT_TYPES: { value: SlotType; label: string }[] = [
-	{ value: 'creature', label: 'Creature' },
-	{ value: 'hazard', label: 'Hazard' },
-	{ value: 'reinforcement', label: 'Reinforcement' },
-	{ value: 'narrative', label: 'Narrative Event' },
-	{ value: 'aura', label: 'Aura Event' },
+const SLOT_TYPES: { value: SlotType; label: string; Icon: LucideIcon }[] = [
+	{ value: 'creature', label: 'Creature', Icon: Skull },
+	{ value: 'hazard', label: 'Hazard', Icon: TriangleAlert },
+	{ value: 'reinforcement', label: 'Reinforcement', Icon: ShieldPlus },
+	{ value: 'narrative', label: 'Narrative Event', Icon: ScrollText },
+	{ value: 'aura', label: 'Aura Event', Icon: Sparkles },
 ];
 
 const SIDE_OPTIONS: { value: SideType; label: string }[] = [
@@ -58,6 +67,8 @@ export function SlotRow({ index, form, remove, update, isOnly }: SlotRowProps) {
 	const { control, watch } = form;
 	const slot = watch(`slots.${index}`) as BuilderSlot;
 	const slotType = slot.type;
+	const isCombatSlot =
+		slotType === 'creature' || slotType === 'reinforcement' || slotType === 'hazard';
 
 	const handleTypeChange = (newType: SlotType) => {
 		const current = form.getValues(`slots.${index}`);
@@ -86,43 +97,50 @@ export function SlotRow({ index, form, remove, update, isOnly }: SlotRowProps) {
 	};
 
 	return (
-		<div className="border rounded-md p-3 space-y-2 bg-card">
-			<div className="flex gap-2 flex-wrap items-end">
-				{/* Type */}
-				<FormField
-					control={control}
-					name={`slots.${index}.type` as const}
-					render={({ field }) => (
-						<FormItem className="space-y-1 min-w-[160px]">
-							<FormLabel>Type</FormLabel>
-							<FormControl>
-								<Select
-									value={field.value}
-									onValueChange={(value) => handleTypeChange(value as SlotType)}
-								>
-									<SelectTrigger className="w-full">
-										<SelectValue />
-									</SelectTrigger>
-									<SelectContent>
-										{SLOT_TYPES.map((o) => (
-											<SelectItem key={o.value} value={o.value}>
-												{o.label}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
+		<div className="border rounded-md p-3 space-y-3 bg-card">
+			<div className="flex items-start gap-2">
+				<div className="flex flex-wrap gap-2">
+					{SLOT_TYPES.map(({ value, label, Icon }) => (
+						<Toggle
+							key={value}
+							type="button"
+							size="sm"
+							variant="outline"
+							pressed={slotType === value}
+							onPressedChange={(pressed) => {
+								if (pressed) {
+									handleTypeChange(value);
+								}
+							}}
+							aria-label={`Set slot type to ${label}`}
+							className="gap-1.5"
+						>
+							<Icon className="size-4" />
+							<span className="hidden sm:inline">{label}</span>
+						</Toggle>
+					))}
+				</div>
+
+				<div className="ml-auto">
+					<Button
+						type="button"
+						variant="destructive"
+						size="sm"
+						onClick={handleRemove}
+					>
+						{isOnly ? 'Clear' : 'Remove'}
+					</Button>
+				</div>
+			</div>
+
+			<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
 
 				{/* Name */}
 				<FormField
 					control={control}
 					name={`slots.${index}.name` as const}
 					render={({ field }) => (
-						<FormItem className="space-y-1 flex-1 min-w-[140px]">
+						<FormItem className="space-y-1 sm:col-span-2 lg:col-span-2">
 							<FormLabel>Name</FormLabel>
 							<FormControl>
 								<Input
@@ -140,15 +158,13 @@ export function SlotRow({ index, form, remove, update, isOnly }: SlotRowProps) {
 				/>
 
 				{/* Creature & Reinforcement fields */}
-				{(slotType === 'creature' ||
-					slotType === 'reinforcement' ||
-					slotType === 'hazard') && (
+				{isCombatSlot && (
 					<>
 						<FormField
 							control={control}
 							name={`slots.${index}.side` as const}
 							render={({ field }) => (
-								<FormItem className="space-y-1 min-w-[100px]">
+								<FormItem className="space-y-1">
 									<FormLabel>Side</FormLabel>
 									<FormControl>
 										<Select
@@ -176,7 +192,7 @@ export function SlotRow({ index, form, remove, update, isOnly }: SlotRowProps) {
 							control={control}
 							name={`slots.${index}.level` as const}
 							render={({ field }) => (
-								<FormItem className="space-y-1 w-[70px]">
+								<FormItem className="space-y-1">
 									<FormLabel>Level</FormLabel>
 									<FormControl>
 										<Input
@@ -203,7 +219,7 @@ export function SlotRow({ index, form, remove, update, isOnly }: SlotRowProps) {
 							control={control}
 							name={`slots.${index}.count` as const}
 							render={({ field }) => (
-								<FormItem className="space-y-1 w-[70px]">
+								<FormItem className="space-y-1">
 									<FormLabel>Count</FormLabel>
 									<FormControl>
 										<Input
@@ -231,7 +247,7 @@ export function SlotRow({ index, form, remove, update, isOnly }: SlotRowProps) {
 								control={control}
 								name={`slots.${index}.maxHealth` as const}
 								render={({ field }) => (
-									<FormItem className="space-y-1 w-[90px]">
+									<FormItem className="space-y-1">
 										<FormLabel>Max HP</FormLabel>
 										<FormControl>
 											<Input
@@ -261,7 +277,7 @@ export function SlotRow({ index, form, remove, update, isOnly }: SlotRowProps) {
 								control={control}
 								name={`slots.${index}.adjustment` as const}
 								render={({ field }) => (
-									<FormItem className="space-y-1 min-w-[120px]">
+									<FormItem className="space-y-1 sm:col-span-2 lg:col-span-2">
 										<FormLabel>Adjustment</FormLabel>
 										<FormControl>
 											<Select
@@ -293,7 +309,7 @@ export function SlotRow({ index, form, remove, update, isOnly }: SlotRowProps) {
 								control={control}
 								name={`slots.${index}.isSimpleHazard` as const}
 								render={({ field }) => (
-									<FormItem className="flex items-center gap-2 mt-5 space-y-0">
+									<FormItem className="flex items-center gap-2 mt-5 space-y-0 sm:col-span-2">
 										<FormControl>
 											<input
 												type="checkbox"
@@ -322,7 +338,7 @@ export function SlotRow({ index, form, remove, update, isOnly }: SlotRowProps) {
 								control={control}
 								name={`slots.${index}.successesToDisable` as const}
 								render={({ field }) => (
-									<FormItem className="space-y-1 w-[120px]">
+									<FormItem className="space-y-1">
 										<FormLabel>Successes</FormLabel>
 										<FormControl>
 											<Input
@@ -352,7 +368,7 @@ export function SlotRow({ index, form, remove, update, isOnly }: SlotRowProps) {
 								control={control}
 								name={`slots.${index}.reinforcementRound` as const}
 								render={({ field }) => (
-									<FormItem className="space-y-1 w-[80px]">
+									<FormItem className="space-y-1">
 										<FormLabel>Round</FormLabel>
 										<FormControl>
 											<Input
@@ -385,7 +401,7 @@ export function SlotRow({ index, form, remove, update, isOnly }: SlotRowProps) {
 						control={control}
 						name={`slots.${index}.eventRound` as const}
 						render={({ field }) => (
-							<FormItem className="space-y-1 w-[80px]">
+							<FormItem className="space-y-1">
 								<FormLabel>Round</FormLabel>
 								<FormControl>
 									<Input
@@ -414,7 +430,7 @@ export function SlotRow({ index, form, remove, update, isOnly }: SlotRowProps) {
 						control={control}
 						name={`slots.${index}.auraCycle` as const}
 						render={({ field }) => (
-							<FormItem className="space-y-1 w-[100px]">
+							<FormItem className="space-y-1">
 								<FormLabel>Cycle (rounds)</FormLabel>
 								<FormControl>
 									<Input
@@ -436,17 +452,6 @@ export function SlotRow({ index, form, remove, update, isOnly }: SlotRowProps) {
 						)}
 					/>
 				)}
-
-				<div className="ml-auto self-end">
-					<Button
-						type="button"
-						variant="destructive"
-						size="sm"
-						onClick={handleRemove}
-					>
-						Remove
-					</Button>
-				</div>
 			</div>
 
 			{/* Description (collapsed row) */}
