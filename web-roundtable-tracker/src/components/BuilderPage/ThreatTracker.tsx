@@ -29,7 +29,7 @@ const CHARACTER_ADJUSTMENT_BY_THREAT: Record<string, number> = {
 };
 
 function getBaseXpFromThreatKey(key: number): number {
-	return 40 + key * 20;
+	return 60 + key * 20;
 }
 
 function getCharacterAdjustmentForThreat(baseLabel: string): number {
@@ -113,6 +113,9 @@ export function ThreatTracker({
 	budget = ExperienceBudget.Moderate,
 	partySize = 4,
 }: ThreatTrackerProps) {
+	const stripThreatSuffix = (label: string): string =>
+		label.replace(/(\+|-)+$/g, '').trim();
+
 	const threatEntries = Object.entries(THREAT_TYPE).map(([key, label]) => [
 		parseInt(key),
 		label,
@@ -135,11 +138,43 @@ export function ThreatTracker({
 		return () => window.removeEventListener('resize', handleResize);
 	}, []);
 
-	const achievedThreat = Threat.fromExperienceBudget(budget, partySize);
 	const currentBudgetXp = budget.valueOf() ?? 0;
-	const currentThresholdIdx = merged.findIndex((group) =>
-		group.keys.includes(Number(achievedThreat.threat))
+	const currentThresholdIdx = Math.max(
+		0,
+		merged.findIndex((group, index) => {
+			const isLast = index === merged.length - 1;
+
+			if (isLast) {
+				return currentBudgetXp >= group.minXp;
+			}
+
+			return currentBudgetXp >= group.minXp && currentBudgetXp < group.maxXp;
+		})
 	);
+	const currentThresholdLabel = merged[currentThresholdIdx]?.baseLabel ?? 'Trivial';
+
+	const exactThreatLabel =
+		threatEntries
+			.map(([key, label]) => ({
+				label,
+				xp: new Threat({ threat: key as keyof typeof THREAT_TYPE }).toExpBudget(
+					partySize
+				).valueOf(),
+			}))
+			.sort((a, b) => a.xp - b.xp)
+			.reduce<string>((activeLabel, threat) => {
+				if (currentBudgetXp >= threat.xp) {
+					return threat.label;
+				}
+
+				return activeLabel;
+			}, THREAT_TYPE[0]);
+
+	const exactThreatBaseLabel = stripThreatSuffix(exactThreatLabel);
+	const currentDisplayLabel =
+		exactThreatBaseLabel === currentThresholdLabel
+			? exactThreatLabel
+			: currentThresholdLabel;
 
 	const distance = isSmall ? 1 : 1;
 	const start = Math.max(0, currentThresholdIdx - distance);
@@ -178,7 +213,33 @@ export function ThreatTracker({
 		((currentBudgetXp - visibleMin) / (visibleMax - visibleMin)) * 100;
 
 	return (
-		<div ref={containerRef} className="relative h-10 w-full overflow-visible" title={`${achievedThreat.toLabel()} — ${budget.valueOf()} XP`}>
+		<div ref={containerRef} className="relative h-10 w-full overflow-visible" title={`${currentDisplayLabel} — ${budget.valueOf()} XP`}>
+			<div className="absolute left-0 w-full pointer-events-none h-4">
+				{visibleThresholds.map((t, i) => {
+					const left =
+						((t.minXp - visibleMin) / (visibleMax - visibleMin)) * 100;
+					const width =
+						((t.maxXp - t.minXp) / (visibleMax - visibleMin)) * 100;
+
+					return (
+						<div
+							key={i}
+							className="absolute text-xs text-gray-300 font-semibold px-1 truncate pointer-events-none"
+							style={{
+								left: `${left}%`,
+								width: `${width}%`,
+								minWidth: 0,
+								top: 0,
+								overflow: 'hidden',
+								textOverflow: 'ellipsis',
+								whiteSpace: 'nowrap',
+							}}
+						>
+							{Math.round(t.minXp)}
+						</div>
+					);
+				})}
+			</div>
 			<Progress value={Math.max(0, Math.min(100, scaledValue))} className="h-4" />
 			<div className="absolute inset-0 flex h-4 w-full pointer-events-none">
 				{visibleThresholds.map((t, i) => {
@@ -210,7 +271,7 @@ export function ThreatTracker({
 					const width =
 						((t.maxXp - t.minXp) / (visibleMax - visibleMin)) * 100;
 					const isCurrent = merged.indexOf(t) === currentThresholdIdx;
-					const label = isCurrent ? achievedThreat.toLabel() : t.baseLabel;
+					const label = isCurrent ? currentDisplayLabel : t.baseLabel;
 
 					return (
 						<span

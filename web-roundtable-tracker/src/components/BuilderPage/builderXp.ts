@@ -47,22 +47,22 @@ export function computeBuilderXP(
 	partyLevel: number
 ): ExperienceBudget {
 	let total = new ExperienceBudget(0);
-	console.log('Computing XP for slots:', slots, 'with party level:', partyLevel);
+	// console.log('Computing XP for slots:', slots, 'with party level:', partyLevel);
 	for (const slot of slots) {
-		console.log(`Processing slot: ${slot.id} (type: ${slot.type}, side: ${slot.side})`);
+		// console.log(`Processing slot: ${slot.id} (type: ${slot.type}, side: ${slot.side})`);
 
 		if (slot.type !== 'creature' && slot.type !== 'hazard') {
-			console.log(`  Skipping: type is ${slot.type}, not creature or hazard`);
+			// console.log(`  Skipping: type is ${slot.type}, not creature or hazard`);
 			continue;
 		}
 
 		if (slot.side === 'neutral') {
-			console.log(`  Skipping: side is neutral`);
+			// console.log(`  Skipping: side is neutral`);
 			continue;
 		}
 
 		if (slot.level === undefined || slot.level === null || isNaN(slot.level)) {
-			console.log(`  Skipping: level is invalid (${slot.level})`);
+			// console.log(`  Skipping: level is invalid (${slot.level})`);
 			continue;
 		}
 
@@ -71,32 +71,32 @@ export function computeBuilderXP(
 				? slot.count
 				: 1;
 		const count = Math.max(0, countValue);
-		console.log(`  Count: ${count}`);
+		// console.log(`  Count: ${count}`);
 
 		const adjustment: LevelAdjustment | undefined =
 			slot.type === 'hazard' || slot.adjustment === 'none'
 				? undefined
 				: slot.adjustment;
-		console.log(`  Adjustment: ${adjustment || 'none'}`);
+		// console.log(`  Adjustment: ${adjustment || 'none'}`);
 
 		const adjustedLevel = getAdjustedLevel(slot.level, adjustment);
-		console.log(`  Base level: ${slot.level}, Adjusted level: ${adjustedLevel}`);
+		// console.log(`  Base level: ${slot.level}, Adjusted level: ${adjustedLevel}`);
 
 		const diff = new LevelDifference(adjustedLevel - partyLevel);
-		console.log(`  Level difference: ${adjustedLevel - partyLevel}`);
+		// console.log(`  Level difference: ${adjustedLevel - partyLevel}`);
 
 		const xp = diff.toExperience(!slot.isSimpleHazard);
-		console.log(`  XP per unit: ${xp.valueOf()} (isSimpleHazard: ${slot.isSimpleHazard})`);
+		// console.log(`  XP per unit: ${xp.valueOf()} (isSimpleHazard: ${slot.isSimpleHazard})`);
 
 		const contribution =
 			slot.side === 'ally' ? -xp.valueOf() * count : xp.valueOf() * count;
-		console.log(`  Contribution (${slot.side}): ${contribution}`);
+		// console.log(`  Contribution (${slot.side}): ${contribution}`);
 
 		total = total.sum(new ExperienceBudget(contribution));
-		console.log(`  Running total: ${total.valueOf()}`);
+		// console.log(`  Running total: ${total.valueOf()}`);
 	}
 
-	console.log(`Final XP total: ${total.valueOf()}`);
+	// console.log(`Final XP total: ${total.valueOf()}`);
 	return total;
 }
 
