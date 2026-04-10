@@ -73,6 +73,7 @@ export interface SimulationRoundPoint {
 
 export interface EncounterThreatSimulation {
 	maxThreatDisplayXp: number;
+	maxThreatExactXp: number;
 	history: SimulationRoundPoint[];
 }
 
@@ -230,13 +231,14 @@ function simulateEncounterThreat(
 	let pendingAttrition = 0;
 	let round = 1;
 	let maxThreatDisplayXp = 0;
+	let maxThreatExactXp = 0;
 	const history: SimulationRoundPoint[] = [];
 
 	const normalizedArrivalRound = Math.max(1, Math.floor(arrivalRound || 1));
 	const partyReductionPerRound =
 		config.basePartyOutputPerRound * (Math.max(1, partySize) / 4);
 
-	while (currentWave0 > 0 || currentWave1 > 0 || round === normalizedArrivalRound) {
+	while (currentWave0 > 0 || currentWave1 > 0 || round <= normalizedArrivalRound) {
 		if (round === normalizedArrivalRound) {
 			currentWave1 = Math.max(0, wave1Xp);
 		}
@@ -244,12 +246,18 @@ function simulateEncounterThreat(
 		accumulatedAttrition += pendingAttrition;
 
 		const currentBaseThreat = currentWave0 + currentWave1;
+
+		if (currentBaseThreat === 0 && accumulatedAttrition < 5) {
+			accumulatedAttrition = 0;
+		}
+
 		const newAttrition = (currentBaseThreat + accumulatedAttrition) * config.attritionRate;
 		pendingAttrition = newAttrition;
 
 		const totalExact = currentBaseThreat + accumulatedAttrition;
 		const totalDisplay = roundUpToNearestFive(totalExact);
 		maxThreatDisplayXp = Math.max(maxThreatDisplayXp, totalDisplay);
+		maxThreatExactXp = Math.max(maxThreatExactXp, totalExact);
 
 		history.push({
 			round,
@@ -272,8 +280,14 @@ function simulateEncounterThreat(
 
 		if (currentWave1 >= damageToDeal) {
 			currentWave1 -= damageToDeal;
+			damageToDeal = 0;
 		} else {
+			damageToDeal -= currentWave1;
 			currentWave1 = 0;
+		}
+
+		if (damageToDeal > 0) {
+			accumulatedAttrition = Math.max(0, accumulatedAttrition - damageToDeal);
 		}
 
 		if (round >= config.maxRounds) {
@@ -285,6 +299,7 @@ function simulateEncounterThreat(
 
 	return {
 		maxThreatDisplayXp,
+		maxThreatExactXp,
 		history,
 	};
 }
@@ -355,7 +370,7 @@ export function computeEncounterXpUsage(
 		: null;
 
 	const effectiveXp = simulation
-		? new ExperienceBudget(simulation.maxThreatDisplayXp)
+		? new ExperienceBudget(simulation.maxThreatExactXp)
 		: immediateXp;
 
 	const effectiveReinforcementXp = hasSimulatedReinforcement
