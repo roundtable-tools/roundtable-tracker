@@ -71,6 +71,18 @@ export function SlotRow({ index, form, remove, update, isOnly }: SlotRowProps) {
 		slotType === 'creature' || slotType === 'reinforcement' || slotType === 'hazard';
 
 	const handleTypeChange = (newType: SlotType) => {
+		// Enforce single reinforcement slot
+		if (newType === 'reinforcement') {
+			const allSlots = form.getValues('slots') || [];
+			const hasExistingReinforcement = allSlots.some(
+				(s: BuilderSlot, i: number) => i !== index && s.type === 'reinforcement'
+			);
+
+			if (hasExistingReinforcement) {
+				return; // Prevent creating a second reinforcement slot
+			}
+		}
+
 		const current = form.getValues(`slots.${index}`);
 		const reset = defaultSlot();
 
@@ -100,25 +112,41 @@ export function SlotRow({ index, form, remove, update, isOnly }: SlotRowProps) {
 		<div className="border rounded-md p-3 space-y-3 bg-card">
 			<div className="flex items-start gap-2">
 				<div className="flex flex-wrap gap-2">
-					{SLOT_TYPES.map(({ value, label, Icon }) => (
-						<Toggle
-							key={value}
-							type="button"
-							size="sm"
-							variant="outline"
-							pressed={slotType === value}
-							onPressedChange={(pressed) => {
-								if (pressed) {
-									handleTypeChange(value);
+					{SLOT_TYPES.map(({ value, label, Icon }) => {
+						const allSlots = form.getValues('slots') || [];
+						const isReinforcementDisabled =
+							value === 'reinforcement' &&
+							allSlots.some(
+								(s: BuilderSlot, i: number) =>
+									i !== index && s.type === 'reinforcement'
+							);
+
+						return (
+							<Toggle
+								key={value}
+								type="button"
+								size="sm"
+								variant="outline"
+								pressed={slotType === value}
+								onPressedChange={(pressed) => {
+									if (pressed) {
+										handleTypeChange(value);
+									}
+								}}
+								aria-label={`Set slot type to ${label}`}
+								disabled={isReinforcementDisabled}
+								title={
+									isReinforcementDisabled
+										? 'Only one reinforcement slot allowed'
+										: undefined
 								}
-							}}
-							aria-label={`Set slot type to ${label}`}
-							className="gap-1.5"
-						>
-							<Icon className="size-4" />
-							<span className="hidden sm:inline">{label}</span>
-						</Toggle>
-					))}
+								className="gap-1.5"
+							>
+								<Icon className="size-4" />
+								<span className="hidden sm:inline">{label}</span>
+							</Toggle>
+						);
+					})}
 				</div>
 
 				<div className="ml-auto">

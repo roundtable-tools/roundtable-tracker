@@ -6,11 +6,17 @@ import {
 } from '@/components/ui/hover-card';
 import { ExperienceBudget } from '@/models/utility/experienceBudget/ExperienceBudget';
 import { THREAT_TYPE, Threat } from '@/models/utility/threat/Threat.class';
+import type { EncounterThreatSimulation, EncounterWaveInteraction } from './builderXp';
 import { useEffect, useRef, useState } from 'react';
 
 interface ThreatTrackerProps {
 	budget?: ExperienceBudget;
+	comparisonBudget?: ExperienceBudget;
+	primaryBudgetLabel?: string;
+	comparisonBudgetLabel?: string;
 	partySize?: number;
+	waveInteraction?: EncounterWaveInteraction;
+	simulation?: EncounterThreatSimulation | null;
 }
 
 const ADDITIONAL_IMPOSSIBLE_UNITS = 3;
@@ -116,10 +122,53 @@ export function getMergedThresholds(
 
 export function ThreatTracker({
 	budget = ExperienceBudget.Moderate,
+	comparisonBudget,
+	primaryBudgetLabel = 'Effective XP',
+	comparisonBudgetLabel = 'Raw XP',
 	partySize = 4,
+	waveInteraction,
+	simulation,
 }: ThreatTrackerProps) {
 	const stripThreatSuffix = (label: string): string =>
 		label.replace(/(\+|-)+$/g, '').trim();
+
+	const getDisplayLabelForBudget = (targetBudget: ExperienceBudget): string => {
+		const targetBudgetXp = targetBudget.valueOf() ?? 0;
+		const thresholdIdx = Math.max(
+			0,
+			merged.findIndex((group, index) => {
+				const isLast = index === merged.length - 1;
+
+				if (isLast) {
+					return targetBudgetXp >= group.minXp;
+				}
+
+				return targetBudgetXp >= group.minXp && targetBudgetXp < group.maxXp;
+			})
+		);
+
+		const thresholdLabel = merged[thresholdIdx]?.baseLabel ?? 'Trivial';
+		const exactLabel =
+			threatEntries
+				.map(([key, label]) => ({
+					label,
+					xp: new Threat({ threat: key as keyof typeof THREAT_TYPE }).toExpBudget(
+						partySize
+					).valueOf(),
+				}))
+				.sort((a, b) => a.xp - b.xp)
+				.reduce<string>((activeLabel, threat) => {
+					if (targetBudgetXp >= threat.xp) {
+						return threat.label;
+					}
+
+					return activeLabel;
+				}, THREAT_TYPE[0]);
+
+		const exactBaseLabel = stripThreatSuffix(exactLabel);
+
+		return exactBaseLabel === thresholdLabel ? exactLabel : thresholdLabel;
+	};
 
 	const threatEntries = Object.entries(THREAT_TYPE).map(([key, label]) => [
 		parseInt(key),
@@ -180,6 +229,9 @@ export function ThreatTracker({
 		exactThreatBaseLabel === currentThresholdLabel
 			? exactThreatLabel
 			: currentThresholdLabel;
+	const comparisonDisplayLabel = comparisonBudget
+		? getDisplayLabelForBudget(comparisonBudget)
+		: undefined;
 
 	const distance = isSmall ? 1 : 1;
 	const start = Math.max(0, currentThresholdIdx - distance);
@@ -195,7 +247,7 @@ export function ThreatTracker({
 
 	const TRIMMED_SEGMENT_PCT = isSmall ? 75 : 15;
 
-	let visibleMin = visibleThresholds[0].minXp;
+	const visibleMin = visibleThresholds[0].minXp;
 	let visibleMax = visibleThresholds[visibleThresholds.length - 1].maxXp;
 
 	if (lastVisibleIsLast && !lastIsCurrent) {
@@ -216,6 +268,10 @@ export function ThreatTracker({
 
 	const scaledValue =
 		((currentBudgetXp - visibleMin) / (visibleMax - visibleMin)) * 100;
+	const simulationMaxStack = Math.max(
+		1,
+		...(simulation?.history.map((point) => point.totalDisplay) ?? [0])
+	);
 
 	return (
 		<HoverCard>
@@ -305,7 +361,90 @@ export function ThreatTracker({
 				</div>
 			</HoverCardTrigger>
 			<HoverCardContent className="w-fit">
-				{currentDisplayLabel} - {budget.valueOf()} XP
+				<div className="space-y-2 text-xs">
+					<div>
+						<span className="font-semibold">{primaryBudgetLabel}:</span>{' '}
+						{currentDisplayLabel} - {budget.valueOf()} XP
+					</div>
+					{comparisonBudget && comparisonDisplayLabel ? (
+						<div>
+							<span className="font-semibold">{comparisonBudgetLabel}:</span>{' '}
+							{comparisonDisplayLabel} - {comparisonBudget.valueOf()} XP
+						</div>
+					) : null}
+					{simulation && simulation.history.length > 0 ? (
+						<div className="space-y-1 border-t border-gray-300 pt-1">
+							<div className="font-semibold">Threat by Round</div>
+							<div className="w-[min(78vw,28rem)]">
+								<div className="flex h-28 items-end rounded border bg-muted/25 p-2">
+									{simulation.history.map((point) => {
+										const wave0Height = (point.wave0 / simulationMaxStack) * 100;
+										const wave1Height = (point.wave1 / simulationMaxStack) * 100;
+										const attritionHeight =
+											(point.attrition / simulationMaxStack) * 100;
+
+										return (
+											<div
+												key={point.round}
+												className="flex min-w-0 flex-1 flex-col items-center"
+											>
+												<div className="relative flex h-full w-full items-end justify-center">
+													<div className="flex h-20 w-full flex-col justify-end border-r border-border/40 last:border-r-0">
+														<div
+															className="bg-blue-500/80"
+															style={{ height: `${wave0Height}%` }}
+														/>
+														<div
+															className="bg-amber-400/90"
+															style={{ height: `${wave1Height}%` }}
+														/>
+														<div
+															className="bg-rose-500/85"
+															style={{ height: `${attritionHeight}%` }}
+														/>
+													</div>
+													<span className="absolute -top-5 text-[10px] text-muted-foreground">
+														{point.totalDisplay}
+													</span>
+												</div>
+												<span className="mt-1 text-[10px] text-muted-foreground">
+													R{point.round}
+												</span>
+											</div>
+										);
+									})}
+								</div>
+								<div className="flex gap-3 text-[10px] text-muted-foreground">
+									<span className="inline-flex items-center gap-1">
+										<span className="h-2 w-2 rounded-sm bg-blue-500/80" />
+										Main Forces
+									</span>
+									<span className="inline-flex items-center gap-1">
+										<span className="h-2 w-2 rounded-sm bg-amber-400/90" />
+										Reinforcements
+									</span>
+									<span className="inline-flex items-center gap-1">
+										<span className="h-2 w-2 rounded-sm bg-rose-500/85" />
+										Attrition
+									</span>
+								</div>
+							</div>
+						</div>
+					) : null}
+					{waveInteraction && waveInteraction.wave1 ? (
+						<div className="border-t border-gray-300 pt-1 mt-1">
+							<div className="font-semibold">Wave Threat Changes:</div>
+							<div>
+								Wave 0: {waveInteraction.wave0.adjustmentPercent > 0 ? '+' : ''}
+								{waveInteraction.wave0.adjustmentPercent.toFixed(0)}%
+							</div>
+							<div>
+								Wave 1: {waveInteraction.wave1.adjustmentPercent > 0 ? '+' : ''}
+								{waveInteraction.wave1.adjustmentPercent.toFixed(0)}%
+							</div>
+						</div>
+					) : null}
+				</div>
 			</HoverCardContent>
 		</HoverCard>
 	);

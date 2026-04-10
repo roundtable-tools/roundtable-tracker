@@ -14,11 +14,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { getSavedEncountersStore } from '@/store/savedEncounterInstance';
 import { useSavedEncountersStore } from '@/store/savedEncounterInstance';
 import type { ConcreteEncounter } from '@/store/data';
-import { ExperienceBudget } from '@/models/utility/experienceBudget/ExperienceBudget';
 import { ThreatTracker } from './ThreatTracker';
 import { SlotRow } from './SlotRow';
 import { SaveSuccessModal } from './SaveSuccessModal';
-import { computeBuilderXP } from './builderXp';
+import { computeEncounterXpUsage } from './builderXp';
 import { useNavigate } from '@tanstack/react-router';
 import {
 	defaultFormValues,
@@ -75,7 +74,7 @@ export function BuilderPage({ encounterId }: BuilderPageProps) {
 		typeof partySize === 'number' && Number.isFinite(partySize) && partySize > 0
 			? partySize
 			: 4;
-	const xp: ExperienceBudget = computeBuilderXP(slots ?? [], safePartyLevel);
+	const xpUsage = computeEncounterXpUsage(slots ?? [], safePartyLevel, safePartySize);
 
 	const onSubmit = (values: BuilderFormValues) => {
 		const encounter = toConcreteEncounter(values, encounterId);
@@ -202,9 +201,92 @@ export function BuilderPage({ encounterId }: BuilderPageProps) {
 			<section>
 				<h3 className="text-sm font-medium mb-2">Encounter Threat</h3>
 				<ThreatTracker
-					budget={xp}
+					budget={xpUsage.effectiveXp}
+					comparisonBudget={xpUsage.rawXp}
+					primaryBudgetLabel="Effective XP"
+					comparisonBudgetLabel="Raw XP"
 					partySize={safePartySize}
+					waveInteraction={xpUsage.waveInteraction}
+					simulation={xpUsage.simulation}
 				/>
+				<div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+					<span className="rounded border px-2 py-1">
+						Effective: {xpUsage.effectiveXp.valueOf()} XP
+					</span>
+					<span className="rounded border px-2 py-1">
+						Raw: {xpUsage.rawXp.valueOf()} XP
+					</span>
+					<span className="rounded border px-2 py-1">
+						Wave 1 base XP: {xpUsage.effectiveReinforcementXp.valueOf()} /{' '}
+						{xpUsage.rawReinforcementXp.valueOf()} XP
+					</span>
+				</div>
+				{xpUsage.rawReinforcementXp.valueOf() !== 0 ? (
+					<div className="mt-2 text-xs text-muted-foreground">
+						<p className="font-medium">Wave Breakdown:</p>
+						<p>
+							Wave 0: {xpUsage.immediateXp.valueOf()} XP + Wave 1:{' '}
+							{xpUsage.rawReinforcementXp.valueOf()} XP = Total{' '}
+							{xpUsage.rawXp.valueOf()} XP
+						</p>
+						{xpUsage.simulation ? (
+							<p className="text-[11px] mt-1">
+								Final threat (max rounded): {xpUsage.simulation.maxThreatDisplayXp} XP
+							</p>
+						) : null}
+					</div>
+				) : null}
+				<details className="mt-2 rounded-md border p-2 text-xs">
+					<summary className="cursor-pointer font-medium">Show XP Math</summary>
+					<div className="mt-2 space-y-1 text-muted-foreground">
+						<p>
+							Per-round output: {(
+								xpUsage.config.basePartyOutputPerRound *
+								(safePartySize / 4)
+							).toFixed(1)}{' '}
+							XP | Attrition rate: {(xpUsage.config.attritionRate * 100).toFixed(0)}%
+							 | Max rounds: {xpUsage.config.maxRounds}
+						</p>
+						{xpUsage.waveInteraction.wave1 ? (
+							<p>
+								Round diff: {xpUsage.waveInteraction.roundDiff} | Threshold:{' '}
+								{xpUsage.waveInteraction.roundDiffThreshold}{' '}
+								{xpUsage.waveInteraction.affectsOtherWave
+									? '(waves interact)'
+									: '(no interaction)'}
+							</p>
+						) : null}
+						<p>Immediate XP: {xpUsage.immediateXp.valueOf()}</p>
+						{xpUsage.simulation ? (
+							<div className="overflow-x-auto">
+								<table className="w-full border-collapse">
+									<thead>
+										<tr className="text-left text-foreground">
+											<th className="py-1 pr-2">Round</th>
+											<th className="py-1 pr-2">Main Forces</th>
+											<th className="py-1 pr-2">Reinforcements</th>
+											<th className="py-1 pr-2">Attrition</th>
+											<th className="py-1">Total (Rounded)</th>
+										</tr>
+									</thead>
+									<tbody>
+										{xpUsage.simulation.history.map((wave) => (
+											<tr key={wave.round} className="border-t">
+												<td className="py-1 pr-2">{wave.round}</td>
+												<td className="py-1 pr-2">{wave.wave0.toFixed(1)}</td>
+												<td className="py-1 pr-2">{wave.wave1.toFixed(1)}</td>
+												<td className="py-1 pr-2">{wave.attrition.toFixed(2)}</td>
+												<td className="py-1">{wave.totalDisplay}</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						) : (
+							<p>No delayed reinforcement simulation is active.</p>
+						)}
+					</div>
+				</details>
 			</section>
 
 			{/* Slots */}
