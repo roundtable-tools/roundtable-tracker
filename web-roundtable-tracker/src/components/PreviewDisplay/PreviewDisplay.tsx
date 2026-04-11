@@ -12,7 +12,7 @@ import {
 } from '@/store/data';
 import { generateUUID } from '@/utils/uuid';
 import { PreviewCard } from './PreviewCard';
-import { useEncounterStore } from '@/store/instance';
+import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { useEffect, useMemo, useState } from 'react';
 import { AppHeader } from '@/AppHeader';
 import { participantsToEncounterCharacters } from '@/store/convert';
@@ -257,7 +257,7 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	};
 
 	const onSelectInitiativeView = (
-		view: 'initiative' | 'newInitiative' | 'initiative2'
+		view: 'initiative' | 'newInitiative'
 	) => {
 		startEncounter(participantsToEncounterCharacters(preparedParticipants));
 		setShowInitiativeChoice(false);
@@ -265,12 +265,6 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 
 		if (view === 'newInitiative') {
 			navigate({ to: '/new_initiative' });
-
-			return;
-		}
-
-		if (view === 'initiative2') {
-			navigate({ to: '/initiative2' });
 
 			return;
 		}
@@ -304,12 +298,6 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 							onClick={() => onSelectInitiativeView('initiative')}
 						>
 							Classic Initiative
-						</Button>
-						<Button
-							variant="secondary"
-							onClick={() => onSelectInitiativeView('initiative2')}
-						>
-							Initiative 2
 						</Button>
 						<Button onClick={() => onSelectInitiativeView('newInitiative')}>
 							New Initiative

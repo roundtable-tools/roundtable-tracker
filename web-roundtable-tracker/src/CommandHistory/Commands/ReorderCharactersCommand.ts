@@ -1,6 +1,6 @@
 import { UUID } from '@/utils/uuid';
 import { Command, CommandDeps, getDeps, STATUS } from '../common';
-import { EncounterStore } from '@/store/store';
+import { EncounterStore } from '@/store/encounterRuntimeStore';
 
 type CommandProps = {
 	newOrder: UUID[];

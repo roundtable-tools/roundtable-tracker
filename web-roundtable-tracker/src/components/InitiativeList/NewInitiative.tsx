@@ -1,4 +1,4 @@
-import { useEncounterStore } from '@/store/instance';
+import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { useEffect, useState } from 'react';
 import { Timeline } from './Timeline';
 import { Button } from '@/components/ui/button';

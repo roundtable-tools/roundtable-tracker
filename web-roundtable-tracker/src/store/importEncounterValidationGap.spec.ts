@@ -9,7 +9,7 @@ import {
 	type CharacterConfig,
 } from './data';
 import { participantsToEncounterCharacters } from './convert';
-import { createEncounterStore } from './store';
+import { createEncounterStore } from './encounterRuntimeStore';
 
 describe('Import encounter validation gap', () => {
 	const createBaseImportPayload = () => ({

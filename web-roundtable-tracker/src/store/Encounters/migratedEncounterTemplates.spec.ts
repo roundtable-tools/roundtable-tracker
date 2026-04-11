@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import encounterTemplates from './EncounterTemplates';
+import encounterTemplates from '@/models/encounters/defaultTemplates';
 import { EncounterTemplateDataSchema } from '@/models/encounters/encounter.schemas';
 
 describe('migratedEncounterTemplates', () => {

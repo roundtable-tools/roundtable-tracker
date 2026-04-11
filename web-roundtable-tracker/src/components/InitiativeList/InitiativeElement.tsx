@@ -1,7 +1,7 @@
 import { Accordion, AccordionPanel, Box, Grid } from 'grommet';
 import { Character } from '@/store/data';
 import { TypingEffect } from '@/components/TypingEffect';
-import { useEncounterStore } from '@/store/instance';
+import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { HealthManagementForm } from './HealthManagementForm';
 import { CharacterManagementForm } from './CharacterManagementForm';
 

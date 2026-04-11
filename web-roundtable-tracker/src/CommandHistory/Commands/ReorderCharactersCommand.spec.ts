@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ReorderCharactersCommand } from './ReorderCharactersCommand';
-import { createEncounterStore } from '@/store/store';
+import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import { Character } from '@/store/data';
 import { STATUS } from '../common';
 

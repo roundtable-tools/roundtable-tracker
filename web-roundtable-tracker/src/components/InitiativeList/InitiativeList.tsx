@@ -15,7 +15,7 @@ import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
 import { debounce } from 'throttle-debounce';
 import { ReorderCharactersCommand } from '@/CommandHistory/Commands/ReorderCharactersCommand';
 import { UUID } from '@/utils/uuid';
-import { useEncounterStore } from '@/store/instance';
+import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { useRaisedShadow } from '@/hooks/useRisedShadow';
 import {
 	Close,

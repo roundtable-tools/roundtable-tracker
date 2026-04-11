@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Character } from '../../store/data';
 import { STATUS } from '../common';
-import { createEncounterStore } from '@/store/store';
+import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import { UpdateCharacterDataCommand } from './UpdateCharacterDataCommand';
 
 describe('UpdateCharacterCommand', () => {

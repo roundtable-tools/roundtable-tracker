@@ -1,1 +1,1 @@
-export { default } from './EncounterTemplates';
+export { default } from '@/models/encounters/defaultTemplates';

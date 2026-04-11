@@ -1,7 +1,7 @@
 import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
 import { EndRoundCommand } from '@/CommandHistory/Commands/EndRoundCommand';
 import { EndTurnCommand } from '@/CommandHistory/Commands/EndTurnCommand';
-import { useEncounterStore } from '@/store/instance';
+import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { UUID } from '@/utils/uuid';
 import { Box, Button } from 'grommet';
 import { useContext } from 'react';

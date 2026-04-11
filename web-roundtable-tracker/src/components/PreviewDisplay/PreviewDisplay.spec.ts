@@ -28,7 +28,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
 	};
 });
 
-vi.mock('@/store/instance', () => ({
+vi.mock('@/store/encounterRuntimeInstance', () => ({
 	useEncounterStore: <T,>(selector: (state: typeof mocks.storeState) => T) =>
 		selector(mocks.storeState),
 }));

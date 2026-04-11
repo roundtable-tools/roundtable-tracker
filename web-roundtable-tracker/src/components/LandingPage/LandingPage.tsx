@@ -10,7 +10,7 @@ import {
 import { LandingPageOption } from './LandingPageOption';
 import { ReactNode, useContext } from 'react';
 import { FolderOpen, FormClock, PlayFill, Tools } from 'grommet-icons';
-import { useEncounterStore } from '@/store/instance';
+import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 
 type LandingPageProps = {
 	setView: (view: string) => void;

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { InitiativeList } from '@/components/InitiativeList/InitiativeList';
-import { useEncounterStore } from '@/store/instance';
+import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { RoundBar } from '@/components/InitiativeList/RoundBar';
 import { PreviewDisplay } from '@/components/PreviewDisplay/PreviewDisplay';
 import { Box, Main, Page, PageContent, PageHeader } from 'grommet';
@@ -9,7 +9,6 @@ import { EncounterDirectory } from './components/EncounterDirectory/EncounterDir
 import { AppHeader } from './AppHeader';
 import { LandingPage } from './components/LandingPage/LandingPage';
 import { NewInitiative } from './components/InitiativeList/NewInitiative';
-import { AlternativeList } from './components/InitiativeList/AlternativeList';
 export const AppContainer = () => {
 	const encounterData = useEncounterStore((state) => state.encounterData);
 	const [view, setView] = useState<string>('landingPage');
@@ -42,11 +41,6 @@ export const AppContainer = () => {
 				) : view === 'newInitiative' ? (
 					<>
 						<NewInitiative />
-						<HistoryFooter endEncounter={() => setView('preview')} />
-					</>
-				) : view === 'initiative2' ? (
-					<>
-						<AlternativeList />
 						<HistoryFooter endEncounter={() => setView('preview')} />
 					</>
 				) : view === 'preview' ? (

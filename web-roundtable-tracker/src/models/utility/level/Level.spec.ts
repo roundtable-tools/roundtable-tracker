@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { formatAdjustedLevel, getAdjustedLevel, Level } from './Level';
 import { LevelDifference } from './LevelDifference';
 import { LevelRange } from './LevelRange';
-import { TemplateSlot } from '@/models/templates/TemplateSlot.class';
 
 describe('Level', () => {
     describe('constructor', () => {
@@ -180,77 +179,6 @@ describe('Level', () => {
                 const range = new LevelRange(1, 10);
                 expect(range.min).toBe(1);
                 expect(range.max).toBe(10);
-            });
-        });
-
-        describe('fromTemplateSlots', () => {
-            it('should create a LevelRange from template slots with valid offsets and levels', () => {
-                const slots: TemplateSlot[] = [
-                    {
-                        id: 'slot1',
-                        name: 'Slot 1',
-                        description: 'Description 1',
-                        offset: new LevelDifference(2),
-                        statblock: { level: new Level(5) },
-                    },
-                    {
-                        id: 'slot2',
-                        name: 'Slot 2',
-                        description: 'Description 2',
-                        offset: new LevelDifference(-1),
-                        statblock: { level: new Level(10) },
-                    },
-                ];
-
-                const range = LevelRange.fromTemplateSlots(slots, 0, 20);
-                expect(typeof range.min).toBe('number');
-                expect(typeof range.max).toBe('number');
-            });
-
-            it('should handle slots with undefined offsets or levels', () => {
-                const slots: TemplateSlot[] = [
-                    {
-                        id: 'slot1',
-                        name: 'Slot 1',
-                        description: 'Description 1',
-                        offset: undefined,
-                        statblock: { level: new Level(5) },
-                    },
-                    {
-                        id: 'slot2',
-                        name: 'Slot 2',
-                        description: 'Description 2',
-                        offset: new LevelDifference(2),
-                        statblock: undefined,
-                    },
-                ];
-
-                const range = LevelRange.fromTemplateSlots(slots, 0, 20);
-                expect(typeof range.min).toBe('number');
-                expect(typeof range.max).toBe('number');
-            });
-
-            it('should handle empty slots array', () => {
-                const slots: TemplateSlot[] = [];
-                const range = LevelRange.fromTemplateSlots(slots, 0, 20);
-                expect(typeof range.min).toBe('number');
-                expect(typeof range.max).toBe('number');
-            });
-
-            it('should respect provided minLevel and maxLevel bounds', () => {
-                const slots: TemplateSlot[] = [
-                    {
-                        id: 'slot1',
-                        name: 'Slot 1',
-                        description: 'Description 1',
-                        offset: new LevelDifference(2),
-                        statblock: { level: new Level(5) },
-                    },
-                ];
-
-                const range = LevelRange.fromTemplateSlots(slots, 3, 15);
-                expect(typeof range.min).toBe('number');
-                expect(typeof range.max).toBe('number');
             });
         });
 

@@ -43,7 +43,7 @@ import {
 } from '@/store/data.ts';
 import type { EncounterTemplateData } from '@/models/encounters/encounter.types';
 import { LevelDifference } from '@/models/utility/level/LevelDifference';
-import { useEncounterStore } from '@/store/instance.ts';
+import { useEncounterStore } from '@/store/encounterRuntimeInstance.ts';
 import { EncounterDetailsModal } from './EncounterDetails/EncounterDetailsModal.tsx';
 import { EncounterImportModal } from './EncounterDetails/EncounterImportModal.tsx';
 import { SavedConcreteEncounter } from '@/store/savedEncounters.ts';

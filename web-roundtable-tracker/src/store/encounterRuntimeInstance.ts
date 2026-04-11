@@ -1,5 +1,5 @@
 import { generateUUID } from '@/utils/uuid';
-import { createEncounterStore, EncounterStore } from './store';
+import { createEncounterStore, EncounterStore } from './encounterRuntimeStore';
 import { Character, STATE } from './data';
 import { useStore } from 'zustand/react';
 import { registerSerializableCommands } from '@/CommandHistory/commandRegistry';

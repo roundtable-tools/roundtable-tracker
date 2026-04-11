@@ -10,7 +10,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { DIFFICULTY, difficultyToString, Encounter } from '@/store/data';
 import { useEffect, useState } from 'react';
-import { useEncounterStore } from '@/store/instance';
+import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { useNavigate } from '@tanstack/react-router';
 import { Pencil, Play, Trash2, UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';

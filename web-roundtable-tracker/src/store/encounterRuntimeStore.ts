@@ -112,9 +112,13 @@ const updateCharacter =
 				return {};
 			}
 			const newCharacterValue = unpackValue(newCharacter, character);
-			state.charactersMap[uuid] = newCharacterValue;
 
-			return { charactersMap: { ...state.charactersMap } };
+			return {
+				charactersMap: {
+					...state.charactersMap,
+					[uuid]: newCharacterValue,
+				},
+			};
 		});
 
 export const createEncounterStore = () =>

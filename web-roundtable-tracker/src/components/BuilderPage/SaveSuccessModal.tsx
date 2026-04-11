@@ -8,7 +8,7 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog';
 import type { ConcreteEncounter } from '@/store/data';
-import { useEncounterStore } from '@/store/instance';
+import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { useNavigate } from '@tanstack/react-router';
 import { Clipboard, FolderOpen, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
