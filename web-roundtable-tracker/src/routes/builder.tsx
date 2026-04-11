@@ -6,6 +6,8 @@ import { BuilderPage } from '@/components/BuilderPage/BuilderPage';
 export const builderSearchSchema = z.object({
 	templateId: z.string().optional(),
 	encounterId: z.string().optional(),
+	templateLevel: z.coerce.number().int().optional(),
+	templatePartySize: z.coerce.number().int().positive().optional(),
 });
 
 export type BuilderSearch = z.infer<typeof builderSearchSchema>;
@@ -19,11 +21,18 @@ export const Route = createFileRoute('/builder')({
 });
 
 export function BuilderRouteComponent() {
-	const { encounterId } = Route.useSearch();
+	const { encounterId, templateId, templateLevel, templatePartySize } =
+		Route.useSearch();
+
 	return (
 		<>
 			<AppHeader setView={() => {}} />
-			<BuilderPage encounterId={encounterId} />
+			<BuilderPage
+				encounterId={encounterId}
+				templateId={templateId}
+				templateLevel={templateLevel}
+				templatePartySize={templatePartySize}
+			/>
 		</>
 	);
 }

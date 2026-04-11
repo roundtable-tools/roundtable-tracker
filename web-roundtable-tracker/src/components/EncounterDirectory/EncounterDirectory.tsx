@@ -30,16 +30,19 @@ import {
 } from '@tanstack/react-table';
 import { Filter, Plus, Search, Upload, UserRound, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import AbstractEcounters from '../../store/Encounters/EncounterTemplates.ts';
+import migratedEncounterTemplates from '../../store/Encounters/migratedEncounterTemplates.ts';
 import {
-	AbstractEncounter,
+	ALIGNMENT,
 	CombatantParticipant,
 	DIFFICULTY,
 	difficultyToString,
 	Encounter,
+	LEVEL_REPRESENTATION,
 	indexToLetter,
 	participantsToLevelRange,
 } from '@/store/data.ts';
+import type { EncounterTemplateData } from '@/models/encounters/encounter.types';
+import { LevelDifference } from '@/models/utility/level/LevelDifference';
 import { useEncounterStore } from '@/store/instance.ts';
 import { EncounterDetailsModal } from './EncounterDetails/EncounterDetailsModal.tsx';
 import { EncounterImportModal } from './EncounterDetails/EncounterImportModal.tsx';
@@ -54,6 +57,7 @@ type EncounterDirectoryEntry = Encounter & {
 	directoryId: string;
 	source: 'template' | 'saved';
 	difficultyLabel: string;
+	templateId?: string;
 };
 
 const PARTY_SIZE_OPTIONS = [3, 4, 5, 6] as const;
@@ -112,53 +116,83 @@ const partySizeFilter: FilterFn<EncounterDirectoryEntry> = (
 	return row.getValue<number>(columnId) === filterValue;
 };
 
-const toTemplateEntries = (
-	templates: AbstractEncounter[]
-): EncounterDirectoryEntry[] => {
-	return templates.flatMap<EncounterDirectoryEntry>((encounter) => {
-		const mainVariant: EncounterDirectoryEntry = {
-			id: `${encounter.id}${encounter.variants ? '-a' : ''}`,
-			directoryId: `template:${encounter.id}${encounter.variants ? '-a' : ''}`,
-			source: 'template',
-			name: encounter.name,
-			difficultyLabel: difficultyToString(encounter.difficulty ?? DIFFICULTY.Low),
-			level:
-				'level' in encounter
-					? encounter.level
-					: participantsToLevelRange(encounter.participants),
-			description: encounter.description,
-			difficulty: encounter.difficulty ?? DIFFICULTY.Low,
-			partySize: encounter.partySize ?? 4,
-			participants: encounter.participants,
-			levelRepresentation: encounter.levelRepresentation,
+const toRelativeLevel = (
+	level: LevelDifference
+): `+${number}` | `-${number}` => level.toString() as `+${number}` | `-${number}`;
+
+const toDirectoryDifficulty = (tags?: string[]) => {
+	if (!tags || tags.length === 0) {
+		return DIFFICULTY.Low;
+	}
+
+	const difficultyKey = Object.keys(DIFFICULTY).find((key) =>
+		tags.some((tag) => tag.toLowerCase() === key.toLowerCase())
+	) as keyof typeof DIFFICULTY | undefined;
+
+	return difficultyKey ? DIFFICULTY[difficultyKey] : DIFFICULTY.Low;
+};
+
+const toDirectoryParticipants = (
+	participants: EncounterTemplateData['variants'][number]['participants']
+): CombatantParticipant[] => {
+	return participants.map((participant) => {
+		const baseParticipant = {
+			name: participant.tag ?? participant.role,
+			level: toRelativeLevel(participant.relativeLevel),
+			side: participant.side,
+			count: participant.count,
 		};
 
-		return [
-			mainVariant,
-			...(encounter.variants ?? []).map((variant, index) => {
-				const id = `${encounter.id}-${indexToLetter(index + 1)}`;
+		if (participant.type === 'hazard') {
+			return {
+				...baseParticipant,
+				type: 'hazard',
+				successesToDisable: participant.successesToDisable,
+				isComplexHazard: participant.role === 'complex',
+			};
+		}
 
-				return {
-					id,
-					directoryId: `template:${id}`,
-					source: 'template' as const,
-					name: encounter.name,
-					difficultyLabel: difficultyToString(
-						(encounter.difficulty ?? DIFFICULTY.Low)
-					),
-					level:
-						'level' in variant
-							? (variant.level as [number, number])
-							: participantsToLevelRange(variant.participants),
-					description: variant.description,
-					difficulty:
-						variant.difficulty ?? encounter.difficulty ?? DIFFICULTY.Low,
-					partySize: variant.partySize ?? encounter.partySize ?? 4,
-					participants: variant.participants,
-					levelRepresentation: encounter.levelRepresentation,
-				};
-			}),
-		];
+		return {
+			...baseParticipant,
+			type: 'creature',
+			adjustment: 'none',
+		};
+	});
+};
+
+const toTemplateEntries = (
+	templates: EncounterTemplateData[]
+): EncounterDirectoryEntry[] => {
+	return templates.flatMap<EncounterDirectoryEntry>((template) => {
+		const difficulty = toDirectoryDifficulty(template.tags);
+		const defaultVariant =
+			template.variants.find(
+				(variant) => variant.id === template.defaultVariantId
+			) ?? template.variants[0];
+		const nonDefaultVariants = template.variants.filter(
+			(variant) => variant.id !== defaultVariant.id
+		);
+		const orderedVariants = [defaultVariant, ...nonDefaultVariants];
+
+		return orderedVariants.map((variant, index) => {
+			const id = `${template.id}-${indexToLetter(index)}`;
+			const participants = toDirectoryParticipants(variant.participants);
+
+			return {
+				id,
+				directoryId: `template:${id}`,
+				source: 'template' as const,
+				templateId: template.id,
+				name: template.name,
+				difficultyLabel: difficultyToString(difficulty),
+				level: participantsToLevelRange(participants),
+				description: variant.description ?? template.description,
+				difficulty,
+				partySize: variant.partySize,
+				participants,
+				levelRepresentation: LEVEL_REPRESENTATION.Relative,
+			};
+		});
 	});
 };
 
@@ -176,7 +210,7 @@ const toSavedEntries = (
 export const getDefaultShowTemplates = (savedCount: number) => savedCount === 0;
 
 export const createDirectoryEntries = (
-	templates: AbstractEncounter[],
+	templates: EncounterTemplateData[],
 	savedEncounters: SavedConcreteEncounter[],
 	showTemplates: boolean
 ): EncounterDirectoryEntry[] => {
@@ -210,7 +244,11 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 	const [showImportLayer, setShowImportLayer] = useState(false);
 	const data = useMemo(
 		() =>
-			createDirectoryEntries(AbstractEcounters, savedEncounters, showTemplates),
+			createDirectoryEntries(
+				migratedEncounterTemplates,
+				savedEncounters,
+				showTemplates
+			),
 		[savedEncounters, showTemplates]
 	);
 
@@ -298,7 +336,18 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 
 	const openBuilder = () => {
 		setView('builder');
-		navigate({ to: '/builder' });
+		const params: Record<string, string | null> = {};
+
+		if (selectedEncounterData?.source === 'saved' && selectedEncounterData?.id) {
+			params.encounterId = selectedEncounterData.id;
+		} else if (selectedEncounterData?.source === 'template' && selectedEncounterData?.templateId) {
+			params.templateId = selectedEncounterData.templateId;
+		}
+
+		navigate({
+			to: '/builder',
+			search: Object.fromEntries(Object.entries(params).filter(([, v]) => v !== null)),
+		});
 	};
 
 	const selectedEncounterData = useMemo(
@@ -512,6 +561,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 				selectedEncounter={selectedEncounterData}
 				source={selectedEncounterData?.source}
 				encounterId={selectedEncounterData?.id}
+				templateId={selectedEncounterData?.templateId}
 				onDelete={deleteSelectedEncounter}
 				submit={() => {
 					if (selectedEncounterData)

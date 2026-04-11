@@ -3,30 +3,39 @@ import {
 	ALIGNMENT,
 	DIFFICULTY,
 	LEVEL_REPRESENTATION,
-	type AbstractEncounter,
 	type ConcreteEncounter,
 } from '@/store/data';
+import type { EncounterTemplateData } from '@/models/encounters/encounter.types';
 import {
 	createDirectoryEntries,
 	getDefaultShowTemplates,
 	toEncounter,
 } from './EncounterDirectory';
 import type { SavedConcreteEncounter } from '@/store/savedEncounters';
+import { LevelDifference } from '@/models/utility/level/LevelDifference';
 
-const templateEncounter: AbstractEncounter = {
+const templateEncounter: EncounterTemplateData = {
 	id: 'template-1',
 	name: 'Template Encounter',
-	levelRepresentation: LEVEL_REPRESENTATION.Relative,
-	difficulty: DIFFICULTY.Low,
-	partySize: 4,
 	description: 'Template entry',
-	participants: [
+	defaultVariantId: 'variant-1',
+	tags: ['Low'],
+	variants: [
 		{
-			type: 'creature',
-			name: 'Bandit',
-			level: '+0',
-			side: ALIGNMENT.Opponents,
-			count: 2,
+			id: 'variant-1',
+			partySize: 4,
+			participants: [
+				{
+					id: 'participant-1',
+					type: 'creature',
+					role: 'opponent',
+					tag: 'Bandit',
+					count: 2,
+					relativeLevel: new LevelDifference(0),
+					side: ALIGNMENT.Opponents,
+				},
+			],
+			events: [],
 		},
 	],
 };
@@ -72,7 +81,7 @@ describe('EncounterDirectory data helpers', () => {
 		expect(data[0].source).toBe('saved');
 		expect(data[0].directoryId).toBe('saved:saved-1');
 		expect(data[1].source).toBe('template');
-		expect(data[1].directoryId).toBe('template:template-1');
+		expect(data[1].directoryId).toBe('template:template-1-a');
 	});
 
 	it('returns only saved encounters when templates are hidden', () => {

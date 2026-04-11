@@ -49,12 +49,25 @@ const NumberInput = ({
 			)}
 			aria-invalid={filed.invalid || undefined}
 			{...register(name, {
-				min: 0,
-				valueAsNumber: true,
+				setValueAs: (value) => {
+					if (value === '' || value === undefined || value === null) {
+						return undefined;
+					}
+
+					return Number(value);
+				},
 				validate: {
 					isNumber: (value) => {
+						if (value === undefined) {
+							return true;
+						}
+
 						if (isNaN(value)) {
 							return 'Value must be a number';
+						}
+
+						if (value < 0) {
+							return 'Value must be zero or greater';
 						}
 
 						return true;

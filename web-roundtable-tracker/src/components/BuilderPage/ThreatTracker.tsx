@@ -233,13 +233,19 @@ export function ThreatTracker({
 		? getDisplayLabelForBudget(comparisonBudget)
 		: undefined;
 
-	const distance = isSmall ? 1 : 1;
+	const distance = isSmall ? 1 : 3;
 	const start = Math.max(0, currentThresholdIdx - distance);
 	const end = Math.min(merged.length - 1, currentThresholdIdx + distance);
 
 	let visibleThresholds = merged.slice(start, end + 1);
 
+	// If XP exceeds the Impossible threshold's max, show only Impossible
 	const lastIdx = merged.length - 1;
+	const impossibleThreshold = merged[lastIdx];
+	if (impossibleThreshold && currentBudgetXp > impossibleThreshold.maxXp) {
+		visibleThresholds = [impossibleThreshold];
+	}
+
 	const lastVisibleIdx = visibleThresholds.length - 1;
 	const lastVisibleIsLast =
 		merged.indexOf(visibleThresholds[lastVisibleIdx]) === lastIdx;

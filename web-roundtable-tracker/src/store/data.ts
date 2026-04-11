@@ -195,6 +195,7 @@ export type Hazard<
 	type: "hazard";
 	successesToDisable: number;
 	isComplexHazard?: boolean;
+	isSimpleHazard?: boolean;
 };
 
 export type Participant<
@@ -223,10 +224,19 @@ type EncounterTemplateVariant = {
 	participants: Participant<typeof LEVEL_REPRESENTATION.Relative>[];
 };
 
+export type AuraElement = {
+	id: string;
+	name: string;
+	description?: string;
+	radius?: number;
+	trigger?: string;
+};
+
 export type NarrativeSlot = {
 	id: string;
 	type: "default" | "reinforcement" | "ongoing";
 	description?: string;
+	accomplishmentLevel?: "story" | "minor" | "moderate" | "major";
 	trigger: {
 		round: number;
 		frequency?: number;
@@ -244,6 +254,7 @@ export type EncounterTemplate = {
 	partySize?: number; // Optional party size for abstract encounters
 	description: string; // Description of the encounter
 	participants: Participant<typeof LEVEL_REPRESENTATION.Relative>[]; // List of participants
+		auras?: AuraElement[];
 	narrativeSlots?: NarrativeSlot[];
 	variants?: EncounterTemplateVariant[];
 };
@@ -266,6 +277,7 @@ export type ConcreteEncounter = {
 	difficulty: Difficulty; // Difficulty setting
 	description: string; // Description of the encounter
 	participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[]; // List of participants
+		auras?: AuraElement[];
 	narrativeSlots?: NarrativeSlot[];
 	variants?: ConcreteEncounterVariant[];
 	notes?: EncounterNotes;
@@ -305,6 +317,7 @@ const hazardSchema = combatantParticipantSchema.extend({
 	type: z.literal("hazard"),
 	successesToDisable: z.number(),
 	isComplexHazard: z.boolean().optional(),
+	isSimpleHazard: z.boolean().optional(),
 });
 
 const participantSchema = z.union([creatureSchema, hazardSchema]);
@@ -313,11 +326,22 @@ const narrativeSlotSchema = z.object({
 	id: z.string(),
 	type: z.enum(["default", "reinforcement", "ongoing"]),
 	description: z.string().optional(),
+	accomplishmentLevel: z
+		.enum(["story", "minor", "moderate", "major"])
+		.optional(),
 	trigger: z.object({
 		round: z.number(),
 		frequency: z.number().optional(),
 	}),
 	participants: z.array(participantSchema).optional(),
+});
+
+const auraSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	description: z.string().optional(),
+	radius: z.number().optional(),
+	trigger: z.string().optional(),
 });
 
 const encounterNotesSchema = z.object({
@@ -335,6 +359,7 @@ export const ConcreteEncounterSchema = z.object({
 	partySize: z.number(),
 	description: z.string(),
 	participants: z.array(participantSchema),
+	auras: z.array(auraSchema).optional(),
 	narrativeSlots: z.array(narrativeSlotSchema).optional(),
 	notes: encounterNotesSchema.optional(),
 });

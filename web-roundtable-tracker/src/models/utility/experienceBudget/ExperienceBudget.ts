@@ -32,6 +32,42 @@ export class ExperienceBudget extends Number {
         return new ExperienceBudget(this.valueOf() + budget.valueOf());
     }
 
+    /**
+     * Convert a relative level (e.g., -2, 0, +3) to XP budget.
+     * Uses PF2e scaling: 40 * multiplier where multiplier depends on level difference.
+     * Relative level < -4 yields 0 XP (creatures too weak to be worth experience).
+     */
+    static fromLevel(relativeLevel: number): ExperienceBudget {
+        if (relativeLevel < -4) {
+            return new ExperienceBudget(0);
+        }
+
+        const baseCost = 40;
+        const difference = Math.trunc(relativeLevel);
+
+        const multiplier = (() => {
+            if (difference === 0) return 1;
+
+            if (difference > 0) {
+                if (difference % 2 === 0) {
+                    return Math.pow(2, difference / 2);
+                }
+
+                return 1.5 * Math.pow(2, (difference - 1) / 2);
+            }
+
+            const absoluteDifference = Math.abs(difference);
+            if (absoluteDifference % 2 === 0) {
+                return 1 / Math.pow(2, absoluteDifference / 2);
+            }
+
+            return 0.75 / Math.pow(2, (absoluteDifference - 1) / 2);
+        })();
+
+        const xp = baseCost * multiplier;
+        return new ExperienceBudget(xp);
+    }
+
     private static resolveCharacterAdjustmentValue(baseReward: number): number {
         if (baseReward <= 40) {
             return Math.max(0, Math.round(baseReward / 4));

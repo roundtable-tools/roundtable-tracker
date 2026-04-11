@@ -19,13 +19,22 @@ type EncounterCardProps = {
 	selectedEncounter: Encounter;
 	source?: 'template' | 'saved';
 	encounterId?: string;
+	templateId?: string;
 	onDelete?: () => void;
 	submit: (encounter?: Encounter) => void;
 	close: () => void;
 };
 
 export const EncounterCard = (props: EncounterCardProps) => {
-	const { selectedEncounter, source, encounterId, onDelete, submit, close } = props;
+	const {
+		selectedEncounter,
+		source,
+		encounterId,
+		templateId,
+		onDelete,
+		submit,
+		close,
+	} = props;
 	const navigate = useNavigate();
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
 	const setPartyLevel = useEncounterStore((state) => state.setPartyLevel);
@@ -155,6 +164,32 @@ export const EncounterCard = (props: EncounterCardProps) => {
 						<Button variant="destructive" onClick={onDelete}>
 							<Trash2 className="h-4 w-4" />
 							Delete
+						</Button>
+					) : null}
+					{source === 'template' && templateId ? (
+						<Button
+							variant="secondary"
+							onClick={() => {
+								const templateLevel = isVariableLevel
+									? level
+									: (typeof selectedEncounter.level === 'number'
+										? selectedEncounter.level
+										: undefined);
+								const templatePartySize = selectedEncounter.partySize ?? 4;
+
+								close();
+								navigate({
+									to: '/builder',
+									search: {
+										templateId,
+										templateLevel,
+										templatePartySize,
+									},
+								});
+							}}
+						>
+							<Pencil className="h-4 w-4" />
+							Use Template
 						</Button>
 					) : null}
 				</div>

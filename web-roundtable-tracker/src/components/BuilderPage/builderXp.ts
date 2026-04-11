@@ -3,15 +3,28 @@ import { LevelDifference } from '@/models/utility/level/LevelDifference';
 import { getAdjustedLevel } from '@/models/utility/level/Level';
 import { Threat } from '@/models/utility/threat/Threat.class';
 import type { LevelAdjustment } from '@/models/utility/level/Level';
+import type { AccomplishmentLevel } from '@/models/encounters/encounter.types';
 
 export type SlotType =
 	| 'creature'
 	| 'hazard'
 	| 'reinforcement'
-	| 'narrative'
-	| 'aura';
+	| 'narrative';
 
 export type SideType = 'enemy' | 'ally' | 'neutral';
+
+export interface BuilderReinforcementParticipant {
+	id: string;
+	type: 'creature' | 'hazard';
+	name: string;
+	side: SideType;
+	level: number;
+	count: number;
+	maxHealth?: number;
+	successesToDisable: number;
+	adjustment: LevelAdjustment | 'none';
+	isSimpleHazard: boolean;
+}
 
 export interface BuilderSlot {
 	id: string;
@@ -26,8 +39,10 @@ export interface BuilderSlot {
 	adjustment: LevelAdjustment | 'none';
 	isSimpleHazard: boolean;
 	reinforcementRound: number;
+	reinforcementParticipants: BuilderReinforcementParticipant[];
 	eventRound: number;
-	auraCycle: number;
+	repeatInterval?: number;
+	accomplishmentLevel?: AccomplishmentLevel;
 }
 
 export interface DelayedReinforcementConfig {
@@ -109,6 +124,13 @@ const ROUND_DIFF_THRESHOLD_BY_THREAT: Record<number, number> = {
 	10: 0,
 };
 
+const ACCOMPLISHMENT_XP_AWARD: Record<AccomplishmentLevel, number> = {
+	story: 0,
+	minor: 10,
+	moderate: 30,
+	major: 80,
+};
+
 function roundUpToNearestFive(value: number): number {
 	return Math.ceil(value / 5) * 5;
 }
@@ -132,31 +154,79 @@ function sanitizeConfig(
 	};
 }
 
-function resolveSlotBaseXp(slot: BuilderSlot, partyLevel: number): ExperienceBudget | null {
-	if (slot.side === 'neutral') {
+function resolveCombatValuesBaseXp(
+	values: {
+		side: SideType;
+		level: number;
+		count: number;
+		adjustment: LevelAdjustment | 'none';
+		isSimpleHazard: boolean;
+		type: SlotType;
+	},
+	partyLevel: number
+): ExperienceBudget | null {
+	if (values.side === 'neutral') {
 		return null;
 	}
 
-	if (slot.level === undefined || slot.level === null || isNaN(slot.level)) {
+	if (values.level === undefined || values.level === null || isNaN(values.level)) {
 		return null;
 	}
 
 	const countValue =
-		typeof slot.count === 'number' && Number.isFinite(slot.count) ? slot.count : 1;
+		typeof values.count === 'number' && Number.isFinite(values.count) ? values.count : 1;
 	const count = Math.max(0, countValue);
 
 	const adjustment: LevelAdjustment | undefined =
-		slot.type === 'hazard' || slot.adjustment === 'none'
+		values.type === 'hazard' || values.adjustment === 'none'
 			? undefined
-			: slot.adjustment;
+			: values.adjustment;
 
-	const adjustedLevel = getAdjustedLevel(slot.level, adjustment);
+	const adjustedLevel = getAdjustedLevel(values.level, adjustment);
 	const diff = new LevelDifference(adjustedLevel - partyLevel);
-	const xp = diff.toExperience(!slot.isSimpleHazard);
+	const xp = diff.toExperience(!values.isSimpleHazard);
 	const contribution =
-		slot.side === 'ally' ? -xp.valueOf() * count : xp.valueOf() * count;
+		values.side === 'ally' ? -xp.valueOf() * count : xp.valueOf() * count;
 
 	return new ExperienceBudget(contribution);
+}
+
+function resolveSlotBaseXp(slot: BuilderSlot, partyLevel: number): ExperienceBudget | null {
+	return resolveCombatValuesBaseXp(
+		{
+			side: slot.side,
+			level: slot.level,
+			count: slot.count,
+			adjustment: slot.adjustment,
+			isSimpleHazard: slot.isSimpleHazard,
+			type: slot.type,
+		},
+		partyLevel
+	);
+}
+
+function resolveReinforcementParticipantXp(
+	participant: BuilderReinforcementParticipant,
+	partyLevel: number
+): ExperienceBudget | null {
+	return resolveCombatValuesBaseXp(
+		{
+			side: participant.side,
+			level: participant.level,
+			count: participant.count,
+			adjustment: participant.adjustment,
+			isSimpleHazard: participant.isSimpleHazard,
+			type: participant.type,
+		},
+		partyLevel
+	);
+}
+
+function resolveNarrativeAccomplishmentXp(slot: BuilderSlot): ExperienceBudget {
+	const accomplishmentLevel = slot.accomplishmentLevel ?? 'story';
+	const award = ACCOMPLISHMENT_XP_AWARD[accomplishmentLevel] ?? 0;
+
+	return new ExperienceBudget(award);
 }
 
 function calculateWaveInteractionThreat(
@@ -314,6 +384,11 @@ export function computeBuilderXP(
 	let total = new ExperienceBudget(0);
 
 	for (const slot of slots) {
+		if (slot.type === 'narrative') {
+			total = total.sum(resolveNarrativeAccomplishmentXp(slot));
+			continue;
+		}
+
 		if (slot.type !== 'creature' && slot.type !== 'hazard') {
 			continue;
 		}
@@ -344,20 +419,42 @@ export function computeEncounterXpUsage(
 		typeof partySizeOrConfig === 'object' ? partySizeOrConfig : config
 	);
 
-	const immediateSlots = slots.filter(
-		(slot) => slot.type === 'creature' || slot.type === 'hazard'
-	);
+	const immediateSlots = slots.filter((slot) => slot.type !== 'reinforcement');
 	const immediateXp = computeBuilderXP(immediateSlots, partyLevel);
 
 	const reinforcementSlots = slots.filter((slot) => slot.type === 'reinforcement');
-	const firstReinforcementSlot = reinforcementSlots[0];
-	const rawReinforcementXp = firstReinforcementSlot
-		? resolveSlotBaseXp(firstReinforcementSlot, partyLevel) ?? new ExperienceBudget(0)
-		: new ExperienceBudget(0);
+	const rawReinforcementXp = reinforcementSlots.reduce((sum, slot) => {
+		const hasParticipantList = Array.isArray(slot.reinforcementParticipants);
+		const slotParticipants = hasParticipantList
+			? slot.reinforcementParticipants
+			: [];
+
+		if (!hasParticipantList) {
+			const legacyContribution =
+				resolveSlotBaseXp(slot, partyLevel) ?? new ExperienceBudget(0);
+
+			return sum.sum(legacyContribution);
+		}
+
+		const slotContribution = slotParticipants.reduce(
+			(participantSum, participant) => {
+				const contribution =
+					resolveReinforcementParticipantXp(participant, partyLevel) ??
+					new ExperienceBudget(0);
+
+				return participantSum.sum(contribution);
+			},
+			new ExperienceBudget(0)
+		);
+
+		return sum.sum(slotContribution);
+	}, new ExperienceBudget(0));
 
 	const rawXp = immediateXp.sum(rawReinforcementXp);
 	const hasSimulatedReinforcement = rawReinforcementXp.valueOf() > 0;
-	const reinforcementRound = firstReinforcementSlot?.reinforcementRound ?? 1;
+	const reinforcementRound = reinforcementSlots.length
+		? Math.min(...reinforcementSlots.map((slot) => slot.reinforcementRound || 1))
+		: 1;
 
 	const simulation = hasSimulatedReinforcement
 		? simulateEncounterThreat(
@@ -377,7 +474,7 @@ export function computeEncounterXpUsage(
 		? rawReinforcementXp
 		: new ExperienceBudget(0);
 
-	const waves: ReinforcementWaveBreakdown[] = firstReinforcementSlot
+	const waves: ReinforcementWaveBreakdown[] = reinforcementSlots.length > 0
 		? [
 				{
 					round: Math.max(1, Math.floor(reinforcementRound || 1)),

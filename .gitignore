@@ -36,3 +36,4 @@ coverage
 !.yarn/sdks
 !.yarn/versions
 typecheck_output.txt
+web-roundtable-tracker/test_output.txt

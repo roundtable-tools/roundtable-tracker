@@ -21,7 +21,7 @@ function creature(overrides: Partial<BuilderSlot> = {}): BuilderSlot {
 		isSimpleHazard: false,
 		reinforcementRound: 1,
 		eventRound: 1,
-		auraCycle: 1,
+		repeatInterval: undefined,
 		...overrides,
 	};
 }
@@ -59,14 +59,32 @@ describe('computeBuilderXP', () => {
 		expect(computeBuilderXP(slots, 5).valueOf()).toBe(0);
 	});
 
-	it('ignores narrative type slots', () => {
-		const slots = [creature({ type: 'narrative', level: 5 })];
+	it('treats story accomplishment narrative slots as 0 XP', () => {
+		const slots = [
+			creature({ type: 'narrative', accomplishmentLevel: 'story', level: 5 }),
+		];
 		expect(computeBuilderXP(slots, 5).valueOf()).toBe(0);
 	});
 
-	it('ignores aura type slots', () => {
-		const slots = [creature({ type: 'aura', level: 5 })];
-		expect(computeBuilderXP(slots, 5).valueOf()).toBe(0);
+	it('awards accomplishment XP for narrative slots', () => {
+		const slots = [
+			creature({ type: 'narrative', accomplishmentLevel: 'minor' }),
+			creature({ type: 'narrative', accomplishmentLevel: 'moderate' }),
+			creature({ type: 'narrative', accomplishmentLevel: 'major' }),
+		];
+		expect(computeBuilderXP(slots, 5).valueOf()).toBe(120);
+	});
+
+	it('awards accomplishment XP for narrative slots with repeat interval', () => {
+		const slots = [
+			creature({
+				type: 'narrative',
+				accomplishmentLevel: 'moderate',
+				repeatInterval: 2,
+				eventRound: 3,
+			}),
+		];
+		expect(computeBuilderXP(slots, 5).valueOf()).toBe(30);
 	});
 
 	it('ignores slots with NaN level', () => {
@@ -146,6 +164,45 @@ describe('computeEncounterXpUsage', () => {
 		expect(usage.waveInteraction.effectiveThreat.toLabel()).toBe('Moderate');
 	});
 
+	it('adds narrative accomplishment XP into immediate budget totals', () => {
+		const usage = computeEncounterXpUsage(
+			[
+				creature({ level: 5, count: 2 }),
+				creature({ type: 'narrative', accomplishmentLevel: 'minor' }),
+			],
+			5,
+			4
+		);
+
+		expect(usage.immediateXp.valueOf()).toBe(90);
+		expect(usage.rawReinforcementXp.valueOf()).toBe(0);
+		expect(usage.rawXp.valueOf()).toBe(90);
+		expect(usage.effectiveXp.valueOf()).toBe(90);
+		expect(usage.simulation).toBeNull();
+	});
+
+	it('treats reinforcement slots with explicit empty participants as 0 XP', () => {
+		const usage = computeEncounterXpUsage(
+			[
+				creature({ level: 5, count: 2 }),
+				creature({
+					type: 'reinforcement',
+					level: 5,
+					reinforcementRound: 3,
+					reinforcementParticipants: [],
+				}),
+			],
+			5,
+			4
+		);
+
+		expect(usage.immediateXp.valueOf()).toBe(80);
+		expect(usage.rawReinforcementXp.valueOf()).toBe(0);
+		expect(usage.rawXp.valueOf()).toBe(80);
+		expect(usage.effectiveXp.valueOf()).toBe(80);
+		expect(usage.simulation).toBeNull();
+	});
+
 	it('simulates delayed reinforcements using round-by-round attrition and max rounded threat', () => {
 		const slots = [
 			creature({ type: 'creature', level: 5, count: 2 }),
@@ -181,7 +238,7 @@ describe('computeEncounterXpUsage', () => {
 		expect(round3?.totalDisplay).toBe(90);
 	});
 
-	it('uses only the first reinforcement slot (single reinforcement enforcement)', () => {
+	it('sums multiple reinforcement slots into the same wave budget', () => {
 		const usage = computeEncounterXpUsage(
 			[
 				creature({ type: 'reinforcement', level: 5, count: 2, reinforcementRound: 2 }),
@@ -191,11 +248,11 @@ describe('computeEncounterXpUsage', () => {
 			4
 		);
 
-		// Only the first reinforcement slot is used, so 2 creatures at level 5 = 80 XP
+		// 3 total creatures at level 5 = 120 XP
 		expect(usage.waves).toHaveLength(1);
 		expect(usage.waves[0].round).toBe(2);
-		expect(usage.waves[0].rawXp.valueOf()).toBe(80);
-		expect(usage.waves[0].effectiveXp.valueOf()).toBe(80);
+		expect(usage.waves[0].rawXp.valueOf()).toBe(120);
+		expect(usage.waves[0].effectiveXp.valueOf()).toBe(120);
 	});
 
 	it('scales party output by party size during simulation', () => {

@@ -13,7 +13,7 @@ import {
 import { generateUUID } from '@/utils/uuid';
 import { PreviewCard } from './PreviewCard';
 import { useEncounterStore } from '@/store/instance';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AppHeader } from '@/AppHeader';
 import { participantsToEncounterCharacters } from '@/store/convert';
 import { useFieldArray, useForm } from 'react-hook-form';
@@ -180,31 +180,73 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 		[encounterData, partyLevel]
 	);
 
-	const fullParty = [party, ...participants];
-	const defaultTeams = fullParty
-		.filter((participants) => participants.length > 0)
-		.map((participants) => ({
-			side: participants[0].side,
-			characters: participants.map((participant) => ({
-				initiative: 0,
-				maxHealth: 1,
-				tempHealth: 0,
-				...participant,
-				health: participant.health ?? participant.maxHealth ?? 1,
-			})),
-		}));
+	const fullParty = useMemo(() => [party, ...participants], [party, participants]);
+	const defaultTeams = useMemo(
+		() =>
+			fullParty
+				.filter((group) => group.length > 0)
+				.map((group) => ({
+					side: group[0].side,
+					characters: group.map((participant) => ({
+						...participant,
+						initiative: 0,
+						maxHealth: participant.maxHealth ?? 1,
+						tempHealth: participant.tempHealth ?? 0,
+						health: participant.health ?? participant.maxHealth,
+					})),
+				})),
+		[fullParty]
+	);
 
-	const { control, register, getFieldState, handleSubmit } = useForm<Inputs>({
+	const { control, register, getFieldState, handleSubmit, reset } = useForm<Inputs>({
 		mode: 'onChange',
 		defaultValues: {
 			teams: defaultTeams,
 		},
 	});
 
+	useEffect(() => {
+		reset({ teams: defaultTeams });
+	}, [defaultTeams, reset]);
+
 	const onStartEncounter = () => {
 		handleSubmit(
 			(data) => {
-				const participants = data.teams.flatMap(({ characters }) => characters);
+				const participants = data.teams
+					.flatMap(({ characters }) => characters)
+					.map((participant) => {
+						const maxHealth =
+							typeof participant.maxHealth === 'number' &&
+							Number.isFinite(participant.maxHealth) &&
+							participant.maxHealth >= 0
+								? participant.maxHealth
+								: 1;
+						const health =
+							typeof participant.health === 'number' &&
+							Number.isFinite(participant.health) &&
+							participant.health >= 0
+								? participant.health
+								: maxHealth;
+						const tempHealth =
+							typeof participant.tempHealth === 'number' &&
+							Number.isFinite(participant.tempHealth) &&
+							participant.tempHealth >= 0
+								? participant.tempHealth
+								: 0;
+						const initiative =
+							typeof participant.initiative === 'number' &&
+							Number.isFinite(participant.initiative)
+								? participant.initiative
+								: 0;
+
+						return {
+							...participant,
+							initiative,
+							maxHealth,
+							health,
+							tempHealth,
+						};
+					});
 				setPreparedParticipants(participants);
 				setShowInitiativeChoice(true);
 			},
