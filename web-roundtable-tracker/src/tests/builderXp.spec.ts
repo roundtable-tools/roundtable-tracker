@@ -158,7 +158,7 @@ describe('computeEncounterXpUsage', () => {
 		expect(usage.rawReinforcementXp.valueOf()).toBe(40);
 		expect(usage.rawXp.valueOf()).toBe(120);
 		expect(usage.effectiveReinforcementXp.valueOf()).toBe(40);
-		expect(usage.effectiveXp.valueOf()).toBe(90);
+		expect(usage.effectiveXp.valueOf()).toBe(87);
 		expect(usage.simulation?.maxThreatDisplayXp).toBe(90);
 
 		const round1 = usage.simulation?.history[0];

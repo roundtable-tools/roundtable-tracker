@@ -10,103 +10,91 @@ import {
 	Participant,
 	PRIORITY,
 } from '@/store/data';
-import {
-	Box,
-	Button,
-	Card,
-	CardBody,
-	CardFooter,
-	CardHeader,
-	Grid,
-	Heading,
-	Layer,
-	PageContent,
-	PageHeader,
-	ResponsiveContext,
-	Stack,
-	Text,
-} from 'grommet';
 import { generateUUID } from '@/utils/uuid';
 import { PreviewCard } from './PreviewCard';
 import { useEncounterStore } from '@/store/instance';
-import { FlagFill, Robot, StreetView, Toast, TreeOption } from 'grommet-icons';
-import { useContext, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AppHeader } from '@/AppHeader';
 import { participantsToEncounterCharacters } from '@/store/convert';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate } from '@tanstack/react-router';
+import { Button } from '@/components/ui/button';
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog';
+import { Bot, Ghost, Trees, User } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 type PreviewDisplayProps = {
 	setView: (view: string) => void;
 };
 
-const sideToAccentColorMap: Record<number, string> = {
-	0: 'accent-3',
-	1: 'accent-2',
-	2: 'accent-1',
-	3: 'accent-4',
-} as const;
-
-const sideToNeutralColorMap: Record<number, string> = {
-	0: 'neutral-3',
-	1: 'neutral-2',
-	2: 'neutral-1',
-	3: 'neutral-4',
-} as const;
-
-const getNeutralColor = (side: number): string => {
-	const normalizedSide = Math.min(3, Math.max(0, side)) as 0 | 1 | 2 | 3;
-
-	return sideToNeutralColorMap[normalizedSide];
+type TeamAppearance = {
+	borderClassName: string;
+	markerClassName: string;
+	textClassName: string;
+	label: string;
+	Icon: LucideIcon;
 };
 
-const getAligmentFlag = (side: number): JSX.Element => {
-	const normalizedSide = Math.min(3, Math.max(0, side)) as 0 | 1 | 2 | 3;
-	const iconSize = '34%';
-	const iconColor = sideToAccentColorMap[normalizedSide];
-	const padding = '90%';
-	const sideToIconMap: Record<number, JSX.Element> = {
-		0: (
-			<StreetView
-				size={iconSize}
-				color={iconColor}
-				style={{ paddingBottom: padding }}
-			/>
-		),
-		1: (
-			<Robot
-				size={iconSize}
-				color={iconColor}
-				style={{ paddingBottom: padding }}
-			/>
-		),
-		2: (
-			<TreeOption
-				size={iconSize}
-				color={iconColor}
-				style={{ paddingBottom: padding }}
-			/>
-		),
-		3: (
-			<Toast
-				size={iconSize}
-				color={iconColor}
-				style={{ paddingBottom: padding }}
-			/>
-		),
-	} as const;
-	const flagSize = '100%';
-	const flagColor = sideToNeutralColorMap[normalizedSide];
+const TEAM_APPEARANCES: Record<number, TeamAppearance> = {
+	0: {
+		borderClassName: 'border-l-teal-600',
+		markerClassName: 'bg-teal-600',
+		textClassName: 'text-teal-600',
+		label: 'PCs',
+		Icon: User,
+	},
+	1: {
+		borderClassName: 'border-l-violet-700',
+		markerClassName: 'bg-violet-700',
+		textClassName: 'text-violet-700',
+		label: 'Opponents',
+		Icon: Bot,
+	},
+	2: {
+		borderClassName: 'border-l-green-600',
+		markerClassName: 'bg-green-600',
+		textClassName: 'text-green-600',
+		label: 'Neutral',
+		Icon: Trees,
+	},
+	3: {
+		borderClassName: 'border-l-orange-500',
+		markerClassName: 'bg-orange-500',
+		textClassName: 'text-orange-500',
+		label: 'Special',
+		Icon: Ghost,
+	},
+} as const;
 
-	return (
-		<Stack anchor={'center'}>
-			<FlagFill size={flagSize} color={flagColor} />
-			{sideToIconMap[normalizedSide]}
-		</Stack>
-	);
-};
+function getTeamAppearance(side: number): TeamAppearance {
+	return TEAM_APPEARANCES[Math.min(3, Math.max(0, side))] ?? TEAM_APPEARANCES[0];
+}
 
-const generateParticipants = (
+function getDefaultParticipantName(participant: Participant<0 | 1>): string {
+	if (participant.type === 'hazard') {
+		return 'Hazard';
+	}
+
+	switch (participant.side) {
+		case ALIGNMENT.Opponents:
+			return 'Enemy';
+		case ALIGNMENT.Neutral:
+			return 'Neutral';
+		case ALIGNMENT.PCs:
+			return 'Ally';
+		default:
+			return 'Combatant';
+	}
+}
+
+export const generateParticipants = (
 	encounterData: Encounter | undefined,
 	partyLevel: number
 ): InitiativeParticipant[][] => {
@@ -125,17 +113,25 @@ const generateParticipants = (
 	);
 
 	return Object.values(groupedBySide).map((participants) =>
-		participants.flatMap(({ level, name, count, ...participant }) =>
-			Array.from({ length: count ?? 1 }).map((_, index, { length }) => ({
+		participants.flatMap(({ level, name, count, ...participant }) => {
+			const trimmedName = name.trim();
+			const baseName =
+				trimmedName.length > 0
+					? trimmedName
+					: getDefaultParticipantName({ level, name, count, ...participant });
+
+			return Array.from({ length: count ?? 1 }).map((_, index, { length }) => ({
 				uuid: generateUUID(),
 				tiePriority: PRIORITY.NPC,
 				initiative: Math.floor(Math.random() * 20) + 1,
 				...participant,
 				level: normalizeLevel(partyLevel, level),
 				name:
-					length > 1 ? `${name} ${indexToLetter(index).toUpperCase()}` : name,
-			}))
-		)
+					length > 1
+						? `${baseName} ${indexToLetter(index).toUpperCase()}`
+						: baseName,
+			}));
+		})
 	);
 };
 
@@ -166,7 +162,6 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	const startEncounter = useEncounterStore((state) => state.startEncounter);
 	const navigate = useNavigate();
 
-	const size = useContext(ResponsiveContext);
 	const encounterData = useEncounterStore((state) => state.encounterData);
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
 	const setView = props.setView;
@@ -186,20 +181,23 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	);
 
 	const fullParty = [party, ...participants];
+	const defaultTeams = fullParty
+		.filter((participants) => participants.length > 0)
+		.map((participants) => ({
+			side: participants[0].side,
+			characters: participants.map((participant) => ({
+				initiative: 0,
+				maxHealth: 1,
+				tempHealth: 0,
+				...participant,
+				health: participant.health ?? participant.maxHealth ?? 1,
+			})),
+		}));
 
 	const { control, register, getFieldState, handleSubmit } = useForm<Inputs>({
 		mode: 'onChange',
 		defaultValues: {
-			teams: fullParty.map((participants) => ({
-				side: participants[0].side,
-				characters: participants.map((participant) => ({
-					initiative: 0,
-					maxHealth: 1,
-					tempHealth: 0,
-					...participant,
-					health: participant.health ?? participant.maxHealth ?? 1,
-				})),
-			})),
+			teams: defaultTeams,
 		},
 	});
 
@@ -247,96 +245,90 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 
 	return (
 		<>
-			{showInitiativeChoice && (
-				<Layer
-					onEsc={() => setShowInitiativeChoice(false)}
-					onClickOutside={() => setShowInitiativeChoice(false)}
-				>
-					<Card width="medium">
-						<CardHeader pad="small" background="brand">
-							<Heading level={3} margin="none">
-								Choose Initiative View
-							</Heading>
-						</CardHeader>
-						<CardBody pad="medium" gap="small">
-							<Text>
-								Select which initiative experience you want to use for this
-								encounter.
-							</Text>
-						</CardBody>
-						<CardFooter
-							pad="small"
-							background="light-2"
-							justify="end"
-							gap="small"
+			<Dialog open={showInitiativeChoice} onOpenChange={setShowInitiativeChoice}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Choose Initiative View</DialogTitle>
+						<DialogDescription>
+							Select which initiative experience you want to use for this encounter.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter className="flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+						<Button variant="outline" onClick={() => setShowInitiativeChoice(false)}>
+							Cancel
+						</Button>
+						<Button
+							variant="secondary"
+							onClick={() => onSelectInitiativeView('initiative')}
 						>
-							<Button
-								label="Cancel"
-								onClick={() => setShowInitiativeChoice(false)}
-							/>
-							<Button
-								label="Classic Initiative"
-								onClick={() => onSelectInitiativeView('initiative')}
-							/>
-							<Button
-								label="Initiative 2"
-								onClick={() => onSelectInitiativeView('initiative2')}
-							/>
-							<Button
-								primary
-								label="New Initiative"
-								onClick={() => onSelectInitiativeView('newInitiative')}
-							/>
-						</CardFooter>
-					</Card>
-				</Layer>
-			)}
+							Classic Initiative
+						</Button>
+						<Button
+							variant="secondary"
+							onClick={() => onSelectInitiativeView('initiative2')}
+						>
+							Initiative 2
+						</Button>
+						<Button onClick={() => onSelectInitiativeView('newInitiative')}>
+							New Initiative
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 			<AppHeader setView={setView} />
-			<PageContent fill>
-				<PageHeader
-					title={
-						<Box flex direction={'row'} justify="between">
-							<Heading level={1}>{encounterData?.name}</Heading>
-							<Heading
-								level={2}
-								color={'brand'}
-							>{`${difficultyToString(encounterData?.difficulty ?? DIFFICULTY.Moderate)} ${partyLevel}`}</Heading>
-						</Box>
-					}
-				/>
-				<form>
-					<Grid
-						columns={size === 'small' ? ['1fr'] : ['1fr', '1fr']}
-						gap="medium"
-						pad={{ horizontal: 'medium', vertical: 'small' }}
+			<div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+				<header className="flex flex-col gap-3 rounded-2xl border bg-card px-5 py-5 shadow-sm sm:flex-row sm:items-end sm:justify-between">
+					<div className="space-y-1">
+						<p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
+							Encounter Preview
+						</p>
+						<h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+							{encounterData.name}
+						</h1>
+					</div>
+					<div
+						className="rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary shadow-sm"
 					>
+						{difficultyToString(encounterData.difficulty ?? DIFFICULTY.Moderate)}{' '}
+						{partyLevel}
+					</div>
+				</header>
+				<form className="space-y-6">
+					<div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
 						{teamFields.map((teamField, index) => {
+							const appearance = getTeamAppearance(teamField.side);
+							const TeamIcon = appearance.Icon;
+
 							return (
 								<PreviewCard
 									register={register}
 									getFieldState={getFieldState}
-									accentColor={getNeutralColor(teamField.side)}
-									key={index}
+									borderClassName={appearance.borderClassName}
+									markerClassName={appearance.markerClassName}
+									key={teamField.id}
 									teamIndex={index}
-									sideFlag={getAligmentFlag(teamField.side)}
+									sideFlag={<TeamIcon className="h-5 w-5" />}
 									sideTitle={
 										Object.entries(ALIGNMENT).find(
 											([, value]) => value === teamField.side
-										)?.[0] ?? 'Unknown'
+										)?.[0] ?? appearance.label
 									}
 									participants={teamField.characters}
 								/>
 							);
 						})}
-					</Grid>
+					</div>
+					<div className="flex justify-end">
+						<Button
+							type="button"
+							className="h-11 min-w-44 px-6 text-sm font-semibold"
+							onClick={onStartEncounter}
+						>
+							Start Encounter
+						</Button>
+					</div>
 				</form>
-				<Button
-					margin={{ top: 'medium' }}
-					primary
-					label="Start Encounter"
-					onClick={onStartEncounter}
-				/>
-			</PageContent>
+			</div>
 		</>
 	);
 };

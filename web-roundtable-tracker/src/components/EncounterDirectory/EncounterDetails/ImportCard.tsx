@@ -1,4 +1,13 @@
-import { Card, CardBody, CardFooter, Button, Text, TextArea } from 'grommet';
+import { Button } from '@/components/ui/button';
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { ConcreteEncounterSchema, Encounter } from '@/store/data';
 import { useState } from 'react';
 import { z } from 'zod';
@@ -43,45 +52,49 @@ export const ImportCard = (props: ImportCardProps) => {
 			level: 1,
 			partySize: 4,
 			participants: [],
-		})
+		}, null, 2)
 	);
 	const [error, setError] = useState<string | null>(null);
 
 	return (
-		<Card>
-			<CardBody
-				pad={{ vertical: 'large', horizontal: 'medium' }}
-				background="light-1"
-			>
-				<Text size="xxlarge">Import Encounter</Text>
-				<TextArea
+		<Card className="gap-0 rounded-none border-0 shadow-none">
+			<CardHeader className="border-b pb-6">
+				<CardTitle className="text-2xl">Import Encounter</CardTitle>
+				<CardDescription>
+					Paste exported encounter JSON to validate it before loading.
+				</CardDescription>
+			</CardHeader>
+			<CardContent className="space-y-4 py-6">
+				<Textarea
 					placeholder="Paste JSON data here"
 					value={value}
 					onChange={(event) => setValue(event.target.value)}
+					className="min-h-72 font-mono text-xs leading-5"
 				/>
-				<Text
-					size="small"
-					color="status-error"
-					style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
-				>
-					{error ?? ''}
-				</Text>
-			</CardBody>
-			<CardFooter pad="small" background="light-2" justify="end">
-				<Button label="Back" onClick={close}></Button>
+				{error ? (
+					<p className="whitespace-pre-wrap break-words rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+						{error}
+					</p>
+				) : null}
+			</CardContent>
+			<CardFooter className="justify-end gap-2 border-t pt-6">
+				<Button variant="outline" onClick={close}>
+					Back
+				</Button>
 				<Button
-					label="Validate"
-					primary
 					onClick={() => {
 						const [encounterData, validationError] = ValidateEncounter(value);
 
 						if (encounterData) {
-							submit(encounterData); // Pass the validated encounter data to the parent
+							setError(null);
+							submit(encounterData);
 						} else {
 							setError(validationError);
 						}
 					}}
-				/>
+				>
+					Validate
+				</Button>
 			</CardFooter>
 		</Card>
 	);

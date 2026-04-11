@@ -1,8 +1,8 @@
 import { Encounter } from '@/store/data';
-import { Layer } from 'grommet';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useState } from 'react';
-import { ImportCard } from './ImportCard'; // Import the ImportCard component
-import { EncounterCard } from './EncounterCard'; // Import the EncounterCard component
+import { ImportCard } from './ImportCard';
+import { EncounterCard } from './EncounterCard';
 
 type EncounterImportModalProps = {
 	closeLayer: () => void;
@@ -15,33 +15,42 @@ export const EncounterImportModal = (props: EncounterImportModalProps) => {
 	const [importedEncounter, setImportedEncounter] = useState<Encounter | null>(
 		null
 	);
+	const handleOpenChange = (open: boolean) => {
+		if (open) {
+			return;
+		}
+
+		if (importedEncounter) {
+			setImportedEncounter(null);
+
+			return;
+		}
+
+		closeLayer();
+	};
 
 	return showLayer ? (
-		<Layer
-			background={{
-				opacity: 0,
-			}}
-			onEsc={importedEncounter ? () => setImportedEncounter(null) : closeLayer}
-			onClickOutside={closeLayer}
-		>
-			{!importedEncounter ? (
-				<ImportCard
-					submit={(encounterData) => setImportedEncounter(encounterData)}
-					close={closeLayer}
-				/>
-			) : (
-				<EncounterCard
-					selectedEncounter={importedEncounter}
-					submit={() => {
-						submit(importedEncounter);
-						setImportedEncounter(null);
-						closeLayer();
-					}}
-					close={() => setImportedEncounter(null)}
-				/>
-			)}
-		</Layer>
+		<Dialog open={showLayer} onOpenChange={handleOpenChange}>
+			<DialogContent className="max-w-3xl gap-0 overflow-hidden p-0 sm:max-w-3xl">
+				{!importedEncounter ? (
+					<ImportCard
+						submit={(encounterData) => setImportedEncounter(encounterData)}
+						close={closeLayer}
+					/>
+				) : (
+					<EncounterCard
+						selectedEncounter={importedEncounter}
+						submit={() => {
+							submit(importedEncounter);
+							setImportedEncounter(null);
+							closeLayer();
+						}}
+						close={() => setImportedEncounter(null)}
+					/>
+				)}
+			</DialogContent>
+		</Dialog>
 	) : (
-		<></>
+		null
 	);
 };
