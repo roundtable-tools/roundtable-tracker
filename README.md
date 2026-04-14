@@ -45,12 +45,6 @@ This repository is a monorepo containing the following workspaces:
    yarn dev
    ```
 
-4. Run the native application:
-
-   ```bash
-   yarn start
-   ```
-
 ## Development 🛠️
 
 ### Linting and Formatting
@@ -73,6 +67,13 @@ This repository is a monorepo containing the following workspaces:
 - Run tests for the native application:
   ```bash
   yarn workspace native-roundtable-tracker test
+  ```
+
+### Repository Validation
+
+- Run cross-workspace TypeScript verification (web typecheck, native typecheck, and web test run):
+  ```bash
+  yarn verify:types
   ```
 
 ### Building

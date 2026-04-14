@@ -3,4 +3,4 @@
  */
 
 export { EncounterTemplate } from './EncounterTemplate';
-export type { EncounterTemplateVariant } from './EncounterTemplate';
+export type { EncounterVariant } from './encounter.types';

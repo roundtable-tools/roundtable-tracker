@@ -53,23 +53,20 @@ function BreadCrumbs() {
 export const Route = createRootRoute({
 	component: () => {
 		return (
-			<>
-				<ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-					<SidebarProvider>
-						<AppSidebar />
-						<SidebarInset>
-							<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-								<SidebarTrigger className="-ml-1" />
-								<Separator orientation="vertical" className="mr-2 h-4" />
-								<BreadCrumbs />
-							</header>
-							<Outlet />
-						</SidebarInset>
-					</SidebarProvider>
-
-					<TanStackRouterDevtools />
-				</ThemeProvider>
-			</>
+			<ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+				<SidebarProvider>
+					<AppSidebar />
+					<SidebarInset>
+						<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+							<SidebarTrigger className="-ml-1" />
+							<Separator orientation="vertical" className="mr-2 h-4" />
+							<BreadCrumbs />
+						</header>
+						<Outlet />
+					</SidebarInset>
+				</SidebarProvider>
+				<TanStackRouterDevtools />
+			</ThemeProvider>
 		);
 	},
 });
