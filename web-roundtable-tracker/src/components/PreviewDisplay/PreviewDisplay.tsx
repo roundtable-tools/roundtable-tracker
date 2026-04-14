@@ -257,11 +257,23 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	};
 
 	const onSelectInitiativeView = (
-		view: 'initiative' | 'newInitiative'
+		view: 'initiative' | 'newInitiative' | 'initiativeTracker' | 'initiativePlayer'
 	) => {
 		startEncounter(participantsToEncounterCharacters(preparedParticipants));
 		setShowInitiativeChoice(false);
 		setView(view);
+
+		if (view === 'initiativeTracker') {
+			navigate({ to: '/initiative_tracker' });
+
+			return;
+		}
+
+		if (view === 'initiativePlayer') {
+			navigate({ to: '/initiative_player' });
+
+			return;
+		}
 
 		if (view === 'newInitiative') {
 			navigate({ to: '/new_initiative' });
@@ -301,6 +313,18 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 						</Button>
 						<Button onClick={() => onSelectInitiativeView('newInitiative')}>
 							New Initiative
+						</Button>
+						<Button
+							variant="secondary"
+							onClick={() => onSelectInitiativeView('initiativeTracker')}
+						>
+							Initiative Tracker (PoC)
+						</Button>
+						<Button
+							variant="secondary"
+							onClick={() => onSelectInitiativeView('initiativePlayer')}
+						>
+							Player View (PoC)
 						</Button>
 					</DialogFooter>
 				</DialogContent>
