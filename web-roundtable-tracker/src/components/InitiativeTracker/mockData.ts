@@ -1,9 +1,12 @@
 export type TrackerParticipant = {
 	id: string;
 	name: string;
-	role: 'pc' | 'opponent' | 'neutral' | 'hazard' | 'reinforcement';
+	role: 'pc' | 'opponent' | 'neutral' | 'ally' | 'hazard' | 'reinforcement';
 	state: 'active' | 'delayed' | 'knocked-out' | 'inactive';
-	hpLabel: 'Healthy' | 'Barely Injured' | 'Bloodied' | 'Critical';
+	currentHp?: number;
+	maxHp?: number;
+	disableChecksSucceeded?: number;
+	disableChecksRequired?: number;
 	notes: string;
 };
 
@@ -45,7 +48,8 @@ export const trackerMockData = {
 			name: 'Alyx the Shieldbearer',
 			role: 'pc',
 			state: 'active',
-			hpLabel: 'Healthy',
+			currentHp: 44,
+			maxHp: 44,
 			notes: 'Holding front line near center rune.',
 		},
 		{
@@ -53,7 +57,8 @@ export const trackerMockData = {
 			name: 'Cinder Mage',
 			role: 'opponent',
 			state: 'active',
-			hpLabel: 'Barely Injured',
+			currentHp: 26,
+			maxHp: 30,
 			notes: 'Preparing ignition cone on next action.',
 		},
 		{
@@ -61,7 +66,8 @@ export const trackerMockData = {
 			name: 'Ember Wisp B',
 			role: 'opponent',
 			state: 'active',
-			hpLabel: 'Bloodied',
+			currentHp: 12,
+			maxHp: 20,
 			notes: 'Orbiting western pillar.',
 		},
 		{
@@ -69,7 +75,8 @@ export const trackerMockData = {
 			name: 'Mira the Oracle',
 			role: 'pc',
 			state: 'delayed',
-			hpLabel: 'Critical',
+			currentHp: 6,
+			maxHp: 24,
 			notes: 'Concentrating on protective ward.',
 		},
 		{
@@ -77,7 +84,8 @@ export const trackerMockData = {
 			name: 'Basalt Hound',
 			role: 'opponent',
 			state: 'active',
-			hpLabel: 'Healthy',
+			currentHp: 36,
+			maxHp: 38,
 			notes: 'Guarding the west stair with readied movement.',
 		},
 		{
@@ -85,7 +93,8 @@ export const trackerMockData = {
 			name: 'Seren of the Glass Bow',
 			role: 'pc',
 			state: 'active',
-			hpLabel: 'Barely Injured',
+			currentHp: 21,
+			maxHp: 24,
 			notes: 'Tracking weak points around the anchor rune.',
 		},
 		{
@@ -93,15 +102,44 @@ export const trackerMockData = {
 			name: 'Temple Attendant',
 			role: 'neutral',
 			state: 'active',
-			hpLabel: 'Healthy',
+			currentHp: 12,
+			maxHp: 12,
 			notes: 'Attempting to evacuate trapped acolytes.',
+		},
+		{
+			id: 'ally-1',
+			name: 'Rowan, Verdant Spear',
+			role: 'ally',
+			state: 'active',
+			currentHp: 30,
+			maxHp: 32,
+			notes: 'Allied lancer pinning wisps away from the party flank.',
+		},
+		{
+			id: 'ally-2',
+			name: 'Sister Vey, Field Medic',
+			role: 'ally',
+			state: 'delayed',
+			currentHp: 17,
+			maxHp: 20,
+			notes: 'Holding action for triage timing after incoming hazard pulse.',
+		},
+		{
+			id: 'hazard-complex-1',
+			name: 'Runic Counterpulse (Complex Hazard)',
+			role: 'hazard',
+			state: 'active',
+			disableChecksSucceeded: 2,
+			disableChecksRequired: 5,
+			notes: 'Takes initiative turns to emit chained arc bursts along rune lines.',
 		},
 		{
 			id: 'npc-4',
 			name: 'Ember Wisp C',
 			role: 'opponent',
 			state: 'knocked-out',
-			hpLabel: 'Bloodied',
+			currentHp: 0,
+			maxHp: 20,
 			notes: 'Dropped beside the collapsed bridge after a lucky strike.',
 		},
 		{
@@ -109,8 +147,18 @@ export const trackerMockData = {
 			name: 'Brother Cal',
 			role: 'pc',
 			state: 'delayed',
-			hpLabel: 'Healthy',
+			currentHp: 27,
+			maxHp: 30,
 			notes: 'Stabilizing allies while tracking hazard timing.',
+		},
+		{
+			id: 'hazard-complex-2',
+			name: 'Molten Glyph Surge (Complex Hazard)',
+			role: 'hazard',
+			state: 'active',
+			disableChecksSucceeded: 1,
+			disableChecksRequired: 4,
+			notes: 'Acts on initiative to retarget unstable lava vents each turn.',
 		},
 	] satisfies TrackerParticipant[],
 	outOfInitiative: {
@@ -120,7 +168,8 @@ export const trackerMockData = {
 				name: 'Ashbound Brute',
 				role: 'reinforcement',
 				state: 'inactive',
-				hpLabel: 'Healthy',
+				currentHp: 40,
+				maxHp: 40,
 				notes: 'Arrives at round 3 from north gate.',
 			},
 		],
@@ -131,8 +180,27 @@ export const trackerMockData = {
 				name: 'Magma Vent',
 				role: 'hazard',
 				state: 'inactive',
-				hpLabel: 'Healthy',
+				disableChecksSucceeded: 0,
+				disableChecksRequired: 3,
 				notes: 'Simple hazard currently dormant.',
+			},
+			{
+				id: 'hazard-2',
+				name: 'Falling Debris Field',
+				role: 'hazard',
+				state: 'inactive',
+				disableChecksSucceeded: 1,
+				disableChecksRequired: 2,
+				notes: 'Simple hazard: each turn, random lane becomes difficult terrain.',
+			},
+			{
+				id: 'hazard-3',
+				name: 'Searing Steam Pocket',
+				role: 'hazard',
+				state: 'inactive',
+				disableChecksSucceeded: 2,
+				disableChecksRequired: 5,
+				notes: 'Simple hazard: bursts when a creature ends turn adjacent.',
 			},
 		],
 	} as const,
