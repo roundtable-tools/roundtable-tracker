@@ -61,6 +61,9 @@ function BreadCrumbs() {
 
 function EncounterHeaderInfo() {
 	const matches = useMatches();
+	const isInitiativeTrackerRoute = matches.some(
+		(match) => match.routeId === '/initiative_tracker',
+	);
 	const encounterMatch = matches
 		.filter(
 			(
@@ -86,11 +89,16 @@ function EncounterHeaderInfo() {
 		<>
 			<Separator orientation="vertical" className="mx-2 h-4" />
 			<div className="flex min-w-0 flex-1 items-center justify-between gap-4">
-				<div className="flex min-w-0 items-center gap-2">
+				<div
+					className={[
+						'flex min-w-0 items-center gap-2',
+						isInitiativeTrackerRoute ? 'hidden md:flex' : '',
+					].join(' ')}
+				>
 					<span className="truncate text-sm font-semibold">{encounterHeader.title}</span>
 					<span className="text-xs text-muted-foreground">{encounterHeader.threatLevel}</span>
 				</div>
-				<div className="shrink-0 text-right">
+				<div className="shrink-0 text-right ml-auto md:ml-0">
 					<p className="text-xs text-muted-foreground">
 						Last turn {encounterHeader.turnTimers.lastTurn}
 					</p>

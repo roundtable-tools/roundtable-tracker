@@ -34,6 +34,7 @@ import {
 	SkipForward,
 	Undo2,
 } from 'lucide-react';
+import { Reorder } from 'motion/react';
 
 function logTrackerButton(action: string, details?: Record<string, unknown>) {
 	if (details) {
@@ -473,6 +474,214 @@ function InitiativeCarouselCard({
 	);
 }
 
+function MobileInitiativeCarouselCard({
+	participant,
+	selected,
+	onSelect,
+	isCurrent,
+}: {
+	participant: TrackerParticipant;
+	selected: boolean;
+	onSelect: (id: string) => void;
+	isCurrent: boolean;
+}) {
+	const SWIPE_REVEAL_PX = 76;
+	const SWIPE_INTENT_PX = 10;
+	const SWIPE_SNAP_PX = 28;
+	const accent = getParticipantAccent(participant.role);
+	const indicatorLabel = getParticipantIndicatorLabel(participant);
+	const [swipeOffsetY, setSwipeOffsetY] = useState(0);
+	const [swipeActionFlash, setSwipeActionFlash] = useState<'delay' | 'ko' | null>(null);
+	const swipeFlashTimeoutRef = useRef<number | null>(null);
+	const swipeStateRef = useRef({
+		pointerId: null as number | null,
+		startX: 0,
+		startY: 0,
+		isSwiping: false,
+		didDrag: false,
+	});
+
+	useEffect(() => {
+		return () => {
+			if (swipeFlashTimeoutRef.current !== null) {
+				window.clearTimeout(swipeFlashTimeoutRef.current);
+			}
+		};
+	}, []);
+
+	const registerSwipeInput = (action: 'delay' | 'ko') => {
+		logTrackerButton('Mobile swipe action input', {
+			action,
+			participantId: participant.id,
+			participantName: participant.name,
+		});
+		setSwipeActionFlash(action);
+		if (swipeFlashTimeoutRef.current !== null) {
+			window.clearTimeout(swipeFlashTimeoutRef.current);
+		}
+
+		swipeFlashTimeoutRef.current = window.setTimeout(() => {
+			setSwipeActionFlash(null);
+			swipeFlashTimeoutRef.current = null;
+		}, 320);
+	};
+
+	const handlePointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
+		if (event.pointerType === 'mouse' && event.button !== 0) {
+			return;
+		}
+
+		swipeStateRef.current.pointerId = event.pointerId;
+		swipeStateRef.current.startX = event.clientX;
+		swipeStateRef.current.startY = event.clientY;
+		swipeStateRef.current.isSwiping = false;
+		swipeStateRef.current.didDrag = false;
+		event.currentTarget.setPointerCapture(event.pointerId);
+	};
+
+	const handlePointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+		if (swipeStateRef.current.pointerId !== event.pointerId) {
+			return;
+		}
+
+		const deltaX = event.clientX - swipeStateRef.current.startX;
+		const deltaY = event.clientY - swipeStateRef.current.startY;
+
+		if (!swipeStateRef.current.isSwiping) {
+			if (Math.abs(deltaY) < SWIPE_INTENT_PX || Math.abs(deltaY) <= Math.abs(deltaX)) {
+				return;
+			}
+			swipeStateRef.current.isSwiping = true;
+		}
+
+		swipeStateRef.current.didDrag = true;
+		setSwipeOffsetY(Math.max(-SWIPE_REVEAL_PX, Math.min(SWIPE_REVEAL_PX, deltaY)));
+	};
+
+	const finishSwipe = () => {
+		if (!swipeStateRef.current.didDrag) {
+			return;
+		}
+
+		if (swipeOffsetY <= -SWIPE_SNAP_PX) {
+			registerSwipeInput('delay');
+			setSwipeOffsetY(0);
+			return;
+		}
+
+		if (swipeOffsetY >= SWIPE_SNAP_PX) {
+			registerSwipeInput('ko');
+			setSwipeOffsetY(0);
+			return;
+		}
+
+		setSwipeOffsetY(0);
+	};
+
+	const handlePointerUp = (event: React.PointerEvent<HTMLButtonElement>) => {
+		if (swipeStateRef.current.pointerId !== event.pointerId) {
+			return;
+		}
+
+		finishSwipe();
+		swipeStateRef.current.pointerId = null;
+		swipeStateRef.current.isSwiping = false;
+	};
+
+	const handlePointerCancel = () => {
+		swipeStateRef.current.pointerId = null;
+		swipeStateRef.current.isSwiping = false;
+		swipeStateRef.current.didDrag = false;
+		setSwipeOffsetY(0);
+	};
+
+	const handleCardClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+		if (swipeStateRef.current.didDrag) {
+			event.preventDefault();
+			event.stopPropagation();
+			swipeStateRef.current.didDrag = false;
+			return;
+		}
+
+		logTrackerButton('Mobile initiative card selected', {
+			participantId: participant.id,
+			participantName: participant.name,
+		});
+		onSelect(participant.id);
+	};
+
+	return (
+		<div
+			className={[
+				'relative overflow-hidden rounded-xl',
+				selected ? 'ring-2 ring-primary/60 ring-offset-2 ring-offset-background' : '',
+			].join(' ')}
+		>
+			<div className="pointer-events-none absolute inset-x-0 bottom-0 top-0 flex flex-col items-center justify-between py-2">
+				<div
+					className={[
+						'inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-1 text-[10px] uppercase tracking-[0.18em] transition-opacity',
+						swipeOffsetY < 0 || swipeActionFlash === 'delay' ? 'opacity-100' : 'opacity-40',
+						swipeActionFlash === 'delay' ? 'border-current/50' : '',
+					].join(' ')}
+				>
+					Delay <ArrowLeft className="h-3 w-3" />
+				</div>
+				<div
+					className={[
+						'inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-1 text-[10px] uppercase tracking-[0.18em] transition-opacity',
+						swipeOffsetY > 0 || swipeActionFlash === 'ko' ? 'opacity-100' : 'opacity-40',
+						swipeActionFlash === 'ko' ? 'border-current/50' : '',
+					].join(' ')}
+				>
+					KO <ArrowRight className="h-3 w-3" />
+				</div>
+			</div>
+			<button
+				type="button"
+				onPointerDown={handlePointerDown}
+				onPointerMove={handlePointerMove}
+				onPointerUp={handlePointerUp}
+				onPointerCancel={handlePointerCancel}
+				onClick={handleCardClick}
+				style={{ transform: `translateY(${swipeOffsetY}px)` }}
+				className={[
+					'group relative flex aspect-square min-h-44 w-full min-w-0 touch-pan-x flex-col justify-between gap-2 rounded-xl border p-3 text-left transition-transform',
+					isCurrent ? accent.activeCard : `${accent.inactiveCard} ${accent.inactiveMarker}`,
+				].join(' ')}
+			>
+				<div className="space-y-2">
+					<div className="flex flex-wrap items-center gap-1.5">
+						<p
+							className={[
+								'min-w-0 break-words text-sm font-semibold',
+								!isCurrent ? accent.name : '',
+							].join(' ')}
+						>
+							{participant.name}
+						</p>
+					</div>
+					<div className="flex flex-wrap items-center gap-1.5">
+						<Badge className={accent.badge}>{participant.role}</Badge>
+						<Badge variant={isCurrent ? 'secondary' : 'outline'}>{participant.state}</Badge>
+					</div>
+				</div>
+				<div className="text-[11px] uppercase tracking-[0.18em] text-current/80">
+					{participant.role === 'hazard' ? (
+						<span className="inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-1">
+							<ShieldOff className="h-3 w-3" /> {indicatorLabel}
+						</span>
+					) : (
+						<span className="inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-1">
+							<Heart className="h-3 w-3" /> {indicatorLabel}
+						</span>
+					)}
+				</div>
+			</button>
+		</div>
+	);
+}
+
 function NextRoundMarkerCard({ nextRound }: { nextRound: number }) {
 	return (
 		<div className="flex min-h-25 w-full min-w-0 items-center justify-center rounded-xl border border-dashed border-primary/50 bg-primary/5 px-4 py-6 text-center">
@@ -532,6 +741,9 @@ export function InitiativeTrackerPage() {
 		trackerMockData.initiativeParticipants[0]?.id ?? null
 	);
 	const [reorderOpen, setReorderOpen] = useState(false);
+	const [reorderDraftParticipants, setReorderDraftParticipants] = useState<TrackerParticipant[]>(
+		trackerMockData.initiativeParticipants
+	);
 	const currentInitiativeParticipantId = initiativeParticipants[0]?.id ?? null;
 	const nextTurnTimeoutRef = useRef<number | null>(null);
 	const delayedParticipantCopies = useMemo(
@@ -557,6 +769,14 @@ export function InitiativeTrackerPage() {
 			}
 		};
 	}, []);
+
+	useEffect(() => {
+		if (!reorderOpen) {
+			return;
+		}
+
+		setReorderDraftParticipants(initiativeParticipants);
+	}, [initiativeParticipants, reorderOpen]);
 
 	const focusCurrentParticipant = () => {
 		if (!initiativeCarouselApi) {
@@ -593,6 +813,18 @@ export function InitiativeTrackerPage() {
 			nextTurnTimeoutRef.current = null;
 		}, 20);
 		logTrackerButton('Next Turn rotation queued after focus animation');
+	};
+
+	const resetReorderDraft = () => {
+		setReorderDraftParticipants(initiativeParticipants);
+	};
+
+	const handleReorderOpenChange = (open: boolean) => {
+		if (!open) {
+			resetReorderDraft();
+		}
+
+		setReorderOpen(open);
 	};
 
 	const allParticipants = useMemo(
@@ -785,10 +1017,10 @@ export function InitiativeTrackerPage() {
 
 					<Card className="flex min-h-0 min-w-0 flex-col p-4">
 						<Tabs defaultValue="reinforcements" className="flex min-h-0 flex-1 flex-col">
-							<TabsList className="grid w-full grid-cols-3">
-								<TabsTrigger value="reinforcements">Reinforcements</TabsTrigger>
-								<TabsTrigger value="delaying">Delaying</TabsTrigger>
-								<TabsTrigger value="hazards">Simple Hazards</TabsTrigger>
+							<TabsList className="grid w-full grid-cols-3 h-auto">
+								<TabsTrigger value="reinforcements" className="whitespace-normal">Reinforcements</TabsTrigger>
+								<TabsTrigger value="delaying" className="whitespace-normal">Delaying</TabsTrigger>
+								<TabsTrigger value="hazards" className="whitespace-normal">Simple Hazards</TabsTrigger>
 							</TabsList>
 							<TabsContent value="reinforcements" className="mt-3 min-h-0 flex-1">
 								<ScrollArea className="h-full pr-3">
@@ -840,11 +1072,11 @@ export function InitiativeTrackerPage() {
 
 					<Card className="flex min-h-0 min-w-0 flex-col p-4">
 						<Tabs defaultValue="description" className="flex min-h-0 flex-1 flex-col">
-							<TabsList className="grid w-full grid-cols-4">
-								<TabsTrigger value="description">Description</TabsTrigger>
-								<TabsTrigger value="events">Narrative Events</TabsTrigger>
-								<TabsTrigger value="history">Command History</TabsTrigger>
-								<TabsTrigger value="stats">Turn Stats</TabsTrigger>
+							<TabsList className="grid w-full grid-cols-4 h-auto">
+								<TabsTrigger value="description" className="whitespace-normal">Description</TabsTrigger>
+								<TabsTrigger value="events" className="whitespace-normal">Narrative Events</TabsTrigger>
+								<TabsTrigger value="history" className="whitespace-normal">Command History</TabsTrigger>
+								<TabsTrigger value="stats" className="whitespace-normal">Turn Stats</TabsTrigger>
 							</TabsList>
 							<TabsContent value="description" className="mt-3 min-h-0 flex-1 text-sm">
 								<ScrollArea className="h-full pr-3">
@@ -890,143 +1122,284 @@ export function InitiativeTrackerPage() {
 			</section>
 
 			<section className="space-y-4 lg:hidden">
-				<Card className="space-y-3 p-4">
-					<h2 className="text-base font-semibold">Initiative Controls</h2>
-					<div className="flex flex-wrap gap-2">
-						<Button
-							size="sm"
-							onClick={() => {
-								logTrackerButton('Mobile Next Turn button clicked');
-								handleNextTurn();
-							}}
-						>
-							<SkipForward className="mr-2 h-4 w-4" /> Next Turn
-						</Button>
-						<Button
-							size="sm"
-							variant="outline"
-							onClick={() => {
-								logTrackerButton('Mobile Reorder button clicked');
-								setReorderOpen(true);
-							}}
-						>
-							<ArrowUpDown className="mr-2 h-4 w-4" /> Reorder
-						</Button>
-						<Button size="sm" variant="outline" onClick={() => logTrackerButton('Mobile Undo button clicked')}>
-							<Undo2 className="mr-2 h-4 w-4" /> Undo
-						</Button>
-						<Button size="sm" variant="outline" onClick={() => logTrackerButton('Mobile Redo button clicked')}>
-							<Redo2 className="mr-2 h-4 w-4" /> Redo
-						</Button>
+				<Card className="p-4">
+					<div className="flex items-start gap-3">
+						<div className="min-w-0">
+							{/* <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+								Initiative Controls
+							</p> */}
+							<h2 className="truncate text-base font-semibold">
+								{trackerMockData.encounterTitle}
+							</h2>
+							<p className="text-sm text-muted-foreground">{trackerMockData.threatLevel}</p>
+						</div>
+						<div className="ml-auto flex flex-col items-end gap-2">
+							<div className="flex items-center gap-2">
+								<Button
+									aria-label="Next Turn"
+									variant="secondary"
+									size="icon"
+									onClick={() => {
+										logTrackerButton('Mobile Next Turn button clicked');
+										handleNextTurn();
+									}}
+								>
+									<SkipForward className="h-4 w-4" />
+								</Button>
+								<Button
+									aria-label="Focus Current"
+									variant="secondary"
+									size="icon"
+									className="border border-sky-500/50 bg-sky-500/15 text-sky-200 hover:bg-sky-500/25"
+									onClick={() => {
+										logTrackerButton('Focus Current button clicked');
+										focusCurrentParticipant();
+									}}
+								>
+									<History className="h-4 w-4" />
+								</Button>
+								<Button
+									aria-label="End Encounter"
+									variant="secondary"
+									size="icon"
+									className="border border-amber-500/50 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25"
+									onClick={() => logTrackerButton('End Encounter button clicked')}
+								>
+									<ArrowRight className="h-4 w-4" />
+								</Button>
+							</div>
+							<div className="flex items-right gap-2 pr-1">
+								<Button
+									aria-label="Manual Reorder"
+									size="icon"
+									onClick={() => {
+										logTrackerButton('Mobile Reorder button clicked');
+										setReorderOpen(true);
+									}}
+								>
+									<ArrowUpDown className="h-4 w-4" />
+								</Button>
+								<div className="inline-flex items-center overflow-hidden rounded-md border border-input">
+									<Button
+										aria-label="Undo"
+										variant="ghost"
+										size="icon"
+										className="rounded-none border-0"
+										onClick={() => logTrackerButton('Mobile Undo button clicked')}
+									>
+										<Undo2 className="h-4 w-4" />
+									</Button>
+									<div className="h-6 w-px bg-border" />
+									<Button
+										aria-label="Redo"
+										variant="ghost"
+										size="icon"
+										className="rounded-none border-0"
+										onClick={() => logTrackerButton('Mobile Redo button clicked')}
+									>
+										<Redo2 className="h-4 w-4" />
+									</Button>
+								</div>
+							</div>
+						</div>
 					</div>
 				</Card>
 
-				<Card className="p-4">
-					<Tabs defaultValue="inactive">
-						<TabsList className="grid w-full grid-cols-2">
-							<TabsTrigger value="inactive">Inactive Participants</TabsTrigger>
-							<TabsTrigger value="carousel">Horizontal Carousel</TabsTrigger>
-						</TabsList>
-						<TabsContent value="inactive" className="mt-3 space-y-2">
-							{[
-								...trackerMockData.outOfInitiative.reinforcements,
-								...delayedSectionParticipants,
-								...trackerMockData.outOfInitiative.hazards,
-							].map((participant) => (
-								<ParticipantRow
-									key={participant.id}
-									participant={participant}
-									onSelect={setSelectedParticipantId}
-									selected={participant.id === selectedParticipantId}
-								/>
-							))}
-						</TabsContent>
-						<TabsContent value="carousel" className="mt-3">
-							<div className="flex gap-2 overflow-x-auto pb-1">
-								{initiativeParticipants.map((participant) => (
-									participant.state === 'delayed' ? (
-										<div
-											key={participant.id}
-											className="flex min-h-20 min-w-52 items-center justify-center rounded-md border border-dashed border-primary/50 bg-primary/5 p-2 text-center"
-										>
-											<div>
-												<p className="text-xs font-medium uppercase tracking-[0.22em] text-primary/80">
-													Delayed
-												</p>
-												<p className="text-sm font-semibold text-primary">{participant.name}</p>
-											</div>
-										</div>
-									) : (
-										<button
-											type="button"
-											key={participant.id}
-											onClick={() => {
-												logTrackerButton('Mobile carousel participant selected', {
-													participantId: participant.id,
-													participantName: participant.name,
-												});
-												setSelectedParticipantId(participant.id);
-											}}
-											className="min-w-52 rounded-md border p-2 text-left"
-										>
-											<p className="text-sm font-medium">{participant.name}</p>
-											<p className="text-xs text-muted-foreground">{participant.state}</p>
-										</button>
-									)
-								))}
-							</div>
-						</TabsContent>
-					</Tabs>
-				</Card>
+				<Tabs defaultValue="inactive" className="space-y-3">
+					<TabsList className="grid w-full grid-cols-2">
+						<TabsTrigger value="inactive">Inactive Participants</TabsTrigger>
+						<TabsTrigger value="carousel">Horizontal Carousel</TabsTrigger>
+					</TabsList>
+					<TabsContent value="inactive" className="mt-0">
+						<Card className="p-4">
+							<Tabs defaultValue="reinforcements" className="space-y-3">
+								<TabsList className="grid w-full grid-cols-3 h-auto">
+									<TabsTrigger value="reinforcements" className="whitespace-normal">Reinforcements</TabsTrigger>
+									<TabsTrigger value="delaying" className="whitespace-normal">Delaying</TabsTrigger>
+									<TabsTrigger value="hazards" className="whitespace-normal">Simple Hazards</TabsTrigger>
+								</TabsList>
+								<TabsContent value="reinforcements" className="mt-0">
+									<div className="space-y-2">
+										{trackerMockData.outOfInitiative.reinforcements.map((participant) => (
+											<ParticipantRow
+												key={participant.id}
+												participant={participant}
+												onSelect={setSelectedParticipantId}
+												selected={participant.id === selectedParticipantId}
+											/>
+										))}
+									</div>
+								</TabsContent>
+								<TabsContent value="delaying" className="mt-0">
+									<div className="space-y-2">
+										{delayedSectionParticipants.map((participant) => (
+											<ParticipantRow
+												key={participant.id}
+												participant={participant}
+												onSelect={setSelectedParticipantId}
+												selected={participant.id === selectedParticipantId}
+											/>
+										))}
+									</div>
+								</TabsContent>
+								<TabsContent value="hazards" className="mt-0">
+									<div className="space-y-2">
+										{trackerMockData.outOfInitiative.hazards.map((participant) => (
+											<ParticipantRow
+												key={participant.id}
+												participant={participant}
+												onSelect={setSelectedParticipantId}
+												selected={participant.id === selectedParticipantId}
+											/>
+										))}
+									</div>
+								</TabsContent>
+							</Tabs>
+						</Card>
+					</TabsContent>
+					<TabsContent value="carousel" className="mt-0">
+						<Card className="p-4">
+							<Carousel
+								opts={{ align: 'start', dragFree: true }}
+								className="w-full"
+							>
+								<CarouselContent className="-ml-2">
+									{initiativeParticipants.map((participant, index) => (
+										<Fragment key={participant.id}>
+											{index === nextRoundMarkerIndex ? (
+												<CarouselItem className="basis-[42%] pl-2">
+													<div className="flex aspect-square min-h-44 items-center justify-center rounded-xl border border-dashed border-primary/50 bg-primary/5 px-3 py-4 text-center">
+														<div className="space-y-1">
+															<p className="text-xs font-medium uppercase tracking-[0.24em] text-primary/80">
+																Next Round
+															</p>
+															<p className="text-xl font-semibold tabular-nums text-primary">{nextRound}</p>
+														</div>
+													</div>
+												</CarouselItem>
+											) : null}
+											<CarouselItem
+												className={[
+													'pl-2',
+													participant.state === 'delayed' ? 'basis-[42%]' : 'basis-[70%]',
+												].join(' ')}
+											>
+												{participant.state === 'delayed' ? (
+													<div className="flex aspect-square min-h-44 w-full items-center justify-center rounded-xl border border-dashed border-primary/50 bg-primary/5 px-3 py-4 text-center">
+														<div className="space-y-1">
+															<p className="text-xs font-medium uppercase tracking-[0.24em] text-primary/80">
+																Delayed
+															</p>
+															<p className="text-sm font-semibold text-primary">{participant.name}</p>
+														</div>
+													</div>
+												) : (
+													<MobileInitiativeCarouselCard
+														participant={participant}
+														selected={participant.id === selectedParticipantId}
+														onSelect={setSelectedParticipantId}
+														isCurrent={participant.id === currentInitiativeParticipantId}
+													/>
+												)}
+											</CarouselItem>
+										</Fragment>
+									))}
+								</CarouselContent>
+							</Carousel>
+						</Card>
+					</TabsContent>
+				</Tabs>
 
-				<Card className="p-4">
-					<Tabs defaultValue="general">
-						<TabsList className="grid w-full grid-cols-2">
-							<TabsTrigger value="general">General Info</TabsTrigger>
-							<TabsTrigger value="selected">Selected Participant</TabsTrigger>
-						</TabsList>
-						<TabsContent value="general" className="mt-3 text-sm">
-							<p>{trackerMockData.description}</p>
-							<div className="mt-4">
-								<Timeline
-									currentTurn={trackerMockData.currentRound}
-									events={trackerMockData.timeline.map((event) => ({
-										round: event.round,
-										label: event.title,
-										description: event.detail,
-									}))}
-									futureTurns={5}
-								/>
-							</div>
-						</TabsContent>
-						<TabsContent value="selected" className="mt-3">
+				<Tabs defaultValue="general" className="space-y-3">
+					<TabsList className="grid w-full grid-cols-2">
+						<TabsTrigger value="general">General Info</TabsTrigger>
+						<TabsTrigger value="selected">Selected Participant</TabsTrigger>
+					</TabsList>
+					<TabsContent value="general" className="mt-0">
+						<Card className="p-4">
+							<Tabs defaultValue="description" className="space-y-3">
+								<TabsList className="grid w-full grid-cols-4 h-auto">
+									<TabsTrigger value="description" className="whitespace-normal">Description</TabsTrigger>
+									<TabsTrigger value="events" className="whitespace-normal">Narrative Events</TabsTrigger>
+									<TabsTrigger value="history" className="whitespace-normal">Command History</TabsTrigger>
+									<TabsTrigger value="stats" className="whitespace-normal">Turn Stats</TabsTrigger>
+								</TabsList>
+								<TabsContent value="description" className="mt-0 text-sm">
+									<p>{trackerMockData.description}</p>
+								</TabsContent>
+								<TabsContent value="events" className="mt-0">
+									<ul className="space-y-2 text-sm">
+										{trackerMockData.narrativeDetails.map((event) => (
+											<li key={event} className="rounded-md border p-2">
+												{event}
+											</li>
+										))}
+									</ul>
+								</TabsContent>
+								<TabsContent value="history" className="mt-0">
+									<ul className="space-y-2 text-sm">
+										{trackerMockData.historyPreview.map((entry) => (
+											<li key={entry} className="rounded-md border p-2">
+												{entry}
+											</li>
+										))}
+									</ul>
+								</TabsContent>
+								<TabsContent value="stats" className="mt-0 text-sm">
+									<p>Average turn duration data will be connected in MVP.</p>
+								</TabsContent>
+							</Tabs>
+						</Card>
+					</TabsContent>
+					<TabsContent value="selected" className="mt-0">
+						<Card className="p-4">
 							<ParticipantDetails participant={selectedParticipant} />
-						</TabsContent>
-					</Tabs>
-				</Card>
+						</Card>
+					</TabsContent>
+				</Tabs>
 			</section>
 
-			<Dialog open={reorderOpen} onOpenChange={setReorderOpen}>
-				<DialogContent>
-					<DialogHeader>
+			<Dialog open={reorderOpen} onOpenChange={handleReorderOpenChange}>
+				<DialogContent
+					className={[
+						'left-auto right-0 top-0 h-dvh w-full max-w-[92vw] translate-x-0 translate-y-0 rounded-none border-l p-0',
+						'flex flex-col gap-0',
+						'data-[state=closed]:zoom-out-100 data-[state=open]:zoom-in-100 data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right',
+						'sm:left-[50%] sm:right-auto sm:top-[50%] sm:h-auto sm:max-w-lg sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-lg sm:border sm:p-6',
+						'sm:grid sm:gap-4 sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95 sm:data-[state=open]:slide-in-from-bottom-0 sm:data-[state=closed]:slide-out-to-bottom-0',
+					].join(' ')}
+				>
+					<DialogHeader className="border-b px-6 py-4 sm:border-0 sm:px-0 sm:py-0">
 						<DialogTitle>Manual Reorder Draft</DialogTitle>
 						<DialogDescription>
 							This PoC dialog mirrors the initiative list in a separate draft space. Drag and save behavior will be enabled in MVP.
 						</DialogDescription>
 					</DialogHeader>
-					<div className="space-y-2">
-						{initiativeParticipants.map((participant) => (
-							<div key={participant.id} className="rounded-md border p-2 text-sm">
-								{participant.name}
-							</div>
-						))}
+					<div className="min-h-0 flex-1 overflow-y-auto px-6 py-4 sm:px-0 sm:py-0">
+						<Reorder.Group
+							axis="y"
+							values={reorderDraftParticipants}
+							onReorder={setReorderDraftParticipants}
+							className="space-y-2"
+						>
+							{reorderDraftParticipants.map((participant) => (
+								<Reorder.Item
+									key={participant.id}
+									value={participant}
+									whileDrag={{ scale: 1.01 }}
+									className="cursor-grab rounded-md border p-2 text-sm active:cursor-grabbing"
+								>
+									{participant.name}
+								</Reorder.Item>
+							))}
+						</Reorder.Group>
 					</div>
-					<DialogFooter>
+					<DialogFooter className="sticky bottom-0 border-t bg-background px-6 py-4 sm:static sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
 						<Button
 							variant="outline"
 							onClick={() => {
 								logTrackerButton('Manual reorder dialog cancel clicked');
-								setReorderOpen(false);
+								handleReorderOpenChange(false);
 							}}
 						>
 							Cancel
