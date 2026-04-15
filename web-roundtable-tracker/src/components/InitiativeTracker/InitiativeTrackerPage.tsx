@@ -573,27 +573,25 @@ export function InitiativeTrackerPage() {
 			window.clearTimeout(nextTurnTimeoutRef.current);
 			nextTurnTimeoutRef.current = null;
 		}
+		setInitiativeParticipants((previousOrder) => {
+			if (previousOrder.length < 2) {
+				return previousOrder;
+			}
 
-		focusCurrentParticipant();
-		nextTurnTimeoutRef.current = window.setTimeout(() => {
-			setInitiativeParticipants((previousOrder) => {
-				if (previousOrder.length < 2) {
-					return previousOrder;
-				}
-
-				const [firstParticipant, ...rest] = previousOrder;
-				const nextOrder = [...rest, firstParticipant];
-				logTrackerButton('Next Turn mock rotation applied', {
-					movedParticipantId: firstParticipant.id,
-					movedParticipantName: firstParticipant.name,
-					nextCurrentParticipantId: nextOrder[0]?.id,
-				});
-
-				return nextOrder;
+			const [firstParticipant, ...rest] = previousOrder;
+			const nextOrder = [...rest, firstParticipant];
+			logTrackerButton('Next Turn mock rotation applied', {
+				movedParticipantId: firstParticipant.id,
+				movedParticipantName: firstParticipant.name,
+				nextCurrentParticipantId: nextOrder[0]?.id,
 			});
 
+			return nextOrder;
+		});
+		nextTurnTimeoutRef.current = window.setTimeout(() => {
+			focusCurrentParticipant();
 			nextTurnTimeoutRef.current = null;
-		}, 260);
+		}, 20);
 		logTrackerButton('Next Turn rotation queued after focus animation');
 	};
 
@@ -617,33 +615,10 @@ export function InitiativeTrackerPage() {
 
 	return (
 		<main className="mx-auto w-full max-w-7xl space-y-4 p-4 lg:p-6">
-			<header className="flex flex-col gap-2 rounded-xl border bg-card p-4 lg:hidden lg:flex-row lg:items-start lg:justify-between">
-				<div>
-					<h1 className="text-2xl font-semibold tracking-tight">
-						{trackerMockData.encounterTitle}
-					</h1>
-					<p className="text-sm text-muted-foreground">{trackerMockData.threatLevel}</p>
-				</div>
-				<div className="text-right">
-					<p className="text-xs text-muted-foreground">Last turn {trackerMockData.turnTimers.lastTurn}</p>
-					<p className="text-2xl font-semibold tabular-nums">
-						{trackerMockData.turnTimers.currentTurn}
-					</p>
-				</div>
-			</header>
-
 			<section className="hidden lg:grid lg:h-[calc(100vh-8rem)] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:grid-rows-[auto_minmax(0,1fr)] lg:gap-4">
 				<Card className="min-w-0 p-4 lg:col-span-2">
 					<div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
 						<div className="min-w-0 space-y-3">
-							<div className="min-w-0 space-y-1">
-								<h1 className="truncate text-2xl font-semibold tracking-tight">
-									{trackerMockData.encounterTitle}
-								</h1>
-								<p className="text-sm text-muted-foreground">
-									{trackerMockData.threatLevel}
-								</p>
-							</div>
 							<div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-x-auto">
 								<Tooltip>
 									<TooltipTrigger asChild>
@@ -742,17 +717,6 @@ export function InitiativeTrackerPage() {
 						</div>
 
 						<div className="min-w-0 space-y-3 pl-4">
-							<div className="flex min-w-0 items-center justify-between gap-3">
-								<div />
-								<div className="text-right">
-									<p className="text-xs text-muted-foreground">
-										Last turn {trackerMockData.turnTimers.lastTurn}
-									</p>
-									<p className="text-lg font-semibold tabular-nums">
-										{trackerMockData.turnTimers.currentTurn}
-									</p>
-								</div>
-							</div>
 							<Timeline
 								currentTurn={trackerMockData.currentRound}
 								events={trackerMockData.timeline.map((event) => ({
