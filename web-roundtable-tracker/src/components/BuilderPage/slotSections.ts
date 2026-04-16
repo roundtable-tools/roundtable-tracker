@@ -84,6 +84,7 @@ export function getParticipantSectionSummary(slots: BuilderSlot[]) {
 		}
 
 		summary[slot.type] = (summary[slot.type] ?? 0) + 1;
+
 		return summary;
 	}, {});
 	const levels = slots.filter(isParticipantSlot).map((slot) => slot.level);
@@ -102,6 +103,7 @@ export function getEventSectionSummary(slots: BuilderSlot[]) {
 		}
 
 		summary[slot.type] = (summary[slot.type] ?? 0) + 1;
+
 		return summary;
 	}, {});
 	const tiers = slots.filter(isEventSlot).map((slot) => slot.accomplishmentLevel);

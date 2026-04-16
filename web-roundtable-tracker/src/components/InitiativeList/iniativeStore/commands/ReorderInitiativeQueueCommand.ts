@@ -23,6 +23,7 @@ export class ReorderInitiativeQueueCommand implements Command {
 
 	undo() {
 		const { encounterStore$ } = getInitiativeStore();
+
 		if (!this.data.prevQueue) return STATUS.failure;
 		encounterStore$.initiativeQueue.set(this.data.prevQueue);
 

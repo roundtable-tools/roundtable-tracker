@@ -30,6 +30,7 @@ export class ForceUpdateStateCommand implements Command {
 		// Store old values for undo
 		const old: Record<string, unknown> = {};
 		const keys = Object.keys(this.data.update) as (keyof Character)[];
+
 		for (const key of keys) {
 			if (!this.data.oldValues) this.data.oldValues = {} as Partial<Character>;
 			old[key] = character.element[key];

@@ -71,9 +71,11 @@ function HealthStatus({
 		return null;
 	const ratio = health / maxHealth;
 	let color = 'text-red-700';
+
 	if (ratio > 0.75) color = 'text-green-700';
 	else if (ratio > 0.5) color = 'text-yellow-500';
 	else if (ratio > 0.25) color = 'text-amber-500';
+
 	return (
 		<span className={`font-semibold ml-2 ${color}`}>
 			{`(${Math.round(ratio * 100)}%)`}
@@ -89,20 +91,23 @@ function HealthControls({
 	onStateChange?: (uuid: string, update: Partial<Character>) => void;
 }) {
 	const [damage, setDamage] = useState('');
+
 	function handleDealDamage(e: React.FormEvent) {
 		e.preventDefault();
 		const dmg = Number(damage);
+
 		if (isNaN(dmg) || dmg <= 0) return;
-		let temp = character.tempHealth ?? 0;
-		let health = character.health ?? 0;
-		let tempUsed = Math.min(temp, dmg);
-		let healthUsed = Math.max(0, dmg - tempUsed);
+		const temp = character.tempHealth ?? 0;
+		const health = character.health ?? 0;
+		const tempUsed = Math.min(temp, dmg);
+		const healthUsed = Math.max(0, dmg - tempUsed);
 		onStateChange?.(character.uuid, {
 			tempHealth: temp - tempUsed,
 			health: Math.max(0, health - healthUsed),
 		});
 		setDamage('');
 	}
+
 	return (
 		<div className="flex flex-wrap items-center gap-2 mt-2">
 			<label className="font-semibold flex gap-2 items-center">
@@ -175,6 +180,7 @@ function StateSelect({
 		'knocked-out',
 		'on-hold',
 	];
+
 	return (
 		<div className="flex items-center gap-2 mt-2">
 			<label className="font-semibold flex gap-2 items-center">

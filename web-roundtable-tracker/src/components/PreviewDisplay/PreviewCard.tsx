@@ -16,6 +16,8 @@ type InitiativeCardProps = {
 	participants: CharacterConfig[];
 	register: UseFormRegister<Inputs>;
 	getFieldState: UseFormGetFieldState<Inputs>;
+	/** Fields to render as read-only display text instead of inputs */
+	readonlyFields?: Array<'name' | 'level'>;
 };
 
 type NumberKeys<T> = {
@@ -79,7 +81,8 @@ const NumberInput = ({
 };
 
 export const PreviewCard = (props: InitiativeCardProps) => {
-	const { register, getFieldState, teamIndex } = props;
+	const { register, getFieldState, teamIndex, readonlyFields = [] } = props;
+	const isNameReadonly = readonlyFields.includes('name');
 
 	return (
 		<Card
@@ -112,6 +115,11 @@ export const PreviewCard = (props: InitiativeCardProps) => {
 							key={participant.uuid}
 							className="flex flex-wrap items-center gap-2 rounded-lg border border-border/70 bg-background/70 p-3"
 						>
+						{isNameReadonly ? (
+							<span className="h-8 min-w-40 flex-1 content-center truncate text-sm font-medium sm:max-w-48">
+								{participant.name}
+							</span>
+						) : (
 							<Input
 								type="text"
 								placeholder="Character Name"
@@ -122,6 +130,7 @@ export const PreviewCard = (props: InitiativeCardProps) => {
 								aria-invalid={nameFieldState.invalid || undefined}
 								{...register(`teams.${teamIndex}.characters.${index}.name`)}
 							/>
+						)}
 							<span className="min-w-fit text-sm font-medium text-muted-foreground">
 								{`(${formatAdjustedLevel(
 									adjustedLevel(participant.level, participant.adjustment)

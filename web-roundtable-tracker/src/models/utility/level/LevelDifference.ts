@@ -30,6 +30,7 @@ export class LevelDifference {
             }
 
             const absoluteDifference = Math.abs(difference);
+
             if (absoluteDifference % 2 === 0) {
                 return 1 / Math.pow(2, absoluteDifference / 2);
             }

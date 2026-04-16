@@ -1,6 +1,22 @@
 import { createStore } from 'zustand/vanilla';
 import { Character } from './data';
 import { UUID } from '@/utils/uuid';
+
+export type TrackerParticipantRole =
+	| 'pc'
+	| 'opponent'
+	| 'neutral'
+	| 'ally'
+	| 'hazard'
+	| 'reinforcement';
+
+export type TrackerParticipantMeta = {
+	role: TrackerParticipantRole;
+	isSimpleHazard: boolean;
+	disableChecksRequired: number;
+	disableChecksSucceeded: number;
+	notes: string;
+};
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Encounter } from './data';
 import { Command } from '@/CommandHistory/common';
@@ -27,6 +43,7 @@ export interface EncounterStore {
 	charactersMap: Record<UUID, Character>;
 	charactersOrder: UUID[];
 	delayedOrder: UUID[];
+	trackerMetaMap: Record<UUID, TrackerParticipantMeta>;
 	partyLevel: number;
 	round: number;
 	charactersWithTurn: Set<UUID>;
@@ -37,6 +54,7 @@ export interface EncounterStore {
 	updateCharacter: (uuid: UUID, character: ValueOrFunction<Character>) => void;
 	setCharacters: (characters: Character[]) => void;
 	setPartyLevel: (partyLevel: number) => void;
+	setTrackerMetaMap: (metaMap: Record<UUID, TrackerParticipantMeta>) => void;
 	setHistory: (history: ValueOrFunction<Command[]>) => void;
 	setRedoStack: (redoStack: ValueOrFunction<Command[]>) => void;
 }
@@ -94,6 +112,7 @@ const startEncounter = (characters: Character[]): Partial<EncounterStore> => {
 		charactersMap,
 		charactersOrder,
 		delayedOrder,
+		trackerMetaMap: {},
 		round: 1,
 		charactersWithTurn: new Set(charactersOrder),
 		...resetHistory(),
@@ -128,6 +147,7 @@ export const createEncounterStore = () =>
 				charactersMap: {},
 				charactersOrder: [],
 				delayedOrder: [],
+				trackerMetaMap: {},
 				round: 0,
 				charactersWithTurn: new Set(),
 				history: [],
@@ -142,6 +162,8 @@ export const createEncounterStore = () =>
 				setPartyLevel: (partyLevel: number) => set(() => ({ partyLevel })),
 				setEncounterData: (encounterData: Encounter) =>
 					set(() => ({ encounterData })),
+				setTrackerMetaMap: (metaMap: Record<UUID, TrackerParticipantMeta>) =>
+					set(() => ({ trackerMetaMap: metaMap })),
 				setHistory: simpleSet<Command[], typeof set>(set, 'history'),
 				setRedoStack: simpleSet<Command[], typeof set>(set, 'redoStack'),
 			}),

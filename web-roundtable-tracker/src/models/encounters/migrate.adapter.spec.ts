@@ -46,6 +46,7 @@ function validateMigration(
 
   // defaultVariantId must exist
   const hasDefaultVariant = migrated.variants.some((v) => v.id === migrated.defaultVariantId);
+
   if (!hasDefaultVariant) {
     result.errors.push(
       `defaultVariantId "${migrated.defaultVariantId}" does not reference any variant`,
@@ -56,17 +57,24 @@ function validateMigration(
   for (const variant of migrated.variants) {
     for (const participant of variant.participants) {
       if (!participant.id) result.errors.push('Participant missing id');
+
       if (participant.count === undefined) result.errors.push('Participant missing count');
+
       if (participant.relativeLevel === undefined)
         result.errors.push('Participant missing relativeLevel');
+
       if (participant.side === undefined) result.errors.push('Participant missing side');
+
       if (participant.type === undefined) result.errors.push('Participant missing type');
+
       if (participant.type === 'creature' && !participant.role) {
         result.errors.push('Creature participant missing role');
       }
+
       if (participant.type === 'hazard' && !participant.role) {
         result.errors.push('Hazard participant missing role');
       }
+
       if (participant.type === 'hazard' && participant.successesToDisable === undefined) {
         result.errors.push('Hazard participant missing successesToDisable');
       }
@@ -74,6 +82,7 @@ function validateMigration(
   }
 
   result.passed = result.errors.length === 0;
+
   return result;
 }
 
@@ -89,6 +98,7 @@ describe('Encounter Template Migration (Phase 0)', () => {
       const migrated = migrateOldTemplate(simpleTemplateFixture);
       const result = EncounterTemplateDataSchema.safeParse(migrated);
       expect(result.success).toBe(true);
+
       if (!result.success) {
         console.error('Validation errors:', result.error.issues);
       }
@@ -116,6 +126,7 @@ describe('Encounter Template Migration (Phase 0)', () => {
       if (boss && boss.type === 'creature') {
         expect(boss.role).toBe('boss');
       }
+
       if (lackey && lackey.type === 'creature') {
         expect(lackey.role).toBe('lackey');
       }
@@ -186,6 +197,7 @@ describe('Encounter Template Migration (Phase 0)', () => {
       if (simple && simple.type === 'hazard') {
         expect(simple.role).toBe('simple');
       }
+
       if (complex && complex.type === 'hazard') {
         expect(complex.role).toBe('complex');
       }

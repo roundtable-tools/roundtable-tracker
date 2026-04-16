@@ -12,6 +12,7 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as PreviewImport } from './routes/preview'
+import { Route as PartysetupImport } from './routes/party_setup'
 import { Route as NewinitiativeImport } from './routes/new_initiative'
 import { Route as InitiativetrackerImport } from './routes/initiative_tracker'
 import { Route as InitiativeplayerImport } from './routes/initiative_player'
@@ -25,6 +26,12 @@ import { Route as IndexImport } from './routes/index'
 const PreviewRoute = PreviewImport.update({
   id: '/preview',
   path: '/preview',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const PartysetupRoute = PartysetupImport.update({
+  id: '/party_setup',
+  path: '/party_setup',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -123,6 +130,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NewinitiativeImport
       parentRoute: typeof rootRoute
     }
+    '/party_setup': {
+      id: '/party_setup'
+      path: '/party_setup'
+      fullPath: '/party_setup'
+      preLoaderRoute: typeof PartysetupImport
+      parentRoute: typeof rootRoute
+    }
     '/preview': {
       id: '/preview'
       path: '/preview'
@@ -143,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/initiative_player': typeof InitiativeplayerRoute
   '/initiative_tracker': typeof InitiativetrackerRoute
   '/new_initiative': typeof NewinitiativeRoute
+  '/party_setup': typeof PartysetupRoute
   '/preview': typeof PreviewRoute
 }
 
@@ -154,6 +169,7 @@ export interface FileRoutesByTo {
   '/initiative_player': typeof InitiativeplayerRoute
   '/initiative_tracker': typeof InitiativetrackerRoute
   '/new_initiative': typeof NewinitiativeRoute
+  '/party_setup': typeof PartysetupRoute
   '/preview': typeof PreviewRoute
 }
 
@@ -166,6 +182,7 @@ export interface FileRoutesById {
   '/initiative_player': typeof InitiativeplayerRoute
   '/initiative_tracker': typeof InitiativetrackerRoute
   '/new_initiative': typeof NewinitiativeRoute
+  '/party_setup': typeof PartysetupRoute
   '/preview': typeof PreviewRoute
 }
 
@@ -179,6 +196,7 @@ export interface FileRouteTypes {
     | '/initiative_player'
     | '/initiative_tracker'
     | '/new_initiative'
+    | '/party_setup'
     | '/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -189,6 +207,7 @@ export interface FileRouteTypes {
     | '/initiative_player'
     | '/initiative_tracker'
     | '/new_initiative'
+    | '/party_setup'
     | '/preview'
   id:
     | '__root__'
@@ -199,6 +218,7 @@ export interface FileRouteTypes {
     | '/initiative_player'
     | '/initiative_tracker'
     | '/new_initiative'
+    | '/party_setup'
     | '/preview'
   fileRoutesById: FileRoutesById
 }
@@ -211,6 +231,7 @@ export interface RootRouteChildren {
   InitiativeplayerRoute: typeof InitiativeplayerRoute
   InitiativetrackerRoute: typeof InitiativetrackerRoute
   NewinitiativeRoute: typeof NewinitiativeRoute
+  PartysetupRoute: typeof PartysetupRoute
   PreviewRoute: typeof PreviewRoute
 }
 
@@ -222,6 +243,7 @@ const rootRouteChildren: RootRouteChildren = {
   InitiativeplayerRoute: InitiativeplayerRoute,
   InitiativetrackerRoute: InitiativetrackerRoute,
   NewinitiativeRoute: NewinitiativeRoute,
+  PartysetupRoute: PartysetupRoute,
   PreviewRoute: PreviewRoute,
 }
 
@@ -242,6 +264,7 @@ export const routeTree = rootRoute
         "/initiative_player",
         "/initiative_tracker",
         "/new_initiative",
+        "/party_setup",
         "/preview"
       ]
     },
@@ -265,6 +288,9 @@ export const routeTree = rootRoute
     },
     "/new_initiative": {
       "filePath": "new_initiative.tsx"
+    },
+    "/party_setup": {
+      "filePath": "party_setup.tsx"
     },
     "/preview": {
       "filePath": "preview.tsx"

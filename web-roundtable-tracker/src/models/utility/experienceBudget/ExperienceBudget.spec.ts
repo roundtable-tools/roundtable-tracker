@@ -54,6 +54,7 @@ describe('ExpreirenceBudget', () => {
             }));
 
             const collisions = new Map<number, number>();
+
             for (const scenario of scenarios) {
                 collisions.set(scenario.adjustedBudget, (collisions.get(scenario.adjustedBudget) ?? 0) + 1);
             }

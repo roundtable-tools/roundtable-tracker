@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/AppHeader', () => ({
 	AppHeader: (props: { setView: (view: string) => void }) => {
 		mocks.appHeaderSpy(props);
+
 		return createElement('div', { 'data-testid': 'app-header' });
 	},
 }));
@@ -17,6 +18,7 @@ vi.mock('@/AppHeader', () => ({
 vi.mock('@/components/BuilderPage/BuilderPage', () => ({
 	BuilderPage: (props: { encounterId?: string }) => {
 		mocks.builderPageSpy(props);
+
 		return createElement('main', { 'data-testid': 'builder-page' });
 	},
 }));

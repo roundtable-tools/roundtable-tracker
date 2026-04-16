@@ -21,6 +21,7 @@ const mergeById = (
 	next: SavedConcreteEncounter
 ): SavedConcreteEncounter[] => {
 	const existingIndex = items.findIndex((item) => item.id === next.id);
+
 	if (existingIndex === -1) {
 		return [...items, next];
 	}

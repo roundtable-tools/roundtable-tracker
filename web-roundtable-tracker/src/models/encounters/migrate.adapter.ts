@@ -18,7 +18,9 @@ function inferCreatureRole(name?: string): CreatureRole {
   const normalized = (name ?? '').toLowerCase();
 
   if (normalized.includes('boss')) return 'boss';
+
   if (normalized.includes('lackey') || normalized.includes('minion')) return 'lackey';
+
   if (normalized.includes('lieutenant') || normalized.includes('elite')) return 'lieutenant';
 
   return 'opponent';
@@ -32,8 +34,11 @@ function parseRelativeLevel(levelStr: string | number): LevelDifference {
   if (typeof levelStr === 'number') return new LevelDifference(levelStr);
 
   const str = levelStr.trim();
+
   if (str === '0' || str === '+0') return new LevelDifference(0);
+
   if (str.startsWith('+')) return new LevelDifference(parseInt(str.slice(1), 10));
+
   if (str.startsWith('-')) return new LevelDifference(parseInt(str, 10));
 
   return new LevelDifference(parseInt(str, 10)); // Try direct parse
@@ -126,6 +131,7 @@ export function migrateOldTemplate(oldTemplate: OldStoreTemplate): EncounterTemp
 
   // Validate against schema
   const validated = EncounterTemplateDataSchema.parse(template);
+
   return validated;
 }
 

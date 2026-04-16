@@ -101,8 +101,10 @@ export function BuilderPage({
 		if (!templateId || activeEncounterId) return;
 
 		const template = encounterTemplates.find((t) => t.id === templateId);
+
 		if (!template) {
 			console.warn(`Template ${templateId} not found`);
+
 			return;
 		}
 
@@ -110,10 +112,12 @@ export function BuilderPage({
 		const defaultVariant = template.variants.find(
 			(v) => v.id === template.defaultVariantId
 		);
+
 		if (!defaultVariant) {
 			console.warn(
 				`Default variant ${template.defaultVariantId} not found in template ${templateId}`
 			);
+
 			return;
 		}
 

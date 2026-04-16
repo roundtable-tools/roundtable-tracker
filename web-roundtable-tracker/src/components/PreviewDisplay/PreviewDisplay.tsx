@@ -15,7 +15,7 @@ import { PreviewCard } from './PreviewCard';
 import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { useEffect, useMemo, useState } from 'react';
 import { AppHeader } from '@/AppHeader';
-import { participantsToEncounterCharacters } from '@/store/convert';
+import { buildTrackerMetaMap, participantsToEncounterCharacters } from '@/store/convert';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
@@ -27,8 +27,17 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import { Bot, Ghost, Trees, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useSavedPartiesStore } from '@/store/savedPartiesInstance';
+import { Party } from '@/store/savedParties';
 
 type PreviewDisplayProps = {
 	setView: (view: string) => void;
@@ -85,10 +94,13 @@ function getDefaultParticipantName(participant: Participant<0 | 1>): string {
 	switch (participant.side) {
 		case ALIGNMENT.Opponents:
 			return 'Enemy';
+
 		case ALIGNMENT.Neutral:
 			return 'Neutral';
+
 		case ALIGNMENT.PCs:
 			return 'Ally';
+
 		default:
 			return 'Combatant';
 	}
@@ -151,6 +163,20 @@ const generateParty = (
 	);
 };
 
+const generatePartyFromData = (party: Party): InitiativeParticipant[] =>
+	party.members.map((member) => ({
+		uuid: member.uuid,
+		name: member.name,
+		level: member.level,
+		side: ALIGNMENT.PCs,
+		tiePriority: member.tiePriority ? PRIORITY.PC : PRIORITY.NPC,
+		maxHealth: member.maxHealth,
+		health: member.maxHealth,
+		tempHealth: 0,
+		initiative: 0,
+		type: 'creature' as const,
+	}));
+
 export type Inputs = {
 	teams: {
 		side: number;
@@ -160,6 +186,7 @@ export type Inputs = {
 
 export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	const startEncounter = useEncounterStore((state) => state.startEncounter);
+	const setTrackerMetaMap = useEncounterStore((state) => state.setTrackerMetaMap);
 	const navigate = useNavigate();
 
 	const encounterData = useEncounterStore((state) => state.encounterData);
@@ -170,14 +197,26 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 		CharacterConfig[]
 	>([]);
 
+	const parties = useSavedPartiesStore((s) => s.parties);
+	const lastUsedPartyId = useSavedPartiesStore((s) => s.lastUsedPartyId);
+	const setLastUsedPartyId = useSavedPartiesStore((s) => s.setLastUsedPartyId);
+
+	const selectedParty = useMemo(
+		() => parties.find((p) => p.id === lastUsedPartyId) ?? null,
+		[parties, lastUsedPartyId]
+	);
+
 	const participants = useMemo(
 		() => generateParticipants(encounterData, partyLevel),
 		[encounterData, partyLevel]
 	);
 
 	const party = useMemo(
-		() => generateParty(encounterData, partyLevel),
-		[encounterData, partyLevel]
+		() =>
+			selectedParty
+				? generatePartyFromData(selectedParty)
+				: generateParty(encounterData, partyLevel),
+		[selectedParty, encounterData, partyLevel]
 	);
 
 	const fullParty = useMemo(() => [party, ...participants], [party, participants]);
@@ -260,6 +299,7 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 		view: 'initiative' | 'newInitiative' | 'initiativeTracker' | 'initiativePlayer'
 	) => {
 		startEncounter(participantsToEncounterCharacters(preparedParticipants));
+		setTrackerMetaMap(buildTrackerMetaMap(preparedParticipants));
 		setShowInitiativeChoice(false);
 		setView(view);
 
@@ -340,11 +380,33 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 							{encounterData.name}
 						</h1>
 					</div>
-					<div
-						className="rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary shadow-sm"
-					>
-						{difficultyToString(encounterData.difficulty ?? DIFFICULTY.Moderate)}{' '}
-						{partyLevel}
+					<div className="flex flex-wrap items-center gap-3">
+						{parties.length > 0 && (
+							<Select
+								value={selectedParty?.id ?? '__none__'}
+								onValueChange={(v) =>
+									setLastUsedPartyId(v === '__none__' ? undefined : v)
+								}
+							>
+								<SelectTrigger className="h-9 min-w-44 max-w-60 text-sm">
+									<SelectValue placeholder="Choose party…" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="__none__">No party (manual)</SelectItem>
+									{parties.map((p) => (
+										<SelectItem key={p.id} value={p.id}>
+											{p.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						)}
+						<div
+							className="rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary shadow-sm"
+						>
+							{difficultyToString(encounterData.difficulty ?? DIFFICULTY.Moderate)}{' '}
+							{partyLevel}
+						</div>
 					</div>
 				</header>
 				<form className="space-y-6">
@@ -367,8 +429,11 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 											([, value]) => value === teamField.side
 										)?.[0] ?? appearance.label
 									}
-									participants={teamField.characters}
-								/>
+									participants={teamField.characters}								readonlyFields={
+									selectedParty !== null && teamField.side === ALIGNMENT.PCs
+										? ['name']
+										: []
+								}								/>
 							);
 						})}
 					</div>

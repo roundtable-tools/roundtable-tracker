@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { trackerMockData, type TrackerParticipant } from './mockData';
+import { type TrackerParticipant } from './mockData';
 import Timeline from '@/components/InitiativeList/Timeline';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -35,10 +35,19 @@ import {
 	Undo2,
 } from 'lucide-react';
 import { Reorder } from 'motion/react';
+import { useEncounterStore } from '@/store/encounterRuntimeInstance';
+import {
+	runtimeToInitiativeQueue,
+	runtimeToOutOfInitiativeData,
+	narrativeSlotsToTimeline,
+	encounterToTrackerHeader,
+	historyToPreviewLines,
+} from '@/store/trackerMappers';
 
 function logTrackerButton(action: string, details?: Record<string, unknown>) {
 	if (details) {
 		console.log('[InitiativeTrackerPage]', action, details);
+
 		return;
 	}
 
@@ -146,6 +155,7 @@ function getParticipantAccent(role: TrackerParticipant['role']) {
 					'border-sky-300 bg-sky-600 text-sky-50 shadow-lg shadow-sky-950/30',
 				delayedCard: 'border-sky-500/50 bg-sky-500/10 text-sky-200',
 			};
+
 		case 'opponent':
 			return {
 				badge: 'bg-rose-500/15 text-rose-200 ring-1 ring-rose-400/40',
@@ -156,6 +166,7 @@ function getParticipantAccent(role: TrackerParticipant['role']) {
 					'border-rose-300 bg-rose-700 text-rose-50 shadow-lg shadow-rose-950/30',
 				delayedCard: 'border-rose-500/50 bg-rose-500/10 text-rose-200',
 			};
+
 		case 'neutral':
 			return {
 				badge: 'bg-violet-500/15 text-violet-200 ring-1 ring-violet-400/40',
@@ -166,6 +177,7 @@ function getParticipantAccent(role: TrackerParticipant['role']) {
 					'border-violet-300 bg-violet-700 text-violet-50 shadow-lg shadow-violet-950/30',
 				delayedCard: 'border-violet-500/50 bg-violet-500/10 text-violet-200',
 			};
+
 		case 'ally':
 			return {
 				badge: 'bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/40',
@@ -176,6 +188,7 @@ function getParticipantAccent(role: TrackerParticipant['role']) {
 					'border-emerald-300 bg-emerald-600 text-emerald-50 shadow-lg shadow-emerald-950/30',
 				delayedCard: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-200',
 			};
+
 		case 'hazard':
 			return {
 				badge: 'bg-amber-500/15 text-amber-200 ring-1 ring-amber-400/40',
@@ -186,7 +199,9 @@ function getParticipantAccent(role: TrackerParticipant['role']) {
 					'border-amber-300 bg-amber-600 text-amber-950 shadow-lg shadow-amber-950/30',
 				delayedCard: 'border-amber-500/50 bg-amber-500/10 text-amber-200',
 			};
+
 		case 'reinforcement':
+
 		default:
 			return {
 				badge: 'bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/40',
@@ -308,6 +323,7 @@ function InitiativeCarouselCard({
 			participantName: participant.name,
 		});
 		setSwipeActionFlash(action);
+
 		if (swipeFlashTimeoutRef.current !== null) {
 			window.clearTimeout(swipeFlashTimeoutRef.current);
 		}
@@ -358,12 +374,14 @@ function InitiativeCarouselCard({
 		if (swipeOffset >= SWIPE_SNAP_PX) {
 			registerSwipeInput('delay');
 			setSwipeOffset(0);
+
 			return;
 		}
 
 		if (swipeOffset <= -SWIPE_SNAP_PX) {
 			registerSwipeInput('ko');
 			setSwipeOffset(0);
+
 			return;
 		}
 
@@ -392,6 +410,7 @@ function InitiativeCarouselCard({
 			event.preventDefault();
 			event.stopPropagation();
 			swipeStateRef.current.didDrag = false;
+
 			return;
 		}
 
@@ -516,6 +535,7 @@ function MobileInitiativeCarouselCard({
 			participantName: participant.name,
 		});
 		setSwipeActionFlash(action);
+
 		if (swipeFlashTimeoutRef.current !== null) {
 			window.clearTimeout(swipeFlashTimeoutRef.current);
 		}
@@ -566,12 +586,14 @@ function MobileInitiativeCarouselCard({
 		if (swipeOffsetY <= -SWIPE_SNAP_PX) {
 			registerSwipeInput('delay');
 			setSwipeOffsetY(0);
+
 			return;
 		}
 
 		if (swipeOffsetY >= SWIPE_SNAP_PX) {
 			registerSwipeInput('ko');
 			setSwipeOffsetY(0);
+
 			return;
 		}
 
@@ -600,6 +622,7 @@ function MobileInitiativeCarouselCard({
 			event.preventDefault();
 			event.stopPropagation();
 			swipeStateRef.current.didDrag = false;
+
 			return;
 		}
 
@@ -733,16 +756,47 @@ function DelayedMarkerCard({
 }
 
 export function InitiativeTrackerPage() {
+	const charactersOrder = useEncounterStore((state) => state.charactersOrder);
+	const delayedOrder = useEncounterStore((state) => state.delayedOrder);
+	const charactersMap = useEncounterStore((state) => state.charactersMap);
+	const trackerMetaMap = useEncounterStore((state) => state.trackerMetaMap);
+	const encounterData = useEncounterStore((state) => state.encounterData);
+	const partyLevel = useEncounterStore((state) => state.partyLevel);
+	const round = useEncounterStore((state) => state.round);
+	const history = useEncounterStore((state) => state.history);
+
+	const storeInitiativeParticipants = useMemo(
+		() => runtimeToInitiativeQueue({ charactersOrder, delayedOrder, charactersMap, trackerMetaMap }),
+		[charactersOrder, delayedOrder, charactersMap, trackerMetaMap]
+	);
+
+	const outOfInitiative = useMemo(
+		() => runtimeToOutOfInitiativeData({ charactersOrder, delayedOrder, charactersMap, trackerMetaMap, encounterData, partyLevel }),
+		[charactersOrder, delayedOrder, charactersMap, trackerMetaMap, encounterData, partyLevel]
+	);
+
+	const trackerHeader = useMemo(
+		() => encounterData ? encounterToTrackerHeader(encounterData, partyLevel, round) : null,
+		[encounterData, partyLevel, round]
+	);
+
+	const timeline = useMemo(
+		() => narrativeSlotsToTimeline(encounterData?.narrativeSlots),
+		[encounterData]
+	);
+
+	const historyPreview = useMemo(() => historyToPreviewLines(history), [history]);
+
 	const [initiativeCarouselApi, setInitiativeCarouselApi] = useState<CarouselApi>();
 	const [initiativeParticipants, setInitiativeParticipants] = useState<TrackerParticipant[]>(
-		trackerMockData.initiativeParticipants
+		storeInitiativeParticipants
 	);
 	const [selectedParticipantId, setSelectedParticipantId] = useState(
-		trackerMockData.initiativeParticipants[0]?.id ?? null
+		storeInitiativeParticipants[0]?.id ?? null
 	);
 	const [reorderOpen, setReorderOpen] = useState(false);
 	const [reorderDraftParticipants, setReorderDraftParticipants] = useState<TrackerParticipant[]>(
-		trackerMockData.initiativeParticipants
+		storeInitiativeParticipants
 	);
 	const currentInitiativeParticipantId = initiativeParticipants[0]?.id ?? null;
 	const nextTurnTimeoutRef = useRef<number | null>(null);
@@ -758,8 +812,8 @@ export function InitiativeTrackerPage() {
 		[initiativeParticipants]
 	);
 	const delayedSectionParticipants = useMemo(
-		() => [...delayedParticipantCopies, ...trackerMockData.outOfInitiative.delayed],
-		[delayedParticipantCopies]
+		() => [...delayedParticipantCopies, ...outOfInitiative.delayed],
+		[delayedParticipantCopies, outOfInitiative]
 	);
 
 	useEffect(() => {
@@ -769,6 +823,10 @@ export function InitiativeTrackerPage() {
 			}
 		};
 	}, []);
+
+	useEffect(() => {
+		setInitiativeParticipants(storeInitiativeParticipants);
+	}, [storeInitiativeParticipants]);
 
 	useEffect(() => {
 		if (!reorderOpen) {
@@ -781,6 +839,7 @@ export function InitiativeTrackerPage() {
 	const focusCurrentParticipant = () => {
 		if (!initiativeCarouselApi) {
 			logTrackerButton('Focus Current attempted before carousel API ready');
+
 			return;
 		}
 
@@ -830,16 +889,16 @@ export function InitiativeTrackerPage() {
 	const allParticipants = useMemo(
 		() => [
 			...initiativeParticipants,
-			...trackerMockData.outOfInitiative.reinforcements,
+			...outOfInitiative.reinforcements,
 			...delayedSectionParticipants,
-			...trackerMockData.outOfInitiative.hazards,
+			...outOfInitiative.hazards,
 		],
-		[initiativeParticipants, delayedSectionParticipants]
+		[initiativeParticipants, outOfInitiative, delayedSectionParticipants]
 	);
 
 	const selectedParticipant =
 		allParticipants.find((p) => p.id === selectedParticipantId) ?? null;
-	const nextRound = trackerMockData.currentRound + 1;
+	const nextRound = (trackerHeader?.currentRound ?? round) + 1;
 	const nextRoundMarkerIndex = Math.max(
 		1,
 		Math.floor(initiativeParticipants.length / 2)
@@ -950,8 +1009,8 @@ export function InitiativeTrackerPage() {
 
 						<div className="min-w-0 space-y-3 pl-4">
 							<Timeline
-								currentTurn={trackerMockData.currentRound}
-								events={trackerMockData.timeline.map((event) => ({
+								currentTurn={trackerHeader?.currentRound ?? round}
+								events={timeline.map((event) => ({
 									round: event.round,
 									label: event.title,
 									description: event.detail,
@@ -1025,7 +1084,7 @@ export function InitiativeTrackerPage() {
 							<TabsContent value="reinforcements" className="mt-3 min-h-0 flex-1">
 								<ScrollArea className="h-full pr-3">
 									<div className="space-y-2">
-										{trackerMockData.outOfInitiative.reinforcements.map((participant) => (
+										{outOfInitiative.reinforcements.map((participant) => (
 											<ParticipantRow
 												key={participant.id}
 												participant={participant}
@@ -1053,7 +1112,7 @@ export function InitiativeTrackerPage() {
 							<TabsContent value="hazards" className="mt-3 min-h-0 flex-1">
 								<ScrollArea className="h-full pr-3">
 									<div className="space-y-2">
-										{trackerMockData.outOfInitiative.hazards.map((participant) => (
+										{outOfInitiative.hazards.map((participant) => (
 											<ParticipantRow
 												key={participant.id}
 												participant={participant}
@@ -1080,13 +1139,13 @@ export function InitiativeTrackerPage() {
 							</TabsList>
 							<TabsContent value="description" className="mt-3 min-h-0 flex-1 text-sm">
 								<ScrollArea className="h-full pr-3">
-									<p>{trackerMockData.description}</p>
+									<p>{trackerHeader?.description}</p>
 								</ScrollArea>
 							</TabsContent>
 							<TabsContent value="events" className="mt-3 min-h-0 flex-1">
 								<ScrollArea className="h-full pr-3">
 									<ul className="space-y-2 text-sm">
-										{trackerMockData.narrativeDetails.map((event) => (
+										{(trackerHeader?.narrativeDetails ?? []).map((event) => (
 											<li key={event} className="rounded-md border p-2">
 												{event}
 											</li>
@@ -1097,7 +1156,7 @@ export function InitiativeTrackerPage() {
 							<TabsContent value="history" className="mt-3 min-h-0 flex-1">
 								<ScrollArea className="h-full pr-3">
 									<ul className="space-y-2 text-sm">
-										{trackerMockData.historyPreview.map((entry) => (
+										{historyPreview.map((entry) => (
 											<li key={entry} className="rounded-md border p-2">
 												{entry}
 											</li>
@@ -1129,9 +1188,9 @@ export function InitiativeTrackerPage() {
 								Initiative Controls
 							</p> */}
 							<h2 className="truncate text-base font-semibold">
-								{trackerMockData.encounterTitle}
+								{trackerHeader?.encounterTitle}
 							</h2>
-							<p className="text-sm text-muted-foreground">{trackerMockData.threatLevel}</p>
+							<p className="text-sm text-muted-foreground">{trackerHeader?.threatLevel}</p>
 						</div>
 						<div className="ml-auto flex flex-col items-end gap-2">
 							<div className="flex items-center gap-2">
@@ -1220,7 +1279,7 @@ export function InitiativeTrackerPage() {
 								</TabsList>
 								<TabsContent value="reinforcements" className="mt-0">
 									<div className="space-y-2">
-										{trackerMockData.outOfInitiative.reinforcements.map((participant) => (
+										{outOfInitiative.reinforcements.map((participant) => (
 											<ParticipantRow
 												key={participant.id}
 												participant={participant}
@@ -1244,7 +1303,7 @@ export function InitiativeTrackerPage() {
 								</TabsContent>
 								<TabsContent value="hazards" className="mt-0">
 									<div className="space-y-2">
-										{trackerMockData.outOfInitiative.hazards.map((participant) => (
+										{outOfInitiative.hazards.map((participant) => (
 											<ParticipantRow
 												key={participant.id}
 												participant={participant}
@@ -1325,11 +1384,11 @@ export function InitiativeTrackerPage() {
 									<TabsTrigger value="stats" className="whitespace-normal">Turn Stats</TabsTrigger>
 								</TabsList>
 								<TabsContent value="description" className="mt-0 text-sm">
-									<p>{trackerMockData.description}</p>
+									<p>{trackerHeader?.description}</p>
 								</TabsContent>
 								<TabsContent value="events" className="mt-0">
 									<ul className="space-y-2 text-sm">
-										{trackerMockData.narrativeDetails.map((event) => (
+										{(trackerHeader?.narrativeDetails ?? []).map((event) => (
 											<li key={event} className="rounded-md border p-2">
 												{event}
 											</li>
@@ -1338,7 +1397,7 @@ export function InitiativeTrackerPage() {
 								</TabsContent>
 								<TabsContent value="history" className="mt-0">
 									<ul className="space-y-2 text-sm">
-										{trackerMockData.historyPreview.map((entry) => (
+										{historyPreview.map((entry) => (
 											<li key={entry} className="rounded-md border p-2">
 												{entry}
 											</li>

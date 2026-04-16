@@ -57,6 +57,7 @@ export class ExperienceBudget extends Number {
             }
 
             const absoluteDifference = Math.abs(difference);
+
             if (absoluteDifference % 2 === 0) {
                 return 1 / Math.pow(2, absoluteDifference / 2);
             }
@@ -65,6 +66,7 @@ export class ExperienceBudget extends Number {
         })();
 
         const xp = baseCost * multiplier;
+
         return new ExperienceBudget(xp);
     }
 

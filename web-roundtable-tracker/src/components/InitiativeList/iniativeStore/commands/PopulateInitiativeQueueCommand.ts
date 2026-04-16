@@ -41,6 +41,7 @@ export class PopulateInitiativeQueueCommand implements Command {
 	}
 	undo() {
 		const { encounterStore$ } = getInitiativeStore();
+
 		if (!this.data.removedItems) return STATUS.failure;
 		encounterStore$.initiativeQueue.set(this.data.removedItems);
 

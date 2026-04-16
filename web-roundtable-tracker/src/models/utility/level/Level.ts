@@ -14,12 +14,16 @@ export const getAdjustedLevel = (
     switch (adjustment) {
         case "elite":
             return baseLevel + (baseLevel <= 0 ? 2 : 1);
+
         case "weak":
             return baseLevel - (baseLevel === 1 ? 2 : 1);
+
         case "elite-offense":
             return baseLevel + (baseLevel <= 0 ? 1.5 : 0.75);
+
         case "elite-defense":
             return baseLevel + (baseLevel <= 0 ? 1 : 0.5);
+
         default:
             return baseLevel;
     }

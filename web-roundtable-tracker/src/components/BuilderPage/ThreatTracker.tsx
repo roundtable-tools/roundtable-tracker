@@ -242,6 +242,7 @@ export function ThreatTracker({
 	// If XP exceeds the Impossible threshold's max, show only Impossible
 	const lastIdx = merged.length - 1;
 	const impossibleThreshold = merged[lastIdx];
+
 	if (impossibleThreshold && currentBudgetXp > impossibleThreshold.maxXp) {
 		visibleThresholds = [impossibleThreshold];
 	}

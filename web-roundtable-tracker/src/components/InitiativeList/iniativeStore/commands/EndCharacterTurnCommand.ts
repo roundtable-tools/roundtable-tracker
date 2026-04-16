@@ -31,6 +31,7 @@ export class EndCharacterTurnCommand implements Command {
 	}
 	undo() {
 		const { encounterStore$ } = getInitiativeStore();
+
 		if (this.data.oldTimestamps) {
 			encounterStore$.characterTurnTimestamps[this.data.uuid].set(
 				this.data.oldTimestamps

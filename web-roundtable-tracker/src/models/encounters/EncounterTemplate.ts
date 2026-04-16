@@ -27,10 +27,12 @@ export class EncounterTemplate {
    */
   public validateDefaultVariant(): string {
     const variantExists = this.data.variants.some((v) => v.id === this.data.defaultVariantId);
+
     // If default variant doesn't exist, use first
     if (!variantExists) {
       return this.data.variants[0]?.id || this.data.defaultVariantId;
     }
+
     return this.data.defaultVariantId;
   }
 
@@ -42,12 +44,14 @@ export class EncounterTemplate {
    */
   public calculateXpBudget(variantId: string): ExperienceBudget {
     const variant = this.data.variants.find((v) => v.id === variantId);
+
     if (!variant) {
       return new ExperienceBudget(0);
     }
 
     const totalXp = variant.participants.reduce((sum, participant) => {
       const participantXp = this.calculateParticipantXp(participant);
+
       return sum + participantXp;
     }, 0);
 
@@ -79,12 +83,14 @@ export class EncounterTemplate {
    */
   public calculateThreatLevel(variantId: string): Threat {
     const variant = this.data.variants.find((v) => v.id === variantId);
+
     if (!variant) {
       return Threat.fromExperienceBudget(new ExperienceBudget(0), 4);
     }
 
     const xpBudget = this.calculateXpBudget(variantId);
     const threat = Threat.fromExperienceBudget(xpBudget, variant.partySize);
+
     return threat;
   }
 
@@ -95,6 +101,7 @@ export class EncounterTemplate {
   public calculateAwardedXp(variantId: string): ExperienceBudget {
     const xpBudget = this.calculateXpBudget(variantId);
     const awarded = ExperienceBudget.budgetToBaseReward(xpBudget, 4); // Use standard party size
+
     return awarded;
   }
 
@@ -160,6 +167,7 @@ export class EncounterTemplate {
    */
   public findByTag(tag: string): Participant[] {
     const matches: Participant[] = [];
+
     for (const variant of this.data.variants) {
       for (const participant of variant.participants) {
         if (participant.tag === tag) {
@@ -167,6 +175,7 @@ export class EncounterTemplate {
         }
       }
     }
+
     return matches;
   }
 
@@ -176,6 +185,7 @@ export class EncounterTemplate {
    */
   public findEventsByTag(tag: string): Event[] {
     const matches: Event[] = [];
+
     for (const variant of this.data.variants) {
       for (const event of variant.events) {
         if (event.tag === tag) {
@@ -183,6 +193,7 @@ export class EncounterTemplate {
         }
       }
     }
+
     return matches;
   }
 
@@ -201,6 +212,7 @@ export class EncounterTemplate {
   public static fromJSON(json: string): EncounterTemplate {
     const data = JSON.parse(json) as unknown;
     const validated = EncounterTemplateDataSchema.parse(data);
+
     return new EncounterTemplate(validated);
   }
 
