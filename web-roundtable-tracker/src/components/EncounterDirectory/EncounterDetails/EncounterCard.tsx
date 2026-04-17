@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
+	type ConcreteEncounter,
 	DIFFICULTY,
 	LEVEL_REPRESENTATION,
 	difficultyToString,
@@ -22,6 +23,7 @@ import { Pencil, Play, Trash2, UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import encounterTemplates from '@/store/Encounters/migratedEncounterTemplates';
 import type { EncounterVariant } from '@/models/encounters/encounter.types';
+import { saveImportedEncounterDraft } from '@/store/importedEncounterDraft';
 
 function buildTemplateVariantParticipants(
 	variant: EncounterVariant
@@ -72,6 +74,15 @@ export const EncounterCard = (props: EncounterCardProps) => {
 	const navigate = useNavigate();
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
 	const setPartyLevel = useEncounterStore((state) => state.setPartyLevel);
+	const encounterKindLabel =
+		source === 'saved'
+			? 'Saved Encounter'
+			: source === 'template'
+				? 'Encounter Template'
+				: 'Imported Encounter';
+	const canLoadImportedEncounterToEditor =
+		source === undefined &&
+		selectedEncounter.levelRepresentation === LEVEL_REPRESENTATION.Exact;
 
 	// Variant switcher state
 	const activeTemplate =
@@ -82,7 +93,7 @@ export const EncounterCard = (props: EncounterCardProps) => {
 	const hasMultipleTemplateVariants = allTemplateVariants.length > 1;
 
 	const savedVariants =
-		source === 'saved' ? (selectedEncounter.variants ?? []) : [];
+		source !== 'template' ? (selectedEncounter.variants ?? []) : [];
 	const hasSavedVariants = savedVariants.length > 0;
 
 	const [activeTemplateVariantId, setActiveTemplateVariantId] = useState<
@@ -104,7 +115,7 @@ export const EncounterCard = (props: EncounterCardProps) => {
 		if (source === 'template' && activeTemplateVariant) {
 			return buildTemplateVariantParticipants(activeTemplateVariant);
 		}
-		if (source === 'saved' && activeSavedVariant) {
+		if (source !== 'template' && activeSavedVariant) {
 			return activeSavedVariant.participants as StoreParticipant[];
 		}
 		return selectedEncounter.participants ?? [];
@@ -114,7 +125,7 @@ export const EncounterCard = (props: EncounterCardProps) => {
 		if (source === 'template' && activeTemplateVariant) {
 			return activeTemplateVariant.partySize;
 		}
-		if (source === 'saved' && activeSavedVariant) {
+		if (source !== 'template' && activeSavedVariant) {
 			return activeSavedVariant.partySize ?? selectedEncounter.partySize ?? 4;
 		}
 		return selectedEncounter.partySize ?? 4;
@@ -152,14 +163,32 @@ export const EncounterCard = (props: EncounterCardProps) => {
 					activeTemplateVariant.description ?? selectedEncounter.description,
 			} as Encounter;
 		}
-		if (source === 'saved' && activeSavedVariant) {
+		if (source !== 'template' && activeSavedVariant) {
 			return {
 				...selectedEncounter,
 				partySize: activeSavedVariant.partySize ?? selectedEncounter.partySize,
+				level: activeSavedVariant.level ?? selectedEncounter.level,
+				difficulty: activeSavedVariant.difficulty ?? selectedEncounter.difficulty,
+				description: activeSavedVariant.description ?? selectedEncounter.description,
 				participants: activeSavedVariant.participants,
 			} as Encounter;
 		}
 		return undefined;
+	};
+
+	const handleLoadToEditor = () => {
+		if (!canLoadImportedEncounterToEditor) {
+			return;
+		}
+
+		const encounterToEdit =
+			(buildVariantEncounter() ?? selectedEncounter) as ConcreteEncounter;
+		const importDraftId = saveImportedEncounterDraft(encounterToEdit);
+		close();
+		navigate({
+			to: '/builder',
+			search: { importDraftId },
+		});
 	};
 
 	return (
@@ -169,7 +198,7 @@ export const EncounterCard = (props: EncounterCardProps) => {
 					<div className="space-y-2">
 						<div className="flex flex-wrap items-center gap-2">
 							<span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-								{source === 'saved' ? 'Saved Encounter' : 'Encounter Template'}
+								{encounterKindLabel}
 							</span>
 							<span className="rounded-full border px-3 py-1 text-xs font-semibold text-muted-foreground">
 								{difficultyToString(
@@ -253,7 +282,7 @@ export const EncounterCard = (props: EncounterCardProps) => {
 										</Button>
 									);
 								})}
-							{source === 'saved' && (
+							{source !== 'template' && (
 								<>
 									<Button
 										type="button"
@@ -337,6 +366,12 @@ export const EncounterCard = (props: EncounterCardProps) => {
 						>
 							<Pencil className="h-4 w-4" />
 							Use Template
+						</Button>
+					) : null}
+					{canLoadImportedEncounterToEditor ? (
+						<Button variant="secondary" onClick={handleLoadToEditor}>
+							<Pencil className="h-4 w-4" />
+							Load to Editor
 						</Button>
 					) : null}
 				</div>

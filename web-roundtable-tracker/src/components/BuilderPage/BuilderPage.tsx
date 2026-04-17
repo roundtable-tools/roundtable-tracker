@@ -21,6 +21,10 @@ import { SaveSuccessModal } from './SaveSuccessModal';
 import { computeEncounterXpUsage, type SlotType } from './builderXp';
 import { useNavigate } from '@tanstack/react-router';
 import {
+	deleteImportedEncounterDraft,
+	getImportedEncounterDraft,
+} from '@/store/importedEncounterDraft';
+import {
 	defaultFormValues,
 	defaultSlot,
 	fromEncounterTemplate,
@@ -40,6 +44,7 @@ import {
 
 interface BuilderPageProps {
 	encounterId?: string;
+	importDraftId?: string;
 	templateId?: string;
 	templateVariantId?: string;
 	templateLevel?: number;
@@ -48,6 +53,7 @@ interface BuilderPageProps {
 
 export function BuilderPage({
 	encounterId,
+	importDraftId,
 	templateId,
 	templateVariantId,
 	templateLevel,
@@ -100,9 +106,24 @@ export function BuilderPage({
 		}
 	}, [activeEncounterId, reset]);
 
+	useEffect(() => {
+		if (!importDraftId || activeEncounterId) {
+			return;
+		}
+
+		const importedDraft = getImportedEncounterDraft(importDraftId);
+
+		if (!importedDraft) {
+			return;
+		}
+
+		reset(fromConcreteEncounter(importedDraft));
+		deleteImportedEncounterDraft(importDraftId);
+	}, [importDraftId, activeEncounterId, reset]);
+
 	// Initialize from template when templateId is provided and no encounterId
 	useEffect(() => {
-		if (!templateId || activeEncounterId) return;
+		if (!templateId || activeEncounterId || importDraftId) return;
 
 		const template = encounterTemplates.find((t) => t.id === templateId);
 
@@ -143,6 +164,7 @@ export function BuilderPage({
 		templateId,
 		templateVariantId,
 		activeEncounterId,
+		importDraftId,
 		templateLevel,
 		templatePartySize,
 		reset,

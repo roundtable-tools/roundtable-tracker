@@ -281,6 +281,29 @@ function ParticipantDetails({ participant }: { participant: TrackerParticipant |
 	);
 }
 
+function TrackerDescriptionSections({
+	sections,
+}: {
+	sections: Array<{ label: string; content: string }>;
+}) {
+	if (sections.length === 0) {
+		return <p className="text-muted-foreground">No encounter notes available.</p>;
+	}
+
+	return (
+		<div className="space-y-4">
+			{sections.map((section) => (
+				<section key={section.label} className="space-y-1">
+					<h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+						{section.label}
+					</h3>
+					<p className="whitespace-pre-wrap">{section.content}</p>
+				</section>
+			))}
+		</div>
+	);
+}
+
 function InitiativeCarouselCard({
 	participant,
 	selected,
@@ -1139,7 +1162,9 @@ export function InitiativeTrackerPage() {
 							</TabsList>
 							<TabsContent value="description" className="mt-3 min-h-0 flex-1 text-sm">
 								<ScrollArea className="h-full pr-3">
-									<p>{trackerHeader?.description}</p>
+									<TrackerDescriptionSections
+										sections={trackerHeader?.descriptionSections ?? []}
+									/>
 								</ScrollArea>
 							</TabsContent>
 							<TabsContent value="events" className="mt-3 min-h-0 flex-1">
@@ -1384,7 +1409,9 @@ export function InitiativeTrackerPage() {
 									<TabsTrigger value="stats" className="whitespace-normal">Turn Stats</TabsTrigger>
 								</TabsList>
 								<TabsContent value="description" className="mt-0 text-sm">
-									<p>{trackerHeader?.description}</p>
+										<TrackerDescriptionSections
+											sections={trackerHeader?.descriptionSections ?? []}
+										/>
 								</TabsContent>
 								<TabsContent value="events" className="mt-0">
 									<ul className="space-y-2 text-sm">

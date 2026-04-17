@@ -9,41 +9,14 @@ import {
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import {
-	ConcreteEncounterSchema,
 	Encounter,
-	LEVEL_REPRESENTATION,
 } from '@/store/data';
 import { useState } from 'react';
-import { z } from 'zod';
-import { generateUUID } from '@/utils/uuid';
+import { validateImportedEncounter } from './importEncounter';
 
 type ImportCardProps = {
 	submit: (encounterData: Encounter) => void;
 	close: () => void;
-};
-
-const ValidateEncounter = (dataString: string): [Encounter | null, string] => {
-	try {
-		const parsedData = {
-			levelRepresentation: LEVEL_REPRESENTATION.Exact,
-			id: generateUUID(),
-			...JSON.parse(dataString),
-		};
-		const validatedData = ConcreteEncounterSchema.parse(parsedData);
-
-		return [validatedData as Encounter, '']; // Return the validated data if successful
-	} catch (error) {
-		if (error instanceof SyntaxError) {
-			return [null, 'Invalid JSON format.']; // Handle JSON parsing errors
-		} else if (error instanceof z.ZodError) {
-			return [
-				null,
-				`${error.errors.map((e) => `${e.path}: ${e.message}`).join(',\n')}`,
-			]; // Handle schema validation errors
-		}
-
-		return [null, 'Unknown error occurred.'];
-	}
 };
 
 export const ImportCard = (props: ImportCardProps) => {
@@ -87,7 +60,7 @@ export const ImportCard = (props: ImportCardProps) => {
 				</Button>
 				<Button
 					onClick={() => {
-						const [encounterData, validationError] = ValidateEncounter(value);
+						const [encounterData, validationError] = validateImportedEncounter(value);
 
 						if (encounterData) {
 							setError(null);

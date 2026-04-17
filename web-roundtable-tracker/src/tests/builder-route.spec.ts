@@ -16,7 +16,7 @@ vi.mock('@/AppHeader', () => ({
 }));
 
 vi.mock('@/components/BuilderPage/BuilderPage', () => ({
-	BuilderPage: (props: { encounterId?: string }) => {
+	BuilderPage: (props: { encounterId?: string; importDraftId?: string }) => {
 		mocks.builderPageSpy(props);
 
 		return createElement('main', { 'data-testid': 'builder-page' });
@@ -47,15 +47,18 @@ describe('builder route search params', () => {
 		const parsed = validateBuilderSearch({
 			templateId: 'template-1',
 			encounterId: 'encounter-1',
+			importDraftId: 'draft-1',
 		});
 
 		expect(parsed.templateId).toBe('template-1');
 		expect(parsed.encounterId).toBe('encounter-1');
+		expect(parsed.importDraftId).toBe('draft-1');
 	});
 
 	it('rejects non-string values', () => {
 		expect(() => validateBuilderSearch({ templateId: 42 })).toThrow();
 		expect(() => validateBuilderSearch({ encounterId: true })).toThrow();
+		expect(() => validateBuilderSearch({ importDraftId: 42 })).toThrow();
 	});
 
 	it('drops unknown search keys', () => {
@@ -86,10 +89,12 @@ describe('builder route search params', () => {
 		};
 		const builderPageProps = mocks.builderPageSpy.mock.calls[0]?.[0] as {
 			encounterId?: string;
+			importDraftId?: string;
 		};
 
 		expect(typeof appHeaderProps?.setView).toBe('function');
 		expect(() => appHeaderProps.setView('any-view')).not.toThrow();
 		expect(builderPageProps?.encounterId).toBeUndefined();
+		expect(builderPageProps?.importDraftId).toBeUndefined();
 	});
 });

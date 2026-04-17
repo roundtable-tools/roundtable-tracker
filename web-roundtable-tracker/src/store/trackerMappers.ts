@@ -6,7 +6,10 @@ export type TrackerHeader = {
 	encounterTitle: string;
 	threatLevel: string;
 	currentRound: number;
-	description: string;
+	descriptionSections: Array<{
+		label: string;
+		content: string;
+	}>;
 	narrativeDetails: string[];
 };
 
@@ -176,11 +179,18 @@ export function encounterToTrackerHeader(
 		.filter((slot) => slot.description)
 		.map((slot) => `Round ${slot.trigger.round}: ${slot.description}`);
 
+	const descriptionSections = [
+		{ label: 'Description', content: encounterData.description },
+		{ label: 'GM Notes', content: encounterData.notes?.gm ?? '' },
+		{ label: 'Monster Notes', content: encounterData.notes?.monster ?? '' },
+		{ label: 'Player Notes', content: encounterData.notes?.player ?? '' },
+	].filter((section) => section.content.trim().length > 0);
+
 	return {
 		encounterTitle: encounterData.name,
 		threatLevel: `${difficultyLabel} ${encounterLevel}`,
 		currentRound: round,
-		description: encounterData.description,
+		descriptionSections,
 		narrativeDetails,
 	};
 }

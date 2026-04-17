@@ -7,6 +7,7 @@ export const builderSearchSchema = z.object({
 	templateId: z.string().optional(),
 	templateVariantId: z.string().optional(),
 	encounterId: z.string().optional(),
+	importDraftId: z.string().optional(),
 	templateLevel: z.coerce.number().int().optional(),
 	templatePartySize: z.coerce.number().int().positive().optional(),
 });
@@ -24,6 +25,7 @@ export const Route = createFileRoute('/builder')({
 export function BuilderRouteComponent() {
 	const {
 		encounterId,
+		importDraftId,
 		templateId,
 		templateVariantId,
 		templateLevel,
@@ -36,6 +38,7 @@ export function BuilderRouteComponent() {
 			<AppHeader setView={() => {}} />
 			<BuilderPage
 				encounterId={encounterId}
+				importDraftId={importDraftId}
 				templateId={templateId}
 				templateVariantId={templateVariantId}
 				templateLevel={templateLevel}
