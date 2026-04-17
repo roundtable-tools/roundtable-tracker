@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
 	ALIGNMENT,
 	ConcreteEncounter,
+	ConcreteEncounterVariant,
 	DIFFICULTY,
 	LEVEL_REPRESENTATION,
 	type NarrativeSlot,
@@ -13,11 +14,20 @@ import { Threat } from '@/models/utility/threat/Threat.class';
 import type { LevelAdjustment } from '@/models/utility/level/Level';
 import type { EncounterTemplateData } from '@/models/encounters/encounter.types';
 
+export interface BuilderVariantSnapshot {
+	id: string;
+	description: string;
+	partyLevel: number;
+	partySize: number;
+	slots: BuilderSlot[];
+}
+
 export interface BuilderFormValues {
 	name: string;
 	description: string;
 	partyLevel: number;
 	partySize: number;
+	variants: BuilderVariantSnapshot[];
 	gmNotes: string;
 	monsterNotes: string;
 	playerNotes: string;
@@ -51,6 +61,7 @@ export function defaultFormValues(): BuilderFormValues {
 		description: '',
 		partyLevel: 1,
 		partySize: 4,
+		variants: [],
 		gmNotes: '',
 		monsterNotes: '',
 		playerNotes: '',
@@ -74,6 +85,7 @@ export function fromEncounterTemplate(
 		description: template.description,
 		partyLevel,
 		partySize,
+		variants: [],
 		gmNotes: '',
 		monsterNotes: '',
 		playerNotes: '',
@@ -245,6 +257,60 @@ export function toConcreteEncounter(
 						})
 					: undefined,
 		}));
+	const variants: ConcreteEncounterVariant[] | undefined =
+		values.variants.length > 0
+			? values.variants.map((snapshot) => {
+					const snapXp = computeBuilderXP(snapshot.slots, snapshot.partyLevel);
+					const snapThreat = Threat.fromExperienceBudget(snapXp, snapshot.partySize);
+					const snapParticipants: Participant<typeof LEVEL_REPRESENTATION.Exact>[] =
+						snapshot.slots
+							.filter((s) => s.type === 'creature' || s.type === 'hazard')
+							.map((s) => {
+								const side =
+									s.side === 'ally'
+										? ALIGNMENT.PCs
+										: s.side === 'enemy'
+											? ALIGNMENT.Opponents
+											: ALIGNMENT.Neutral;
+
+								if (s.type === 'hazard') {
+									return {
+										type: 'hazard' as const,
+										name: s.name,
+										level: s.level,
+										side,
+										count: s.count,
+										maxHealth: s.maxHealth || undefined,
+										successesToDisable: s.successesToDisable ?? 1,
+										isComplexHazard: !s.isSimpleHazard,
+										description: s.description || undefined,
+									};
+								}
+
+								return {
+									type: 'creature' as const,
+									name: s.name,
+									level: s.level,
+									side,
+									count: s.count,
+									maxHealth: s.maxHealth || undefined,
+									adjustment:
+										s.adjustment === 'none'
+											? undefined
+											: (s.adjustment as LevelAdjustment),
+									description: s.description || undefined,
+								};
+							});
+
+					return {
+						level: snapshot.partyLevel,
+						partySize: snapshot.partySize,
+						difficulty: threatToDifficulty(snapThreat.threat),
+						description: snapshot.description.trim() || `Variant`,
+						participants: snapParticipants,
+					};
+				})
+			: undefined;
 
 	return {
 		id,
@@ -255,6 +321,7 @@ export function toConcreteEncounter(
 		difficulty,
 		description: values.description,
 		participants,
+		variants,
 		narrativeSlots: narrativeSlots.length > 0 ? narrativeSlots : undefined,
 		notes: {
 			gm: values.gmNotes || undefined,
@@ -377,9 +444,113 @@ export function fromConcreteEncounter(
 		description: encounter.description,
 		partyLevel: encounter.level,
 		partySize: encounter.partySize,
+		variants: encounter.variants?.map((v) => ({
+			id: uuidv4(),
+			description: v.description,
+			partyLevel: v.level ?? encounter.level,
+			partySize: v.partySize ?? encounter.partySize,
+			slots: participantsToBuilderSlots(v.participants),
+		})) ?? [],
 		gmNotes: encounter.notes?.gm ?? '',
 		monsterNotes: encounter.notes?.monster ?? '',
 		playerNotes: encounter.notes?.player ?? '',
 		slots,
+	};
+}
+
+function participantsToBuilderSlots(
+	participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[]
+): BuilderSlot[] {
+	return participants.map((p) => {
+		if (p.type === 'creature') {
+			return {
+				id: uuidv4(),
+				type: 'creature' as const,
+				name: p.name,
+				description: p.description ?? '',
+				side:
+					p.side === ALIGNMENT.PCs
+						? 'ally'
+						: p.side === ALIGNMENT.Opponents
+							? 'enemy'
+							: 'neutral',
+				level: p.level,
+				count: p.count ?? 1,
+				maxHealth: p.maxHealth,
+				successesToDisable: 1,
+				adjustment: p.adjustment ?? 'none',
+				isSimpleHazard: false,
+				reinforcementRound: 1,
+				reinforcementParticipants: [],
+				eventRound: 1,
+				repeatInterval: undefined,
+				accomplishmentLevel: undefined,
+			};
+		}
+
+		return {
+			id: uuidv4(),
+			type: 'hazard' as const,
+			name: p.name,
+			description: p.description ?? '',
+			side:
+				p.side === ALIGNMENT.PCs
+					? 'ally'
+					: p.side === ALIGNMENT.Opponents
+						? 'enemy'
+						: 'neutral',
+				level: p.level,
+				count: p.count ?? 1,
+				maxHealth: p.maxHealth,
+				successesToDisable: p.successesToDisable,
+				adjustment: 'none',
+				isSimpleHazard: !p.isComplexHazard,
+				reinforcementRound: 1,
+				reinforcementParticipants: [],
+				eventRound: 1,
+				repeatInterval: undefined,
+				accomplishmentLevel: undefined,
+			};
+		});
+}
+
+/**
+ * Produces form-loadable values from a template variant (for shadow-variant loading).
+ * Converts relative participant levels to absolute using the given partyLevel.
+ */
+export function templateVariantToFormPartial(
+	variant: import('@/models/encounters/encounter.types').EncounterVariant,
+	partyLevel: number
+): { partySize: number; slots: BuilderSlot[] } {
+	return {
+		partySize: variant.partySize,
+		slots: variant.participants.map((participant) => ({
+			id: participant.id,
+			type: participant.type === 'creature' ? 'creature' as const : 'hazard' as const,
+			name:
+				participant.type === 'creature'
+					? `${participant.role || 'creature'} (${participant.count})`
+					: participant.id,
+			description: '',
+			side:
+				participant.side === 0
+					? 'ally'
+					: participant.side === 2
+						? 'neutral'
+						: 'enemy',
+			level: participant.relativeLevel.toLevel(partyLevel).valueOf(),
+			count: participant.count,
+			maxHealth: undefined,
+			successesToDisable:
+				participant.type === 'hazard' ? participant.successesToDisable : 1,
+			adjustment: 'none',
+			isSimpleHazard:
+				participant.type === 'hazard' && participant.role === 'simple',
+			reinforcementRound: 1,
+			reinforcementParticipants: [],
+			eventRound: 1,
+			repeatInterval: undefined,
+			accomplishmentLevel: undefined,
+		})),
 	};
 }

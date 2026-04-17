@@ -5,6 +5,7 @@ import { BuilderPage } from '@/components/BuilderPage/BuilderPage';
 
 export const builderSearchSchema = z.object({
 	templateId: z.string().optional(),
+	templateVariantId: z.string().optional(),
 	encounterId: z.string().optional(),
 	templateLevel: z.coerce.number().int().optional(),
 	templatePartySize: z.coerce.number().int().positive().optional(),
@@ -21,7 +22,13 @@ export const Route = createFileRoute('/builder')({
 });
 
 export function BuilderRouteComponent() {
-	const { encounterId, templateId, templateLevel, templatePartySize } =
+	const {
+		encounterId,
+		templateId,
+		templateVariantId,
+		templateLevel,
+		templatePartySize,
+	} =
 		Route.useSearch();
 
 	return (
@@ -30,6 +37,7 @@ export function BuilderRouteComponent() {
 			<BuilderPage
 				encounterId={encounterId}
 				templateId={templateId}
+				templateVariantId={templateVariantId}
 				templateLevel={templateLevel}
 				templatePartySize={templatePartySize}
 			/>

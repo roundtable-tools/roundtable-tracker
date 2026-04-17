@@ -19,7 +19,7 @@ function Index() {
 		<div className="flex flex-col items-center justify-center h-screen">
 			<div className="flex gap-4 p-4 flex-wrap items-center justify-center">
 				<Button asChild className="text-xl h-auto">
-					<Link to="/initiative">
+					<Link to="/initiative_tracker">
 						<Play size={48} /> Continue
 					</Link>
 				</Button>

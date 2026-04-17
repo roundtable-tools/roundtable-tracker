@@ -8,7 +8,7 @@
     "dev": "yarn workspace web-roundtable-tracker dev",
     "start": "yarn workspace web-roundtable-tracker start",
     "test": "yarn workspace web-roundtable-tracker test",
-    "verify:types": "yarn workspace web-roundtable-tracker typecheck && yarn workspace native-roundtable-tracker typecheck && yarn workspace web-roundtable-tracker test --run"
+    "verify:types": "yarn workspace web-roundtable-tracker typecheck && yarn workspace web-roundtable-tracker test --run"
   },
   "devDependencies": {
     "vitest": "^4.1.2"

@@ -8,7 +8,11 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { ConcreteEncounterSchema, Encounter } from '@/store/data';
+import {
+	ConcreteEncounterSchema,
+	Encounter,
+	LEVEL_REPRESENTATION,
+} from '@/store/data';
 import { useState } from 'react';
 import { z } from 'zod';
 import { generateUUID } from '@/utils/uuid';
@@ -21,13 +25,13 @@ type ImportCardProps = {
 const ValidateEncounter = (dataString: string): [Encounter | null, string] => {
 	try {
 		const parsedData = {
-			levelRepresentation: 1, // Default level representation to 1
-			id: generateUUID(), // Generate a new UUID for the encounter
+			levelRepresentation: LEVEL_REPRESENTATION.Exact,
+			id: generateUUID(),
 			...JSON.parse(dataString),
-		}; // Parse the JSON string
-		const validatedData = ConcreteEncounterSchema.parse(parsedData); // Validate against the schema
+		};
+		const validatedData = ConcreteEncounterSchema.parse(parsedData);
 
-		return [validatedData, '']; // Return the validated data if successful
+		return [validatedData as Encounter, '']; // Return the validated data if successful
 	} catch (error) {
 		if (error instanceof SyntaxError) {
 			return [null, 'Invalid JSON format.']; // Handle JSON parsing errors

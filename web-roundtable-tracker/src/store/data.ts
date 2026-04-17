@@ -214,7 +214,7 @@ export type InitiativeParticipant = {
 } & Omit<Creature<typeof LEVEL_REPRESENTATION.Exact>, "type" | "adjustment"> & {
 	adjustment?: ParticipantAdjustment;
 };
-type ConcreteEncounterVariant = {
+export type ConcreteEncounterVariant = {
 	difficulty?: Difficulty;
 	partySize?: number;
 	level?: number;
@@ -354,6 +354,14 @@ const encounterNotesSchema = z.object({
 	player: z.string().optional(),
 });
 
+const concreteEncounterVariantSchema = z.object({
+	difficulty: z.nativeEnum(DIFFICULTY).optional(),
+	partySize: z.number().optional(),
+	level: z.number().optional(),
+	description: z.string(),
+	participants: z.array(participantSchema),
+});
+
 export const ConcreteEncounterSchema = z.object({
 	id: z.string(),
 	name: z.string(),
@@ -363,6 +371,7 @@ export const ConcreteEncounterSchema = z.object({
 	partySize: z.number(),
 	description: z.string(),
 	participants: z.array(participantSchema),
+	variants: z.array(concreteEncounterVariantSchema).optional(),
 	auras: z.array(auraSchema).optional(),
 	narrativeSlots: z.array(narrativeSlotSchema).optional(),
 	notes: encounterNotesSchema.optional(),

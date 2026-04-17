@@ -13,10 +13,8 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as PreviewImport } from './routes/preview'
 import { Route as PartysetupImport } from './routes/party_setup'
-import { Route as NewinitiativeImport } from './routes/new_initiative'
 import { Route as InitiativetrackerImport } from './routes/initiative_tracker'
 import { Route as InitiativeplayerImport } from './routes/initiative_player'
-import { Route as InitiativeImport } from './routes/initiative'
 import { Route as EncountersImport } from './routes/encounters'
 import { Route as BuilderImport } from './routes/builder'
 import { Route as IndexImport } from './routes/index'
@@ -35,12 +33,6 @@ const PartysetupRoute = PartysetupImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const NewinitiativeRoute = NewinitiativeImport.update({
-  id: '/new_initiative',
-  path: '/new_initiative',
-  getParentRoute: () => rootRoute,
-} as any)
-
 const InitiativetrackerRoute = InitiativetrackerImport.update({
   id: '/initiative_tracker',
   path: '/initiative_tracker',
@@ -50,12 +42,6 @@ const InitiativetrackerRoute = InitiativetrackerImport.update({
 const InitiativeplayerRoute = InitiativeplayerImport.update({
   id: '/initiative_player',
   path: '/initiative_player',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const InitiativeRoute = InitiativeImport.update({
-  id: '/initiative',
-  path: '/initiative',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -102,13 +88,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EncountersImport
       parentRoute: typeof rootRoute
     }
-    '/initiative': {
-      id: '/initiative'
-      path: '/initiative'
-      fullPath: '/initiative'
-      preLoaderRoute: typeof InitiativeImport
-      parentRoute: typeof rootRoute
-    }
     '/initiative_player': {
       id: '/initiative_player'
       path: '/initiative_player'
@@ -121,13 +100,6 @@ declare module '@tanstack/react-router' {
       path: '/initiative_tracker'
       fullPath: '/initiative_tracker'
       preLoaderRoute: typeof InitiativetrackerImport
-      parentRoute: typeof rootRoute
-    }
-    '/new_initiative': {
-      id: '/new_initiative'
-      path: '/new_initiative'
-      fullPath: '/new_initiative'
-      preLoaderRoute: typeof NewinitiativeImport
       parentRoute: typeof rootRoute
     }
     '/party_setup': {
@@ -153,10 +125,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/encounters': typeof EncountersRoute
-  '/initiative': typeof InitiativeRoute
   '/initiative_player': typeof InitiativeplayerRoute
   '/initiative_tracker': typeof InitiativetrackerRoute
-  '/new_initiative': typeof NewinitiativeRoute
   '/party_setup': typeof PartysetupRoute
   '/preview': typeof PreviewRoute
 }
@@ -165,10 +135,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/encounters': typeof EncountersRoute
-  '/initiative': typeof InitiativeRoute
   '/initiative_player': typeof InitiativeplayerRoute
   '/initiative_tracker': typeof InitiativetrackerRoute
-  '/new_initiative': typeof NewinitiativeRoute
   '/party_setup': typeof PartysetupRoute
   '/preview': typeof PreviewRoute
 }
@@ -178,10 +146,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/encounters': typeof EncountersRoute
-  '/initiative': typeof InitiativeRoute
   '/initiative_player': typeof InitiativeplayerRoute
   '/initiative_tracker': typeof InitiativetrackerRoute
-  '/new_initiative': typeof NewinitiativeRoute
   '/party_setup': typeof PartysetupRoute
   '/preview': typeof PreviewRoute
 }
@@ -192,10 +158,8 @@ export interface FileRouteTypes {
     | '/'
     | '/builder'
     | '/encounters'
-    | '/initiative'
     | '/initiative_player'
     | '/initiative_tracker'
-    | '/new_initiative'
     | '/party_setup'
     | '/preview'
   fileRoutesByTo: FileRoutesByTo
@@ -203,10 +167,8 @@ export interface FileRouteTypes {
     | '/'
     | '/builder'
     | '/encounters'
-    | '/initiative'
     | '/initiative_player'
     | '/initiative_tracker'
-    | '/new_initiative'
     | '/party_setup'
     | '/preview'
   id:
@@ -214,10 +176,8 @@ export interface FileRouteTypes {
     | '/'
     | '/builder'
     | '/encounters'
-    | '/initiative'
     | '/initiative_player'
     | '/initiative_tracker'
-    | '/new_initiative'
     | '/party_setup'
     | '/preview'
   fileRoutesById: FileRoutesById
@@ -227,10 +187,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BuilderRoute: typeof BuilderRoute
   EncountersRoute: typeof EncountersRoute
-  InitiativeRoute: typeof InitiativeRoute
   InitiativeplayerRoute: typeof InitiativeplayerRoute
   InitiativetrackerRoute: typeof InitiativetrackerRoute
-  NewinitiativeRoute: typeof NewinitiativeRoute
   PartysetupRoute: typeof PartysetupRoute
   PreviewRoute: typeof PreviewRoute
 }
@@ -239,10 +197,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BuilderRoute: BuilderRoute,
   EncountersRoute: EncountersRoute,
-  InitiativeRoute: InitiativeRoute,
   InitiativeplayerRoute: InitiativeplayerRoute,
   InitiativetrackerRoute: InitiativetrackerRoute,
-  NewinitiativeRoute: NewinitiativeRoute,
   PartysetupRoute: PartysetupRoute,
   PreviewRoute: PreviewRoute,
 }
@@ -260,10 +216,8 @@ export const routeTree = rootRoute
         "/",
         "/builder",
         "/encounters",
-        "/initiative",
         "/initiative_player",
         "/initiative_tracker",
-        "/new_initiative",
         "/party_setup",
         "/preview"
       ]
@@ -277,17 +231,11 @@ export const routeTree = rootRoute
     "/encounters": {
       "filePath": "encounters.tsx"
     },
-    "/initiative": {
-      "filePath": "initiative.tsx"
-    },
     "/initiative_player": {
       "filePath": "initiative_player.tsx"
     },
     "/initiative_tracker": {
       "filePath": "initiative_tracker.tsx"
-    },
-    "/new_initiative": {
-      "filePath": "new_initiative.tsx"
     },
     "/party_setup": {
       "filePath": "party_setup.tsx"

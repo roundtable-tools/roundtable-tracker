@@ -26,8 +26,12 @@ import {
 	fromEncounterTemplate,
 	fromConcreteEncounter,
 	toConcreteEncounter,
+	templateVariantToFormPartial,
 	type BuilderFormValues,
+	type BuilderVariantSnapshot,
 } from './builderConvert';
+import { v4 as uuidv4 } from 'uuid';
+import { RotateCcw, Trash2 } from 'lucide-react';
 import {
 	getEventSectionSummary,
 	getParticipantSectionSummary,
@@ -37,6 +41,7 @@ import {
 interface BuilderPageProps {
 	encounterId?: string;
 	templateId?: string;
+	templateVariantId?: string;
 	templateLevel?: number;
 	templatePartySize?: number;
 }
@@ -44,6 +49,7 @@ interface BuilderPageProps {
 export function BuilderPage({
 	encounterId,
 	templateId,
+	templateVariantId,
 	templateLevel,
 	templatePartySize,
 }: BuilderPageProps) {
@@ -53,11 +59,9 @@ export function BuilderPage({
 	);
 	const [savedEncounter, setSavedEncounter] =
 		useState<ConcreteEncounter | null>(null);
-	const [showAdvancedThreatOptions, setShowAdvancedThreatOptions] =
-		useState(false);
-	const [attritionRatePercent, setAttritionRatePercent] = useState(5);
-	const [maxRounds, setMaxRounds] = useState(20);
-	const [basePartyOutputPerRound, setBasePartyOutputPerRound] = useState(20);
+	const attritionRatePercent = 5;
+	const maxRounds = 20;
+	const basePartyOutputPerRound = 20;
 
 	const addEncounter = useSavedEncountersStore((s) => s.addEncounter);
 	const updateEncounter = useSavedEncountersStore((s) => s.updateEncounter);
@@ -112,10 +116,14 @@ export function BuilderPage({
 		const defaultVariant = template.variants.find(
 			(v) => v.id === template.defaultVariantId
 		);
+		const selectedVariant = templateVariantId
+			? template.variants.find((variant) => variant.id === templateVariantId)
+			: undefined;
+		const variantToUse = selectedVariant ?? defaultVariant;
 
-		if (!defaultVariant) {
+		if (!variantToUse) {
 			console.warn(
-				`Default variant ${template.defaultVariantId} not found in template ${templateId}`
+				`No usable variant found in template ${templateId}`
 			);
 
 			return;
@@ -123,7 +131,7 @@ export function BuilderPage({
 
 		const initialFormValues: BuilderFormValues = fromEncounterTemplate(
 			template,
-			defaultVariant,
+			variantToUse,
 			{
 				partyLevel: templateLevel,
 				partySize: templatePartySize,
@@ -131,7 +139,14 @@ export function BuilderPage({
 		);
 
 		reset(initialFormValues);
-	}, [templateId, activeEncounterId, templateLevel, templatePartySize, reset]);
+	}, [
+		templateId,
+		templateVariantId,
+		activeEncounterId,
+		templateLevel,
+		templatePartySize,
+		reset,
+	]);
 
 	const safePartyLevel =
 		typeof partyLevel === 'number' && Number.isFinite(partyLevel)
@@ -151,6 +166,11 @@ export function BuilderPage({
 	const eventIndices = getSlotSectionIndices(resolvedSlots, 'events');
 	const participantSummary = getParticipantSectionSummary(resolvedSlots);
 	const eventSummary = getEventSectionSummary(resolvedSlots);
+	const variants = useWatch({ control, name: 'variants' }) ?? [];
+
+	const templateShadowVariants = templateId
+		? (encounterTemplates.find((t) => t.id === templateId)?.variants ?? [])
+		: [];
 
 	const onSubmit = (values: BuilderFormValues) => {
 		const encounter = toConcreteEncounter(values, activeEncounterId);
@@ -241,57 +261,6 @@ export function BuilderPage({
 							{xpUsage.rawReinforcementXp.valueOf()} XP
 						</span>
 					</div>
-
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						className="mt-3"
-						onClick={() =>
-							setShowAdvancedThreatOptions((current) => !current)
-						}
-					>
-						{showAdvancedThreatOptions
-							? 'Hide Optional Threat Settings'
-							: 'Show Optional Threat Settings'}
-					</Button>
-
-					{showAdvancedThreatOptions ? (
-						<div className="mt-2 grid gap-2 rounded-md border p-3 text-sm sm:grid-cols-3">
-							<div className="grid items-center gap-1">
-								<FormLabel className="text-xs">Attrition Rate (%)</FormLabel>
-								<Input
-									type="number"
-									min={0}
-									max={100}
-									value={attritionRatePercent}
-									onChange={(event) =>
-										setAttritionRatePercent(Number(event.target.value || 0))
-									}
-								/>
-							</div>
-							<div className="grid items-center gap-1">
-								<FormLabel className="text-xs">Max Rounds</FormLabel>
-								<Input
-									type="number"
-									min={1}
-									value={maxRounds}
-									onChange={(event) => setMaxRounds(Number(event.target.value || 1))}
-								/>
-							</div>
-							<div className="grid items-center gap-1">
-								<FormLabel className="text-xs">Party Output / Round</FormLabel>
-								<Input
-									type="number"
-									min={0}
-									value={basePartyOutputPerRound}
-									onChange={(event) =>
-										setBasePartyOutputPerRound(Number(event.target.value || 0))
-									}
-								/>
-							</div>
-						</div>
-					) : null}
 				</section>
 
 				<Tabs defaultValue="details" className="w-full space-y-4">
@@ -299,6 +268,7 @@ export function BuilderPage({
 						<TabsTrigger value="details">Details</TabsTrigger>
 						<TabsTrigger value="participants">Participants ({participantSummary.count})</TabsTrigger>
 						<TabsTrigger value="events">Events ({eventSummary.count})</TabsTrigger>
+						<TabsTrigger value="variants">Variants ({variants.length})</TabsTrigger>
 					</TabsList>
 
 					<TabsContent value="details" className="space-y-3">
@@ -439,29 +409,6 @@ export function BuilderPage({
 								/>
 							</div>
 
-							<details className="mt-2 rounded-md border p-2 text-xs">
-								<summary className="cursor-pointer font-medium">Show XP Math</summary>
-								<div className="mt-2 space-y-1 text-muted-foreground">
-									<p>
-										Per-round output: {(
-											xpUsage.config.basePartyOutputPerRound *
-											(safePartySize / 4)
-										).toFixed(1)}{' '}
-										XP | Attrition rate: {(xpUsage.config.attritionRate * 100).toFixed(0)}%
-										 | Max rounds: {xpUsage.config.maxRounds}
-									</p>
-									{xpUsage.waveInteraction.wave1 ? (
-										<p>
-											Round diff: {xpUsage.waveInteraction.roundDiff} | Threshold:{' '}
-											{xpUsage.waveInteraction.roundDiffThreshold}{' '}
-											{xpUsage.waveInteraction.affectsOtherWave
-												? '(waves interact)'
-												: '(no interaction)'}
-										</p>
-									) : null}
-									<p>Immediate XP: {xpUsage.immediateXp.valueOf()}</p>
-								</div>
-							</details>
 						</section>
 					</TabsContent>
 
@@ -528,6 +475,187 @@ export function BuilderPage({
 								{renderSlotRows(eventIndices, EVENT_SLOT_TYPES)}
 							</div>
 						</section>
+					</TabsContent>
+
+					<TabsContent value="variants" className="space-y-4">
+						<section className="space-y-3">
+							<div className="flex items-center justify-between gap-3">
+								<div>
+									<h3 className="text-sm font-medium">Saved Variants</h3>
+									<p className="text-xs text-muted-foreground">
+										Snapshot the current builder state as a reusable variant.
+									</p>
+								</div>
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									onClick={() => {
+										const label =
+											window.prompt(
+												'Variant description:',
+												`Variant ${variants.length + 1} (${safePartySize} players, level ${safePartyLevel})`
+											) ?? `Variant ${variants.length + 1}`;
+										const snapshot: BuilderVariantSnapshot = {
+											id: uuidv4(),
+											description: label,
+											partyLevel: safePartyLevel,
+											partySize: safePartySize,
+											slots: form.getValues('slots').map((s) => ({ ...s })),
+										};
+										form.setValue('variants', [...variants, snapshot], {
+											shouldDirty: true,
+										});
+									}}
+								>
+									Create Variant
+								</Button>
+							</div>
+
+							{variants.length === 0 ? (
+								<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+									No variants saved yet. Create one to store a reusable snapshot.
+								</div>
+							) : (
+								<div className="space-y-2">
+									{variants.map((snapshot, idx) => (
+										<div key={snapshot.id} className="rounded-md border p-3 space-y-2">
+											<div className="flex items-center gap-2">
+												<Input
+													className="h-7 text-sm"
+													value={snapshot.description}
+													onChange={(e) => {
+														const updated = variants.map((v, i) =>
+															i === idx ? { ...v, description: e.target.value } : v
+														);
+														form.setValue('variants', updated, { shouldDirty: true });
+													}}
+												/>
+												<Button
+													type="button"
+													variant="ghost"
+													size="icon"
+													title="Restore this snapshot"
+													onClick={() => {
+														const confirmed = window.confirm(
+															`Restore "${snapshot.description}"? This will overwrite the current party size, party level, and participants.`
+														);
+														if (!confirmed) return;
+														form.setValue('partyLevel', snapshot.partyLevel, { shouldDirty: true });
+														form.setValue('partySize', snapshot.partySize, { shouldDirty: true });
+														form.setValue('slots', snapshot.slots.map((s) => ({ ...s })), { shouldDirty: true });
+													}}
+												>
+													<RotateCcw className="h-4 w-4" />
+												</Button>
+												<Button
+													type="button"
+													variant="ghost"
+													size="icon"
+													title="Remove variant"
+													onClick={() => {
+														const updated = variants.filter((_, i) => i !== idx);
+														form.setValue('variants', updated, { shouldDirty: true });
+													}}
+												>
+													<Trash2 className="h-4 w-4 text-destructive" />
+												</Button>
+											</div>
+											<div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+												<span className="rounded border px-2 py-1">Party size: {snapshot.partySize}</span>
+												<span className="rounded border px-2 py-1">Party level: {snapshot.partyLevel}</span>
+												<span className="rounded border px-2 py-1">
+													Participants: {snapshot.slots.filter((s) => s.type === 'creature' || s.type === 'hazard').length}
+												</span>
+											</div>
+										</div>
+									))}
+								</div>
+							)}
+						</section>
+
+						{templateShadowVariants.length > 0 && (
+							<section className="space-y-3">
+								<div>
+									<h3 className="text-sm font-medium text-muted-foreground">From template</h3>
+									<p className="text-xs text-muted-foreground">
+										These are the original template variants. Load one to apply it to the current form, or load and save to create a concrete variant snapshot.
+									</p>
+								</div>
+								<div className="space-y-2">
+									{templateShadowVariants.map((tv) => {
+										const isCurrentVariant = tv.id === templateVariantId;
+										return (
+											<div
+												key={tv.id}
+												className="rounded-md border border-dashed bg-muted/30 p-3 space-y-2"
+											>
+												<div className="flex items-center justify-between gap-2">
+													<span className="text-sm text-muted-foreground italic">
+														{tv.description ?? `Party of ${tv.partySize}`}
+														{isCurrentVariant ? ' (current)' : ''}
+													</span>
+													<div className="flex gap-1">
+														<Button
+															type="button"
+															variant="outline"
+															size="sm"
+															className="text-xs"
+															onClick={() => {
+																const partial = templateVariantToFormPartial(tv, safePartyLevel);
+																form.setValue('partySize', partial.partySize, { shouldDirty: true });
+																form.setValue('slots', partial.slots, { shouldDirty: true });
+															}}
+														>
+															Load
+														</Button>
+														<Button
+															type="button"
+															variant="outline"
+															size="sm"
+															className="text-xs"
+															onClick={() => {
+																const partial = templateVariantToFormPartial(tv, safePartyLevel);
+																form.setValue('partySize', partial.partySize, { shouldDirty: true });
+																form.setValue('slots', partial.slots, { shouldDirty: true });
+																const label =
+																	window.prompt(
+																		'Variant description:',
+																		tv.description ?? `Party of ${tv.partySize}`
+																	) ?? (tv.description ?? `Party of ${tv.partySize}`);
+																const snapshot: BuilderVariantSnapshot = {
+																	id: uuidv4(),
+																	description: label,
+																	partyLevel: safePartyLevel,
+																	partySize: partial.partySize,
+																	slots: partial.slots.map((s) => ({ ...s })),
+																};
+																form.setValue(
+																	'variants',
+																	[...form.getValues('variants'), snapshot],
+																	{ shouldDirty: true }
+																);
+															}}
+														>
+															Load &amp; Save
+														</Button>
+													</div>
+												</div>
+												<div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+													<span className="rounded border border-dashed px-2 py-1">Party size: {tv.partySize}</span>
+													{tv.partyLevel && (
+														<span className="rounded border border-dashed px-2 py-1">Party level: {tv.partyLevel}</span>
+													)}
+													<span className="rounded border border-dashed px-2 py-1">
+														Participants: {tv.participants.length}
+													</span>
+												</div>
+											</div>
+										);
+									})}
+								</div>
+							</section>
+						)}
 					</TabsContent>
 				</Tabs>
 

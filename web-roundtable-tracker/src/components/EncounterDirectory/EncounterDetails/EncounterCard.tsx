@@ -8,18 +8,51 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { DIFFICULTY, difficultyToString, Encounter } from '@/store/data';
+import {
+	DIFFICULTY,
+	LEVEL_REPRESENTATION,
+	difficultyToString,
+	Encounter,
+	type Participant as StoreParticipant,
+} from '@/store/data';
 import { useEffect, useState } from 'react';
 import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { useNavigate } from '@tanstack/react-router';
 import { Pencil, Play, Trash2, UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import encounterTemplates from '@/store/Encounters/migratedEncounterTemplates';
+import type { EncounterVariant } from '@/models/encounters/encounter.types';
+
+function buildTemplateVariantParticipants(
+	variant: EncounterVariant
+): StoreParticipant<typeof LEVEL_REPRESENTATION.Relative>[] {
+	return variant.participants.map((p) => {
+		const base = {
+			name: p.tag ?? p.role,
+			level: p.relativeLevel.toString() as `+${number}` | `-${number}`,
+			side: p.side,
+			count: p.count,
+		};
+
+		if (p.type === 'hazard') {
+			return {
+				...base,
+				type: 'hazard' as const,
+				successesToDisable: p.successesToDisable,
+				isComplexHazard: p.role === 'complex',
+			};
+		}
+
+		return { ...base, type: 'creature' as const };
+	});
+}
 
 type EncounterCardProps = {
 	selectedEncounter: Encounter;
 	source?: 'template' | 'saved';
 	encounterId?: string;
 	templateId?: string;
+	templateVariantId?: string;
 	onDelete?: () => void;
 	submit: (encounter?: Encounter) => void;
 	close: () => void;
@@ -31,6 +64,7 @@ export const EncounterCard = (props: EncounterCardProps) => {
 		source,
 		encounterId,
 		templateId,
+		templateVariantId,
 		onDelete,
 		submit,
 		close,
@@ -38,31 +72,95 @@ export const EncounterCard = (props: EncounterCardProps) => {
 	const navigate = useNavigate();
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
 	const setPartyLevel = useEncounterStore((state) => state.setPartyLevel);
+
+	// Variant switcher state
+	const activeTemplate =
+		source === 'template' && templateId
+			? encounterTemplates.find((t) => t.id === templateId)
+			: undefined;
+	const allTemplateVariants = activeTemplate?.variants ?? [];
+	const hasMultipleTemplateVariants = allTemplateVariants.length > 1;
+
+	const savedVariants =
+		source === 'saved' ? (selectedEncounter.variants ?? []) : [];
+	const hasSavedVariants = savedVariants.length > 0;
+
+	const [activeTemplateVariantId, setActiveTemplateVariantId] = useState<
+		string | undefined
+	>(templateVariantId);
+	// null = base encounter for saved variants
+	const [activeSavedVariantIdx, setActiveSavedVariantIdx] = useState<
+		number | null
+	>(null);
+
+	const activeTemplateVariant = allTemplateVariants.find(
+		(v) => v.id === activeTemplateVariantId
+	);
+	const activeSavedVariant =
+		activeSavedVariantIdx !== null ? savedVariants[activeSavedVariantIdx] : null;
+
+	// Derived display values based on active variant
+	const displayedParticipants: StoreParticipant[] = (() => {
+		if (source === 'template' && activeTemplateVariant) {
+			return buildTemplateVariantParticipants(activeTemplateVariant);
+		}
+		if (source === 'saved' && activeSavedVariant) {
+			return activeSavedVariant.participants as StoreParticipant[];
+		}
+		return selectedEncounter.participants ?? [];
+	})();
+
+	const displayedPartySize = (() => {
+		if (source === 'template' && activeTemplateVariant) {
+			return activeTemplateVariant.partySize;
+		}
+		if (source === 'saved' && activeSavedVariant) {
+			return activeSavedVariant.partySize ?? selectedEncounter.partySize ?? 4;
+		}
+		return selectedEncounter.partySize ?? 4;
+	})();
+
+	const levelRange = Array.isArray(selectedEncounter.level)
+		? selectedEncounter.level
+		: undefined;
+
 	const [level, setLevel] = useState<number>(partyLevel);
-	const isVariableLevel = Array.isArray(selectedEncounter.level);
-	const partySize = selectedEncounter.partySize ?? 4;
-	const participants = selectedEncounter.participants ?? [];
 
 	const clampLevel = (value: number) => {
-		if (!isVariableLevel) {
+		if (!levelRange) {
 			return value;
 		}
 
-		return Math.min(
-			selectedEncounter.level[1],
-			Math.max(selectedEncounter.level[0], value)
-		);
+		return Math.min(levelRange[1], Math.max(levelRange[0], value));
 	};
 
 	useEffect(() => {
-		const level = Array.isArray(selectedEncounter.level)
-			? Math.max(
-					selectedEncounter.level[0],
-					Math.min(selectedEncounter.level[1], partyLevel)
-				)
-			: selectedEncounter.level || 0;
+		const level = levelRange
+			? Math.max(levelRange[0], Math.min(levelRange[1], partyLevel))
+			: (typeof selectedEncounter.level === 'number' ? selectedEncounter.level : 0);
 		setLevel(level);
-	}, [partyLevel, selectedEncounter]);
+	}, [levelRange, partyLevel, selectedEncounter.level]);
+
+	// Build override encounter for submit when a variant is active
+	const buildVariantEncounter = (): Encounter | undefined => {
+		if (source === 'template' && activeTemplateVariant) {
+			return {
+				...selectedEncounter,
+				partySize: activeTemplateVariant.partySize,
+				participants: buildTemplateVariantParticipants(activeTemplateVariant),
+				description:
+					activeTemplateVariant.description ?? selectedEncounter.description,
+			} as Encounter;
+		}
+		if (source === 'saved' && activeSavedVariant) {
+			return {
+				...selectedEncounter,
+				partySize: activeSavedVariant.partySize ?? selectedEncounter.partySize,
+				participants: activeSavedVariant.participants,
+			} as Encounter;
+		}
+		return undefined;
+	};
 
 	return (
 		<Card className="gap-0 rounded-none border-0 shadow-none">
@@ -89,24 +187,24 @@ export const EncounterCard = (props: EncounterCardProps) => {
 					<div className="grid gap-3 sm:min-w-56">
 						<div className="rounded-xl border bg-muted/40 px-4 py-3 text-sm">
 							<p className="font-medium text-foreground">Encounter Level</p>
-							{isVariableLevel ? (
+							{levelRange ? (
 								<div className="mt-3 flex items-center gap-3">
 									<Input
 										type="number"
-										min={selectedEncounter.level[0]}
-										max={selectedEncounter.level[1]}
+										min={levelRange[0]}
+										max={levelRange[1]}
 										value={level}
 										onChange={(event) => {
 											const nextValue = Number.parseInt(event.target.value, 10);
 
 											setLevel(
-												clampLevel(Number.isNaN(nextValue) ? selectedEncounter.level[0] : nextValue)
+												clampLevel(Number.isNaN(nextValue) ? levelRange[0] : nextValue)
 											);
 										}}
 										className="h-9 w-24"
 									/>
 									<p className="text-xs text-muted-foreground">
-										Range {selectedEncounter.level[0]}-{selectedEncounter.level[1]}
+										Range {levelRange[0]}-{levelRange[1]}
 									</p>
 								</div>
 							) : (
@@ -121,7 +219,7 @@ export const EncounterCard = (props: EncounterCardProps) => {
 										key={index}
 										className={cn(
 											'h-4 w-4',
-											index < partySize
+										index < displayedPartySize
 												? 'text-foreground'
 												: 'text-muted-foreground/40'
 										)}
@@ -133,14 +231,62 @@ export const EncounterCard = (props: EncounterCardProps) => {
 				</div>
 			</CardHeader>
 			<CardContent className="space-y-6 py-6">
+				{(hasMultipleTemplateVariants || hasSavedVariants) && (
+					<section className="space-y-2">
+						<h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+							Variants
+						</h3>
+						<div className="flex flex-wrap gap-2">
+							{source === 'template' &&
+								allTemplateVariants.map((tv, idx) => {
+									const label = tv.description ?? `Variant ${String.fromCharCode(65 + idx)}`;
+									const isActive = tv.id === activeTemplateVariantId;
+									return (
+										<Button
+											key={tv.id}
+											type="button"
+											size="sm"
+											variant={isActive ? 'default' : 'outline'}
+											onClick={() => setActiveTemplateVariantId(tv.id)}
+										>
+											{label}
+										</Button>
+									);
+								})}
+							{source === 'saved' && (
+								<>
+									<Button
+										type="button"
+										size="sm"
+										variant={activeSavedVariantIdx === null ? 'default' : 'outline'}
+										onClick={() => setActiveSavedVariantIdx(null)}
+									>
+										Base
+									</Button>
+									{savedVariants.map((sv, idx) => (
+										<Button
+											key={idx}
+											type="button"
+											size="sm"
+											variant={activeSavedVariantIdx === idx ? 'default' : 'outline'}
+											onClick={() => setActiveSavedVariantIdx(idx)}
+										>
+											{sv.description || `Variant ${idx + 1}`}
+										</Button>
+									))}
+								</>
+							)}
+						</div>
+					</section>
+				)}
 				<section className="space-y-3">
 					<h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
 						Participants
 					</h3>
 					<div className="rounded-xl border bg-muted/30 p-4">
-						{participants.length > 0 ? (
+						{displayedParticipants.length > 0 ? (
 							<ul className="space-y-2 text-sm text-muted-foreground">
-								{participants.map((participant, index) => (
+								{displayedParticipants.map((participant, index) => (
 									<li key={`${participant.name}-${index}`}>
 										<span className="font-medium text-foreground">
 											{participant.name}
@@ -170,18 +316,19 @@ export const EncounterCard = (props: EncounterCardProps) => {
 						<Button
 							variant="secondary"
 							onClick={() => {
-								const templateLevel = isVariableLevel
+								const templateLevel = levelRange
 									? level
 									: (typeof selectedEncounter.level === 'number'
 										? selectedEncounter.level
 										: undefined);
-								const templatePartySize = selectedEncounter.partySize ?? 4;
+								const templatePartySize = activeTemplateVariant?.partySize ?? selectedEncounter.partySize ?? 4;
 
 								close();
 								navigate({
 									to: '/builder',
 									search: {
 										templateId,
+										templateVariantId: activeTemplateVariantId,
 										templateLevel,
 										templatePartySize,
 									},
@@ -208,15 +355,15 @@ export const EncounterCard = (props: EncounterCardProps) => {
 					) : null}
 					<Button
 						onClick={() => {
-							if (isVariableLevel) {
+							if (levelRange) {
 								setPartyLevel(Math.max(1, level));
 							} else if (typeof selectedEncounter.level === 'number') {
 								setPartyLevel(Math.max(1, selectedEncounter.level));
 							}
 
-							submit();
+							submit(buildVariantEncounter());
 						}}
-						disabled={isVariableLevel && level <= 0}
+						disabled={Boolean(levelRange && level <= 0)}
 					>
 						<Play className="h-4 w-4" />
 						Select

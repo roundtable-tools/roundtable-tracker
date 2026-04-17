@@ -8,8 +8,9 @@ type EncounterDetailsModalProps = {
 	source?: 'template' | 'saved';
 	encounterId?: string;
 	templateId?: string;
+	templateVariantId?: string;
 	onDelete?: () => void;
-	submit: () => void;
+	submit: (encounter?: Encounter) => void;
 };
 
 export const EncounterDetailsModal = (props: EncounterDetailsModalProps) => {
@@ -19,6 +20,7 @@ export const EncounterDetailsModal = (props: EncounterDetailsModalProps) => {
 		source,
 		encounterId,
 		templateId,
+		templateVariantId,
 		onDelete,
 		submit,
 	} =
@@ -32,6 +34,7 @@ export const EncounterDetailsModal = (props: EncounterDetailsModalProps) => {
 					source={source}
 					encounterId={encounterId}
 					templateId={templateId}
+					templateVariantId={templateVariantId}
 					onDelete={onDelete}
 					submit={submit}
 					close={closeLayer}

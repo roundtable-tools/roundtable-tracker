@@ -32,12 +32,11 @@ import { Filter, Plus, Search, Upload, UserRound, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import migratedEncounterTemplates from '../../store/Encounters/migratedEncounterTemplates.ts';
 import {
-	ALIGNMENT,
-	CombatantParticipant,
 	DIFFICULTY,
 	difficultyToString,
 	Encounter,
 	LEVEL_REPRESENTATION,
+	type Participant as StoreParticipant,
 	indexToLetter,
 	participantsToLevelRange,
 } from '@/store/data.ts';
@@ -58,6 +57,10 @@ type EncounterDirectoryEntry = Encounter & {
 	source: 'template' | 'saved';
 	difficultyLabel: string;
 	templateId?: string;
+	templateVariantId?: string;
+	templateVariantLabel?: string;
+	templateVariantCount?: number;
+	templateGroupId?: string;
 };
 
 const PARTY_SIZE_OPTIONS = [3, 4, 5, 6] as const;
@@ -70,12 +73,36 @@ const formatLevel = (level: EncounterDirectoryEntry['level']) => {
 	return Array.isArray(level) ? `${level[0]}-${level[1]}` : `${level}`;
 };
 
-const summarizeParticipants = (participants?: CombatantParticipant[]) =>
+const summarizeParticipants = (participants?: StoreParticipant[]) =>
 	participants
 		? participants.reduce<string>((acc, participant) => {
 				return `${acc}${acc ? ', ' : ''}${participant.name}${participant.count ? ` (x${participant.count})` : ''}`;
 		  }, '')
 		: '';
+
+const summarizeVariantInfo = (entry: EncounterDirectoryEntry) => {
+	if (entry.source !== 'template') {
+		const variants = entry.variants ?? [];
+
+		if (variants.length === 0) {
+			return 'No variants';
+		}
+
+		const primaryVariant = variants[0];
+
+		return `${variants.length} variant${variants.length === 1 ? '' : 's'}${primaryVariant?.description ? ` • ${primaryVariant.description}` : ''}`;
+	}
+
+	if (entry.templateVariantCount && entry.templateVariantCount > 1) {
+		if (entry.templateVariantLabel) {
+			return `Variant ${entry.templateVariantLabel} of ${entry.templateVariantCount}`;
+		}
+
+		return `${entry.templateVariantCount} template variants`;
+	}
+
+	return entry.templateVariantLabel ? `Variant ${entry.templateVariantLabel}` : 'Variant A';
+};
 
 const directoryGlobalFilter: FilterFn<EncounterDirectoryEntry> = (
 	row,
@@ -94,6 +121,7 @@ const directoryGlobalFilter: FilterFn<EncounterDirectoryEntry> = (
 		encounter.name,
 		encounter.description,
 		encounter.difficultyLabel,
+		summarizeVariantInfo(encounter),
 		formatLevel(encounter.level),
 		`${encounter.partySize ?? 4}`,
 		summarizeParticipants(encounter.participants),
@@ -134,7 +162,7 @@ const toDirectoryDifficulty = (tags?: string[]) => {
 
 const toDirectoryParticipants = (
 	participants: EncounterTemplateData['variants'][number]['participants']
-): CombatantParticipant[] => {
+): StoreParticipant<typeof LEVEL_REPRESENTATION.Relative>[] => {
 	return participants.map((participant) => {
 		const baseParticipant = {
 			name: participant.tag ?? participant.role,
@@ -161,7 +189,8 @@ const toDirectoryParticipants = (
 };
 
 const toTemplateEntries = (
-	templates: EncounterTemplateData[]
+	templates: EncounterTemplateData[],
+	groupByVariant: boolean
 ): EncounterDirectoryEntry[] => {
 	return templates.flatMap<EncounterDirectoryEntry>((template) => {
 		const difficulty = toDirectoryDifficulty(template.tags);
@@ -169,13 +198,43 @@ const toTemplateEntries = (
 			template.variants.find(
 				(variant) => variant.id === template.defaultVariantId
 			) ?? template.variants[0];
+
+		if (!defaultVariant) {
+			return [];
+		}
+
+		if (!groupByVariant) {
+			const participants = toDirectoryParticipants(defaultVariant.participants);
+
+			return [
+				{
+					id: template.id,
+					directoryId: `template:${template.id}`,
+					source: 'template' as const,
+					templateId: template.id,
+					templateVariantId: defaultVariant.id,
+					templateVariantCount: template.variants.length,
+					templateGroupId: template.id,
+					name: template.name,
+					difficultyLabel: difficultyToString(difficulty),
+					level: participantsToLevelRange(participants),
+					description: defaultVariant.description ?? template.description,
+					difficulty,
+					partySize: defaultVariant.partySize,
+					participants,
+					levelRepresentation: LEVEL_REPRESENTATION.Relative,
+				},
+			];
+		}
+
 		const nonDefaultVariants = template.variants.filter(
 			(variant) => variant.id !== defaultVariant.id
 		);
 		const orderedVariants = [defaultVariant, ...nonDefaultVariants];
 
 		return orderedVariants.map((variant, index) => {
-			const id = `${template.id}-${indexToLetter(index)}`;
+			const variantLabel = indexToLetter(index).toUpperCase();
+			const id = `${template.id}-${variantLabel.toLowerCase()}`;
 			const participants = toDirectoryParticipants(variant.participants);
 
 			return {
@@ -183,6 +242,10 @@ const toTemplateEntries = (
 				directoryId: `template:${id}`,
 				source: 'template' as const,
 				templateId: template.id,
+				templateVariantId: variant.id,
+				templateVariantLabel: variantLabel,
+				templateVariantCount: orderedVariants.length,
+				templateGroupId: template.id,
 				name: template.name,
 				difficultyLabel: difficultyToString(difficulty),
 				level: participantsToLevelRange(participants),
@@ -212,10 +275,13 @@ export const getDefaultShowTemplates = (savedCount: number) => savedCount === 0;
 export const createDirectoryEntries = (
 	templates: EncounterTemplateData[],
 	savedEncounters: SavedConcreteEncounter[],
-	showTemplates: boolean
+	showTemplates: boolean,
+	groupByVariant = true
 ): EncounterDirectoryEntry[] => {
 	const savedEntries = toSavedEntries(savedEncounters);
-	const templateEntries = showTemplates ? toTemplateEntries(templates) : [];
+	const templateEntries = showTemplates
+		? toTemplateEntries(templates, groupByVariant)
+		: [];
 
 	return [...savedEntries, ...templateEntries];
 };
@@ -237,6 +303,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 	const [showTemplates, setShowTemplates] = useState(
 		getDefaultShowTemplates(savedEncounters.length)
 	);
+	const [groupByVariant, setGroupByVariant] = useState(true);
 	const [globalFilter, setGlobalFilter] = useState('');
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -247,9 +314,10 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			createDirectoryEntries(
 				migratedEncounterTemplates,
 				savedEncounters,
-				showTemplates
+				showTemplates,
+				groupByVariant
 			),
-		[savedEncounters, showTemplates]
+		[savedEncounters, showTemplates, groupByVariant]
 	);
 
 	useEffect(() => {
@@ -271,6 +339,15 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 						{row.original.source === 'saved' ? (
 							<span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
 								Saved
+							</span>
+						) : (
+							<span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-xs font-semibold text-sky-700 dark:text-sky-300">
+								Template
+							</span>
+						)}
+						{row.original.templateVariantLabel ? (
+							<span className="rounded-full border px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+								Variant {row.original.templateVariantLabel}
 							</span>
 						) : null}
 					</div>
@@ -326,6 +403,14 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 					<span className="text-sm text-muted-foreground">{getValue()}</span>
 				),
 			}),
+			columnHelper.accessor((row) => summarizeVariantInfo(row), {
+				id: 'variants',
+				header: 'Variants',
+				enableSorting: false,
+				cell: ({ getValue }) => (
+					<span className="text-sm text-muted-foreground">{getValue()}</span>
+				),
+			}),
 		];
 	}, []);
 
@@ -340,8 +425,14 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 
 		if (selectedEncounterData?.source === 'saved' && selectedEncounterData?.id) {
 			params.encounterId = selectedEncounterData.id;
-		} else if (selectedEncounterData?.source === 'template' && selectedEncounterData?.templateId) {
+		} else if (
+			selectedEncounterData?.source === 'template' &&
+			selectedEncounterData?.templateId
+		) {
 			params.templateId = selectedEncounterData.templateId;
+			if (selectedEncounterData.templateVariantId) {
+				params.templateVariantId = selectedEncounterData.templateVariantId;
+			}
 		}
 
 		navigate({
@@ -424,6 +515,16 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 									aria-label="Show templates"
 								/>
 								Show Templates
+							</label>
+						) : null}
+						{showTemplates ? (
+							<label className="flex items-center gap-2 text-sm font-medium text-white">
+								<Switch
+									checked={groupByVariant}
+									onCheckedChange={setGroupByVariant}
+									aria-label="Group templates by variant"
+								/>
+								Group by variant
 							</label>
 						) : null}
 						<div className="relative min-w-0 flex-1 sm:max-w-sm">
@@ -562,10 +663,11 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 				source={selectedEncounterData?.source}
 				encounterId={selectedEncounterData?.id}
 				templateId={selectedEncounterData?.templateId}
+				templateVariantId={selectedEncounterData?.templateVariantId}
 				onDelete={deleteSelectedEncounter}
-				submit={() => {
-					if (selectedEncounterData)
-						setEncounterData(toEncounter(selectedEncounterData));
+				submit={(encounter) => {
+					const data = encounter ?? (selectedEncounterData ? toEncounter(selectedEncounterData) : undefined);
+					if (data) setEncounterData(data);
 					setSelected(undefined);
 					openPreview();
 				}}

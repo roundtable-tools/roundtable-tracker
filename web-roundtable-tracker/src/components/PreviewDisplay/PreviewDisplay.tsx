@@ -296,7 +296,7 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	};
 
 	const onSelectInitiativeView = (
-		view: 'initiative' | 'newInitiative' | 'initiativeTracker' | 'initiativePlayer'
+		view: 'initiativeTracker' | 'initiativePlayer'
 	) => {
 		startEncounter(participantsToEncounterCharacters(preparedParticipants));
 		setTrackerMetaMap(buildTrackerMetaMap(preparedParticipants));
@@ -315,13 +315,7 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 			return;
 		}
 
-		if (view === 'newInitiative') {
-			navigate({ to: '/new_initiative' });
-
-			return;
-		}
-
-		navigate({ to: '/initiative' });
+		navigate({ to: '/initiative_tracker' });
 	};
 
 	const { fields: teamFields } = useFieldArray({
@@ -344,15 +338,6 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 					<DialogFooter className="flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
 						<Button variant="outline" onClick={() => setShowInitiativeChoice(false)}>
 							Cancel
-						</Button>
-						<Button
-							variant="secondary"
-							onClick={() => onSelectInitiativeView('initiative')}
-						>
-							Classic Initiative
-						</Button>
-						<Button onClick={() => onSelectInitiativeView('newInitiative')}>
-							New Initiative
 						</Button>
 						<Button
 							variant="secondary"

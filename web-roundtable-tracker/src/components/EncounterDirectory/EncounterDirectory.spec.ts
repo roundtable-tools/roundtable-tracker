@@ -74,6 +74,7 @@ describe('EncounterDirectory data helpers', () => {
 		const data = createDirectoryEntries(
 			[templateEncounter],
 			[savedEncounter],
+			true,
 			true
 		);
 
@@ -82,13 +83,30 @@ describe('EncounterDirectory data helpers', () => {
 		expect(data[0].directoryId).toBe('saved:saved-1');
 		expect(data[1].source).toBe('template');
 		expect(data[1].directoryId).toBe('template:template-1-a');
+		expect(data[1].templateVariantCount).toBe(1);
+	});
+
+	it('preserves template variant grouping metadata when grouping is disabled', () => {
+		const data = createDirectoryEntries(
+			[templateEncounter],
+			[savedEncounter],
+			true,
+			false
+		);
+
+		expect(data).toHaveLength(2);
+		expect(data[1].directoryId).toBe('template:template-1');
+		expect(data[1].templateId).toBe('template-1');
+		expect(data[1].templateVariantId).toBe('variant-1');
+		expect(data[1].templateVariantCount).toBe(1);
 	});
 
 	it('returns only saved encounters when templates are hidden', () => {
 		const data = createDirectoryEntries(
 			[templateEncounter],
 			[savedEncounter],
-			false
+			false,
+			true
 		);
 
 		expect(data).toHaveLength(1);
@@ -97,7 +115,7 @@ describe('EncounterDirectory data helpers', () => {
 	});
 
 	it('strips directory metadata when converting entry to encounter', () => {
-		const [entry] = createDirectoryEntries([], [savedEncounter], false);
+		const [entry] = createDirectoryEntries([], [savedEncounter], false, true);
 		const encounter = toEncounter(entry);
 
 		expect(encounter.id).toBe('saved-1');
