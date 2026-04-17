@@ -1,8 +1,12 @@
 import { CompositeCommand } from './Commands/CompositeCommand';
+import { DelayCharacterCommand } from './Commands/DelayCharacterCommand';
 import { EndRoundCommand } from './Commands/EndRoundCommand';
 import { EndTurnCommand } from './Commands/EndTurnCommand';
+import { FinalizeTurnAndAdvanceRoundCommand } from './Commands/FinalizeTurnAndAdvanceRoundCommand';
+import { KnockOutCharacterCommand } from './Commands/KnockOutCharacterCommand';
 import { RemoveCharacterCommand } from './Commands/RemoveCharacterCommand';
 import { ReorderCharactersCommand } from './Commands/ReorderCharactersCommand';
+import { TriggerReinforcementEventCommand } from './Commands/TriggerReinforcementEventCommand';
 import { UpdateCharacterDataCommand } from './Commands/UpdateCharacterDataCommand';
 import { Command } from './common';
 
@@ -41,4 +45,17 @@ export const registerSerializableCommands = () => {
 	);
 	registerSerializableCommand(EndTurnCommand, 'EndTurnCommand');
 	registerSerializableCommand(EndRoundCommand, 'EndRoundCommand');
+	registerSerializableCommand(
+		FinalizeTurnAndAdvanceRoundCommand,
+		'FinalizeTurnAndAdvanceRoundCommand'
+	);
+	registerSerializableCommand(DelayCharacterCommand, 'DelayCharacterCommand');
+	registerSerializableCommand(
+		KnockOutCharacterCommand,
+		'KnockOutCharacterCommand'
+	);
+	registerSerializableCommand(
+		TriggerReinforcementEventCommand,
+		'TriggerReinforcementEventCommand'
+	);
 };

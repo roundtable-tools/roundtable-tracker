@@ -36,6 +36,7 @@ import type {
 	SlotType,
 	SideType,
 } from './builderXp';
+import { normalizeSideType } from './builderXp';
 import type { LevelAdjustment } from '@/models/utility/level/Level';
 import type { AccomplishmentLevel } from '@/models/encounters/encounter.types';
 import { v4 as uuidv4 } from 'uuid';
@@ -55,9 +56,9 @@ export const PARTICIPANT_SLOT_TYPES: SlotType[] = [
 export const EVENT_SLOT_TYPES: SlotType[] = ['narrative', 'reinforcement'];
 
 const SIDE_OPTIONS: { value: SideType; label: string }[] = [
-	{ value: 'enemy', label: 'Enemy' },
-	{ value: 'ally', label: 'Ally' },
-	{ value: 'neutral', label: 'Neutral' },
+	{ value: 'opponent', label: 'Opponents' },
+	{ value: 'ally', label: 'Allies' },
+	{ value: 'other', label: 'Other' },
 ];
 
 const ADJUSTMENT_OPTIONS: { value: LevelAdjustment | 'none'; label: string }[] = [
@@ -100,7 +101,7 @@ export function SlotRow({ index, form, remove, update, allowedTypes }: SlotRowPr
 		id: uuidv4(),
 		type: 'creature',
 		name: '',
-		side: 'enemy',
+		side: 'opponent',
 		level: 1,
 		count: 1,
 		maxHealth: undefined,
@@ -251,7 +252,7 @@ export function SlotRow({ index, form, remove, update, allowedTypes }: SlotRowPr
 									<FormLabel>Side</FormLabel>
 									<FormControl>
 										<Select
-											value={field.value}
+											value={normalizeSideType(field.value as SideType)}
 											onValueChange={(value) => field.onChange(value as SideType)}
 										>
 											<SelectTrigger className="w-full">
@@ -617,7 +618,7 @@ export function SlotRow({ index, form, remove, update, allowedTypes }: SlotRowPr
 									<div className="space-y-1">
 										<FormLabel>Side</FormLabel>
 										<Select
-											value={participant.side}
+											value={normalizeSideType(participant.side)}
 											onValueChange={(value) =>
 												handleReinforcementParticipantChange(participantIndex, {
 													side: value as SideType,

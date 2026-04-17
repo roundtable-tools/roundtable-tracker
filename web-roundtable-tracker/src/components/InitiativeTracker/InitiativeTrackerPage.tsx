@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { type TrackerParticipant } from './mockData';
 import Timeline from '@/components/InitiativeList/Timeline';
 import { Button } from '@/components/ui/button';
@@ -24,10 +24,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-	ArrowLeft,
 	ArrowRight,
 	ArrowUpDown,
-	Heart,
 	History,
 	Redo2,
 	ShieldOff,
@@ -35,14 +33,27 @@ import {
 	Undo2,
 } from 'lucide-react';
 import { Reorder } from 'motion/react';
-import { useEncounterStore } from '@/store/encounterRuntimeInstance';
+import { InitiativeActionCarouselCard } from './InitiativeActionCarouselCard';
+import {
+	getEncounterStore,
+	useEncounterStore,
+} from '@/store/encounterRuntimeInstance';
 import {
 	runtimeToInitiativeQueue,
+	runtimeToInitiativeQueueWithPending,
 	runtimeToOutOfInitiativeData,
 	narrativeSlotsToTimeline,
 	encounterToTrackerHeader,
 	historyToPreviewLines,
 } from '@/store/trackerMappers';
+import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
+import { DelayCharacterCommand } from '@/CommandHistory/Commands/DelayCharacterCommand';
+import { EndTurnCommand } from '@/CommandHistory/Commands/EndTurnCommand';
+import { FinalizeTurnAndAdvanceRoundCommand } from '@/CommandHistory/Commands/FinalizeTurnAndAdvanceRoundCommand';
+import { KnockOutCharacterCommand } from '@/CommandHistory/Commands/KnockOutCharacterCommand';
+import { TriggerReinforcementEventCommand } from '@/CommandHistory/Commands/TriggerReinforcementEventCommand';
+import { ReturnToInitiativeCommand } from '@/CommandHistory/Commands/ReturnToInitiativeCommand';
+import { ReorderCharactersCommand } from '@/CommandHistory/Commands/ReorderCharactersCommand';
 
 function logTrackerButton(action: string, details?: Record<string, unknown>) {
 	if (details) {
@@ -143,8 +154,70 @@ function getParticipantIndicatorLabel(participant: TrackerParticipant) {
 	return getHealthLabelFromPercentage(healthPercentage);
 }
 
-function getParticipantAccent(role: TrackerParticipant['role']) {
-	switch (role) {
+function getParticipantRoleLabel(participant: TrackerParticipant) {
+	if (participant.role === 'neutral') {
+		return 'Other';
+	}
+
+	if (participant.role === 'opponent') {
+		return 'Opponents';
+	}
+
+	if (participant.role === 'pc') {
+		return 'PCs';
+	}
+
+	if (participant.role === 'ally') {
+		return 'Allies';
+	}
+
+	if (participant.role === 'hazard') {
+		return 'Hazard';
+	}
+
+	if (participant.role === 'reinforcement') {
+		return 'Reinforcement';
+	}
+
+	return participant.role;
+}
+
+type SideTheme = 'pc' | 'opponent' | 'ally' | 'other';
+
+function resolveParticipantSideTheme(participant: TrackerParticipant): SideTheme {
+	if (participant.sideTheme === 'pc') {
+		return 'pc';
+	}
+
+	if (participant.sideTheme === 'ally') {
+		return 'ally';
+	}
+
+	if (participant.sideTheme === 'other' || participant.sideTheme === 'neutral') {
+		return 'other';
+	}
+
+	if (participant.sideTheme === 'opponent') {
+		return 'opponent';
+	}
+
+	if (participant.role === 'pc') {
+		return 'pc';
+	}
+
+	if (participant.role === 'ally') {
+		return 'ally';
+	}
+
+	if (participant.role === 'neutral') {
+		return 'other';
+	}
+
+	return 'opponent';
+}
+
+function getSideAccent(sideTheme: SideTheme) {
+	switch (sideTheme) {
 		case 'pc':
 			return {
 				badge: 'bg-sky-500/15 text-sky-200 ring-1 ring-sky-400/40',
@@ -167,7 +240,7 @@ function getParticipantAccent(role: TrackerParticipant['role']) {
 				delayedCard: 'border-rose-500/50 bg-rose-500/10 text-rose-200',
 			};
 
-		case 'neutral':
+		case 'other':
 			return {
 				badge: 'bg-violet-500/15 text-violet-200 ring-1 ring-violet-400/40',
 				inactiveCard: 'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-violet-500/60 hover:bg-slate-900/95',
@@ -179,29 +252,6 @@ function getParticipantAccent(role: TrackerParticipant['role']) {
 			};
 
 		case 'ally':
-			return {
-				badge: 'bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/40',
-				inactiveCard: 'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-emerald-500/60 hover:bg-slate-900/95',
-				inactiveMarker: 'border-l-4 border-l-emerald-400',
-				name: 'text-emerald-200',
-				activeCard:
-					'border-emerald-300 bg-emerald-600 text-emerald-50 shadow-lg shadow-emerald-950/30',
-				delayedCard: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-200',
-			};
-
-		case 'hazard':
-			return {
-				badge: 'bg-amber-500/15 text-amber-200 ring-1 ring-amber-400/40',
-				inactiveCard: 'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-amber-500/60 hover:bg-slate-900/95',
-				inactiveMarker: 'border-l-4 border-l-amber-400',
-				name: 'text-amber-200',
-				activeCard:
-					'border-amber-300 bg-amber-600 text-amber-950 shadow-lg shadow-amber-950/30',
-				delayedCard: 'border-amber-500/50 bg-amber-500/10 text-amber-200',
-			};
-
-		case 'reinforcement':
-
 		default:
 			return {
 				badge: 'bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/40',
@@ -215,14 +265,44 @@ function getParticipantAccent(role: TrackerParticipant['role']) {
 	}
 }
 
+function getParticipantAccent(participant: TrackerParticipant) {
+	const sideTheme = resolveParticipantSideTheme(participant);
+	const baseAccent = getSideAccent(sideTheme);
+
+	if (participant.role !== 'hazard') {
+		return baseAccent;
+	}
+
+	const hazardStripeBySide: Record<SideTheme, string> = {
+		pc: 'bg-[repeating-linear-gradient(135deg,rgba(56,189,248,0.14)_0_6px,rgba(56,189,248,0)_6px_12px)]',
+		opponent:
+			'bg-[repeating-linear-gradient(135deg,rgba(251,113,133,0.14)_0_6px,rgba(251,113,133,0)_6px_12px)]',
+		ally:
+			'bg-[repeating-linear-gradient(135deg,rgba(52,211,153,0.14)_0_6px,rgba(52,211,153,0)_6px_12px)]',
+		other:
+			'bg-[repeating-linear-gradient(135deg,rgba(167,139,250,0.14)_0_6px,rgba(167,139,250,0)_6px_12px)]',
+	};
+
+	const hazardStripe = hazardStripeBySide[sideTheme];
+
+	return {
+		...baseAccent,
+		inactiveCard: `${baseAccent.inactiveCard} ${hazardStripe}`,
+		activeCard: `${baseAccent.activeCard} ${hazardStripe}`,
+		delayedCard: `${baseAccent.delayedCard} ${hazardStripe}`,
+	};
+}
+
 function ParticipantRow({
 	participant,
 	onSelect,
 	selected,
+	actionSlot,
 }: {
 	participant: TrackerParticipant;
 	onSelect: (id: string) => void;
 	selected: boolean;
+	actionSlot?: React.ReactNode;
 }) {
 	const indicatorLabel = getParticipantIndicatorLabel(participant);
 
@@ -243,9 +323,17 @@ function ParticipantRow({
 		>
 			<div>
 				<p className="text-sm font-semibold">{participant.name}</p>
-				<p className="text-xs text-muted-foreground">{participant.state}</p>
+				<p className="text-xs text-muted-foreground">
+					{participant.state}
+					{typeof participant.initiative === 'number'
+						? ` | Init ${participant.initiative}`
+						: ''}
+				</p>
 			</div>
-			<Badge variant="secondary">{indicatorLabel}</Badge>
+			<div className="flex items-center gap-2">
+				<Badge variant="secondary">{indicatorLabel}</Badge>
+				{actionSlot}
+			</div>
 		</button>
 	);
 }
@@ -266,7 +354,7 @@ function ParticipantDetails({ participant }: { participant: TrackerParticipant |
 		<div className="space-y-3">
 			<div className="flex flex-wrap items-center gap-2">
 				<h3 className="text-lg font-semibold">{participant.name}</h3>
-				<Badge>{participant.role}</Badge>
+				<Badge>{getParticipantRoleLabel(participant)}</Badge>
 				<Badge variant="secondary">{participant.state}</Badge>
 			</div>
 			{isHazard ? (
@@ -304,433 +392,20 @@ function TrackerDescriptionSections({
 	);
 }
 
-function InitiativeCarouselCard({
-	participant,
-	selected,
-	onSelect,
-	isCurrent,
+function NextRoundMarkerCard({
+	nextRound,
+	compact = false,
 }: {
-	participant: TrackerParticipant;
-	selected: boolean;
-	onSelect: (id: string) => void;
-	isCurrent: boolean;
+	nextRound: number;
+	compact?: boolean;
 }) {
-	const SWIPE_REVEAL_PX = 88;
-	const SWIPE_INTENT_PX = 10;
-	const SWIPE_SNAP_PX = 34;
-	const accent = getParticipantAccent(participant.role);
-	const indicatorLabel = getParticipantIndicatorLabel(participant);
-	const [swipeOffset, setSwipeOffset] = useState(0);
-	const [swipeActionFlash, setSwipeActionFlash] = useState<'delay' | 'ko' | null>(null);
-	const swipeFlashTimeoutRef = useRef<number | null>(null);
-	const swipeStateRef = useRef({
-		pointerId: null as number | null,
-		startX: 0,
-		startY: 0,
-		isSwiping: false,
-		didDrag: false,
-	});
-
-	useEffect(() => {
-		return () => {
-			if (swipeFlashTimeoutRef.current !== null) {
-				window.clearTimeout(swipeFlashTimeoutRef.current);
-			}
-		};
-	}, []);
-
-	const registerSwipeInput = (action: 'delay' | 'ko') => {
-		logTrackerButton('Swipe action input', {
-			action,
-			participantId: participant.id,
-			participantName: participant.name,
-		});
-		setSwipeActionFlash(action);
-
-		if (swipeFlashTimeoutRef.current !== null) {
-			window.clearTimeout(swipeFlashTimeoutRef.current);
-		}
-
-		swipeFlashTimeoutRef.current = window.setTimeout(() => {
-			setSwipeActionFlash(null);
-			swipeFlashTimeoutRef.current = null;
-		}, 320);
-	};
-
-	const handlePointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
-		if (event.pointerType === 'mouse' && event.button !== 0) {
-			return;
-		}
-
-		swipeStateRef.current.pointerId = event.pointerId;
-		swipeStateRef.current.startX = event.clientX;
-		swipeStateRef.current.startY = event.clientY;
-		swipeStateRef.current.isSwiping = false;
-		swipeStateRef.current.didDrag = false;
-		event.currentTarget.setPointerCapture(event.pointerId);
-	};
-
-	const handlePointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
-		if (swipeStateRef.current.pointerId !== event.pointerId) {
-			return;
-		}
-
-		const deltaX = event.clientX - swipeStateRef.current.startX;
-		const deltaY = event.clientY - swipeStateRef.current.startY;
-
-		if (!swipeStateRef.current.isSwiping) {
-			if (Math.abs(deltaX) < SWIPE_INTENT_PX || Math.abs(deltaX) <= Math.abs(deltaY)) {
-				return;
-			}
-			swipeStateRef.current.isSwiping = true;
-		}
-
-		swipeStateRef.current.didDrag = true;
-		setSwipeOffset(Math.max(-SWIPE_REVEAL_PX, Math.min(SWIPE_REVEAL_PX, deltaX)));
-	};
-
-	const finishSwipe = () => {
-		if (!swipeStateRef.current.didDrag) {
-			return;
-		}
-
-		if (swipeOffset >= SWIPE_SNAP_PX) {
-			registerSwipeInput('delay');
-			setSwipeOffset(0);
-
-			return;
-		}
-
-		if (swipeOffset <= -SWIPE_SNAP_PX) {
-			registerSwipeInput('ko');
-			setSwipeOffset(0);
-
-			return;
-		}
-
-		setSwipeOffset(0);
-	};
-
-	const handlePointerUp = (event: React.PointerEvent<HTMLButtonElement>) => {
-		if (swipeStateRef.current.pointerId !== event.pointerId) {
-			return;
-		}
-
-		finishSwipe();
-		swipeStateRef.current.pointerId = null;
-		swipeStateRef.current.isSwiping = false;
-	};
-
-	const handlePointerCancel = () => {
-		swipeStateRef.current.pointerId = null;
-		swipeStateRef.current.isSwiping = false;
-		swipeStateRef.current.didDrag = false;
-		setSwipeOffset(0);
-	};
-
-	const handleCardClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-		if (swipeStateRef.current.didDrag) {
-			event.preventDefault();
-			event.stopPropagation();
-			swipeStateRef.current.didDrag = false;
-
-			return;
-		}
-
-		logTrackerButton('Initiative card selected', {
-			participantId: participant.id,
-			participantName: participant.name,
-		});
-		onSelect(participant.id);
-	};
-
 	return (
 		<div
 			className={[
-				'relative overflow-hidden rounded-xl',
-				selected ? 'ring-2 ring-primary/60 ring-offset-2 ring-offset-background' : '',
+				'flex w-full min-w-0 items-center justify-center rounded-xl text-center',
+				compact ? 'h-full min-h-0 px-3 py-4' : 'min-h-15 px-4 py-4',
 			].join(' ')}
 		>
-			<div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between px-2">
-				<div
-					className={[
-						'inline-flex items-center gap-1 rounded-full border border-current/20 px-3 py-2 text-xs uppercase tracking-[0.18em] transition-opacity',
-						swipeOffset > 0 || swipeActionFlash === 'delay' ? 'opacity-100' : 'opacity-40',
-						swipeActionFlash === 'delay' ? 'border-current/50' : '',
-					].join(' ')}
-				>
-					<ArrowLeft className="h-4 w-4" /> Delay
-				</div>
-				<div
-					className={[
-						'inline-flex items-center gap-1 rounded-full border border-current/20 px-3 py-2 text-xs uppercase tracking-[0.18em] transition-opacity',
-						swipeOffset < 0 || swipeActionFlash === 'ko' ? 'opacity-100' : 'opacity-40',
-						swipeActionFlash === 'ko' ? 'border-current/50' : '',
-					].join(' ')}
-				>
-					KO <ArrowRight className="h-4 w-4" />
-				</div>
-			</div>
-			<button
-				type="button"
-				onPointerDown={handlePointerDown}
-				onPointerMove={handlePointerMove}
-				onPointerUp={handlePointerUp}
-				onPointerCancel={handlePointerCancel}
-				onClick={handleCardClick}
-				style={{ transform: `translateX(${swipeOffset}px)` }}
-				className={[
-					'group flex min-h-28 w-full min-w-0 touch-pan-y flex-wrap items-center gap-4 rounded-xl border px-4 py-6 text-left transition-transform',
-					isCurrent ? accent.activeCard : `${accent.inactiveCard} ${accent.inactiveMarker}`,
-				].join(' ')}
-			>
-				<div className="flex min-w-0 flex-1 items-center gap-4">
-					<div className="min-w-0 space-y-2">
-						<div className="flex flex-wrap items-center gap-2">
-							<p
-								className={[
-									'min-w-0 break-words text-base font-semibold',
-									!isCurrent ? accent.name : '',
-								].join(' ')}
-							>
-								{participant.name}
-							</p>
-							<Badge className={accent.badge}>{participant.role}</Badge>
-							<Badge variant={isCurrent ? 'secondary' : 'outline'}>{participant.state}</Badge>
-						</div>
-						<div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.2em]">
-							{participant.role === 'hazard' ? (
-								<span className="inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-1 text-current/80">
-									<ShieldOff className="h-3 w-3" /> {indicatorLabel}
-								</span>
-							) : (
-								<span className="inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-1 text-current/80">
-									<Heart className="h-3 w-3" /> {indicatorLabel}
-								</span>
-							)}
-						</div>
-					</div>
-				</div>
-			</button>
-		</div>
-	);
-}
-
-function MobileInitiativeCarouselCard({
-	participant,
-	selected,
-	onSelect,
-	isCurrent,
-}: {
-	participant: TrackerParticipant;
-	selected: boolean;
-	onSelect: (id: string) => void;
-	isCurrent: boolean;
-}) {
-	const SWIPE_REVEAL_PX = 76;
-	const SWIPE_INTENT_PX = 10;
-	const SWIPE_SNAP_PX = 28;
-	const accent = getParticipantAccent(participant.role);
-	const indicatorLabel = getParticipantIndicatorLabel(participant);
-	const [swipeOffsetY, setSwipeOffsetY] = useState(0);
-	const [swipeActionFlash, setSwipeActionFlash] = useState<'delay' | 'ko' | null>(null);
-	const swipeFlashTimeoutRef = useRef<number | null>(null);
-	const swipeStateRef = useRef({
-		pointerId: null as number | null,
-		startX: 0,
-		startY: 0,
-		isSwiping: false,
-		didDrag: false,
-	});
-
-	useEffect(() => {
-		return () => {
-			if (swipeFlashTimeoutRef.current !== null) {
-				window.clearTimeout(swipeFlashTimeoutRef.current);
-			}
-		};
-	}, []);
-
-	const registerSwipeInput = (action: 'delay' | 'ko') => {
-		logTrackerButton('Mobile swipe action input', {
-			action,
-			participantId: participant.id,
-			participantName: participant.name,
-		});
-		setSwipeActionFlash(action);
-
-		if (swipeFlashTimeoutRef.current !== null) {
-			window.clearTimeout(swipeFlashTimeoutRef.current);
-		}
-
-		swipeFlashTimeoutRef.current = window.setTimeout(() => {
-			setSwipeActionFlash(null);
-			swipeFlashTimeoutRef.current = null;
-		}, 320);
-	};
-
-	const handlePointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
-		if (event.pointerType === 'mouse' && event.button !== 0) {
-			return;
-		}
-
-		swipeStateRef.current.pointerId = event.pointerId;
-		swipeStateRef.current.startX = event.clientX;
-		swipeStateRef.current.startY = event.clientY;
-		swipeStateRef.current.isSwiping = false;
-		swipeStateRef.current.didDrag = false;
-		event.currentTarget.setPointerCapture(event.pointerId);
-	};
-
-	const handlePointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
-		if (swipeStateRef.current.pointerId !== event.pointerId) {
-			return;
-		}
-
-		const deltaX = event.clientX - swipeStateRef.current.startX;
-		const deltaY = event.clientY - swipeStateRef.current.startY;
-
-		if (!swipeStateRef.current.isSwiping) {
-			if (Math.abs(deltaY) < SWIPE_INTENT_PX || Math.abs(deltaY) <= Math.abs(deltaX)) {
-				return;
-			}
-			swipeStateRef.current.isSwiping = true;
-		}
-
-		swipeStateRef.current.didDrag = true;
-		setSwipeOffsetY(Math.max(-SWIPE_REVEAL_PX, Math.min(SWIPE_REVEAL_PX, deltaY)));
-	};
-
-	const finishSwipe = () => {
-		if (!swipeStateRef.current.didDrag) {
-			return;
-		}
-
-		if (swipeOffsetY <= -SWIPE_SNAP_PX) {
-			registerSwipeInput('delay');
-			setSwipeOffsetY(0);
-
-			return;
-		}
-
-		if (swipeOffsetY >= SWIPE_SNAP_PX) {
-			registerSwipeInput('ko');
-			setSwipeOffsetY(0);
-
-			return;
-		}
-
-		setSwipeOffsetY(0);
-	};
-
-	const handlePointerUp = (event: React.PointerEvent<HTMLButtonElement>) => {
-		if (swipeStateRef.current.pointerId !== event.pointerId) {
-			return;
-		}
-
-		finishSwipe();
-		swipeStateRef.current.pointerId = null;
-		swipeStateRef.current.isSwiping = false;
-	};
-
-	const handlePointerCancel = () => {
-		swipeStateRef.current.pointerId = null;
-		swipeStateRef.current.isSwiping = false;
-		swipeStateRef.current.didDrag = false;
-		setSwipeOffsetY(0);
-	};
-
-	const handleCardClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-		if (swipeStateRef.current.didDrag) {
-			event.preventDefault();
-			event.stopPropagation();
-			swipeStateRef.current.didDrag = false;
-
-			return;
-		}
-
-		logTrackerButton('Mobile initiative card selected', {
-			participantId: participant.id,
-			participantName: participant.name,
-		});
-		onSelect(participant.id);
-	};
-
-	return (
-		<div
-			className={[
-				'relative overflow-hidden rounded-xl',
-				selected ? 'ring-2 ring-primary/60 ring-offset-2 ring-offset-background' : '',
-			].join(' ')}
-		>
-			<div className="pointer-events-none absolute inset-x-0 bottom-0 top-0 flex flex-col items-center justify-between py-2">
-				<div
-					className={[
-						'inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-1 text-[10px] uppercase tracking-[0.18em] transition-opacity',
-						swipeOffsetY < 0 || swipeActionFlash === 'delay' ? 'opacity-100' : 'opacity-40',
-						swipeActionFlash === 'delay' ? 'border-current/50' : '',
-					].join(' ')}
-				>
-					Delay <ArrowLeft className="h-3 w-3" />
-				</div>
-				<div
-					className={[
-						'inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-1 text-[10px] uppercase tracking-[0.18em] transition-opacity',
-						swipeOffsetY > 0 || swipeActionFlash === 'ko' ? 'opacity-100' : 'opacity-40',
-						swipeActionFlash === 'ko' ? 'border-current/50' : '',
-					].join(' ')}
-				>
-					KO <ArrowRight className="h-3 w-3" />
-				</div>
-			</div>
-			<button
-				type="button"
-				onPointerDown={handlePointerDown}
-				onPointerMove={handlePointerMove}
-				onPointerUp={handlePointerUp}
-				onPointerCancel={handlePointerCancel}
-				onClick={handleCardClick}
-				style={{ transform: `translateY(${swipeOffsetY}px)` }}
-				className={[
-					'group relative flex aspect-square min-h-44 w-full min-w-0 touch-pan-x flex-col justify-between gap-2 rounded-xl border p-3 text-left transition-transform',
-					isCurrent ? accent.activeCard : `${accent.inactiveCard} ${accent.inactiveMarker}`,
-				].join(' ')}
-			>
-				<div className="space-y-2">
-					<div className="flex flex-wrap items-center gap-1.5">
-						<p
-							className={[
-								'min-w-0 break-words text-sm font-semibold',
-								!isCurrent ? accent.name : '',
-							].join(' ')}
-						>
-							{participant.name}
-						</p>
-					</div>
-					<div className="flex flex-wrap items-center gap-1.5">
-						<Badge className={accent.badge}>{participant.role}</Badge>
-						<Badge variant={isCurrent ? 'secondary' : 'outline'}>{participant.state}</Badge>
-					</div>
-				</div>
-				<div className="text-[11px] uppercase tracking-[0.18em] text-current/80">
-					{participant.role === 'hazard' ? (
-						<span className="inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-1">
-							<ShieldOff className="h-3 w-3" /> {indicatorLabel}
-						</span>
-					) : (
-						<span className="inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-1">
-							<Heart className="h-3 w-3" /> {indicatorLabel}
-						</span>
-					)}
-				</div>
-			</button>
-		</div>
-	);
-}
-
-function NextRoundMarkerCard({ nextRound }: { nextRound: number }) {
-	return (
-		<div className="flex min-h-25 w-full min-w-0 items-center justify-center rounded-xl border border-dashed border-primary/50 bg-primary/5 px-4 py-6 text-center">
 			<div className="space-y-1">
 				<p className="text-xs font-medium uppercase tracking-[0.24em] text-primary/80">
 					Next Round
@@ -745,12 +420,14 @@ function DelayedMarkerCard({
 	participant,
 	selected,
 	onSelect,
+	compact = false,
 }: {
 	participant: TrackerParticipant;
 	selected: boolean;
 	onSelect: (id: string) => void;
+	compact?: boolean;
 }) {
-	const accent = getParticipantAccent(participant.role);
+	const accent = getParticipantAccent(participant);
 
 	return (
 		<button
@@ -763,7 +440,8 @@ function DelayedMarkerCard({
 				onSelect(participant.id);
 			}}
 			className={[
-				'flex h-full w-full min-w-0 items-center justify-center rounded-xl border border-dashed px-4 py-3 text-center',
+				'flex w-full min-w-0 items-center justify-center rounded-xl border border-dashed text-center',
+				compact ? 'h-full min-h-0 px-3 py-4' : 'h-full px-4 py-3',
 				accent.delayedCard,
 				selected ? 'ring-2 ring-primary/60 ring-offset-2 ring-offset-background' : '',
 			].join(' ')}
@@ -778,10 +456,79 @@ function DelayedMarkerCard({
 	);
 }
 
+function getRoundBoundaryIndex(
+	participants: TrackerParticipant[],
+	charactersWithTurn: Set<string>
+) {
+	return participants.filter(
+		(participant) =>
+			participant.state !== 'delayed' && charactersWithTurn.has(participant.id)
+	).length;
+}
+
+type InitiativeCarouselItemData =
+	| {
+		key: string;
+		type: 'marker';
+	}
+	| {
+		key: string;
+		type: 'participant';
+		participant: TrackerParticipant;
+	};
+
+function buildInitiativeCarouselItems(
+	participants: TrackerParticipant[],
+	markerIndex: number,
+	nextRound: number
+): InitiativeCarouselItemData[] {
+	if (participants.length === 0) {
+		return [];
+	}
+
+	const clampedMarkerIndex = Math.min(
+		Math.max(markerIndex, 0),
+		participants.length
+	);
+	const items: InitiativeCarouselItemData[] = [];
+
+	participants.forEach((participant, index) => {
+		if (index === clampedMarkerIndex) {
+			items.push({
+				key: `next-round-marker-${nextRound}`,
+				type: 'marker',
+			});
+		}
+
+		items.push({
+			key: participant.id,
+			type: 'participant',
+			participant,
+		});
+	});
+
+	if (clampedMarkerIndex === participants.length) {
+		items.push({
+			key: `next-round-marker-${nextRound}`,
+			type: 'marker',
+		});
+	}
+
+	return items;
+}
+
+type RoundAnnouncementState = {
+	round: number;
+	focusCurrentOnClose: boolean;
+};
+
 export function InitiativeTrackerPage() {
+	const { executeCommand, undo, redo, canUndo, canRedo } =
+		useContext(CommandHistoryContext);
 	const charactersOrder = useEncounterStore((state) => state.charactersOrder);
 	const delayedOrder = useEncounterStore((state) => state.delayedOrder);
 	const charactersMap = useEncounterStore((state) => state.charactersMap);
+	const charactersWithTurn = useEncounterStore((state) => state.charactersWithTurn);
 	const trackerMetaMap = useEncounterStore((state) => state.trackerMetaMap);
 	const encounterData = useEncounterStore((state) => state.encounterData);
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
@@ -790,6 +537,11 @@ export function InitiativeTrackerPage() {
 
 	const storeInitiativeParticipants = useMemo(
 		() => runtimeToInitiativeQueue({ charactersOrder, delayedOrder, charactersMap, trackerMetaMap }),
+		[charactersOrder, delayedOrder, charactersMap, trackerMetaMap]
+	);
+
+	const storeAllInitiativeParticipants = useMemo(
+		() => runtimeToInitiativeQueueWithPending({ charactersOrder, delayedOrder, charactersMap, trackerMetaMap }),
 		[charactersOrder, delayedOrder, charactersMap, trackerMetaMap]
 	);
 
@@ -808,35 +560,71 @@ export function InitiativeTrackerPage() {
 		[encounterData]
 	);
 
+	const triggeredReinforcementSlotIds = useMemo(
+		() =>
+			new Set(
+				Object.values(trackerMetaMap)
+					.filter((meta) => meta.reinforcementSlotId && meta.reinforcementPending !== true)
+					.filter((meta) => meta.reinforcementSlotId && meta.reinforcementPending !== true)
+					.map((meta) => meta.reinforcementSlotId)
+					.filter((slotId): slotId is string => Boolean(slotId))
+			),
+		[trackerMetaMap]
+	);
+
+	const pendingReinforcementParticipants = useMemo(
+		() =>
+			outOfInitiative.reinforcements.filter(
+				(participant) =>
+					participant.eventId && !triggeredReinforcementSlotIds.has(participant.eventId)
+			),
+		[outOfInitiative.reinforcements, triggeredReinforcementSlotIds]
+	);
+
+	const reinforcementEvents = useMemo(
+		() =>
+			(encounterData?.narrativeSlots ?? []).filter(
+				(slot) => slot.type === 'reinforcement'
+			),
+		[encounterData]
+	);
+
 	const historyPreview = useMemo(() => historyToPreviewLines(history), [history]);
 
 	const [initiativeCarouselApi, setInitiativeCarouselApi] = useState<CarouselApi>();
-	const [initiativeParticipants, setInitiativeParticipants] = useState<TrackerParticipant[]>(
-		storeInitiativeParticipants
-	);
-	const [selectedParticipantId, setSelectedParticipantId] = useState(
+	const initiativeParticipants = storeInitiativeParticipants;
+	const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(
 		storeInitiativeParticipants[0]?.id ?? null
 	);
 	const [reorderOpen, setReorderOpen] = useState(false);
+	const [nextRoundAnnouncement, setNextRoundAnnouncement] =
+		useState<RoundAnnouncementState | null>(null);
+	const [pinnedMarkerRound, setPinnedMarkerRound] = useState<number | null>(null);
+	type ReturnPromptState = {
+		participantId: string;
+		action: 'end-turn' | 'delay' | 'ko';
+		focusCurrentOnSuccess: boolean;
+	};
+	const [returnPrompt, setReturnPrompt] = useState<ReturnPromptState | null>(null);
 	const [reorderDraftParticipants, setReorderDraftParticipants] = useState<TrackerParticipant[]>(
 		storeInitiativeParticipants
 	);
-	const currentInitiativeParticipantId = initiativeParticipants[0]?.id ?? null;
+	const currentInitiativeParticipantId = charactersOrder[0] ?? null;
 	const nextTurnTimeoutRef = useRef<number | null>(null);
-	const delayedParticipantCopies = useMemo(
-		() =>
-			initiativeParticipants
-				.filter((participant) => participant.state === 'delayed')
-				.map((participant) => ({
-					...participant,
-					id: `${participant.id}-delayed-copy`,
-					name: `${participant.name} (Delayed Copy)`,
-				})),
-		[initiativeParticipants]
-	);
-	const delayedSectionParticipants = useMemo(
-		() => [...delayedParticipantCopies, ...outOfInitiative.delayed],
-		[delayedParticipantCopies, outOfInitiative]
+	const delayedSectionParticipants = outOfInitiative.delayed;
+	const hasReinforcements = pendingReinforcementParticipants.length > 0;
+	const hasDelayed = delayedSectionParticipants.length > 0;
+	const hasHazards = outOfInitiative.hazards.length > 0;
+	const hasOutOfInitiativePanel = hasReinforcements || hasDelayed || hasHazards;
+	const hasNarrativeEvents = (trackerHeader?.narrativeDetails?.length ?? 0) > 0;
+	const outOfInitiativePanelDefault = hasReinforcements
+		? 'reinforcements'
+		: hasDelayed
+			? 'delaying'
+			: 'hazards';
+	const activeRoundBoundaryIndex = useMemo(
+		() => getRoundBoundaryIndex(initiativeParticipants, charactersWithTurn),
+		[initiativeParticipants, charactersWithTurn]
 	);
 
 	useEffect(() => {
@@ -848,16 +636,12 @@ export function InitiativeTrackerPage() {
 	}, []);
 
 	useEffect(() => {
-		setInitiativeParticipants(storeInitiativeParticipants);
-	}, [storeInitiativeParticipants]);
-
-	useEffect(() => {
 		if (!reorderOpen) {
 			return;
 		}
 
-		setReorderDraftParticipants(initiativeParticipants);
-	}, [initiativeParticipants, reorderOpen]);
+		setReorderDraftParticipants(storeAllInitiativeParticipants);
+	}, [storeAllInitiativeParticipants, reorderOpen]);
 
 	const focusCurrentParticipant = () => {
 		if (!initiativeCarouselApi) {
@@ -870,35 +654,157 @@ export function InitiativeTrackerPage() {
 		logTrackerButton('Focus Current scrolled to top initiative element');
 	};
 
-	const handleNextTurn = () => {
+	const queueFocusCurrentParticipant = () => {
 		if (nextTurnTimeoutRef.current !== null) {
 			window.clearTimeout(nextTurnTimeoutRef.current);
-			nextTurnTimeoutRef.current = null;
 		}
-		setInitiativeParticipants((previousOrder) => {
-			if (previousOrder.length < 2) {
-				return previousOrder;
-			}
 
-			const [firstParticipant, ...rest] = previousOrder;
-			const nextOrder = [...rest, firstParticipant];
-			logTrackerButton('Next Turn mock rotation applied', {
-				movedParticipantId: firstParticipant.id,
-				movedParticipantName: firstParticipant.name,
-				nextCurrentParticipantId: nextOrder[0]?.id,
-			});
-
-			return nextOrder;
-		});
 		nextTurnTimeoutRef.current = window.setTimeout(() => {
 			focusCurrentParticipant();
 			nextTurnTimeoutRef.current = null;
 		}, 20);
+	};
+
+	const handleNextRoundAnnouncementChange = (open: boolean) => {
+		if (open || nextRoundAnnouncement === null) {
+			return;
+		}
+
+		const announcement = nextRoundAnnouncement;
+
+		setNextRoundAnnouncement(null);
+		logTrackerButton('Next Round announcement closed', {
+			round: announcement.round,
+		});
+
+		if (announcement.focusCurrentOnClose) {
+			queueFocusCurrentParticipant();
+		}
+	};
+
+	const clearPinnedMarkerForCurrentRound = () => {
+		if (pinnedMarkerRound === round) {
+			setPinnedMarkerRound(null);
+		}
+	};
+
+	const isFinalActiveParticipant = (participantId: string) =>
+		activeRoundBoundaryIndex === 1 && charactersWithTurn.has(participantId);
+
+	const executeRoundAction = ({
+		participantId,
+		action,
+		focusCurrentOnSuccess = false,
+	}: {
+		participantId: string;
+		action: 'end-turn' | 'delay' | 'ko';
+		focusCurrentOnSuccess?: boolean;
+	}) => {
+		clearPinnedMarkerForCurrentRound();
+
+		const shouldAdvanceRound = isFinalActiveParticipant(participantId);
+		const command = shouldAdvanceRound
+			? new FinalizeTurnAndAdvanceRoundCommand({
+					uuid: participantId,
+					action,
+				})
+			: action === 'delay'
+				? new DelayCharacterCommand({ uuid: participantId })
+				: action === 'ko'
+					? new KnockOutCharacterCommand({ uuid: participantId })
+					: new EndTurnCommand({ uuid: participantId });
+
+		try {
+			executeCommand(command);
+
+			if (shouldAdvanceRound) {
+				const nextRoundState = getEncounterStore().getState();
+
+				setPinnedMarkerRound(nextRoundState.round);
+				setNextRoundAnnouncement({
+					round: nextRoundState.round,
+					focusCurrentOnClose: true,
+				});
+				logTrackerButton('Next Round announcement opened', {
+					round: nextRoundState.round,
+					action,
+					participantId,
+				});
+
+				return;
+			}
+
+			if (focusCurrentOnSuccess) {
+				queueFocusCurrentParticipant();
+			}
+		} catch (error) {
+			console.error('Failed to progress turn', error);
+		}
+	};
+
+	const handleNextTurn = () => {
+		const currentParticipantId = charactersOrder[0];
+
+		if (!currentParticipantId) {
+			logTrackerButton('Next Turn ignored because initiative queue is empty');
+
+			return;
+		}
+
+		// Auto-skip pending reinforcement participants — they are in the order but
+		// shouldn't take a turn until their slot is triggered.
+		const currentMeta = trackerMetaMap[currentParticipantId];
+
+		if (currentMeta?.reinforcementPending === true) {
+			logTrackerButton('Next Turn skipping pending reinforcement', {
+				participantId: currentParticipantId,
+			});
+
+			try {
+				const newOrder = charactersOrder
+					.filter((id) => id !== currentParticipantId)
+					.concat(currentParticipantId);
+
+				executeCommand(new ReorderCharactersCommand({ newOrder }));
+				queueFocusCurrentParticipant();
+			} catch (error) {
+				console.error('Failed to skip pending reinforcement', error);
+			}
+
+			return;
+		}
+
+		if (!charactersWithTurn.has(currentParticipantId)) {
+			logTrackerButton('Next Turn ignored because current participant has no turn', {
+				participantId: currentParticipantId,
+			});
+
+			return;
+		}
+
+		if (delayedSectionParticipants.length > 0) {
+			logTrackerButton('Next Turn paused for return-to-initiative prompt', {
+				participantId: currentParticipantId,
+			});
+			setReturnPrompt({
+				participantId: currentParticipantId,
+				action: 'end-turn',
+				focusCurrentOnSuccess: true,
+			});
+
+			return;
+		}
+
+		executeRoundAction({
+			participantId: currentParticipantId,
+			action: 'end-turn',
+			focusCurrentOnSuccess: true,
+		});
 		logTrackerButton('Next Turn rotation queued after focus animation');
 	};
 
 	const resetReorderDraft = () => {
-		setReorderDraftParticipants(initiativeParticipants);
+		setReorderDraftParticipants(storeAllInitiativeParticipants);
 	};
 
 	const handleReorderOpenChange = (open: boolean) => {
@@ -919,12 +825,201 @@ export function InitiativeTrackerPage() {
 		[initiativeParticipants, outOfInitiative, delayedSectionParticipants]
 	);
 
+	useEffect(() => {
+		if (allParticipants.length === 0) {
+			if (selectedParticipantId !== null) {
+				setSelectedParticipantId(null);
+			}
+
+			return;
+		}
+
+		const selectedStillExists = selectedParticipantId
+			? allParticipants.some((participant) => participant.id === selectedParticipantId)
+			: false;
+
+		if (!selectedStillExists) {
+			setSelectedParticipantId(allParticipants[0]?.id ?? null);
+		}
+	}, [allParticipants, selectedParticipantId]);
+
+	const handleParticipantSwipeAction = (
+		participantId: string,
+		action: 'delay' | 'ko'
+	) => {
+		const isCurrentActive =
+			participantId === currentInitiativeParticipantId &&
+			charactersWithTurn.has(participantId);
+
+		if (isCurrentActive && delayedSectionParticipants.length > 0) {
+			logTrackerButton('Swipe action paused for return-to-initiative prompt', {
+				participantId,
+				action,
+			});
+			setReturnPrompt({
+				participantId,
+				action,
+				focusCurrentOnSuccess: true,
+			});
+
+			return;
+		}
+
+		executeRoundAction({ participantId, action });
+	};
+
+	const handleReturnPromptSelect = (returningParticipantId: string) => {
+		if (!returnPrompt) {
+			return;
+		}
+
+		const { participantId, action } = returnPrompt;
+		setReturnPrompt(null);
+		clearPinnedMarkerForCurrentRound();
+
+		try {
+			executeCommand(
+				new ReturnToInitiativeCommand({
+					activeUuid: participantId,
+					returningUuid: returningParticipantId,
+					action,
+				})
+			);
+			logTrackerButton('Return to initiative executed', {
+				participantId,
+				returningParticipantId,
+				action,
+			});
+			queueFocusCurrentParticipant();
+		} catch (error) {
+			console.error('Failed to return to initiative', error);
+		}
+	};
+
+	const handleReturnPromptSkip = () => {
+		if (!returnPrompt) {
+			return;
+		}
+
+		const { participantId, action, focusCurrentOnSuccess } = returnPrompt;
+		setReturnPrompt(null);
+
+		executeRoundAction({ participantId, action, focusCurrentOnSuccess });
+		logTrackerButton('Return to initiative skipped, normal round action', {
+			participantId,
+			action,
+		});
+	};
+
+	const triggerReinforcementEvent = (slotId: string) => {
+		try {
+			executeCommand(new TriggerReinforcementEventCommand({ slotId }));
+			queueFocusCurrentParticipant();
+			logTrackerButton('Reinforcement event triggered', { slotId });
+		} catch (error) {
+			console.error('Failed to trigger reinforcement event', error);
+		}
+	};
+
+	const reinforcementEventsByRound = useMemo(
+		() =>
+			reinforcementEvents.reduce(
+				(acc, slot) => {
+					if (!acc[slot.trigger.round]) {
+						acc[slot.trigger.round] = [];
+					}
+
+					acc[slot.trigger.round].push(slot);
+
+					return acc;
+				},
+				{} as Record<number, typeof reinforcementEvents>
+			),
+		[reinforcementEvents]
+	);
+
+	const roundAnnouncementEvents = useMemo(() => {
+		if (!nextRoundAnnouncement || !encounterData) {
+			return [] as Array<{
+				id: string;
+				title: string;
+				detail: string;
+				type: 'default' | 'reinforcement' | 'ongoing';
+				canTriggerReinforcement: boolean;
+			}>;
+		}
+
+		return narrativeSlotsToTimeline(encounterData.narrativeSlots)
+			.filter((event) => event.round === nextRoundAnnouncement.round)
+			.map((event) => ({
+				id: event.id ?? `${event.round}-${event.title}`,
+				title: event.title,
+				detail: event.detail,
+				type: event.type ?? 'default',
+				canTriggerReinforcement:
+					event.type === 'reinforcement' &&
+					typeof event.id === 'string' &&
+					!triggeredReinforcementSlotIds.has(event.id),
+			}));
+	}, [encounterData, nextRoundAnnouncement, triggeredReinforcementSlotIds]);
+
 	const selectedParticipant =
 		allParticipants.find((p) => p.id === selectedParticipantId) ?? null;
 	const nextRound = (trackerHeader?.currentRound ?? round) + 1;
-	const nextRoundMarkerIndex = Math.max(
-		1,
-		Math.floor(initiativeParticipants.length / 2)
+	const nextRoundMarkerIndex =
+		pinnedMarkerRound === round
+			? initiativeParticipants.length
+			: activeRoundBoundaryIndex;
+	const initiativeCarouselItems = useMemo(
+		() =>
+			buildInitiativeCarouselItems(
+				initiativeParticipants,
+				nextRoundMarkerIndex,
+				nextRound
+			),
+		[initiativeParticipants, nextRoundMarkerIndex, nextRound]
+	);
+
+	const timelineEvents = useMemo(
+		() =>
+			timeline.map((event) => {
+				if (event.type !== 'reinforcement' || !event.id) {
+					return {
+						round: event.round,
+						label: event.title,
+						description: event.detail,
+					};
+				}
+
+				const isTriggered = triggeredReinforcementSlotIds.has(event.id);
+				const canTrigger = event.round <= round && !isTriggered;
+				const participantCount =
+					reinforcementEventsByRound[event.round]?.find((slot) => slot.id === event.id)
+						?.participants?.length ?? 0;
+
+				return {
+					id: event.id,
+					round: event.round,
+					label: event.title,
+					description:
+						event.detail ||
+						(participantCount > 0
+							? `${participantCount} reinforcement participant${
+								participantCount === 1 ? '' : 's'
+							}`
+							: undefined),
+					actionLabel: isTriggered
+						? 'Triggered'
+						: canTrigger
+							? 'Trigger Now'
+							: undefined,
+					actionDisabled: isTriggered,
+					onAction: canTrigger
+						? () => triggerReinforcementEvent(event.id as string)
+						: undefined,
+				};
+			}),
+		[timeline, triggeredReinforcementSlotIds, round, reinforcementEventsByRound]
 	);
 
 	return (
@@ -1004,7 +1099,11 @@ export function InitiativeTrackerPage() {
 												variant="ghost"
 												size="icon"
 												className="rounded-none border-0"
-												onClick={() => logTrackerButton('Undo button clicked')}
+												disabled={!canUndo}
+												onClick={() => {
+													logTrackerButton('Undo button clicked');
+													undo();
+												}}
 											>
 												<Undo2 className="h-4 w-4" />
 											</Button>
@@ -1019,7 +1118,11 @@ export function InitiativeTrackerPage() {
 												variant="ghost"
 												size="icon"
 												className="rounded-none border-0"
-												onClick={() => logTrackerButton('Redo button clicked')}
+												disabled={!canRedo}
+												onClick={() => {
+													logTrackerButton('Redo button clicked');
+													redo();
+												}}
 											>
 												<Redo2 className="h-4 w-4" />
 											</Button>
@@ -1033,18 +1136,14 @@ export function InitiativeTrackerPage() {
 						<div className="min-w-0 space-y-3 pl-4">
 							<Timeline
 								currentTurn={trackerHeader?.currentRound ?? round}
-								events={timeline.map((event) => ({
-									round: event.round,
-									label: event.title,
-									description: event.detail,
-								}))}
+								events={timelineEvents}
 								futureTurns={5}
 							/>
 						</div>
 					</div>
 				</Card>
 
-				<div className="grid h-full min-h-0 min-w-0 gap-4 lg:grid-rows-[minmax(0,2fr)_minmax(0,1fr)]">
+				<div className={['grid h-full min-h-0 min-w-0 gap-4', hasOutOfInitiativePanel ? 'lg:grid-rows-[minmax(0,2fr)_minmax(0,1fr)]' : 'lg:grid-rows-[minmax(0,1fr)]'].join(' ')}>
 					<Card className="flex min-h-0 min-w-0 flex-col overflow-hidden gap-0 p-4">
 						<div className="min-h-0 min-w-0 flex-1 overflow-hidden">
 							<Carousel
@@ -1053,40 +1152,41 @@ export function InitiativeTrackerPage() {
 								opts={{ align: "start", dragFree: true }}
 								className="h-[calc(100%-3rem)] pt-4 mt-4"
 							>
-								<CarouselContent className="h-full pt-7">
-									{initiativeParticipants.map((participant, index) => (
-										<Fragment key={participant.id}>
-											{index === nextRoundMarkerIndex ? (
-												<CarouselItem
-													key="next-round-marker"
-													className="min-w-0 basis-[5rem]"
-												>
-													<NextRoundMarkerCard nextRound={nextRound} />
-												</CarouselItem>
-											) : null}
-											<CarouselItem
-												key={participant.id}
-												className={[
-													'min-w-0',
-													participant.state === 'delayed' ? 'basis-[5.75rem]' : 'basis-[7rem]',
-												].join(' ')}
-											>
-												{participant.state === 'delayed' ? (
-													<DelayedMarkerCard
-														participant={participant}
-														selected={participant.id === selectedParticipantId}
-														onSelect={setSelectedParticipantId}
-													/>
-												) : (
-													<InitiativeCarouselCard
-														participant={participant}
-														selected={participant.id === selectedParticipantId}
-														onSelect={setSelectedParticipantId}
-														isCurrent={participant.id === currentInitiativeParticipantId}
-													/>
-												)}
-											</CarouselItem>
-										</Fragment>
+								<CarouselContent className="-mt-2 h-full pt-3 gap-1">
+									{initiativeCarouselItems.map((item) => (
+										<CarouselItem
+											key={item.key}
+											className={[
+												'min-w-0 pt-2 -mb-3',
+												item.type === 'marker'
+													? 'basis-[2rem]'
+													: item.participant.state === 'delayed'
+														? 'basis-[4rem]'
+														: 'basis-[5rem]',
+											].join(' ')}
+										>
+											{item.type === 'marker' ? (
+												<NextRoundMarkerCard nextRound={nextRound} />
+											) : item.participant.state === 'delayed' ? (
+												<DelayedMarkerCard
+													participant={item.participant}
+													selected={item.participant.id === selectedParticipantId}
+													onSelect={setSelectedParticipantId}
+												/>
+											) : (
+												<InitiativeActionCarouselCard
+													participant={item.participant}
+													selected={item.participant.id === selectedParticipantId}
+													onSelect={setSelectedParticipantId}
+													isCurrent={item.participant.id === currentInitiativeParticipantId}
+													onSwipeAction={handleParticipantSwipeAction}
+													density="desktop"
+													accent={getParticipantAccent(item.participant)}
+													indicatorLabel={getParticipantIndicatorLabel(item.participant)}
+													logAction={logTrackerButton}
+												/>
+											)}
+										</CarouselItem>
 									))}
 								</CarouselContent>
 								<CarouselPrevious />
@@ -1097,66 +1197,89 @@ export function InitiativeTrackerPage() {
 						</div>
 					</Card>
 
+					{hasOutOfInitiativePanel && (
 					<Card className="flex min-h-0 min-w-0 flex-col p-4">
-						<Tabs defaultValue="reinforcements" className="flex min-h-0 flex-1 flex-col">
-							<TabsList className="grid w-full grid-cols-3 h-auto">
-								<TabsTrigger value="reinforcements" className="whitespace-normal">Reinforcements</TabsTrigger>
-								<TabsTrigger value="delaying" className="whitespace-normal">Delaying</TabsTrigger>
-								<TabsTrigger value="hazards" className="whitespace-normal">Simple Hazards</TabsTrigger>
+						<Tabs defaultValue={outOfInitiativePanelDefault} className="flex min-h-0 flex-1 flex-col">
+							<TabsList className={['grid w-full h-auto', [hasReinforcements, hasDelayed, hasHazards].filter(Boolean).length === 3 ? 'grid-cols-3' : [hasReinforcements, hasDelayed, hasHazards].filter(Boolean).length === 2 ? 'grid-cols-2' : 'grid-cols-1'].join(' ')}>
+								{hasReinforcements && <TabsTrigger value="reinforcements" className="whitespace-normal">Reinforcements</TabsTrigger>}
+								{hasDelayed && <TabsTrigger value="delaying" className="whitespace-normal">Delaying</TabsTrigger>}
+								{hasHazards && <TabsTrigger value="hazards" className="whitespace-normal">Simple Hazards</TabsTrigger>}
 							</TabsList>
-							<TabsContent value="reinforcements" className="mt-3 min-h-0 flex-1">
-								<ScrollArea className="h-full pr-3">
-									<div className="space-y-2">
-										{outOfInitiative.reinforcements.map((participant) => (
-											<ParticipantRow
-												key={participant.id}
-												participant={participant}
-												onSelect={setSelectedParticipantId}
-												selected={participant.id === selectedParticipantId}
-											/>
-										))}
-									</div>
-								</ScrollArea>
-							</TabsContent>
-							<TabsContent value="delaying" className="mt-3 min-h-0 flex-1">
-								<ScrollArea className="h-full pr-3">
-									<div className="space-y-2">
-										{delayedSectionParticipants.map((participant) => (
-											<ParticipantRow
-												key={participant.id}
-												participant={participant}
-												onSelect={setSelectedParticipantId}
-												selected={participant.id === selectedParticipantId}
-											/>
-										))}
-									</div>
-								</ScrollArea>
-							</TabsContent>
-							<TabsContent value="hazards" className="mt-3 min-h-0 flex-1">
-								<ScrollArea className="h-full pr-3">
-									<div className="space-y-2">
-										{outOfInitiative.hazards.map((participant) => (
-											<ParticipantRow
-												key={participant.id}
-												participant={participant}
-												onSelect={setSelectedParticipantId}
-												selected={participant.id === selectedParticipantId}
-											/>
-										))}
-									</div>
-								</ScrollArea>
-							</TabsContent>
+							{hasReinforcements && (
+								<TabsContent value="reinforcements" className="mt-3 min-h-0 flex-1">
+									<ScrollArea className="h-full pr-3">
+										<div className="space-y-2">
+											{pendingReinforcementParticipants.map((participant) => (
+												<ParticipantRow
+													key={participant.id}
+													participant={participant}
+													onSelect={setSelectedParticipantId}
+													selected={participant.id === selectedParticipantId}
+													actionSlot={
+														participant.eventId ? (
+															<Button
+																type="button"
+																size="sm"
+																className="h-7 px-2 text-xs"
+																onClick={(event) => {
+																	event.stopPropagation();
+																	triggerReinforcementEvent(participant.eventId as string);
+																}}
+															>
+																Trigger
+															</Button>
+														) : undefined
+													}
+												/>
+											))}
+										</div>
+									</ScrollArea>
+								</TabsContent>
+							)}
+							{hasDelayed && (
+								<TabsContent value="delaying" className="mt-3 min-h-0 flex-1">
+									<ScrollArea className="h-full pr-3">
+										<div className="space-y-2">
+											{delayedSectionParticipants.map((participant) => (
+												<ParticipantRow
+													key={participant.id}
+													participant={participant}
+													onSelect={setSelectedParticipantId}
+													selected={participant.id === selectedParticipantId}
+												/>
+											))}
+										</div>
+									</ScrollArea>
+								</TabsContent>
+							)}
+							{hasHazards && (
+								<TabsContent value="hazards" className="mt-3 min-h-0 flex-1">
+									<ScrollArea className="h-full pr-3">
+										<div className="space-y-2">
+											{outOfInitiative.hazards.map((participant) => (
+												<ParticipantRow
+													key={participant.id}
+													participant={participant}
+													onSelect={setSelectedParticipantId}
+													selected={participant.id === selectedParticipantId}
+												/>
+											))}
+										</div>
+									</ScrollArea>
+								</TabsContent>
+							)}
 						</Tabs>
 					</Card>
+				)}
 				</div>
 
 				<div className="grid h-full min-h-0 min-w-0 gap-4 lg:grid-rows-[minmax(0,1fr)_minmax(0,1fr)]">
 
 					<Card className="flex min-h-0 min-w-0 flex-col p-4">
 						<Tabs defaultValue="description" className="flex min-h-0 flex-1 flex-col">
-							<TabsList className="grid w-full grid-cols-4 h-auto">
+							<TabsList className={['grid w-full h-auto', hasNarrativeEvents ? 'grid-cols-4' : 'grid-cols-3'].join(' ')}>
 								<TabsTrigger value="description" className="whitespace-normal">Description</TabsTrigger>
-								<TabsTrigger value="events" className="whitespace-normal">Narrative Events</TabsTrigger>
+								{hasNarrativeEvents && <TabsTrigger value="events" className="whitespace-normal">Narrative Events</TabsTrigger>}
 								<TabsTrigger value="history" className="whitespace-normal">Command History</TabsTrigger>
 								<TabsTrigger value="stats" className="whitespace-normal">Turn Stats</TabsTrigger>
 							</TabsList>
@@ -1167,22 +1290,24 @@ export function InitiativeTrackerPage() {
 									/>
 								</ScrollArea>
 							</TabsContent>
-							<TabsContent value="events" className="mt-3 min-h-0 flex-1">
-								<ScrollArea className="h-full pr-3">
-									<ul className="space-y-2 text-sm">
-										{(trackerHeader?.narrativeDetails ?? []).map((event) => (
-											<li key={event} className="rounded-md border p-2">
-												{event}
-											</li>
-										))}
-									</ul>
-								</ScrollArea>
-							</TabsContent>
+							{hasNarrativeEvents && (
+								<TabsContent value="events" className="mt-3 min-h-0 flex-1">
+									<ScrollArea className="h-full pr-3">
+										<ul className="space-y-2 text-sm">
+											{(trackerHeader?.narrativeDetails ?? []).map((event) => (
+												<li key={event} className="rounded-md border p-2">
+													{event}
+												</li>
+											))}
+										</ul>
+									</ScrollArea>
+								</TabsContent>
+							)}
 							<TabsContent value="history" className="mt-3 min-h-0 flex-1">
 								<ScrollArea className="h-full pr-3">
 									<ul className="space-y-2 text-sm">
-										{historyPreview.map((entry) => (
-											<li key={entry} className="rounded-md border p-2">
+										{historyPreview.map((entry, index) => (
+											<li key={index} className="rounded-md border p-2">
 												{entry}
 											</li>
 										))}
@@ -1209,10 +1334,7 @@ export function InitiativeTrackerPage() {
 				<Card className="p-4">
 					<div className="flex items-start gap-3">
 						<div className="min-w-0">
-							{/* <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-								Initiative Controls
-							</p> */}
-							<h2 className="truncate text-base font-semibold">
+							<h2 className="text-base font-semibold break-words">
 								{trackerHeader?.encounterTitle}
 							</h2>
 							<p className="text-sm text-muted-foreground">{trackerHeader?.threatLevel}</p>
@@ -1269,7 +1391,11 @@ export function InitiativeTrackerPage() {
 										variant="ghost"
 										size="icon"
 										className="rounded-none border-0"
-										onClick={() => logTrackerButton('Mobile Undo button clicked')}
+										disabled={!canUndo}
+										onClick={() => {
+											logTrackerButton('Mobile Undo button clicked');
+											undo();
+										}}
 									>
 										<Undo2 className="h-4 w-4" />
 									</Button>
@@ -1279,7 +1405,11 @@ export function InitiativeTrackerPage() {
 										variant="ghost"
 										size="icon"
 										className="rounded-none border-0"
-										onClick={() => logTrackerButton('Mobile Redo button clicked')}
+										disabled={!canRedo}
+										onClick={() => {
+											logTrackerButton('Mobile Redo button clicked');
+											redo();
+										}}
 									>
 										<Redo2 className="h-4 w-4" />
 									</Button>
@@ -1289,104 +1419,118 @@ export function InitiativeTrackerPage() {
 					</div>
 				</Card>
 
-				<Tabs defaultValue="inactive" className="space-y-3">
-					<TabsList className="grid w-full grid-cols-2">
-						<TabsTrigger value="inactive">Inactive Participants</TabsTrigger>
+				<Tabs defaultValue="carousel" className="space-y-3">
+					<TabsList className={['grid w-full', hasOutOfInitiativePanel ? 'grid-cols-2' : 'grid-cols-1'].join(' ')}>
 						<TabsTrigger value="carousel">Horizontal Carousel</TabsTrigger>
+						{hasOutOfInitiativePanel && <TabsTrigger value="inactive">Inactive Participants</TabsTrigger>}
 					</TabsList>
-					<TabsContent value="inactive" className="mt-0">
-						<Card className="p-4">
-							<Tabs defaultValue="reinforcements" className="space-y-3">
-								<TabsList className="grid w-full grid-cols-3 h-auto">
-									<TabsTrigger value="reinforcements" className="whitespace-normal">Reinforcements</TabsTrigger>
-									<TabsTrigger value="delaying" className="whitespace-normal">Delaying</TabsTrigger>
-									<TabsTrigger value="hazards" className="whitespace-normal">Simple Hazards</TabsTrigger>
-								</TabsList>
-								<TabsContent value="reinforcements" className="mt-0">
-									<div className="space-y-2">
-										{outOfInitiative.reinforcements.map((participant) => (
-											<ParticipantRow
-												key={participant.id}
-												participant={participant}
-												onSelect={setSelectedParticipantId}
-												selected={participant.id === selectedParticipantId}
-											/>
-										))}
-									</div>
-								</TabsContent>
-								<TabsContent value="delaying" className="mt-0">
-									<div className="space-y-2">
-										{delayedSectionParticipants.map((participant) => (
-											<ParticipantRow
-												key={participant.id}
-												participant={participant}
-												onSelect={setSelectedParticipantId}
-												selected={participant.id === selectedParticipantId}
-											/>
-										))}
-									</div>
-								</TabsContent>
-								<TabsContent value="hazards" className="mt-0">
-									<div className="space-y-2">
-										{outOfInitiative.hazards.map((participant) => (
-											<ParticipantRow
-												key={participant.id}
-												participant={participant}
-												onSelect={setSelectedParticipantId}
-												selected={participant.id === selectedParticipantId}
-											/>
-										))}
-									</div>
-								</TabsContent>
-							</Tabs>
-						</Card>
-					</TabsContent>
+					{hasOutOfInitiativePanel && (
+						<TabsContent value="inactive" className="mt-0">
+							<Card className="p-4">
+								<Tabs defaultValue={outOfInitiativePanelDefault} className="space-y-3">
+									<TabsList className={['grid w-full h-auto', [hasReinforcements, hasDelayed, hasHazards].filter(Boolean).length === 3 ? 'grid-cols-3' : [hasReinforcements, hasDelayed, hasHazards].filter(Boolean).length === 2 ? 'grid-cols-2' : 'grid-cols-1'].join(' ')}>
+										{hasReinforcements && <TabsTrigger value="reinforcements" className="whitespace-normal">Reinforcements</TabsTrigger>}
+										{hasDelayed && <TabsTrigger value="delaying" className="whitespace-normal">Delaying</TabsTrigger>}
+										{hasHazards && <TabsTrigger value="hazards" className="whitespace-normal">Simple Hazards</TabsTrigger>}
+									</TabsList>
+									{hasReinforcements && (
+										<TabsContent value="reinforcements" className="mt-0">
+											<div className="space-y-2">
+												{pendingReinforcementParticipants.map((participant) => (
+													<ParticipantRow
+														key={participant.id}
+														participant={participant}
+														onSelect={setSelectedParticipantId}
+														selected={participant.id === selectedParticipantId}
+														actionSlot={
+															participant.eventId ? (
+																<Button
+																	type="button"
+																	size="sm"
+																	className="h-7 px-2 text-xs"
+																	onClick={(event) => {
+																		event.stopPropagation();
+																		triggerReinforcementEvent(participant.eventId as string);
+																	}}
+																>
+																	Trigger
+																</Button>
+															) : undefined
+														}
+													/>
+												))}
+											</div>
+										</TabsContent>
+									)}
+									{hasDelayed && (
+										<TabsContent value="delaying" className="mt-0">
+											<div className="space-y-2">
+												{delayedSectionParticipants.map((participant) => (
+													<ParticipantRow
+														key={participant.id}
+														participant={participant}
+														onSelect={setSelectedParticipantId}
+														selected={participant.id === selectedParticipantId}
+													/>
+												))}
+											</div>
+										</TabsContent>
+									)}
+									{hasHazards && (
+										<TabsContent value="hazards" className="mt-0">
+											<div className="space-y-2">
+												{outOfInitiative.hazards.map((participant) => (
+													<ParticipantRow
+														key={participant.id}
+														participant={participant}
+														onSelect={setSelectedParticipantId}
+														selected={participant.id === selectedParticipantId}
+													/>
+												))}
+											</div>
+										</TabsContent>
+									)}
+								</Tabs>
+							</Card>
+						</TabsContent>
+					)}
 					<TabsContent value="carousel" className="mt-0">
 						<Card className="p-4">
 							<Carousel
 								opts={{ align: 'start', dragFree: true }}
 								className="w-full"
 							>
-								<CarouselContent className="-ml-2">
-									{initiativeParticipants.map((participant, index) => (
-										<Fragment key={participant.id}>
-											{index === nextRoundMarkerIndex ? (
-												<CarouselItem className="basis-[42%] pl-2">
-													<div className="flex aspect-square min-h-44 items-center justify-center rounded-xl border border-dashed border-primary/50 bg-primary/5 px-3 py-4 text-center">
-														<div className="space-y-1">
-															<p className="text-xs font-medium uppercase tracking-[0.24em] text-primary/80">
-																Next Round
-															</p>
-															<p className="text-xl font-semibold tabular-nums text-primary">{nextRound}</p>
-														</div>
-													</div>
-												</CarouselItem>
-											) : null}
-											<CarouselItem
-												className={[
-													'pl-2',
-													participant.state === 'delayed' ? 'basis-[42%]' : 'basis-[70%]',
-												].join(' ')}
-											>
-												{participant.state === 'delayed' ? (
-													<div className="flex aspect-square min-h-44 w-full items-center justify-center rounded-xl border border-dashed border-primary/50 bg-primary/5 px-3 py-4 text-center">
-														<div className="space-y-1">
-															<p className="text-xs font-medium uppercase tracking-[0.24em] text-primary/80">
-																Delayed
-															</p>
-															<p className="text-sm font-semibold text-primary">{participant.name}</p>
-														</div>
-													</div>
-												) : (
-													<MobileInitiativeCarouselCard
-														participant={participant}
-														selected={participant.id === selectedParticipantId}
-														onSelect={setSelectedParticipantId}
-														isCurrent={participant.id === currentInitiativeParticipantId}
-													/>
-												)}
-											</CarouselItem>
-										</Fragment>
+								<CarouselContent className="-ml-2 h-60 pl-1">
+									{initiativeCarouselItems.map((item) => (
+										<CarouselItem
+											key={item.key}
+											className={[
+												'h-full min-w-30 basis-[41%] pl-2',
+											].join(' ')}
+										>
+											{item.type === 'marker' ? (
+												<NextRoundMarkerCard nextRound={nextRound} compact />
+											) : item.participant.state === 'delayed' ? (
+												<DelayedMarkerCard
+													participant={item.participant}
+													selected={item.participant.id === selectedParticipantId}
+													onSelect={setSelectedParticipantId}
+													compact
+												/>
+											) : (
+												<InitiativeActionCarouselCard
+													participant={item.participant}
+													selected={item.participant.id === selectedParticipantId}
+													onSelect={setSelectedParticipantId}
+													isCurrent={item.participant.id === currentInitiativeParticipantId}
+													onSwipeAction={handleParticipantSwipeAction}
+													density="mobile"
+													accent={getParticipantAccent(item.participant)}
+													indicatorLabel={getParticipantIndicatorLabel(item.participant)}
+													logAction={logTrackerButton}
+												/>
+											)}
+										</CarouselItem>
 									))}
 								</CarouselContent>
 							</Carousel>
@@ -1402,9 +1546,9 @@ export function InitiativeTrackerPage() {
 					<TabsContent value="general" className="mt-0">
 						<Card className="p-4">
 							<Tabs defaultValue="description" className="space-y-3">
-								<TabsList className="grid w-full grid-cols-4 h-auto">
+								<TabsList className={['grid w-full h-auto', hasNarrativeEvents ? 'grid-cols-4' : 'grid-cols-3'].join(' ')}>
 									<TabsTrigger value="description" className="whitespace-normal">Description</TabsTrigger>
-									<TabsTrigger value="events" className="whitespace-normal">Narrative Events</TabsTrigger>
+									{hasNarrativeEvents && <TabsTrigger value="events" className="whitespace-normal">Narrative Events</TabsTrigger>}
 									<TabsTrigger value="history" className="whitespace-normal">Command History</TabsTrigger>
 									<TabsTrigger value="stats" className="whitespace-normal">Turn Stats</TabsTrigger>
 								</TabsList>
@@ -1413,19 +1557,21 @@ export function InitiativeTrackerPage() {
 											sections={trackerHeader?.descriptionSections ?? []}
 										/>
 								</TabsContent>
-								<TabsContent value="events" className="mt-0">
-									<ul className="space-y-2 text-sm">
-										{(trackerHeader?.narrativeDetails ?? []).map((event) => (
-											<li key={event} className="rounded-md border p-2">
-												{event}
-											</li>
-										))}
-									</ul>
-								</TabsContent>
+								{hasNarrativeEvents && (
+									<TabsContent value="events" className="mt-0">
+										<ul className="space-y-2 text-sm">
+											{(trackerHeader?.narrativeDetails ?? []).map((event) => (
+												<li key={event} className="rounded-md border p-2">
+													{event}
+												</li>
+											))}
+										</ul>
+									</TabsContent>
+								)}
 								<TabsContent value="history" className="mt-0">
 									<ul className="space-y-2 text-sm">
-										{historyPreview.map((entry) => (
-											<li key={entry} className="rounded-md border p-2">
+										{historyPreview.map((entry, index) => (
+											<li key={index} className="rounded-md border p-2">
 												{entry}
 											</li>
 										))}
@@ -1444,6 +1590,81 @@ export function InitiativeTrackerPage() {
 					</TabsContent>
 				</Tabs>
 			</section>
+
+			<Dialog
+				open={nextRoundAnnouncement !== null}
+				onOpenChange={handleNextRoundAnnouncementChange}
+			>
+				<DialogContent className="sm:max-w-sm">
+					<DialogHeader>
+						<DialogTitle>Round {nextRoundAnnouncement?.round}</DialogTitle>
+						<DialogDescription>
+							The next round is ready. Review this round's events before continuing.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="space-y-2">
+						{roundAnnouncementEvents.length === 0 ? (
+							<p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+								No events scheduled for this round.
+							</p>
+						) : (
+							roundAnnouncementEvents.map((event) => (
+								<div key={event.id} className="rounded-md border p-3">
+									<div className="flex items-center justify-between gap-2">
+										<p className="text-sm font-semibold">{event.title}</p>
+										{event.canTriggerReinforcement && (
+											<Button
+												type="button"
+												size="sm"
+												onClick={() => triggerReinforcementEvent(event.id)}
+											>
+												Trigger Reinforcements
+											</Button>
+										)}
+									</div>
+									{event.detail && (
+										<p className="mt-1 text-xs text-muted-foreground">{event.detail}</p>
+									)}
+								</div>
+							))
+						)}
+					</div>
+					<DialogFooter>
+						<Button onClick={() => handleNextRoundAnnouncementChange(false)}>
+							Continue
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			<Dialog open={returnPrompt !== null} onOpenChange={(open) => { if (!open) handleReturnPromptSkip(); }}>
+				<DialogContent className="sm:max-w-sm">
+					<DialogHeader>
+						<DialogTitle>Return to Initiative?</DialogTitle>
+						<DialogDescription>
+							Before ending this turn, does any delayed participant want to return to initiative?
+						</DialogDescription>
+					</DialogHeader>
+					<div className="space-y-2">
+						{delayedSectionParticipants.map((participant) => (
+							<div key={participant.id} className="flex items-center justify-between gap-2 rounded-md border p-3">
+								<p className="text-sm font-semibold">{participant.name}</p>
+								<Button
+									size="sm"
+									onClick={() => handleReturnPromptSelect(participant.id)}
+								>
+									Return
+								</Button>
+							</div>
+						))}
+					</div>
+					<DialogFooter>
+						<Button variant="outline" onClick={handleReturnPromptSkip}>
+							Nobody returns
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 
 			<Dialog open={reorderOpen} onOpenChange={handleReorderOpenChange}>
 				<DialogContent
@@ -1473,9 +1694,17 @@ export function InitiativeTrackerPage() {
 									key={participant.id}
 									value={participant}
 									whileDrag={{ scale: 1.01 }}
-									className="cursor-grab rounded-md border p-2 text-sm active:cursor-grabbing"
+									className={[
+										'cursor-grab rounded-md border p-2 text-sm active:cursor-grabbing',
+										participant.state === 'pending-reinforcement'
+											? 'border-dashed border-amber-500/40 bg-amber-500/5 text-amber-300 opacity-70'
+											: '',
+									].join(' ')}
 								>
-									{participant.name}
+									<span>{participant.name}</span>
+									{participant.state === 'pending-reinforcement' && (
+										<span className="ml-2 text-xs text-amber-400/70">(pending reinforcement)</span>
+									)}
 								</Reorder.Item>
 							))}
 						</Reorder.Group>

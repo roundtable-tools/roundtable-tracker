@@ -1,5 +1,5 @@
 import { UUID } from '@/utils/uuid';
-import { Command } from '@/CommandHistory/common';
+import { Command, CommandDeps } from '@/CommandHistory/common';
 import { CompositeCommand } from '../CompositeCommand';
 import { Character } from '@/store/data';
 import { UpdateCharacterDataCommand } from '../UpdateCharacterDataCommand';
@@ -16,7 +16,8 @@ export const canBeDelayed = (
 
 const getKnockOutCommand = (
 	characterId: string,
-	deps: { charactersWithTurn: Set<UUID>; charactersOrder: UUID[] }
+	deps: { charactersWithTurn: Set<UUID>; charactersOrder: UUID[] },
+	commandDeps?: CommandDeps
 ) => {
 	const { charactersWithTurn, charactersOrder } = deps;
 
@@ -27,9 +28,12 @@ const getKnockOutCommand = (
 	const hasTurn = charactersWithTurn.has(characterId);
 
 	if (hasTurn) {
-		return new EndTurnCommand({ uuid: characterId });
+		return new EndTurnCommand({ uuid: characterId }, commandDeps);
 	} else {
-		return new ReorderCharactersCommand({ newOrder: moveToEnd(characterId) });
+		return new ReorderCharactersCommand(
+			{ newOrder: moveToEnd(characterId) },
+			commandDeps
+		);
 	}
 };
 
@@ -40,27 +44,28 @@ export const getChangeCharacterState = (
 		charactersWithTurn: Set<UUID>;
 		charactersOrder: UUID[];
 		delayedOrder: UUID[];
-	}
+	},
+	commandDeps?: CommandDeps
 ) => {
 	const commands: Command[] = [
 		new UpdateCharacterDataCommand({
 			uuid: character.uuid,
 			newCharacterProps: { turnState: newState },
-		}),
+		}, commandDeps),
 	];
 	const removeFromInitiatives = new ReorderCharactersCommand({
 		newOrder: deps.charactersOrder.filter((id) => id !== character.uuid),
-	});
+	}, commandDeps);
 
 	const removeFromDelayed = new ReorderCharactersCommand({
 		newOrder: deps.delayedOrder.filter((id) => id !== character.uuid),
 		type: 'delay',
-	});
+	}, commandDeps);
 
 	const addToDelayed = new ReorderCharactersCommand({
 		newOrder: deps.delayedOrder.concat(character.uuid),
 		type: 'delay',
-	});
+	}, commandDeps);
 
 	const additionalCommands: Partial<
 		Record<
@@ -69,7 +74,7 @@ export const getChangeCharacterState = (
 		>
 	> = {
 		normal: {
-			'knocked-out': [getKnockOutCommand(character.uuid, deps)],
+			'knocked-out': [getKnockOutCommand(character.uuid, deps, commandDeps)],
 			delayed: [removeFromInitiatives, addToDelayed],
 		},
 		delayed: {
@@ -77,11 +82,11 @@ export const getChangeCharacterState = (
 				removeFromDelayed,
 				new ReorderCharactersCommand({
 					newOrder: [character.uuid].concat(deps.charactersOrder),
-				}),
+				}, commandDeps),
 			],
 			'knocked-out': [
 				removeFromDelayed,
-				getKnockOutCommand(character.uuid, deps),
+				getKnockOutCommand(character.uuid, deps, commandDeps),
 			],
 		},
 		'knocked-out': {

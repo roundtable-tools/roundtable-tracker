@@ -34,7 +34,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { Bot, Ghost, Trees, User } from 'lucide-react';
+import { Bot, Trees, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useSavedPartiesStore } from '@/store/savedPartiesInstance';
 import { Party } from '@/store/savedParties';
@@ -51,39 +51,51 @@ type TeamAppearance = {
 	Icon: LucideIcon;
 };
 
-const TEAM_APPEARANCES: Record<number, TeamAppearance> = {
-	0: {
-		borderClassName: 'border-l-teal-600',
-		markerClassName: 'bg-teal-600',
-		textClassName: 'text-teal-600',
+const TEAM_APPEARANCES = {
+	pc: {
+		borderClassName: 'border-l-sky-600',
+		markerClassName: 'bg-sky-600',
+		textClassName: 'text-sky-600',
 		label: 'PCs',
 		Icon: User,
 	},
-	1: {
-		borderClassName: 'border-l-violet-700',
-		markerClassName: 'bg-violet-700',
-		textClassName: 'text-violet-700',
+	opponents: {
+		borderClassName: 'border-l-rose-700',
+		markerClassName: 'bg-rose-700',
+		textClassName: 'text-rose-700',
 		label: 'Opponents',
 		Icon: Bot,
 	},
-	2: {
-		borderClassName: 'border-l-green-600',
-		markerClassName: 'bg-green-600',
-		textClassName: 'text-green-600',
-		label: 'Neutral',
-		Icon: Trees,
+	allies: {
+		borderClassName: 'border-l-emerald-600',
+		markerClassName: 'bg-emerald-600',
+		textClassName: 'text-emerald-600',
+		label: 'Allies',
+		Icon: User,
 	},
-	3: {
-		borderClassName: 'border-l-orange-500',
-		markerClassName: 'bg-orange-500',
-		textClassName: 'text-orange-500',
-		label: 'Special',
-		Icon: Ghost,
+	other: {
+		borderClassName: 'border-l-violet-600',
+		markerClassName: 'bg-violet-600',
+		textClassName: 'text-violet-600',
+		label: 'Other',
+		Icon: Trees,
 	},
 } as const;
 
-function getTeamAppearance(side: number): TeamAppearance {
-	return TEAM_APPEARANCES[Math.min(3, Math.max(0, side))] ?? TEAM_APPEARANCES[0];
+function getTeamAppearance(side: number, isParty: boolean): TeamAppearance {
+	if (isParty) {
+		return TEAM_APPEARANCES.pc;
+	}
+
+	if (side === ALIGNMENT.Opponents) {
+		return TEAM_APPEARANCES.opponents;
+	}
+
+	if (side === ALIGNMENT.PCs) {
+		return TEAM_APPEARANCES.allies;
+	}
+
+	return TEAM_APPEARANCES.other;
 }
 
 function getDefaultParticipantName(participant: Participant<0 | 1>): string {
@@ -93,13 +105,13 @@ function getDefaultParticipantName(participant: Participant<0 | 1>): string {
 
 	switch (participant.side) {
 		case ALIGNMENT.Opponents:
-			return 'Enemy';
+			return 'Opponent';
 
 		case ALIGNMENT.Neutral:
-			return 'Neutral';
+			return 'Other';
 
 		case ALIGNMENT.PCs:
-			return 'Ally';
+			return 'PC';
 
 		default:
 			return 'Combatant';
@@ -112,7 +124,16 @@ export const generateParticipants = (
 ): InitiativeParticipant[][] => {
 	if (!encounterData) return [];
 
-	const groupedBySide = encounterData.participants.reduce(
+	const reinforcementParticipants = (encounterData.narrativeSlots ?? [])
+		.filter((slot) => slot.type === 'reinforcement')
+		.flatMap((slot) => slot.participants ?? []);
+
+	const allParticipants = [
+		...encounterData.participants,
+		...reinforcementParticipants,
+	];
+
+	const groupedBySide = allParticipants.reduce(
 		(acc, participant) => {
 			if (!acc[participant.side]) {
 				acc[participant.side] = [];
@@ -180,6 +201,7 @@ const generatePartyFromData = (party: Party): InitiativeParticipant[] =>
 export type Inputs = {
 	teams: {
 		side: number;
+		isParty: boolean;
 		characters: CharacterConfig[];
 	}[];
 };
@@ -224,11 +246,12 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 		() =>
 			fullParty
 				.filter((group) => group.length > 0)
-				.map((group) => ({
+				.map((group, index) => ({
 					side: group[0].side,
+					isParty: index === 0,
 					characters: group.map((participant) => ({
 						...participant,
-						initiative: 0,
+						initiative: participant.initiative ?? 0,
 						maxHealth: participant.maxHealth ?? 1,
 						tempHealth: participant.tempHealth ?? 0,
 						health: participant.health ?? participant.maxHealth,
@@ -251,7 +274,7 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	const onStartEncounter = () => {
 		handleSubmit(
 			(data) => {
-				const participants = data.teams
+				const formParticipants = data.teams
 					.flatMap(({ characters }) => characters)
 					.map((participant) => {
 						const maxHealth =
@@ -286,7 +309,8 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 							tempHealth,
 						};
 					});
-				setPreparedParticipants(participants);
+
+				setPreparedParticipants(formParticipants);
 				setShowInitiativeChoice(true);
 			},
 			(errors) => {
@@ -397,7 +421,10 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 				<form className="space-y-6">
 					<div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
 						{teamFields.map((teamField, index) => {
-							const appearance = getTeamAppearance(teamField.side);
+							const appearance = getTeamAppearance(
+								teamField.side,
+								teamField.isParty
+							);
 							const TeamIcon = appearance.Icon;
 
 							return (
@@ -409,16 +436,14 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 									key={teamField.id}
 									teamIndex={index}
 									sideFlag={<TeamIcon className="h-5 w-5" />}
-									sideTitle={
-										Object.entries(ALIGNMENT).find(
-											([, value]) => value === teamField.side
-										)?.[0] ?? appearance.label
-									}
-									participants={teamField.characters}								readonlyFields={
+									sideTitle={appearance.label}
+									participants={teamField.characters}
+									readonlyFields={
 									selectedParty !== null && teamField.side === ALIGNMENT.PCs
 										? ['name']
 										: []
-								}								/>
+								}
+								/>
 							);
 						})}
 					</div>

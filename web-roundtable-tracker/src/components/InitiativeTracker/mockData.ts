@@ -2,7 +2,11 @@ export type TrackerParticipant = {
 	id: string;
 	name: string;
 	role: 'pc' | 'opponent' | 'neutral' | 'ally' | 'hazard' | 'reinforcement';
-	state: 'active' | 'delayed' | 'knocked-out' | 'inactive';
+	sideTheme?: 'pc' | 'opponent' | 'ally' | 'other' | 'neutral';
+	state: 'active' | 'delayed' | 'knocked-out' | 'inactive' | 'pending-reinforcement';
+	initiative?: number;
+	eventId?: string;
+	eventRound?: number;
 	currentHp?: number;
 	maxHp?: number;
 	disableChecksSucceeded?: number;
@@ -11,9 +15,11 @@ export type TrackerParticipant = {
 };
 
 export type TimelineEvent = {
+	id?: string;
 	round: number;
 	title: string;
 	detail: string;
+	type?: 'default' | 'reinforcement' | 'ongoing';
 };
 
 export const trackerMockData = {

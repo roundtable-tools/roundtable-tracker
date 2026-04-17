@@ -18,6 +18,8 @@ type RuntimeParticipantFields = {
 	isSimpleHazard?: boolean;
 	isComplexHazard?: boolean;
 	description?: string;
+	reinforcementSlotId?: string;
+	reinforcementPending?: boolean;
 };
 
 function deriveRole(
@@ -38,6 +40,21 @@ function deriveRole(
 	}
 }
 
+function deriveSideTheme(
+	side: typeof ALIGNMENT[keyof typeof ALIGNMENT]
+): TrackerParticipantMeta['sideTheme'] {
+	switch (side) {
+		case ALIGNMENT.PCs:
+			return 'pc';
+
+		case ALIGNMENT.Neutral:
+			return 'other';
+
+		default:
+			return 'opponent';
+	}
+}
+
 export const buildTrackerMetaMap = (
 	participants: CharacterConfig[]
 ): Record<UUID, TrackerParticipantMeta> => {
@@ -48,10 +65,17 @@ export const buildTrackerMetaMap = (
 
 		result[participant.uuid] = {
 			role: deriveRole(participant.side, runtime.type),
+			sideTheme: deriveSideTheme(participant.side),
 			isSimpleHazard: runtime.isSimpleHazard ?? false,
 			disableChecksRequired: runtime.successesToDisable ?? 0,
 			disableChecksSucceeded: 0,
 			notes: runtime.description ?? '',
+			...(runtime.reinforcementSlotId !== undefined
+				? {
+						reinforcementSlotId: runtime.reinforcementSlotId,
+						reinforcementPending: runtime.reinforcementPending ?? false,
+					}
+				: {}),
 		};
 	}
 

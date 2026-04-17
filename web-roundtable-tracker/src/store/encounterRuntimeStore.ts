@@ -10,12 +10,17 @@ export type TrackerParticipantRole =
 	| 'hazard'
 	| 'reinforcement';
 
+export type TrackerParticipantSideTheme = 'pc' | 'opponent' | 'ally' | 'other';
+
 export type TrackerParticipantMeta = {
 	role: TrackerParticipantRole;
+	sideTheme: TrackerParticipantSideTheme;
 	isSimpleHazard: boolean;
 	disableChecksRequired: number;
 	disableChecksSucceeded: number;
 	notes: string;
+	reinforcementSlotId?: string;
+	reinforcementPending?: boolean;
 };
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Encounter } from './data';

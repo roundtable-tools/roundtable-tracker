@@ -11,7 +11,21 @@ export type SlotType =
 	| 'reinforcement'
 	| 'narrative';
 
-export type SideType = 'enemy' | 'ally' | 'neutral';
+export type CanonicalSideType = 'opponent' | 'ally' | 'other';
+
+export type SideType = CanonicalSideType | 'enemy' | 'neutral';
+
+export function normalizeSideType(side: SideType): CanonicalSideType {
+	if (side === 'enemy') {
+		return 'opponent';
+	}
+
+	if (side === 'neutral') {
+		return 'other';
+	}
+
+	return side;
+}
 
 export interface BuilderReinforcementParticipant {
 	id: string;
@@ -165,7 +179,9 @@ function resolveCombatValuesBaseXp(
 	},
 	partyLevel: number
 ): ExperienceBudget | null {
-	if (values.side === 'neutral') {
+	const side = normalizeSideType(values.side);
+
+	if (side === 'other') {
 		return null;
 	}
 
@@ -186,7 +202,7 @@ function resolveCombatValuesBaseXp(
 	const diff = new LevelDifference(adjustedLevel - partyLevel);
 	const xp = diff.toExperience(!values.isSimpleHazard);
 	const contribution =
-		values.side === 'ally' ? -xp.valueOf() * count : xp.valueOf() * count;
+		side === 'ally' ? -xp.valueOf() * count : xp.valueOf() * count;
 
 	return new ExperienceBudget(contribution);
 }

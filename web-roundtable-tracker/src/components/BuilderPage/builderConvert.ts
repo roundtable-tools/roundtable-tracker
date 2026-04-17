@@ -8,8 +8,12 @@ import {
 	type NarrativeSlot,
 	type Participant,
 } from '@/store/data';
-import type { BuilderSlot } from './builderXp';
-import { computeBuilderXP } from './builderXp';
+import {
+	computeBuilderXP,
+	normalizeSideType,
+	type BuilderSlot,
+	type SideType,
+} from './builderXp';
 import { Threat } from '@/models/utility/threat/Threat.class';
 import type { LevelAdjustment } from '@/models/utility/level/Level';
 import type { EncounterTemplateData } from '@/models/encounters/encounter.types';
@@ -40,7 +44,7 @@ export function defaultSlot(): BuilderSlot {
 		type: 'creature',
 		name: '',
 		description: '',
-		side: 'enemy',
+		side: 'opponent',
 		level: 1,
 		count: 1,
 		maxHealth: undefined,
@@ -53,6 +57,34 @@ export function defaultSlot(): BuilderSlot {
 		repeatInterval: undefined,
 		accomplishmentLevel: 'story',
 	};
+}
+
+function alignmentToBuilderSide(side: number): SideType {
+	if (side === ALIGNMENT.PCs) {
+		return 'ally';
+	}
+
+	if (side === ALIGNMENT.Neutral) {
+		return 'other';
+	}
+
+	return 'opponent';
+}
+
+function builderSideToAlignment(
+	side: SideType
+): (typeof ALIGNMENT)[keyof typeof ALIGNMENT] {
+	const normalizedSide = normalizeSideType(side);
+
+	if (normalizedSide === 'ally') {
+		return ALIGNMENT.PCs;
+	}
+
+	if (normalizedSide === 'other') {
+		return ALIGNMENT.Neutral;
+	}
+
+	return ALIGNMENT.Opponents;
 }
 
 export function defaultFormValues(): BuilderFormValues {
@@ -97,12 +129,7 @@ export function fromEncounterTemplate(
 					? `${participant.role || 'creature'} (${participant.count})`
 					: participant.id,
 			description: '',
-			side:
-				participant.side === 0
-					? 'ally'
-					: participant.side === 2
-						? 'neutral'
-						: 'enemy',
+			side: alignmentToBuilderSide(participant.side),
 			level: participant.relativeLevel.toLevel(partyLevel).valueOf(),
 			count: participant.count,
 			maxHealth: undefined,
@@ -163,12 +190,7 @@ export function toConcreteEncounter(
 	const participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[] = values.slots
 		.filter((s) => s.type === 'creature' || s.type === 'hazard')
 		.map((s) => {
-			const side =
-				s.side === 'ally'
-					? ALIGNMENT.PCs
-					: s.side === 'enemy'
-						? ALIGNMENT.Opponents
-						: ALIGNMENT.Neutral;
+			const side = builderSideToAlignment(s.side);
 
 			if (s.type === 'hazard') {
 				return {
@@ -222,12 +244,7 @@ export function toConcreteEncounter(
 			participants:
 				s.type === 'reinforcement'
 					? s.reinforcementParticipants.map((participant) => {
-							const side =
-								participant.side === 'ally'
-									? ALIGNMENT.PCs
-									: participant.side === 'enemy'
-										? ALIGNMENT.Opponents
-										: ALIGNMENT.Neutral;
+							const side = builderSideToAlignment(participant.side);
 
 							if (participant.type === 'hazard') {
 								return {
@@ -267,11 +284,7 @@ export function toConcreteEncounter(
 							.filter((s) => s.type === 'creature' || s.type === 'hazard')
 							.map((s) => {
 								const side =
-									s.side === 'ally'
-										? ALIGNMENT.PCs
-										: s.side === 'enemy'
-											? ALIGNMENT.Opponents
-											: ALIGNMENT.Neutral;
+									builderSideToAlignment(s.side);
 
 								if (s.type === 'hazard') {
 									return {
@@ -343,12 +356,7 @@ export function fromConcreteEncounter(
 				type: 'creature',
 				name: p.name,
 				description: p.description ?? '',
-				side:
-					p.side === ALIGNMENT.PCs
-						? 'ally'
-						: p.side === ALIGNMENT.Opponents
-							? 'enemy'
-							: 'neutral',
+				side: alignmentToBuilderSide(p.side),
 				level: p.level,
 				count: p.count ?? 1,
 				maxHealth: p.maxHealth,
@@ -369,12 +377,7 @@ export function fromConcreteEncounter(
 			type: 'hazard',
 			name: p.name,
 			description: p.description ?? '',
-			side:
-				p.side === ALIGNMENT.PCs
-					? 'ally'
-					: p.side === ALIGNMENT.Opponents
-						? 'enemy'
-						: 'neutral',
+			side: alignmentToBuilderSide(p.side),
 			level: p.level,
 			count: p.count ?? 1,
 			maxHealth: p.maxHealth,
@@ -397,7 +400,7 @@ export function fromConcreteEncounter(
 			type: isReinforcement ? 'reinforcement' : 'narrative',
 			name: '',
 			description: ns.description ?? '',
-			side: 'enemy',
+			side: 'opponent',
 			level: encounter.level,
 			count: 1,
 			maxHealth: undefined,
@@ -410,12 +413,7 @@ export function fromConcreteEncounter(
 						id: uuidv4(),
 						type: participant.type,
 						name: participant.name,
-						side:
-							participant.side === ALIGNMENT.PCs
-								? 'ally'
-								: participant.side === ALIGNMENT.Opponents
-									? 'enemy'
-									: 'neutral',
+						side: alignmentToBuilderSide(participant.side),
 						level: fromRelativeLevelString(participant.level, encounter.level),
 						count: participant.count ?? 1,
 						maxHealth: participant.maxHealth,
@@ -468,12 +466,7 @@ function participantsToBuilderSlots(
 				type: 'creature' as const,
 				name: p.name,
 				description: p.description ?? '',
-				side:
-					p.side === ALIGNMENT.PCs
-						? 'ally'
-						: p.side === ALIGNMENT.Opponents
-							? 'enemy'
-							: 'neutral',
+				side: alignmentToBuilderSide(p.side),
 				level: p.level,
 				count: p.count ?? 1,
 				maxHealth: p.maxHealth,
@@ -493,24 +486,19 @@ function participantsToBuilderSlots(
 			type: 'hazard' as const,
 			name: p.name,
 			description: p.description ?? '',
-			side:
-				p.side === ALIGNMENT.PCs
-					? 'ally'
-					: p.side === ALIGNMENT.Opponents
-						? 'enemy'
-						: 'neutral',
-				level: p.level,
-				count: p.count ?? 1,
-				maxHealth: p.maxHealth,
-				successesToDisable: p.successesToDisable,
-				adjustment: 'none',
-				isSimpleHazard: !p.isComplexHazard,
-				reinforcementRound: 1,
-				reinforcementParticipants: [],
-				eventRound: 1,
-				repeatInterval: undefined,
-				accomplishmentLevel: undefined,
-			};
+			side: alignmentToBuilderSide(p.side),
+			level: p.level,
+			count: p.count ?? 1,
+			maxHealth: p.maxHealth,
+			successesToDisable: p.successesToDisable,
+			adjustment: 'none',
+			isSimpleHazard: !p.isComplexHazard,
+			reinforcementRound: 1,
+			reinforcementParticipants: [],
+			eventRound: 1,
+			repeatInterval: undefined,
+			accomplishmentLevel: undefined,
+		};
 		});
 }
 
@@ -532,12 +520,7 @@ export function templateVariantToFormPartial(
 					? `${participant.role || 'creature'} (${participant.count})`
 					: participant.id,
 			description: '',
-			side:
-				participant.side === 0
-					? 'ally'
-					: participant.side === 2
-						? 'neutral'
-						: 'enemy',
+			side: alignmentToBuilderSide(participant.side),
 			level: participant.relativeLevel.toLevel(partyLevel).valueOf(),
 			count: participant.count,
 			maxHealth: undefined,
