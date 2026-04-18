@@ -15,6 +15,7 @@ describe('EndTurnCommand', () => {
 			name: 'Test Character',
 			initiative: 10,
 			turnState: 'normal',
+			hasTurn: false,
 			group: 'players',
 			wounded: 0,
 			health: 100,
