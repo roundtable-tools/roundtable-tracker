@@ -32,7 +32,7 @@ const createMeta = (
 });
 
 describe('trackerMappers', () => {
-	it('preserves runtime initiative order instead of re-sorting by initiative', () => {
+	it('preserves runtime initiative order without duplicating delayed participants', () => {
 		const charactersMap = {
 			bravo: createCharacter({
 				uuid: 'bravo',
@@ -58,7 +58,7 @@ describe('trackerMappers', () => {
 		};
 
 		const queue = runtimeToInitiativeQueue({
-			charactersOrder: ['bravo', 'alpha'],
+			charactersOrder: ['bravo', 'alpha', 'delta'],
 			delayedOrder: ['delta'],
 			charactersMap,
 			trackerMetaMap,
@@ -153,5 +153,50 @@ describe('trackerMappers', () => {
 				hpLabel: 'Defeated',
 			},
 		]);
+	});
+
+	it('maps additional participant metadata into tracker participants', () => {
+		const charactersMap = {
+			alpha: createCharacter({
+				uuid: 'alpha',
+				name: 'Alpha',
+				initiative: 18,
+			}),
+		};
+		const trackerMetaMap = {
+			alpha: createMeta({
+				initiativeBonus: 3,
+				hardness: 8,
+				dcs: [
+					{
+						name: 'Disable',
+						value: 24,
+						icon: 'shield',
+						disableSuccesses: 2,
+					},
+				],
+				adjustmentDescription: 'Custom elite skew',
+				adjustmentLevelModifier: 0.5,
+			}),
+		};
+
+		const queue = runtimeToInitiativeQueue({
+			charactersOrder: ['alpha'],
+			delayedOrder: [],
+			charactersMap,
+			trackerMetaMap,
+		});
+
+		expect(queue[0]).toMatchObject({
+			initiativeBonus: 3,
+			hardness: 8,
+			adjustmentDescription: 'Custom elite skew',
+			adjustmentLevelModifier: 0.5,
+		});
+		expect(queue[0].dcs?.[0]).toMatchObject({
+			name: 'Disable',
+			value: 24,
+			disableSuccesses: 2,
+		});
 	});
 });

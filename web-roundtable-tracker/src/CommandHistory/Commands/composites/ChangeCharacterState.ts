@@ -53,8 +53,8 @@ export const getChangeCharacterState = (
 			newCharacterProps: { turnState: newState },
 		}, commandDeps),
 	];
-	const removeFromInitiatives = new ReorderCharactersCommand({
-		newOrder: deps.charactersOrder.filter((id) => id !== character.uuid),
+	const moveToEndInInitiative = new ReorderCharactersCommand({
+		newOrder: deps.charactersOrder.filter((id) => id !== character.uuid).concat(character.uuid),
 	}, commandDeps);
 
 	const removeFromDelayed = new ReorderCharactersCommand({
@@ -63,7 +63,9 @@ export const getChangeCharacterState = (
 	}, commandDeps);
 
 	const addToDelayed = new ReorderCharactersCommand({
-		newOrder: deps.delayedOrder.concat(character.uuid),
+		newOrder: deps.delayedOrder.includes(character.uuid)
+			? deps.delayedOrder
+			: deps.delayedOrder.concat(character.uuid),
 		type: 'delay',
 	}, commandDeps);
 
@@ -75,7 +77,7 @@ export const getChangeCharacterState = (
 	> = {
 		normal: {
 			'knocked-out': [getKnockOutCommand(character.uuid, deps, commandDeps)],
-			delayed: [removeFromInitiatives, addToDelayed],
+			delayed: [new EndTurnCommand({ uuid: character.uuid }, commandDeps), addToDelayed],
 		},
 		delayed: {
 			normal: [
@@ -90,7 +92,7 @@ export const getChangeCharacterState = (
 			],
 		},
 		'knocked-out': {
-			delayed: [removeFromInitiatives, addToDelayed],
+			delayed: [moveToEndInInitiative, addToDelayed],
 		},
 	};
 

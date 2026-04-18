@@ -152,11 +152,16 @@ export const generateParticipants = (
 				trimmedName.length > 0
 					? trimmedName
 					: getDefaultParticipantName({ level, name, count, ...participant });
+			const initiativeBonus =
+				typeof participant.initiativeBonus === 'number' &&
+				Number.isFinite(participant.initiativeBonus)
+					? participant.initiativeBonus
+					: 0;
 
 			return Array.from({ length: count ?? 1 }).map((_, index, { length }) => ({
 				uuid: generateUUID(),
 				tiePriority: PRIORITY.NPC,
-				initiative: Math.floor(Math.random() * 20) + 1,
+				initiative: Math.floor(Math.random() * 20) + 1 + initiativeBonus,
 				...participant,
 				level: normalizeLevel(partyLevel, level),
 				name:

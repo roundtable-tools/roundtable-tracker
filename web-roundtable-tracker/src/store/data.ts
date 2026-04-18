@@ -46,8 +46,7 @@ export interface Character {
 	hasTurn: boolean;
 	health: number;
 	maxHealth: number;
-	tempHealth: number;
-	group?: "players" | "enemies";
+	tempHealth: number;	tempHealthDescription?: string;	group?: "players" | "enemies";
 	wounded?: number;
 	knockedBy?: UUID;
 	level?: number; // Optional level property
@@ -99,10 +98,31 @@ export type ParticipantAdjustment =
 	| "elite-defense"
 	| "none";
 
+export const PARTICIPANT_DC_ICON_KEYS = [
+	'shield',
+	'sword',
+	'eye',
+	'sparkles',
+	'triangle-alert',
+	'target',
+] as const;
+
+export type ParticipantDcIconKey = (typeof PARTICIPANT_DC_ICON_KEYS)[number];
+
+export type ParticipantDcEntry = {
+	name?: string;
+	inline?: string;
+	value: number;
+	icon?: ParticipantDcIconKey | string;
+	disableSuccesses?: number;
+};
+
 export const adjustedLevel = (
 	baseLevel: number,
 	adjustment?: ParticipantAdjustment,
+	customAdjustmentLevelModifier?: number,
 ): number => {
+	const levelWithPreset = (() => {
 	switch (adjustment) {
 		case "elite":
 			return baseLevel + (baseLevel <= 0 ? 2 : 1);
@@ -118,6 +138,16 @@ export const adjustedLevel = (
 		default:
 			return baseLevel;
 	}
+	})();
+
+	if (
+		typeof customAdjustmentLevelModifier === 'number' &&
+		Number.isFinite(customAdjustmentLevelModifier)
+	) {
+		return levelWithPreset + customAdjustmentLevelModifier;
+	}
+
+	return levelWithPreset;
 };
 
 export const formatAdjustedLevel = (level: number): string => {
@@ -179,11 +209,15 @@ export type CombatantParticipant<
 	maxHealth?: number;
 	health?: number;
 	tempHealth?: number;
+	initiativeBonus?: number;
+	hardness?: number;
+	adjustmentDescription?: string;
+	adjustmentLevelModifier?: number;
 	// TEMP: Set state to @ostatni5's format until the types get unified
 	// startingState?: INITIATIVE_STATE.Normal,
 	startingState?: "normal" | "delayed" | "knocked-out";
 	description?: string;
-	dcs?: Array<{ inline: string; value: number }>;
+	dcs?: ParticipantDcEntry[];
 };
 
 export type Creature<
@@ -289,8 +323,11 @@ export type ConcreteEncounter = {
 
 const dcsSchema = z.array(
 	z.object({
-		inline: z.string(),
+		name: z.string().optional(),
+		inline: z.string().optional(),
 		value: z.number(),
+		icon: z.string().optional(),
+		disableSuccesses: z.number().optional(),
 	})
 );
 
@@ -303,6 +340,10 @@ const combatantParticipantSchema = z.object({
 	maxHealth: z.number().optional(),
 	health: z.number().optional(),
 	tempHealth: z.number().optional(),
+	initiativeBonus: z.number().optional(),
+	hardness: z.number().optional(),
+	adjustmentDescription: z.string().optional(),
+	adjustmentLevelModifier: z.number().optional(),
 	// TEMP: Set state to @ostatni5's format until the types get unified
 	// startingState: z.nativeEnum(INITIATIVE_STATE).optional(),
 	startingState: z.enum(["normal", "delayed", "knocked-out"]).optional(),

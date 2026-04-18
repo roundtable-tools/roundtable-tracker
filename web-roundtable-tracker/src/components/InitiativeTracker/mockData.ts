@@ -9,8 +9,21 @@ export type TrackerParticipant = {
 	eventRound?: number;
 	currentHp?: number;
 	maxHp?: number;
+	tempHp?: number;
+	tempHpDescription?: string;
 	disableChecksSucceeded?: number;
 	disableChecksRequired?: number;
+	hardness?: number;
+	initiativeBonus?: number;
+	dcs?: Array<{
+		name?: string;
+		inline?: string;
+		value: number;
+		icon?: string;
+		disableSuccesses?: number;
+	}>;
+	adjustmentDescription?: string;
+	adjustmentLevelModifier?: number;
 	notes: string;
 };
 

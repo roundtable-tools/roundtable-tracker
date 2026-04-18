@@ -27,6 +27,11 @@ const DEFAULT_META: TrackerParticipantMeta = {
 	disableChecksRequired: 0,
 	disableChecksSucceeded: 0,
 	notes: '',
+	hardness: undefined,
+	initiativeBonus: undefined,
+	dcs: undefined,
+	adjustmentDescription: undefined,
+	adjustmentLevelModifier: undefined,
 };
 
 export function characterStateToTrackerState(
@@ -55,7 +60,14 @@ function characterToTrackerParticipant(
 		state: characterStateToTrackerState(character.turnState, inInitiative),
 		currentHp: character.health,
 		maxHp: character.maxHealth,
+		tempHp: character.tempHealth > 0 ? character.tempHealth : undefined,
+		tempHpDescription: character.tempHealthDescription,
 		notes: meta.notes,
+		hardness: meta.hardness,
+		initiativeBonus: meta.initiativeBonus,
+		dcs: meta.dcs,
+		adjustmentDescription: meta.adjustmentDescription,
+		adjustmentLevelModifier: meta.adjustmentLevelModifier,
 	};
 
 	if (meta.disableChecksRequired > 0) {
@@ -72,9 +84,9 @@ export function runtimeToInitiativeQueue(
 		'charactersOrder' | 'delayedOrder' | 'charactersMap' | 'trackerMetaMap'
 	>
 ): TrackerParticipant[] {
-	const { charactersOrder, delayedOrder, charactersMap, trackerMetaMap } = store;
+	const { charactersOrder, charactersMap, trackerMetaMap } = store;
 
-	const allIds = [...charactersOrder, ...delayedOrder].filter((uuid) => {
+	const allIds = charactersOrder.filter((uuid) => {
 		const meta = trackerMetaMap[uuid];
 
 		if (!meta) return true;
@@ -104,9 +116,9 @@ export function runtimeToInitiativeQueueWithPending(
 		'charactersOrder' | 'delayedOrder' | 'charactersMap' | 'trackerMetaMap'
 	>
 ): TrackerParticipant[] {
-	const { charactersOrder, delayedOrder, charactersMap, trackerMetaMap } = store;
+	const { charactersOrder, charactersMap, trackerMetaMap } = store;
 
-	const allIds = [...charactersOrder, ...delayedOrder].filter((uuid) => {
+	const allIds = charactersOrder.filter((uuid) => {
 		const meta = trackerMetaMap[uuid];
 
 		return meta ? !meta.isSimpleHazard : true;
@@ -193,10 +205,15 @@ export function runtimeToOutOfInitiativeData(
 					sideTheme: 'opponent' as const,
 					state: 'inactive' as const,
 					initiative,
+					initiativeBonus: participant.initiativeBonus,
 					eventId: slot.id,
 					eventRound: slot.trigger.round,
 					currentHp: participant.maxHealth ?? level * 5,
 					maxHp: participant.maxHealth ?? level * 5,
+					hardness: participant.hardness,
+					dcs: participant.dcs,
+					adjustmentDescription: participant.adjustmentDescription,
+					adjustmentLevelModifier: participant.adjustmentLevelModifier,
 					notes: slot.description ?? '',
 				} satisfies TrackerParticipant;
 			})

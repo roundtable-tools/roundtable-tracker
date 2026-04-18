@@ -122,6 +122,11 @@ const expandSlotParticipants = (
 						: 0,
 				disableChecksSucceeded: 0,
 				notes,
+				hardness: slotParticipant.hardness,
+				initiativeBonus: slotParticipant.initiativeBonus,
+				dcs: slotParticipant.dcs,
+				adjustmentDescription: slotParticipant.adjustmentDescription,
+				adjustmentLevelModifier: slotParticipant.adjustmentLevelModifier,
 				reinforcementSlotId: slot.id,
 			};
 

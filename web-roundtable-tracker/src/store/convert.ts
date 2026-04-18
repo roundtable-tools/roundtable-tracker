@@ -18,6 +18,17 @@ type RuntimeParticipantFields = {
 	isSimpleHazard?: boolean;
 	isComplexHazard?: boolean;
 	description?: string;
+	hardness?: number;
+	initiativeBonus?: number;
+	dcs?: Array<{
+		name?: string;
+		inline?: string;
+		value: number;
+		icon?: string;
+		disableSuccesses?: number;
+	}>;
+	adjustmentDescription?: string;
+	adjustmentLevelModifier?: number;
 	reinforcementSlotId?: string;
 	reinforcementPending?: boolean;
 };
@@ -70,6 +81,11 @@ export const buildTrackerMetaMap = (
 			disableChecksRequired: runtime.successesToDisable ?? 0,
 			disableChecksSucceeded: 0,
 			notes: runtime.description ?? '',
+			hardness: runtime.hardness,
+			initiativeBonus: runtime.initiativeBonus,
+			dcs: runtime.dcs,
+			adjustmentDescription: runtime.adjustmentDescription,
+			adjustmentLevelModifier: runtime.adjustmentLevelModifier,
 			...(runtime.reinforcementSlotId !== undefined
 				? {
 						reinforcementSlotId: runtime.reinforcementSlotId,

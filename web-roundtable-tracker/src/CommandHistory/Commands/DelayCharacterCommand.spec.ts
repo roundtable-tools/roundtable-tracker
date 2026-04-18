@@ -62,7 +62,11 @@ describe('DelayCharacterCommand', () => {
 		expect(stateAfterExecute.charactersMap[characters[0].uuid].turnState).toBe(
 			'delayed'
 		);
-		expect(stateAfterExecute.charactersOrder).toEqual([characters[1].uuid]);
+		expect(stateAfterExecute.charactersOrder).toEqual([
+			characters[1].uuid,
+			characters[0].uuid,
+		]);
+		expect(stateAfterExecute.charactersWithTurn.has(characters[0].uuid)).toBe(false);
 		expect(stateAfterExecute.delayedOrder).toEqual([characters[0].uuid]);
 
 		const undoStatus = command.undo();

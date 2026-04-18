@@ -199,32 +199,14 @@ export function InitiativeActionCarouselCard({
 			return;
 		}
 
-		if (isMobileDensity) {
-			if (swipeOffset <= -swipeSnapPx) {
+		switch (true) {
+			case swipeOffset <= -swipeSnapPx:
 				triggerActionWithSlide('delay');
-
 				return;
-			}
-
-			if (swipeOffset >= swipeSnapPx) {
+			case swipeOffset >= swipeSnapPx:
 				triggerActionWithSlide('ko');
-
 				return;
-			}
-		} else {
-			if (swipeOffset >= swipeSnapPx) {
-				triggerActionWithSlide('delay');
-
-				return;
-			}
-
-			if (swipeOffset <= -swipeSnapPx) {
-				triggerActionWithSlide('ko');
-
-				return;
-			}
 		}
-
 		setSwipeOffset(0);
 	};
 

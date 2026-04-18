@@ -4,6 +4,7 @@ import { getAdjustedLevel } from '@/models/utility/level/Level';
 import { Threat } from '@/models/utility/threat/Threat.class';
 import type { LevelAdjustment } from '@/models/utility/level/Level';
 import type { AccomplishmentLevel } from '@/models/encounters/encounter.types';
+import type { ParticipantDcEntry } from '@/store/data';
 
 export type SlotType =
 	| 'creature'
@@ -35,9 +36,19 @@ export interface BuilderReinforcementParticipant {
 	level: number;
 	count: number;
 	maxHealth?: number;
+	hardness?: number;
+	initiativeBonus?: number;
+	initiativeDescription?: string;
+	dcs?: ParticipantDcEntry[];
 	successesToDisable: number;
 	adjustment: LevelAdjustment | 'none';
+	adjustmentDescription?: string;
+	adjustmentLevelModifier?: number;
 	isSimpleHazard: boolean;
+	traits?: string[];
+	combatReadyState?: 'active' | 'delayed' | 'knocked-out';
+	initiativeModifier?: number;
+	hiddenFromPlayers?: boolean;
 }
 
 export interface BuilderSlot {
@@ -49,14 +60,24 @@ export interface BuilderSlot {
 	level: number;
 	count: number;
 	maxHealth?: number;
+	hardness?: number;
+	initiativeBonus?: number;
+	initiativeDescription?: string;
+	dcs?: ParticipantDcEntry[];
 	successesToDisable: number;
 	adjustment: LevelAdjustment | 'none';
+	adjustmentDescription?: string;
+	adjustmentLevelModifier?: number;
 	isSimpleHazard: boolean;
 	reinforcementRound: number;
 	reinforcementParticipants: BuilderReinforcementParticipant[];
 	eventRound: number;
 	repeatInterval?: number;
 	accomplishmentLevel?: AccomplishmentLevel;
+	traits?: string[];
+	combatReadyState?: 'active' | 'delayed' | 'knocked-out';
+	initiativeModifier?: number;
+	hiddenFromPlayers?: boolean;
 }
 
 export interface DelayedReinforcementConfig {
@@ -174,6 +195,7 @@ function resolveCombatValuesBaseXp(
 		level: number;
 		count: number;
 		adjustment: LevelAdjustment | 'none';
+		adjustmentLevelModifier?: number;
 		isSimpleHazard: boolean;
 		type: SlotType;
 	},
@@ -199,7 +221,12 @@ function resolveCombatValuesBaseXp(
 			: values.adjustment;
 
 	const adjustedLevel = getAdjustedLevel(values.level, adjustment);
-	const diff = new LevelDifference(adjustedLevel - partyLevel);
+	const levelWithCustomAdjustment =
+		typeof values.adjustmentLevelModifier === 'number' &&
+		Number.isFinite(values.adjustmentLevelModifier)
+			? adjustedLevel + values.adjustmentLevelModifier
+			: adjustedLevel;
+	const diff = new LevelDifference(levelWithCustomAdjustment - partyLevel);
 	const xp = diff.toExperience(!values.isSimpleHazard);
 	const contribution =
 		side === 'ally' ? -xp.valueOf() * count : xp.valueOf() * count;
@@ -214,6 +241,7 @@ function resolveSlotBaseXp(slot: BuilderSlot, partyLevel: number): ExperienceBud
 			level: slot.level,
 			count: slot.count,
 			adjustment: slot.adjustment,
+			adjustmentLevelModifier: slot.adjustmentLevelModifier,
 			isSimpleHazard: slot.isSimpleHazard,
 			type: slot.type,
 		},
@@ -231,6 +259,7 @@ function resolveReinforcementParticipantXp(
 			level: participant.level,
 			count: participant.count,
 			adjustment: participant.adjustment,
+			adjustmentLevelModifier: participant.adjustmentLevelModifier,
 			isSimpleHazard: participant.isSimpleHazard,
 			type: participant.type,
 		},

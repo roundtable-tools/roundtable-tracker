@@ -47,13 +47,18 @@ import {
 	historyToPreviewLines,
 } from '@/store/trackerMappers';
 import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
+import { type Command } from '@/CommandHistory/common';
 import { DelayCharacterCommand } from '@/CommandHistory/Commands/DelayCharacterCommand';
 import { EndTurnCommand } from '@/CommandHistory/Commands/EndTurnCommand';
 import { FinalizeTurnAndAdvanceRoundCommand } from '@/CommandHistory/Commands/FinalizeTurnAndAdvanceRoundCommand';
+import { FinalizeTurnAndReturnToInitiativeCommand } from '@/CommandHistory/Commands/FinalizeTurnAndReturnToInitiativeCommand';
 import { KnockOutCharacterCommand } from '@/CommandHistory/Commands/KnockOutCharacterCommand';
 import { TriggerReinforcementEventCommand } from '@/CommandHistory/Commands/TriggerReinforcementEventCommand';
 import { ReturnToInitiativeCommand } from '@/CommandHistory/Commands/ReturnToInitiativeCommand';
 import { ReorderCharactersCommand } from '@/CommandHistory/Commands/ReorderCharactersCommand';
+import { ChangeHealthCommand } from '@/CommandHistory/Commands/ChangeHealthCommand';
+import { SetTempHealthCommand } from '@/CommandHistory/Commands/SetTempHealthCommand';
+import { Input } from '@/components/ui/input';
 
 function logTrackerButton(action: string, details?: Record<string, unknown>) {
 	if (details) {
@@ -95,7 +100,7 @@ function getHealthLabelFromPercentage(healthPercentage: number) {
 	}
 
 	return 'Near Death';
-}
+	}
 
 function getHazardDisableStageNames(requiredChecks: number) {
 	const clampedRequiredChecks = Math.min(Math.max(requiredChecks, 1), 5);
@@ -180,6 +185,10 @@ function getParticipantRoleLabel(participant: TrackerParticipant) {
 	}
 
 	return participant.role;
+}
+
+function getDcName(dc: NonNullable<TrackerParticipant['dcs']>[number]) {
+	return dc.name ?? dc.inline ?? 'DC';
 }
 
 type SideTheme = 'pc' | 'opponent' | 'ally' | 'other';
@@ -329,6 +338,23 @@ function ParticipantRow({
 						? ` | Init ${participant.initiative}`
 						: ''}
 				</p>
+				<div className="mt-1 flex flex-wrap gap-1">
+					{typeof participant.initiativeBonus === 'number' && (
+						<Badge variant="outline" className="text-[10px]">
+							Init +{participant.initiativeBonus}
+						</Badge>
+					)}
+					{typeof participant.hardness === 'number' && (
+						<Badge variant="outline" className="text-[10px]">
+							Hardness {participant.hardness}
+						</Badge>
+					)}
+					{(participant.dcs?.length ?? 0) > 0 && (
+						<Badge variant="outline" className="text-[10px]">
+							{participant.dcs?.length} DCs
+						</Badge>
+					)}
+				</div>
 			</div>
 			<div className="flex items-center gap-2">
 				<Badge variant="secondary">{indicatorLabel}</Badge>
@@ -338,7 +364,18 @@ function ParticipantRow({
 	);
 }
 
-function ParticipantDetails({ participant }: { participant: TrackerParticipant | null }) {
+type ParticipantDetailsProps = {
+	participant: TrackerParticipant | null;
+	onHeal?: (amount: number) => void;
+	onDamage?: (amount: number) => void;
+	onSetTempHp?: (amount: number, description: string) => void;
+};
+
+function ParticipantDetails({ participant, onHeal, onDamage, onSetTempHp }: ParticipantDetailsProps) {
+	const [hpAmount, setHpAmount] = useState('');
+	const [tempHpAmount, setTempHpAmount] = useState('');
+	const [tempHpDescription, setTempHpDescription] = useState('');
+
 	if (!participant) {
 		return (
 			<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
@@ -349,6 +386,30 @@ function ParticipantDetails({ participant }: { participant: TrackerParticipant |
 
 	const indicatorLabel = getParticipantIndicatorLabel(participant);
 	const isHazard = participant.role === 'hazard';
+	const showHpControls = !isHazard && (onHeal || onDamage || onSetTempHp);
+	const hasHpData = typeof participant.currentHp === 'number' && typeof participant.maxHp === 'number';
+
+	const handleHeal = () => {
+		const amount = parseInt(hpAmount, 10);
+		if (!Number.isFinite(amount) || amount <= 0) return;
+		onHeal?.(amount);
+		setHpAmount('');
+	};
+
+	const handleDamage = () => {
+		const amount = parseInt(hpAmount, 10);
+		if (!Number.isFinite(amount) || amount <= 0) return;
+		onDamage?.(amount);
+		setHpAmount('');
+	};
+
+	const handleSetTempHp = () => {
+		const amount = parseInt(tempHpAmount, 10);
+		if (!Number.isFinite(amount) || amount < 0) return;
+		onSetTempHp?.(amount, tempHpDescription);
+		setTempHpAmount('');
+		setTempHpDescription('');
+	};
 
 	return (
 		<div className="space-y-3">
@@ -362,7 +423,120 @@ function ParticipantDetails({ participant }: { participant: TrackerParticipant |
 					<ShieldOff className="h-4 w-4" /> {indicatorLabel}
 				</p>
 			) : (
-				<p className="text-sm text-muted-foreground">Health: {indicatorLabel}</p>
+				<p className="text-sm text-muted-foreground">
+					Health:{' '}
+					{hasHpData ? (
+						<span className="text-foreground">
+							{participant.currentHp} / {participant.maxHp}
+							{(participant.tempHp ?? 0) > 0 && (
+								<span className="ml-1 text-sky-400"> +{participant.tempHp} temp</span>
+							)}
+							<span className="ml-1 text-muted-foreground">({indicatorLabel})</span>
+						</span>
+					) : (
+						indicatorLabel
+					)}
+				</p>
+			)}
+			{(participant.tempHp ?? 0) > 0 && participant.tempHpDescription && (
+				<p className="text-xs text-muted-foreground">
+					Temp HP source: <span className="text-foreground">{participant.tempHpDescription}</span>
+				</p>
+			)}
+			{showHpControls && (
+				<div className="space-y-2 rounded-md border p-3">
+					<h4 className="text-sm font-medium">HP</h4>
+					<div className="flex gap-2">
+						<Input
+							type="number"
+							min={1}
+							placeholder="Amount"
+							value={hpAmount}
+							onChange={(e) => setHpAmount(e.target.value)}
+							className="h-8 text-sm"
+							onKeyDown={(e) => {
+								if (e.key === 'Enter') handleHeal();
+							}}
+						/>
+						<Button size="sm" variant="outline" className="shrink-0 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10" onClick={handleHeal}>
+							Heal
+						</Button>
+						<Button size="sm" variant="outline" className="shrink-0 border-rose-500/50 text-rose-400 hover:bg-rose-500/10" onClick={handleDamage}>
+							Damage
+						</Button>
+					</div>
+					<div className="space-y-1.5">
+						<div className="flex gap-2">
+							<Input
+								type="number"
+								min={0}
+								placeholder="Temp HP"
+								value={tempHpAmount}
+								onChange={(e) => setTempHpAmount(e.target.value)}
+								className="h-8 text-sm"
+							/>
+							<Input
+								placeholder="Source / duration"
+								value={tempHpDescription}
+								onChange={(e) => setTempHpDescription(e.target.value)}
+								className="h-8 text-sm"
+								onKeyDown={(e) => {
+									if (e.key === 'Enter') handleSetTempHp();
+								}}
+							/>
+						</div>
+						<Button size="sm" variant="outline" className="w-full border-sky-500/50 text-sky-400 hover:bg-sky-500/10" onClick={handleSetTempHp}>
+							Set Temp HP
+						</Button>
+					</div>
+				</div>
+			)}
+			<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+				{typeof participant.initiative === 'number' && (
+					<p className="text-sm text-muted-foreground">
+						Initiative: <span className="text-foreground">{participant.initiative}</span>
+					</p>
+				)}
+				{typeof participant.initiativeBonus === 'number' && (
+					<p className="text-sm text-muted-foreground">
+						Initiative Bonus:{' '}
+						<span className="text-foreground">+{participant.initiativeBonus}</span>
+					</p>
+				)}
+				{typeof participant.hardness === 'number' && (
+					<p className="text-sm text-muted-foreground">
+						Hardness: <span className="text-foreground">{participant.hardness}</span>
+					</p>
+				)}
+				{typeof participant.adjustmentLevelModifier === 'number' && (
+					<p className="text-sm text-muted-foreground">
+						Custom Level Modifier:{' '}
+						<span className="text-foreground">{participant.adjustmentLevelModifier}</span>
+					</p>
+				)}
+			</div>
+			{participant.adjustmentDescription && (
+				<p className="text-sm text-muted-foreground">
+					Adjustment Notes: <span className="text-foreground">{participant.adjustmentDescription}</span>
+				</p>
+			)}
+			{(participant.dcs?.length ?? 0) > 0 && (
+				<div className="space-y-2 rounded-md border p-3">
+					<h4 className="text-sm font-medium">DCs</h4>
+					{participant.dcs?.map((dc, index) => (
+						<div key={`${participant.id}-dc-${index}`} className="rounded-md border p-2 text-sm">
+							<p className="font-medium">
+								{getDcName(dc)}: {dc.value}
+							</p>
+							<p className="text-xs text-muted-foreground">
+								{dc.icon ? `Icon: ${dc.icon}` : 'No icon'}
+								{typeof dc.disableSuccesses === 'number'
+									? ` | Disable successes: ${dc.disableSuccesses}`
+									: ''}
+							</p>
+						</div>
+					))}
+				</div>
 			)}
 			<p className="text-sm">{participant.notes}</p>
 		</div>
@@ -418,41 +592,48 @@ function NextRoundMarkerCard({
 
 function DelayedMarkerCard({
 	participant,
-	selected,
-	onSelect,
 	compact = false,
 }: {
 	participant: TrackerParticipant;
-	selected: boolean;
-	onSelect: (id: string) => void;
 	compact?: boolean;
 }) {
-	const accent = getParticipantAccent(participant);
+	const sideTheme = resolveParticipantSideTheme(participant);
+	const theme = {
+		pc: {
+			line: 'border-sky-400/70',
+			label: 'text-sky-200',
+		},
+		opponent: {
+			line: 'border-rose-400/70',
+			label: 'text-rose-200',
+		},
+		ally: {
+			line: 'border-emerald-400/70',
+			label: 'text-emerald-200',
+		},
+		other: {
+			line: 'border-violet-400/70',
+			label: 'text-violet-200',
+		},
+	}[sideTheme];
 
 	return (
-		<button
-			type="button"
-			onClick={() => {
-				logTrackerButton('Delayed marker selected', {
-					participantId: participant.id,
-					participantName: participant.name,
-				});
-				onSelect(participant.id);
-			}}
+		<div
 			className={[
-				'flex w-full min-w-0 items-center justify-center rounded-xl border border-dashed text-center',
-				compact ? 'h-full min-h-0 px-3 py-4' : 'h-full px-4 py-3',
-				accent.delayedCard,
-				selected ? 'ring-2 ring-primary/60 ring-offset-2 ring-offset-background' : '',
+				'relative flex w-full min-w-0 items-center rounded-md bg-transparent',
+				compact ? 'h-full min-h-0 px-1' : 'h-full min-h-0 px-1',
 			].join(' ')}
 		>
-			<div className="space-y-1">
-				<p className="text-xs font-medium uppercase tracking-[0.24em] text-primary/80">
-					Delayed
-				</p>
-				<p className="text-base font-semibold text-primary">{participant.name}</p>
-			</div>
-		</button>
+			<div
+				className={[
+					'absolute left-0 right-0 top-4/7 -translate-y-1/2 border-t border-dashed',
+					theme.line,
+				].join(' ')}
+			/>
+			<p className={['relative truncate bg-background px-2 text-left text-xs font-medium', theme.label].join(' ')}>
+				{participant.name} is delaying
+			</p>
+		</div>
 	);
 }
 
@@ -691,6 +872,9 @@ export function InitiativeTrackerPage() {
 	const isFinalActiveParticipant = (participantId: string) =>
 		activeRoundBoundaryIndex === 1 && charactersWithTurn.has(participantId);
 
+	const isNextParticipantDelayed = () => {
+		return charactersOrder.length > 1 && delayedOrder.includes(charactersOrder[1]);
+	};
 	const executeRoundAction = ({
 		participantId,
 		action,
@@ -702,17 +886,33 @@ export function InitiativeTrackerPage() {
 	}) => {
 		clearPinnedMarkerForCurrentRound();
 
+		const shouldReturnToInitiative = isNextParticipantDelayed();
 		const shouldAdvanceRound = isFinalActiveParticipant(participantId);
-		const command = shouldAdvanceRound
-			? new FinalizeTurnAndAdvanceRoundCommand({
-					uuid: participantId,
-					action,
-				})
-			: action === 'delay'
-				? new DelayCharacterCommand({ uuid: participantId })
-				: action === 'ko'
-					? new KnockOutCharacterCommand({ uuid: participantId })
-					: new EndTurnCommand({ uuid: participantId });
+		const returningParticipantId = charactersOrder[1];
+
+		const command: Command =
+			shouldAdvanceRound && shouldReturnToInitiative && returningParticipantId
+				? new FinalizeTurnAndReturnToInitiativeCommand({
+						activeUuid: participantId,
+						returningUuid: returningParticipantId,
+						action,
+					})
+				: shouldAdvanceRound
+					? new FinalizeTurnAndAdvanceRoundCommand({
+							uuid: participantId,
+							action,
+						})
+					: shouldReturnToInitiative && returningParticipantId
+						? new ReturnToInitiativeCommand({
+								activeUuid: participantId,
+								returningUuid: returningParticipantId,
+								action,
+							})
+						: action === 'delay'
+							? new DelayCharacterCommand({ uuid: participantId })
+							: action === 'ko'
+								? new KnockOutCharacterCommand({ uuid: participantId })
+								: new EndTurnCommand({ uuid: participantId });
 
 		try {
 			executeCommand(command);
@@ -775,6 +975,21 @@ export function InitiativeTrackerPage() {
 		}
 
 		if (!charactersWithTurn.has(currentParticipantId)) {
+			const currentCharacter = charactersMap[currentParticipantId];
+
+			if (currentCharacter?.turnState === 'delayed') {
+				logTrackerButton('Next Turn opening return-to-initiative prompt for delaying participant', {
+					participantId: currentParticipantId,
+				});
+				setReturnPrompt({
+					participantId: currentParticipantId,
+					action: 'end-turn',
+					focusCurrentOnSuccess: true,
+				});
+
+				return;
+			}
+
 			logTrackerButton('Next Turn ignored because current participant has no turn', {
 				participantId: currentParticipantId,
 			});
@@ -965,6 +1180,37 @@ export function InitiativeTrackerPage() {
 
 	const selectedParticipant =
 		allParticipants.find((p) => p.id === selectedParticipantId) ?? null;
+
+	const handleSelectedHeal = selectedParticipantId
+		? (amount: number) => {
+				try {
+					executeCommand(new ChangeHealthCommand({ uuid: selectedParticipantId, delta: amount }));
+				} catch (error) {
+					console.error('Failed to heal', error);
+				}
+			}
+		: undefined;
+
+	const handleSelectedDamage = selectedParticipantId
+		? (amount: number) => {
+				try {
+					executeCommand(new ChangeHealthCommand({ uuid: selectedParticipantId, delta: -amount }));
+				} catch (error) {
+					console.error('Failed to apply damage', error);
+				}
+			}
+		: undefined;
+
+	const handleSelectedSetTempHp = selectedParticipantId
+		? (amount: number, description: string) => {
+				try {
+					executeCommand(new SetTempHealthCommand({ uuid: selectedParticipantId, tempHealth: amount, description }));
+				} catch (error) {
+					console.error('Failed to set temp HP', error);
+				}
+			}
+		: undefined;
+
 	const nextRound = (trackerHeader?.currentRound ?? round) + 1;
 	const nextRoundMarkerIndex =
 		pinnedMarkerRound === round
@@ -1161,7 +1407,7 @@ export function InitiativeTrackerPage() {
 												item.type === 'marker'
 													? 'basis-[2rem]'
 													: item.participant.state === 'delayed'
-														? 'basis-[4rem]'
+														? 'basis-[2.5rem]'
 														: 'basis-[5rem]',
 											].join(' ')}
 										>
@@ -1170,8 +1416,6 @@ export function InitiativeTrackerPage() {
 											) : item.participant.state === 'delayed' ? (
 												<DelayedMarkerCard
 													participant={item.participant}
-													selected={item.participant.id === selectedParticipantId}
-													onSelect={setSelectedParticipantId}
 												/>
 											) : (
 												<InitiativeActionCarouselCard
@@ -1324,7 +1568,12 @@ export function InitiativeTrackerPage() {
 
 					<Card className="flex min-h-0 min-w-0 flex-col p-4">
 						<ScrollArea className="h-full pr-3">
-							<ParticipantDetails participant={selectedParticipant} />
+							<ParticipantDetails
+								participant={selectedParticipant}
+								onHeal={handleSelectedHeal}
+								onDamage={handleSelectedDamage}
+								onSetTempHp={handleSelectedSetTempHp}
+							/>
 						</ScrollArea>
 					</Card>
 				</div>
@@ -1505,7 +1754,11 @@ export function InitiativeTrackerPage() {
 										<CarouselItem
 											key={item.key}
 											className={[
-												'h-full min-w-30 basis-[41%] pl-2',
+												item.type === 'marker'
+													? 'h-full min-w-20 basis-[28%] pl-2'
+													: item.participant.state === 'delayed'
+														? 'h-full min-w-24 basis-[30%] pl-2'
+														: 'h-full min-w-30 basis-[41%] pl-2',
 											].join(' ')}
 										>
 											{item.type === 'marker' ? (
@@ -1513,8 +1766,6 @@ export function InitiativeTrackerPage() {
 											) : item.participant.state === 'delayed' ? (
 												<DelayedMarkerCard
 													participant={item.participant}
-													selected={item.participant.id === selectedParticipantId}
-													onSelect={setSelectedParticipantId}
 													compact
 												/>
 											) : (
@@ -1585,7 +1836,12 @@ export function InitiativeTrackerPage() {
 					</TabsContent>
 					<TabsContent value="selected" className="mt-0">
 						<Card className="p-4">
-							<ParticipantDetails participant={selectedParticipant} />
+							<ParticipantDetails
+								participant={selectedParticipant}
+								onHeal={handleSelectedHeal}
+								onDamage={handleSelectedDamage}
+								onSetTempHp={handleSelectedSetTempHp}
+							/>
 						</Card>
 					</TabsContent>
 				</Tabs>

@@ -38,4 +38,47 @@ describe('fromEncounterTemplate', () => {
 		expect(formValues.partyLevel).toBe(5);
 		expect(formValues.slots[0]?.level).toBe(7);
 	});
+
+	it('maps template participant overrides into additional-data fields', () => {
+		const enrichedTemplate: EncounterTemplateData = {
+			...template,
+			variants: [
+				{
+					...template.variants[0],
+					participants: [
+						{
+							id: 'creature-override',
+							type: 'creature',
+							role: 'opponent',
+							count: 1,
+							relativeLevel: new LevelDifference(1),
+							side: ALIGNMENT.Opponents,
+							maxHealthOverride: 77,
+							initiativeModifierOverride: 4,
+						},
+						{
+							id: 'hazard-override',
+							type: 'hazard',
+							role: 'simple',
+							count: 1,
+							relativeLevel: new LevelDifference(0),
+							side: ALIGNMENT.Opponents,
+							successesToDisable: 3,
+							hardnessValue: 12,
+						},
+					],
+				},
+			],
+		};
+
+		const formValues = fromEncounterTemplate(
+			enrichedTemplate,
+			enrichedTemplate.variants[0],
+			{ partyLevel: 5 }
+		);
+
+		expect(formValues.slots[0]?.maxHealth).toBe(77);
+		expect(formValues.slots[0]?.initiativeBonus).toBe(4);
+		expect(formValues.slots[1]?.hardness).toBe(12);
+	});
 });

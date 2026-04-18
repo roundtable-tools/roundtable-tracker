@@ -48,14 +48,24 @@ export function defaultSlot(): BuilderSlot {
 		level: 1,
 		count: 1,
 		maxHealth: undefined,
+		hardness: undefined,
+		initiativeBonus: undefined,
+		initiativeDescription: undefined,
+		dcs: [],
 		successesToDisable: 1,
 		adjustment: 'none',
+		adjustmentDescription: undefined,
+		adjustmentLevelModifier: undefined,
 		isSimpleHazard: false,
 		reinforcementRound: 1,
 		reinforcementParticipants: [],
 		eventRound: 1,
 		repeatInterval: undefined,
 		accomplishmentLevel: 'story',
+		traits: [],
+		combatReadyState: 'active',
+		initiativeModifier: undefined,
+		hiddenFromPlayers: false,
 	};
 }
 
@@ -132,10 +142,22 @@ export function fromEncounterTemplate(
 			side: alignmentToBuilderSide(participant.side),
 			level: participant.relativeLevel.toLevel(partyLevel).valueOf(),
 			count: participant.count,
-			maxHealth: undefined,
+				maxHealth:
+					participant.type === 'creature'
+						? participant.maxHealthOverride
+						: undefined,
+				hardness:
+					participant.type === 'hazard' ? participant.hardnessValue : undefined,
+				initiativeBonus:
+					participant.type === 'creature'
+						? participant.initiativeModifierOverride
+						: undefined,
+				dcs: [],
 			successesToDisable:
 				participant.type === 'hazard' ? participant.successesToDisable : 1,
 			adjustment: 'none',
+				adjustmentDescription: undefined,
+				adjustmentLevelModifier: undefined,
 			isSimpleHazard:
 				participant.type === 'hazard' && participant.role === 'simple',
 			reinforcementRound: 1,
@@ -200,8 +222,25 @@ export function toConcreteEncounter(
 					side,
 					count: s.count,
 					maxHealth: s.maxHealth || undefined,
+					hardness: s.hardness || undefined,
+					initiativeBonus: s.initiativeBonus || undefined,
+					dcs:
+						s.dcs && s.dcs.length > 0
+							? s.dcs
+								.map((dc) => ({
+									...dc,
+									name: dc.name ?? dc.inline,
+								}))
+								.filter((dc) => (dc.name ?? dc.inline ?? '').trim().length > 0)
+							: undefined,
 					successesToDisable: s.successesToDisable ?? 1,
 					isComplexHazard: !s.isSimpleHazard,
+					adjustmentDescription: s.adjustmentDescription || undefined,
+					adjustmentLevelModifier:
+						typeof s.adjustmentLevelModifier === 'number' &&
+						Number.isFinite(s.adjustmentLevelModifier)
+							? s.adjustmentLevelModifier
+							: undefined,
 					description: s.description || undefined,
 				};
 			}
@@ -213,10 +252,27 @@ export function toConcreteEncounter(
 				side,
 				count: s.count,
 				maxHealth: s.maxHealth || undefined,
+				hardness: s.hardness || undefined,
+				initiativeBonus: s.initiativeBonus || undefined,
+				dcs:
+					s.dcs && s.dcs.length > 0
+						? s.dcs
+							.map((dc) => ({
+								...dc,
+								name: dc.name ?? dc.inline,
+							}))
+							.filter((dc) => (dc.name ?? dc.inline ?? '').trim().length > 0)
+						: undefined,
 				adjustment:
 					s.adjustment === 'none'
 						? undefined
 						: (s.adjustment as LevelAdjustment),
+				adjustmentDescription: s.adjustmentDescription || undefined,
+				adjustmentLevelModifier:
+					typeof s.adjustmentLevelModifier === 'number' &&
+					Number.isFinite(s.adjustmentLevelModifier)
+						? s.adjustmentLevelModifier
+						: undefined,
 				description: s.description || undefined,
 			};
 		});
@@ -254,8 +310,26 @@ export function toConcreteEncounter(
 									side,
 									count: participant.count,
 									maxHealth: participant.maxHealth || undefined,
+									hardness: participant.hardness || undefined,
+									initiativeBonus: participant.initiativeBonus || undefined,
+									dcs:
+										participant.dcs && participant.dcs.length > 0
+											? participant.dcs
+												.map((dc) => ({
+													...dc,
+													name: dc.name ?? dc.inline,
+												}))
+												.filter((dc) => (dc.name ?? dc.inline ?? '').trim().length > 0)
+											: undefined,
 									successesToDisable: participant.successesToDisable,
 									isComplexHazard: !participant.isSimpleHazard,
+									adjustmentDescription:
+										participant.adjustmentDescription || undefined,
+									adjustmentLevelModifier:
+										typeof participant.adjustmentLevelModifier === 'number' &&
+										Number.isFinite(participant.adjustmentLevelModifier)
+											? participant.adjustmentLevelModifier
+											: undefined,
 								};
 							}
 
@@ -266,9 +340,27 @@ export function toConcreteEncounter(
 								side,
 								count: participant.count,
 								maxHealth: participant.maxHealth || undefined,
+								hardness: participant.hardness || undefined,
+								initiativeBonus: participant.initiativeBonus || undefined,
+								dcs:
+									participant.dcs && participant.dcs.length > 0
+										? participant.dcs
+											.map((dc) => ({
+												...dc,
+												name: dc.name ?? dc.inline,
+											}))
+											.filter((dc) => (dc.name ?? dc.inline ?? '').trim().length > 0)
+										: undefined,
 								adjustment:
 									participant.adjustment !== 'none'
 										? participant.adjustment
+										: undefined,
+								adjustmentDescription:
+									participant.adjustmentDescription || undefined,
+								adjustmentLevelModifier:
+									typeof participant.adjustmentLevelModifier === 'number' &&
+									Number.isFinite(participant.adjustmentLevelModifier)
+										? participant.adjustmentLevelModifier
 										: undefined,
 							};
 						})
@@ -294,8 +386,17 @@ export function toConcreteEncounter(
 										side,
 										count: s.count,
 										maxHealth: s.maxHealth || undefined,
+										hardness: s.hardness || undefined,
+										initiativeBonus: s.initiativeBonus || undefined,
+										dcs: s.dcs,
 										successesToDisable: s.successesToDisable ?? 1,
 										isComplexHazard: !s.isSimpleHazard,
+										adjustmentDescription: s.adjustmentDescription || undefined,
+										adjustmentLevelModifier:
+											typeof s.adjustmentLevelModifier === 'number' &&
+											Number.isFinite(s.adjustmentLevelModifier)
+												? s.adjustmentLevelModifier
+												: undefined,
 										description: s.description || undefined,
 									};
 								}
@@ -307,10 +408,19 @@ export function toConcreteEncounter(
 									side,
 									count: s.count,
 									maxHealth: s.maxHealth || undefined,
+									hardness: s.hardness || undefined,
+									initiativeBonus: s.initiativeBonus || undefined,
+									dcs: s.dcs,
 									adjustment:
 										s.adjustment === 'none'
 											? undefined
 											: (s.adjustment as LevelAdjustment),
+									adjustmentDescription: s.adjustmentDescription || undefined,
+									adjustmentLevelModifier:
+										typeof s.adjustmentLevelModifier === 'number' &&
+										Number.isFinite(s.adjustmentLevelModifier)
+											? s.adjustmentLevelModifier
+											: undefined,
 									description: s.description || undefined,
 								};
 							});
@@ -360,8 +470,13 @@ export function fromConcreteEncounter(
 				level: p.level,
 				count: p.count ?? 1,
 				maxHealth: p.maxHealth,
+				hardness: p.hardness,
+				initiativeBonus: p.initiativeBonus,
+				dcs: p.dcs ?? [],
 				successesToDisable: 1,
 				adjustment: p.adjustment ?? 'none',
+				adjustmentDescription: p.adjustmentDescription,
+				adjustmentLevelModifier: p.adjustmentLevelModifier,
 				isSimpleHazard: false,
 				reinforcementRound: 1,
 				reinforcementParticipants: [],
@@ -381,8 +496,13 @@ export function fromConcreteEncounter(
 			level: p.level,
 			count: p.count ?? 1,
 			maxHealth: p.maxHealth,
+			hardness: p.hardness,
+			initiativeBonus: p.initiativeBonus,
+			dcs: p.dcs ?? [],
 			successesToDisable: p.successesToDisable,
 			adjustment: 'none',
+			adjustmentDescription: p.adjustmentDescription,
+			adjustmentLevelModifier: p.adjustmentLevelModifier,
 			isSimpleHazard: !p.isComplexHazard,
 			reinforcementRound: 1,
 			reinforcementParticipants: [],
@@ -417,6 +537,9 @@ export function fromConcreteEncounter(
 						level: fromRelativeLevelString(participant.level, encounter.level),
 						count: participant.count ?? 1,
 						maxHealth: participant.maxHealth,
+						hardness: participant.hardness,
+						initiativeBonus: participant.initiativeBonus,
+						dcs: participant.dcs ?? [],
 						successesToDisable:
 							participant.type === 'hazard'
 								? participant.successesToDisable
@@ -425,6 +548,8 @@ export function fromConcreteEncounter(
 							participant.type === 'creature'
 								? (participant.adjustment ?? 'none')
 								: 'none',
+						adjustmentDescription: participant.adjustmentDescription,
+						adjustmentLevelModifier: participant.adjustmentLevelModifier,
 						isSimpleHazard:
 							participant.type === 'hazard' ? !participant.isComplexHazard : false,
 					}))
@@ -470,8 +595,13 @@ function participantsToBuilderSlots(
 				level: p.level,
 				count: p.count ?? 1,
 				maxHealth: p.maxHealth,
+				hardness: p.hardness,
+				initiativeBonus: p.initiativeBonus,
+				dcs: p.dcs ?? [],
 				successesToDisable: 1,
 				adjustment: p.adjustment ?? 'none',
+				adjustmentDescription: p.adjustmentDescription,
+				adjustmentLevelModifier: p.adjustmentLevelModifier,
 				isSimpleHazard: false,
 				reinforcementRound: 1,
 				reinforcementParticipants: [],
@@ -490,8 +620,13 @@ function participantsToBuilderSlots(
 			level: p.level,
 			count: p.count ?? 1,
 			maxHealth: p.maxHealth,
+			hardness: p.hardness,
+			initiativeBonus: p.initiativeBonus,
+			dcs: p.dcs ?? [],
 			successesToDisable: p.successesToDisable,
 			adjustment: 'none',
+			adjustmentDescription: p.adjustmentDescription,
+			adjustmentLevelModifier: p.adjustmentLevelModifier,
 			isSimpleHazard: !p.isComplexHazard,
 			reinforcementRound: 1,
 			reinforcementParticipants: [],
@@ -523,10 +658,22 @@ export function templateVariantToFormPartial(
 			side: alignmentToBuilderSide(participant.side),
 			level: participant.relativeLevel.toLevel(partyLevel).valueOf(),
 			count: participant.count,
-			maxHealth: undefined,
+			maxHealth:
+				participant.type === 'creature'
+					? participant.maxHealthOverride
+					: undefined,
+			hardness:
+				participant.type === 'hazard' ? participant.hardnessValue : undefined,
+			initiativeBonus:
+				participant.type === 'creature'
+					? participant.initiativeModifierOverride
+					: undefined,
+			dcs: [],
 			successesToDisable:
 				participant.type === 'hazard' ? participant.successesToDisable : 1,
 			adjustment: 'none',
+			adjustmentDescription: undefined,
+			adjustmentLevelModifier: undefined,
 			isSimpleHazard:
 				participant.type === 'hazard' && participant.role === 'simple',
 			reinforcementRound: 1,

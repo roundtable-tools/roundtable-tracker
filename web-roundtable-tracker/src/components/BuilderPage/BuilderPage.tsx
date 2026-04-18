@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,8 @@ import { useSavedEncountersStore } from '@/store/savedEncounterInstance';
 import type { ConcreteEncounter } from '@/store/data';
 import encounterTemplates from '@/store/Encounters/migratedEncounterTemplates';
 import { ThreatTracker } from './ThreatTracker';
-import { EVENT_SLOT_TYPES, PARTICIPANT_SLOT_TYPES, SlotRow } from './SlotRow';
+import { EVENT_SLOT_TYPES, PARTICIPANT_SLOT_TYPES, SlotRow } from './SlotRow.tsx';
+import type { AdditionalDataBlockKey } from './SlotRow.tsx';
 import { SaveSuccessModal } from './SaveSuccessModal';
 import { computeEncounterXpUsage, type SlotType } from './builderXp';
 import { useNavigate } from '@tanstack/react-router';
@@ -41,6 +42,38 @@ import {
 	getParticipantSectionSummary,
 	getSlotSectionIndices,
 } from './slotSections';
+
+function hasAdditionalBlock(slot: BuilderFormValues['slots'][number], key: AdditionalDataBlockKey): boolean {
+	if (slot.type !== 'creature' && slot.type !== 'hazard') {
+		return false;
+	}
+
+	if (key === 'hp') {
+		return (
+			typeof slot.maxHealth === 'number' ||
+			(slot.type === 'hazard' && typeof slot.hardness === 'number')
+		);
+	}
+
+	if (key === 'dcs') {
+		return (slot.dcs?.length ?? 0) > 0;
+	}
+
+	if (key === 'initiative') {
+		return typeof slot.initiativeBonus === 'number';
+	}
+
+	if (key === 'adjustment') {
+		return (
+			slot.type === 'creature' &&
+			(slot.adjustment !== 'none' ||
+				(slot.adjustmentDescription?.trim().length ?? 0) > 0 ||
+				typeof slot.adjustmentLevelModifier === 'number')
+		);
+	}
+
+	return false;
+}
 
 interface BuilderPageProps {
 	encounterId?: string;
@@ -189,6 +222,16 @@ export function BuilderPage({
 	const participantSummary = getParticipantSectionSummary(resolvedSlots);
 	const eventSummary = getEventSectionSummary(resolvedSlots);
 	const variants = useWatch({ control, name: 'variants' }) ?? [];
+	const usedAdditionalDataBlocks = useMemo(() => {
+		const keys: AdditionalDataBlockKey[] = [
+			'hp',
+			'dcs',
+			'initiative',
+			'adjustment',
+		];
+
+		return keys.filter((key) => resolvedSlots.some((slot) => hasAdditionalBlock(slot, key)));
+	}, [resolvedSlots]);
 
 	const templateShadowVariants = templateId
 		? (encounterTemplates.find((t) => t.id === templateId)?.variants ?? [])
@@ -248,6 +291,7 @@ export function BuilderPage({
 					remove={remove}
 					update={update}
 					allowedTypes={allowedTypes}
+					usedAdditionalDataBlocks={usedAdditionalDataBlocks}
 				/>
 			);
 		});

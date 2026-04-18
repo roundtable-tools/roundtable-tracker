@@ -1,5 +1,5 @@
 import { createStore } from 'zustand/vanilla';
-import { Character } from './data';
+import { Character, type ParticipantDcEntry } from './data';
 import { UUID } from '@/utils/uuid';
 
 export type TrackerParticipantRole =
@@ -19,6 +19,11 @@ export type TrackerParticipantMeta = {
 	disableChecksRequired: number;
 	disableChecksSucceeded: number;
 	notes: string;
+	hardness?: number;
+	initiativeBonus?: number;
+	dcs?: ParticipantDcEntry[];
+	adjustmentDescription?: string;
+	adjustmentLevelModifier?: number;
 	reinforcementSlotId?: string;
 	reinforcementPending?: boolean;
 };

@@ -133,7 +133,11 @@ export const PreviewCard = (props: InitiativeCardProps) => {
 						)}
 							<span className="min-w-fit text-sm font-medium text-muted-foreground">
 								{`(${formatAdjustedLevel(
-									adjustedLevel(participant.level, participant.adjustment)
+									adjustedLevel(
+										participant.level,
+										participant.adjustment,
+										participant.adjustmentLevelModifier
+									)
 								)})`}
 							</span>
 							<div className="flex flex-wrap items-center gap-3">

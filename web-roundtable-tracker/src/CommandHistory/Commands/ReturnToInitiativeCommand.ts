@@ -82,11 +82,14 @@ export class ReturnToInitiativeCommand implements Command {
 			let newCharactersOrder: UUID[];
 
 			if (this.data.action === 'delay') {
-				// Active participant moves to delayed, not to end of charactersOrder
-				newCharactersOrder = state.charactersOrder.filter(
-					(id) => id !== this.data.activeUuid
-				);
-				newDelayedOrder.push(this.data.activeUuid);
+				// Active participant delays and remains in initiative order, moving to the end.
+				newCharactersOrder = state.charactersOrder
+					.filter((id) => id !== this.data.activeUuid)
+					.concat(this.data.activeUuid);
+
+				if (!newDelayedOrder.includes(this.data.activeUuid)) {
+					newDelayedOrder.push(this.data.activeUuid);
+				}
 			} else {
 				// end-turn or ko: active stays in order but moves to the end
 				newCharactersOrder = state.charactersOrder
