@@ -140,4 +140,47 @@ describe('CompositeCommand', () => {
 		compositeCommand.undo();
 		expect(order).toEqual(['command2.undo', 'command1.undo']);
 	});
+
+	it('preserves execute order after an undo', () => {
+		const order: string[] = [];
+		const command1: Command = {
+			execute: vi.fn().mockImplementation(() => {
+				order.push('command1.execute');
+
+				return STATUS.success;
+			}),
+			undo: vi.fn().mockImplementation(() => {
+				order.push('command1.undo');
+
+				return STATUS.success;
+			}),
+			type: '',
+			data: {},
+		};
+		const command2: Command = {
+			execute: vi.fn().mockImplementation(() => {
+				order.push('command2.execute');
+
+				return STATUS.success;
+			}),
+			undo: vi.fn().mockImplementation(() => {
+				order.push('command2.undo');
+
+				return STATUS.success;
+			}),
+			type: '',
+			data: {},
+		};
+		const compositeCommand = new CompositeCommand({
+			commands: [command1, command2],
+		});
+
+		compositeCommand.execute();
+		compositeCommand.undo();
+
+		order.length = 0;
+		compositeCommand.execute();
+
+		expect(order).toEqual(['command1.execute', 'command2.execute']);
+	});
 });

@@ -1,4 +1,4 @@
-import { getEncounterStore } from '@/store/instance';
+import { getEncounterStore } from '@/store/encounterRuntimeInstance';
 
 export const STATUS = {
 	success: 'SUCCESS',
@@ -10,6 +10,7 @@ export type Command<
 	T extends Record<string, unknown> = Record<string, unknown>,
 > = {
 	readonly type: string;
+	partOfTransaction?: boolean;
 	description?: string;
 	data: T;
 

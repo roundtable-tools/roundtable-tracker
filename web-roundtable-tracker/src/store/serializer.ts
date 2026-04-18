@@ -3,7 +3,7 @@ import {
 	commandFromJSON,
 	commandToJSON,
 } from '@/CommandHistory/serialization';
-import { type EncounterStoreJson } from './store';
+import { type EncounterStoreJson } from './encounterRuntimeStore';
 import { type createJSONStorage } from 'zustand/middleware/persist';
 import { isCommand } from '@/CommandHistory/common';
 

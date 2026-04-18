@@ -1,6 +1,6 @@
 import { UUID } from '@/utils/uuid';
 import { Command, CommandDeps, getDeps, STATUS } from '../common';
-import { EncounterStore } from '@/store/store';
+import { EncounterStore } from '@/store/encounterRuntimeStore';
 
 type CommandProps = {
 	newOrder: UUID[];
@@ -33,6 +33,7 @@ export class ReorderCharactersCommand implements Command {
 	}
 	undo() {
 		const orderToRestore = this.data.oldOrder;
+
 		if (!orderToRestore) {
 			console.error(`Old Order is not defined`);
 

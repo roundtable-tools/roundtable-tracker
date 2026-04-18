@@ -10,6 +10,7 @@ export const isCommandJSON = (
 	data: object
 ): data is CommandJSON<Command['data']> => {
 	const json = data as Record<string, unknown>;
+
 	if (typeof json?.type === 'string' && 'data' in json) {
 		return json.type.startsWith('Command.');
 	}

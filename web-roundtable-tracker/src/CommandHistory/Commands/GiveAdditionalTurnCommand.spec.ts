@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GiveAdditionalTurnCommand } from './GiveAdditionalTurnCommand';
-import { createEncounterStore } from '@/store/store';
+import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import { Character } from '@/store/data';
 import { STATUS } from '../common';
 
