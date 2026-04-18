@@ -245,7 +245,9 @@ function isBlockAllowed(
 	isSimpleHazard: boolean,
 ): boolean {
 	if (block === 'adjustment' && slotType !== 'creature') return false;
+
 	if (block === 'initiative' && isSimpleHazard) return false;
+
 	return true;
 }
 
@@ -265,12 +267,17 @@ function inferEnabledTabsFromSlot(slot: BuilderSlot): AdditionalDataBlockKey[] {
 	const tabs: AdditionalDataBlockKey[] = [];
 
 	if (hasAdditionalBlock(slot, 'hp')) tabs.push('hp');
+
 	if (hasAdditionalBlock(slot, 'initiative')) tabs.push('initiative');
+
 	if (hasAdditionalBlock(slot, 'dcs')) tabs.push('dcs');
+
 	if (slot.type === 'creature' && hasAdditionalBlock(slot, 'adjustment')) {
 		tabs.push('adjustment');
 	}
+
 	if (hasAdditionalBlock(slot, 'traits')) tabs.push('traits');
+
 	if (
 		slot.combatReadyState &&
 		(slot.combatReadyState !== 'active' || slot.hiddenFromPlayers)
@@ -287,17 +294,22 @@ function inferEnabledTabsFromReinforcementParticipant(
 	const tabs: AdditionalDataBlockKey[] = [];
 
 	if (hasReinforcementAdditionalBlock(participant, 'hp')) tabs.push('hp');
+
 	if (hasReinforcementAdditionalBlock(participant, 'initiative')) {
 		tabs.push('initiative');
 	}
+
 	if (hasReinforcementAdditionalBlock(participant, 'dcs')) tabs.push('dcs');
+
 	if (
 		participant.type === 'creature' &&
 		hasReinforcementAdditionalBlock(participant, 'adjustment')
 	) {
 		tabs.push('adjustment');
 	}
+
 	if (hasReinforcementAdditionalBlock(participant, 'traits')) tabs.push('traits');
+
 	if (hasReinforcementAdditionalBlock(participant, 'combat-ready')) {
 		tabs.push('combat-ready');
 	}
@@ -410,9 +422,11 @@ export function SlotRow({
 			if (activeTab !== '') {
 				setActiveTab('');
 			}
+
 			if (activeTabs.length > 0) {
 				setActiveTabs([]);
 			}
+
 			return;
 		}
 
@@ -475,6 +489,7 @@ export function SlotRow({
 			if (typeof slot.maxHealth !== 'number') {
 				setValue(`slots.${index}.maxHealth`, 1, { shouldDirty: true, shouldTouch: true });
 			}
+
 			if (slot.type === 'hazard' && typeof slot.hardness !== 'number') {
 				setValue(`slots.${index}.hardness`, 0, { shouldDirty: true, shouldTouch: true });
 			}
@@ -505,6 +520,7 @@ export function SlotRow({
 				shouldDirty: true,
 				shouldTouch: true,
 			});
+
 			if (typeof slot.adjustmentLevelModifier !== 'number') {
 				setValue(`slots.${index}.adjustmentLevelModifier`, 0, {
 					shouldDirty: true,
@@ -1648,6 +1664,7 @@ export function SlotRow({
                             {/* Suggested blocks with dashed borders */}
                             {missingSuggestedBlocks.map((block) => {
                                 const blockLabel = ADDITIONAL_BLOCKS.find((b) => b.key === block)?.label || block;
+
                                 return (
                                     <Button
                                         key={`suggest-${block}`}
@@ -1698,6 +1715,7 @@ export function SlotRow({
                                             current.filter((block) => getTabForBlock(block) !== 'dcs')
                                         );
                                         setActiveTabs((current) => current.filter((tab) => tab !== 'dcs'));
+
                                         if (activeTab === 'dcs') {
                                             setActiveTab('');
                                         }
@@ -1716,6 +1734,7 @@ export function SlotRow({
                                             shouldDirty: true,
                                             shouldTouch: true,
                                         });
+
                                         if (slotType === 'hazard') {
                                             setValue(`slots.${index}.hardness`, undefined, {
                                                 shouldDirty: true,
@@ -1726,6 +1745,7 @@ export function SlotRow({
                                             current.filter((block) => getTabForBlock(block) !== 'hp')
                                         );
                                         setActiveTabs((current) => current.filter((tab) => tab !== 'hp'));
+
                                         if (activeTab === 'hp') {
                                             setActiveTab('');
                                         }
@@ -1751,6 +1771,7 @@ export function SlotRow({
                                             current.filter((block) => getTabForBlock(block) !== 'initiative')
                                         );
                                         setActiveTabs((current) => current.filter((tab) => tab !== 'initiative'));
+
                                         if (activeTab === 'initiative') {
                                             setActiveTab('');
                                         }
@@ -1781,6 +1802,7 @@ export function SlotRow({
                                             current.filter((block) => getTabForBlock(block) !== 'adjustment')
                                         );
                                         setActiveTabs((current) => current.filter((tab) => tab !== 'adjustment'));
+
                                         if (activeTab === 'adjustment') {
                                             setActiveTab('');
                                         }
@@ -1802,6 +1824,7 @@ export function SlotRow({
                                             current.filter((block) => getTabForBlock(block) !== 'traits')
                                         );
                                         setActiveTabs((current) => current.filter((tab) => tab !== 'traits'));
+
                                         if (activeTab === 'traits') {
                                             setActiveTab('');
                                         }
@@ -1827,6 +1850,7 @@ export function SlotRow({
                                             current.filter((block) => getTabForBlock(block) !== 'combat-ready')
                                         );
                                         setActiveTabs((current) => current.filter((tab) => tab !== 'combat-ready'));
+
                                         if (activeTab === 'combat-ready') {
                                             setActiveTab('');
                                         }

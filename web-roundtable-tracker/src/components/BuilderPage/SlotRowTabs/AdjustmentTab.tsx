@@ -63,6 +63,7 @@ export function AdjustmentTab({ index, slot, setValue, control, onRemove }: Adju
 									shouldDirty: true,
 									shouldTouch: true,
 								});
+
 								return;
 							}
 							setValue(`slots.${index}.adjustment`, value as LevelAdjustment | 'none', {

@@ -606,6 +606,7 @@ export function BuilderPage({
 														const confirmed = window.confirm(
 															`Restore "${snapshot.description}"? This will overwrite the current party size, party level, and participants.`
 														);
+
 														if (!confirmed) return;
 														form.setValue('partyLevel', snapshot.partyLevel, { shouldDirty: true });
 														form.setValue('partySize', snapshot.partySize, { shouldDirty: true });
@@ -651,6 +652,7 @@ export function BuilderPage({
 								<div className="space-y-2">
 									{templateShadowVariants.map((tv) => {
 										const isCurrentVariant = tv.id === templateVariantId;
+
 										return (
 											<div
 												key={tv.id}

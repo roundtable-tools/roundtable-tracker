@@ -162,6 +162,7 @@ export const generateParticipants = (
 					? participant.initiativeBonus
 					: 0;
 			const isSimpleHazard = participant.type === 'hazard' && !participant.isComplexHazard;
+
 			return Array.from({ length: count ?? 1 }).map((_, index, { length }) => ({
 				uuid: generateUUID(),
 				tiePriority: PRIORITY.NPC,

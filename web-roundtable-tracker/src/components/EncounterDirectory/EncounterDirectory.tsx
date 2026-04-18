@@ -430,6 +430,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			selectedEncounterData?.templateId
 		) {
 			params.templateId = selectedEncounterData.templateId;
+
 			if (selectedEncounterData.templateVariantId) {
 				params.templateVariantId = selectedEncounterData.templateVariantId;
 			}
@@ -667,6 +668,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 				onDelete={deleteSelectedEncounter}
 				submit={(encounter) => {
 					const data = encounter ?? (selectedEncounterData ? toEncounter(selectedEncounterData) : undefined);
+
 					if (data) setEncounterData(data);
 					setSelected(undefined);
 					openPreview();

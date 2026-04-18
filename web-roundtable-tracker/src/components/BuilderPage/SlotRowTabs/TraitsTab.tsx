@@ -39,6 +39,7 @@ function getTraitColor(trait: string): 'blue' | 'orange' | 'purple' | 'green' | 
 			return category.color;
 		}
 	}
+
 	return 'red';
 }
 
