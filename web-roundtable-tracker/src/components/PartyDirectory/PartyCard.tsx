@@ -38,9 +38,10 @@ type PartyCardProps = {
 	onEdit: () => void;
 	onCopy: () => void;
 	onDelete: () => void;
+	onExportJson: () => void;
 };
 
-export function PartyCard({ party, layout, onEdit, onCopy, onDelete }: PartyCardProps) {
+export function PartyCard({ party, layout, onEdit, onCopy, onDelete, onExportJson }: PartyCardProps) {
 	const Icon = PARTY_ICON_MAP[party.icon] ?? User;
 	const levelRange = partyLevelRange(party);
 	const memberCount = party.members.length;
@@ -71,6 +72,13 @@ export function PartyCard({ party, layout, onEdit, onCopy, onDelete }: PartyCard
 						className="rounded px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
 					>
 						Copy
+					</button>
+					<button
+						type="button"
+						onClick={onExportJson}
+						className="rounded px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+					>
+						Export JSON
 					</button>
 					<button
 						type="button"

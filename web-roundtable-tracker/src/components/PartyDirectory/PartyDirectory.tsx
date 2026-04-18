@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useSavedPartiesStore } from '@/store/savedPartiesInstance';
-import { Party, PartyIcon, PartyMember } from '@/store/savedParties';
+import { Party, PartyIcon, PartyMember, PARTY_ICONS } from '@/store/savedParties';
 import { PartyCard } from './PartyCard';
 import { PartyFormModal, PartyFormValues } from './PartyFormModal';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,14 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogFooter,
+} from '@/components/ui/dialog';
+import { generateUUID } from '@/utils/uuid';
 
 type Layout = 'list' | 'grid' | 'big-grid';
 type SortKey = 'name' | 'size' | 'level';
@@ -33,6 +41,9 @@ export function PartyDirectory() {
 	const [sortKey, setSortKey] = useState<SortKey>('name');
 	const [filter, setFilter] = useState('');
 	const [modal, setModal] = useState<ModalState>({ open: false });
+	const [importOpen, setImportOpen] = useState(false);
+	const [importText, setImportText] = useState('');
+	const [importError, setImportError] = useState<string | null>(null);
 
 	const filtered = useMemo(() => {
 		const q = filter.toLowerCase();
@@ -98,6 +109,53 @@ export function PartyDirectory() {
 		}
 	};
 
+	const handleExportJson = (party: Party) => {
+		const exportData = {
+			name: party.name,
+			icon: party.icon,
+			members: party.members,
+		};
+		navigator.clipboard.writeText(JSON.stringify(exportData, null, 2));
+	};
+
+	const handleImportJson = () => {
+		setImportError(null);
+		let parsed: unknown;
+		try {
+			parsed = JSON.parse(importText);
+		} catch {
+			setImportError('Invalid JSON. Please check your input.');
+			return;
+		}
+		if (
+			typeof parsed !== 'object' ||
+			parsed === null ||
+			typeof (parsed as Record<string, unknown>).name !== 'string' ||
+			!Array.isArray((parsed as Record<string, unknown>).members)
+		) {
+			setImportError('JSON must have a "name" string and "members" array.');
+			return;
+		}
+		const raw = parsed as Record<string, unknown>;
+		const icon: PartyIcon = PARTY_ICONS.includes(raw.icon as PartyIcon)
+			? (raw.icon as PartyIcon)
+			: 'Users';
+		const members: PartyMember[] = (raw.members as Record<string, unknown>[]).map((m) => ({
+			uuid: typeof m.uuid === 'string' ? m.uuid : generateUUID(),
+			name: typeof m.name === 'string' ? m.name : '',
+			level: typeof m.level === 'number' ? m.level : 1,
+			maxHealth: typeof m.maxHealth === 'number' ? m.maxHealth : undefined,
+			tiePriority: typeof m.tiePriority === 'boolean' ? m.tiePriority : true,
+			player: typeof m.player === 'string' ? m.player : undefined,
+			class: typeof m.class === 'string' ? m.class : undefined,
+			ancestry: typeof m.ancestry === 'string' ? m.ancestry : undefined,
+			ac: typeof m.ac === 'number' ? m.ac : undefined,
+		}));
+		addParty({ id: generateUUID(), name: raw.name as string, icon, members });
+		setImportText('');
+		setImportOpen(false);
+	};
+
 	const gridClass =
 		layout === 'list'
 			? 'flex flex-col gap-3'
@@ -117,6 +175,9 @@ export function PartyDirectory() {
 				</div>
 				<Button onClick={() => setModal({ open: true, mode: 'create' })}>
 					New Party
+				</Button>
+				<Button variant="outline" onClick={() => { setImportError(null); setImportText(''); setImportOpen(true); }}>
+					Import from JSON
 				</Button>
 			</div>
 
@@ -175,6 +236,7 @@ export function PartyDirectory() {
 							onEdit={() => setModal({ open: true, mode: 'edit', party })}
 							onCopy={() => setModal({ open: true, mode: 'copy', party })}
 							onDelete={() => handleDelete(party.id)}
+							onExportJson={() => handleExportJson(party)}
 						/>
 					))}
 				</div>
@@ -190,7 +252,38 @@ export function PartyDirectory() {
 				</div>
 			)}
 
-			{/* Modal */}
+			{/* Import JSON Dialog */}
+		<Dialog open={importOpen} onOpenChange={(open) => { if (!open) setImportOpen(false); }}>
+				<DialogContent className="max-w-lg">
+					<DialogHeader>
+						<DialogTitle>Import Party from JSON</DialogTitle>
+					</DialogHeader>
+					<div className="flex flex-col gap-3">
+						<p className="text-sm text-muted-foreground">
+							Paste a party JSON object exported from this app.
+						</p>
+						<textarea
+							className="min-h-48 w-full rounded-md border bg-background px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+							value={importText}
+							onChange={(e) => setImportText(e.target.value)}
+							placeholder='{"name": "My Party", "icon": "Users", "members": [...]}'
+						/>
+						{importError && (
+							<p className="text-sm text-destructive">{importError}</p>
+						)}
+					</div>
+					<DialogFooter>
+						<Button variant="outline" onClick={() => setImportOpen(false)}>
+							Cancel
+						</Button>
+						<Button onClick={handleImportJson} disabled={!importText.trim()}>
+							Import
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+		{/* Modal */}
 			<PartyFormModal
 				open={modal.open}
 				onOpenChange={(open) => {
