@@ -1,4 +1,7 @@
 {
+	"compilerOptions": {
+		"lib": ["dom"],
+	},
 	"files": [],
 	"references": [
 		{ "path": "./tsconfig.app.json" },
