@@ -106,6 +106,7 @@ export function InitiativeActionCarouselCard({
 	const [swipeOffset, setSwipeOffset] = useState(0);
 	const [swipeActionFlash, setSwipeActionFlash] = useState<SwipeAction | null>(null);
 	const isKnockedOut = participant.state === 'knocked-out';
+	const canUseDelayAction = isKnockedOut || isCurrent;
 	const delaySideAction: SwipeAction = isKnockedOut ? 'reactivate' : 'delay';
 	const koSideAction: SwipeAction = isKnockedOut ? 'slay' : 'ko';
 	const delaySideLabel = isKnockedOut ? 'Reactivate' : 'Delay';
@@ -196,7 +197,8 @@ export function InitiativeActionCarouselCard({
 		}
 
 		swipeStateRef.current.didDrag = true;
-		setSwipeOffset(Math.max(-swipeRevealPx, Math.min(swipeRevealPx, axisDelta)));
+		const minSwipeOffset = canUseDelayAction ? -swipeRevealPx : 0;
+		setSwipeOffset(Math.max(minSwipeOffset, Math.min(swipeRevealPx, axisDelta)));
 	};
 
 	const finishSwipe = () => {
@@ -205,7 +207,7 @@ export function InitiativeActionCarouselCard({
 		}
 
 		switch (true) {
-			case swipeOffset <= -swipeSnapPx:
+			case canUseDelayAction && swipeOffset <= -swipeSnapPx:
 				triggerActionWithSlide(delaySideAction);
 				return;
 			case swipeOffset >= swipeSnapPx:
@@ -257,30 +259,32 @@ export function InitiativeActionCarouselCard({
 			].join(' ')}
 		>
 			<div className={isMobileDensity ? 'flex h-full min-h-0 flex-col items-stretch' : 'flex min-h-15 items-stretch'}>
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<button
-							type="button"
-							onClick={(event) => {
-								event.stopPropagation();
-								triggerActionWithSlide(delaySideAction);
-							}}
-							className={[
-								actionButtonDelayClass,
-								swipeActionFlash === delaySideAction
-									? 'border-current/60 after:border-current/60'
-									: '',
-							].join(' ')}
-							aria-label={`${delaySideLabel} ${participant.name}`}
-							title={density === 'mobile' ? delaySideLabel : `${delaySideLabel} ${participant.name}`}
-						>
-							{isKnockedOut ? <RotateCcw className={iconClass} /> : <Clock3 className={iconClass} />}
-						</button>
-					</TooltipTrigger>
-					<TooltipContent side="top">
-						Press or swipe card here to {delaySideLabel.toLowerCase()} {participant.name}
-					</TooltipContent>
-				</Tooltip>
+				{canUseDelayAction ? (
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<button
+								type="button"
+								onClick={(event) => {
+									event.stopPropagation();
+									triggerActionWithSlide(delaySideAction);
+								}}
+								className={[
+									actionButtonDelayClass,
+									swipeActionFlash === delaySideAction
+										? 'border-current/60 after:border-current/60'
+										: '',
+								].join(' ')}
+								aria-label={`${delaySideLabel} ${participant.name}`}
+								title={density === 'mobile' ? delaySideLabel : `${delaySideLabel} ${participant.name}`}
+							>
+								{isKnockedOut ? <RotateCcw className={iconClass} /> : <Clock3 className={iconClass} />}
+							</button>
+						</TooltipTrigger>
+						<TooltipContent side="top">
+							Press or swipe card here to {delaySideLabel.toLowerCase()} {participant.name}
+						</TooltipContent>
+					</Tooltip>
+				) : null}
 
 				<button
 					type="button"
@@ -296,8 +300,12 @@ export function InitiativeActionCarouselCard({
 					}}
 					className={[
 						isMobileDensity
-							? 'relative z-10 -my-1 flex min-h-0 min-w-0 flex-1 touch-pan-x items-center justify-center rounded-xl border px-3 py-2 text-left transition-transform'
-							: 'relative z-10 -mx-1 flex min-h-10 min-w-0 flex-1 touch-pan-y items-center rounded-xl border px-3 py-2 text-left transition-transform',
+							? canUseDelayAction
+								? 'relative z-10 -my-1 flex min-h-0 min-w-0 flex-1 touch-pan-x items-center justify-center rounded-xl border px-3 py-2 text-left transition-transform'
+								: 'relative z-10 -mb-1 flex min-h-0 min-w-0 flex-1 touch-pan-x items-center justify-center rounded-xl border px-3 py-2 text-left transition-transform'
+							: canUseDelayAction
+								? 'relative z-10 -mx-1 flex min-h-10 min-w-0 flex-1 touch-pan-y items-center rounded-xl border px-3 py-2 text-left transition-transform'
+								: 'relative z-10 -mr-1 flex min-h-10 min-w-0 flex-1 touch-pan-y items-center rounded-xl border px-3 py-2 text-left transition-transform',
 						isCurrent ? accent.activeCard : `${accent.inactiveCard} ${accent.inactiveMarker}`,
 					].join(' ')}
 				>
