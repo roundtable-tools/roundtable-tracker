@@ -1,38 +1,24 @@
-import {
-	Box,
-	Card,
-	CardBody,
-	CardHeader,
-	ResponsiveContext,
-	Text,
-} from 'grommet';
-import { Aed, Favorite, Run } from 'grommet-icons/icons';
-import { ReactNode, useContext } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Inputs } from './PreviewDisplay';
 import { UseFormGetFieldState, UseFormRegister } from 'react-hook-form';
-import { CharacterConfig } from '@/store/data';
+import { adjustedLevel, CharacterConfig, formatAdjustedLevel } from '@/store/data';
+import { Activity, Heart, ShieldPlus } from 'lucide-react';
+import { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
 type InitiativeCardProps = {
-	accentColor: string;
+	borderClassName: string;
+	markerClassName: string;
 	teamIndex: number;
 	sideTitle: ReactNode;
 	sideFlag: ReactNode;
-	participants: CharacterConfig[];
+	participants: Array<CharacterConfig & { hasHealthData?: boolean }>;
 	register: UseFormRegister<Inputs>;
 	getFieldState: UseFormGetFieldState<Inputs>;
+	/** Fields to render as read-only display text instead of inputs */
+	readonlyFields?: Array<'name' | 'level'>;
 };
-
-const InputBox = ({ children }: { children: ReactNode }) => (
-	<Box
-		cssGap
-		flex
-		gap={'small'}
-		direction="row"
-		style={{ flexShrink: 0, flexBasis: 'auto' }}
-	>
-		{children}
-	</Box>
-);
 
 type NumberKeys<T> = {
 	[K in keyof T]: T[K] extends number ? K : never;
@@ -55,21 +41,35 @@ const NumberInput = ({
 	const filed = getFieldState(name);
 
 	return (
-		<input
+		<Input
 			type="number"
 			min={0}
 			step={1}
-			style={{
-				width: 50,
-				backgroundColor: filed.invalid ? '#fde8e9' : '',
-			}}
+			className={cn(
+				'h-8 w-14 px-2 text-center tabular-nums',
+				filed.invalid && 'border-destructive bg-destructive/10'
+			)}
+			aria-invalid={filed.invalid || undefined}
 			{...register(name, {
-				min: 0,
-				valueAsNumber: true,
+				setValueAs: (value) => {
+					if (value === '' || value === undefined || value === null) {
+						return undefined;
+					}
+
+					return Number(value);
+				},
 				validate: {
 					isNumber: (value) => {
+						if (value === undefined) {
+							return true;
+						}
+
 						if (isNaN(value)) {
 							return 'Value must be a number';
+						}
+
+						if (value < 0) {
+							return 'Value must be zero or greater';
 						}
 
 						return true;
@@ -81,90 +81,105 @@ const NumberInput = ({
 };
 
 export const PreviewCard = (props: InitiativeCardProps) => {
-	const size = useContext(ResponsiveContext);
-	const { register, getFieldState, teamIndex } = props;
+	const { register, getFieldState, teamIndex, readonlyFields = [] } = props;
+	const isNameReadonly = readonlyFields.includes('name');
 
 	return (
-		<Box style={{ position: 'relative' }}>
-			<Card
-				fill
-				elevation="medium"
-				border={{ color: props.accentColor, size: 'large', side: 'left' }}
+		<Card
+			className={cn(
+				'relative overflow-hidden border-l-4 pt-0 shadow-md',
+				props.borderClassName
+			)}
+		>
+			<div
+				className={cn(
+					'pointer-events-none absolute left-0 top-0 z-10 flex h-12 w-12 items-center justify-center rounded-br-3xl text-white [&_svg]:h-5 [&_svg]:w-5',
+					props.markerClassName
+				)}
 			>
-				<CardHeader background={'light-5'} pad="small" justify="start">
-					<Text size="xlarge" margin={{ left: 'xlarge' }}>
-						{props.sideTitle}
-					</Text>
-				</CardHeader>
-				<CardBody pad="small">
-					{props.participants.map((participant, index) => {
-						return (
-							<Box
-								key={participant.uuid}
-								gap={'small'}
-								direction="row"
-								wrap
-								cssGap
-								pad={{ bottom: 'small' }}
-							>
-								<input
-									type="text"
-									style={{ width: 100, height: 'max-content' }}
-									placeholder="Character Name"
-									{...register(`teams.${teamIndex}.characters.${index}.name`)}
-								/>
-								<Text>{`(${participant.level})`}</Text>
-								<Box
-									cssGap
-									flex
-									gap={'small'}
-									direction="row"
-									wrap
-									align="center"
-									style={{ flexShrink: 0 }}
-								>
-									<InputBox>
-										<Run />
+				{props.sideFlag}
+			</div>
+			<CardHeader className="border-b bg-muted/50 py-4 pl-16 pr-6">
+				<CardTitle className="text-lg font-semibold tracking-tight text-muted-foreground">
+					{props.sideTitle}
+				</CardTitle>
+			</CardHeader>
+			<CardContent className="grid gap-3 px-4 py-4 sm:px-5">
+				{props.participants.map((participant, index) => {
+					const showHealthFields = participant.hasHealthData !== false;
+					const showInitiativeField = participant.isSimpleHazard == false; // Simple hazards don't have initiative
+					const nameFieldState = getFieldState(
+						`teams.${teamIndex}.characters.${index}.name`
+					);
+
+					return (
+						<div
+							key={participant.uuid}
+							className="flex flex-wrap items-center gap-2 rounded-lg border border-border/70 bg-background/70 p-3"
+						>
+						{isNameReadonly ? (
+							<span className="h-8 min-w-40 flex-1 content-center truncate text-sm font-medium sm:max-w-48">
+								{participant.name}
+							</span>
+						) : (
+							<Input
+								type="text"
+								placeholder="Character Name"
+								className={cn(
+									'h-8 w-full min-w-40 flex-1 sm:max-w-48',
+									nameFieldState.invalid && 'border-destructive bg-destructive/10'
+								)}
+								aria-invalid={nameFieldState.invalid || undefined}
+								{...register(`teams.${teamIndex}.characters.${index}.name`)}
+							/>
+						)}
+							<span className="min-w-fit text-sm font-medium text-muted-foreground">
+								{`(${formatAdjustedLevel(
+									adjustedLevel(
+										participant.level,
+										participant.adjustment,
+										participant.adjustmentLevelModifier
+									)
+								)})`}
+							</span>
+							<div className="flex flex-wrap items-center gap-3">
+								{showInitiativeField && (
+									<div className="flex items-center gap-1.5">
+										<Activity className="h-4 w-4 text-muted-foreground" />
 										<NumberInput
 											name={`teams.${teamIndex}.characters.${index}.initiative`}
 											{...{ register, getFieldState }}
 										/>
-									</InputBox>
-									<InputBox>
-										<Favorite />
-										<NumberInput
-											name={`teams.${teamIndex}.characters.${index}.health`}
-											{...{ register, getFieldState }}
-										/>
-										/
-										<NumberInput
-											name={`teams.${teamIndex}.characters.${index}.maxHealth`}
-											{...{ register, getFieldState }}
-										/>
-									</InputBox>
-
-									<InputBox>
-										<Aed />
-										<NumberInput
-											name={`teams.${teamIndex}.characters.${index}.tempHealth`}
-											{...{ register, getFieldState }}
-										/>
-									</InputBox>
-								</Box>
-							</Box>
-						);
-					})}
-				</CardBody>
-			</Card>
-			<Box
-				style={
-					size === 'small'
-						? { position: 'absolute', top: -9, left: -3, pointerEvents: 'none' }
-						: { position: 'absolute', top: -8, left: 0, pointerEvents: 'none' }
-				}
-			>
-				{props.sideFlag}
-			</Box>
-		</Box>
+									</div>
+								)}
+								{showHealthFields && (
+									<>
+										<div className="flex items-center gap-1.5">
+											<Heart className="h-4 w-4 text-muted-foreground" />
+											<NumberInput
+												name={`teams.${teamIndex}.characters.${index}.health`}
+												{...{ register, getFieldState }}
+											/>
+											<span className="text-muted-foreground">/</span>
+											<NumberInput
+												name={`teams.${teamIndex}.characters.${index}.maxHealth`}
+												{...{ register, getFieldState }}
+											/>
+										</div>
+										<div className="flex items-center gap-1.5">
+											<ShieldPlus className="h-4 w-4 text-muted-foreground" />
+											<NumberInput
+												name={`teams.${teamIndex}.characters.${index}.tempHealth`}
+												{...{ register, getFieldState }}
+											/>
+										</div>
+									</>
+								)}
+							</div>
+						</div>
+					);
+				})}
+			</CardContent>
+		</Card>
 	);
 };

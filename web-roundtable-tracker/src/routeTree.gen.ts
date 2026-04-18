@@ -12,9 +12,9 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as PreviewImport } from './routes/preview'
-import { Route as NewinitiativeImport } from './routes/new_initiative'
-import { Route as Initiative2Import } from './routes/initiative2'
-import { Route as InitiativeImport } from './routes/initiative'
+import { Route as PartysetupImport } from './routes/party_setup'
+import { Route as InitiativetrackerImport } from './routes/initiative_tracker'
+import { Route as InitiativeplayerImport } from './routes/initiative_player'
 import { Route as EncountersImport } from './routes/encounters'
 import { Route as BuilderImport } from './routes/builder'
 import { Route as IndexImport } from './routes/index'
@@ -27,21 +27,21 @@ const PreviewRoute = PreviewImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const NewinitiativeRoute = NewinitiativeImport.update({
-  id: '/new_initiative',
-  path: '/new_initiative',
+const PartysetupRoute = PartysetupImport.update({
+  id: '/party_setup',
+  path: '/party_setup',
   getParentRoute: () => rootRoute,
 } as any)
 
-const Initiative2Route = Initiative2Import.update({
-  id: '/initiative2',
-  path: '/initiative2',
+const InitiativetrackerRoute = InitiativetrackerImport.update({
+  id: '/initiative_tracker',
+  path: '/initiative_tracker',
   getParentRoute: () => rootRoute,
 } as any)
 
-const InitiativeRoute = InitiativeImport.update({
-  id: '/initiative',
-  path: '/initiative',
+const InitiativeplayerRoute = InitiativeplayerImport.update({
+  id: '/initiative_player',
+  path: '/initiative_player',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -88,25 +88,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EncountersImport
       parentRoute: typeof rootRoute
     }
-    '/initiative': {
-      id: '/initiative'
-      path: '/initiative'
-      fullPath: '/initiative'
-      preLoaderRoute: typeof InitiativeImport
+    '/initiative_player': {
+      id: '/initiative_player'
+      path: '/initiative_player'
+      fullPath: '/initiative_player'
+      preLoaderRoute: typeof InitiativeplayerImport
       parentRoute: typeof rootRoute
     }
-    '/initiative2': {
-      id: '/initiative2'
-      path: '/initiative2'
-      fullPath: '/initiative2'
-      preLoaderRoute: typeof Initiative2Import
+    '/initiative_tracker': {
+      id: '/initiative_tracker'
+      path: '/initiative_tracker'
+      fullPath: '/initiative_tracker'
+      preLoaderRoute: typeof InitiativetrackerImport
       parentRoute: typeof rootRoute
     }
-    '/new_initiative': {
-      id: '/new_initiative'
-      path: '/new_initiative'
-      fullPath: '/new_initiative'
-      preLoaderRoute: typeof NewinitiativeImport
+    '/party_setup': {
+      id: '/party_setup'
+      path: '/party_setup'
+      fullPath: '/party_setup'
+      preLoaderRoute: typeof PartysetupImport
       parentRoute: typeof rootRoute
     }
     '/preview': {
@@ -125,9 +125,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/encounters': typeof EncountersRoute
-  '/initiative': typeof InitiativeRoute
-  '/initiative2': typeof Initiative2Route
-  '/new_initiative': typeof NewinitiativeRoute
+  '/initiative_player': typeof InitiativeplayerRoute
+  '/initiative_tracker': typeof InitiativetrackerRoute
+  '/party_setup': typeof PartysetupRoute
   '/preview': typeof PreviewRoute
 }
 
@@ -135,9 +135,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/encounters': typeof EncountersRoute
-  '/initiative': typeof InitiativeRoute
-  '/initiative2': typeof Initiative2Route
-  '/new_initiative': typeof NewinitiativeRoute
+  '/initiative_player': typeof InitiativeplayerRoute
+  '/initiative_tracker': typeof InitiativetrackerRoute
+  '/party_setup': typeof PartysetupRoute
   '/preview': typeof PreviewRoute
 }
 
@@ -146,9 +146,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/encounters': typeof EncountersRoute
-  '/initiative': typeof InitiativeRoute
-  '/initiative2': typeof Initiative2Route
-  '/new_initiative': typeof NewinitiativeRoute
+  '/initiative_player': typeof InitiativeplayerRoute
+  '/initiative_tracker': typeof InitiativetrackerRoute
+  '/party_setup': typeof PartysetupRoute
   '/preview': typeof PreviewRoute
 }
 
@@ -158,27 +158,27 @@ export interface FileRouteTypes {
     | '/'
     | '/builder'
     | '/encounters'
-    | '/initiative'
-    | '/initiative2'
-    | '/new_initiative'
+    | '/initiative_player'
+    | '/initiative_tracker'
+    | '/party_setup'
     | '/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/builder'
     | '/encounters'
-    | '/initiative'
-    | '/initiative2'
-    | '/new_initiative'
+    | '/initiative_player'
+    | '/initiative_tracker'
+    | '/party_setup'
     | '/preview'
   id:
     | '__root__'
     | '/'
     | '/builder'
     | '/encounters'
-    | '/initiative'
-    | '/initiative2'
-    | '/new_initiative'
+    | '/initiative_player'
+    | '/initiative_tracker'
+    | '/party_setup'
     | '/preview'
   fileRoutesById: FileRoutesById
 }
@@ -187,9 +187,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BuilderRoute: typeof BuilderRoute
   EncountersRoute: typeof EncountersRoute
-  InitiativeRoute: typeof InitiativeRoute
-  Initiative2Route: typeof Initiative2Route
-  NewinitiativeRoute: typeof NewinitiativeRoute
+  InitiativeplayerRoute: typeof InitiativeplayerRoute
+  InitiativetrackerRoute: typeof InitiativetrackerRoute
+  PartysetupRoute: typeof PartysetupRoute
   PreviewRoute: typeof PreviewRoute
 }
 
@@ -197,9 +197,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BuilderRoute: BuilderRoute,
   EncountersRoute: EncountersRoute,
-  InitiativeRoute: InitiativeRoute,
-  Initiative2Route: Initiative2Route,
-  NewinitiativeRoute: NewinitiativeRoute,
+  InitiativeplayerRoute: InitiativeplayerRoute,
+  InitiativetrackerRoute: InitiativetrackerRoute,
+  PartysetupRoute: PartysetupRoute,
   PreviewRoute: PreviewRoute,
 }
 
@@ -216,9 +216,9 @@ export const routeTree = rootRoute
         "/",
         "/builder",
         "/encounters",
-        "/initiative",
-        "/initiative2",
-        "/new_initiative",
+        "/initiative_player",
+        "/initiative_tracker",
+        "/party_setup",
         "/preview"
       ]
     },
@@ -231,14 +231,14 @@ export const routeTree = rootRoute
     "/encounters": {
       "filePath": "encounters.tsx"
     },
-    "/initiative": {
-      "filePath": "initiative.tsx"
+    "/initiative_player": {
+      "filePath": "initiative_player.tsx"
     },
-    "/initiative2": {
-      "filePath": "initiative2.tsx"
+    "/initiative_tracker": {
+      "filePath": "initiative_tracker.tsx"
     },
-    "/new_initiative": {
-      "filePath": "new_initiative.tsx"
+    "/party_setup": {
+      "filePath": "party_setup.tsx"
     },
     "/preview": {
       "filePath": "preview.tsx"

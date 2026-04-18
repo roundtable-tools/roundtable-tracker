@@ -1,7 +1,7 @@
 import { FC, ReactNode } from 'react';
 
 import { CommandHistoryContext } from './CommandHistoryContext';
-import { useEncounterStore } from '@/store/instance';
+import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { Command } from './common';
 
 export const CommandHistoryProvider: FC<{ children: ReactNode }> = ({

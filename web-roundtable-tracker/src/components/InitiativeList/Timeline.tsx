@@ -5,11 +5,16 @@ import {
 	TooltipContent,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export type TimelineEvent = {
+	id?: string;
 	round: number;
 	label: string;
 	description?: string;
+	actionLabel?: string;
+	onAction?: () => void;
+	actionDisabled?: boolean;
 };
 
 interface TimelineProps {
@@ -63,6 +68,21 @@ function TimelineItem({
 										{event.description}
 									</div>
 								)}
+								{event.onAction && event.actionLabel && (
+									<Button
+										type="button"
+										size="sm"
+										variant="secondary"
+										disabled={event.actionDisabled}
+										onClick={(buttonEvent) => {
+											buttonEvent.stopPropagation();
+											event.onAction?.();
+										}}
+										className="mt-2 h-7 px-2 text-xs"
+									>
+										{event.actionLabel}
+									</Button>
+								)}
 							</div>
 						))}
 					</TooltipContent>
@@ -109,3 +129,5 @@ export function Timeline({
 		</div>
 	);
 }
+
+export default Timeline;

@@ -16,7 +16,7 @@ export class CompositeCommand implements Command {
 
 	undo() {
 		return (
-			this.data.commands
+			[...this.data.commands]
 				.reverse()
 				.map((command) => command.undo())
 				.find((status) => status !== STATUS.success) ?? STATUS.success

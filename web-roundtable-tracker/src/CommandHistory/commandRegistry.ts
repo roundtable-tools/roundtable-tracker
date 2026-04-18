@@ -1,9 +1,17 @@
 import { CompositeCommand } from './Commands/CompositeCommand';
+import { ChangeHealthCommand } from './Commands/ChangeHealthCommand';
+import { DelayCharacterCommand } from './Commands/DelayCharacterCommand';
 import { EndRoundCommand } from './Commands/EndRoundCommand';
 import { EndTurnCommand } from './Commands/EndTurnCommand';
+import { FinalizeTurnAndAdvanceRoundCommand } from './Commands/FinalizeTurnAndAdvanceRoundCommand';
+import { FinalizeTurnAndReturnToInitiativeCommand } from './Commands/FinalizeTurnAndReturnToInitiativeCommand';
+import { KnockOutCharacterCommand } from './Commands/KnockOutCharacterCommand';
+import { ReactivateCharacterCommand } from './Commands/ReactivateCharacterCommand';
 import { RemoveCharacterCommand } from './Commands/RemoveCharacterCommand';
 import { ReorderCharactersCommand } from './Commands/ReorderCharactersCommand';
+import { TriggerReinforcementEventCommand } from './Commands/TriggerReinforcementEventCommand';
 import { UpdateCharacterDataCommand } from './Commands/UpdateCharacterDataCommand';
+import { SetTempHealthCommand } from './Commands/SetTempHealthCommand';
 import { Command } from './common';
 
 const commandMap: Record<string, new (data: Command['data']) => Command> = {};
@@ -41,4 +49,27 @@ export const registerSerializableCommands = () => {
 	);
 	registerSerializableCommand(EndTurnCommand, 'EndTurnCommand');
 	registerSerializableCommand(EndRoundCommand, 'EndRoundCommand');
+	registerSerializableCommand(
+		FinalizeTurnAndAdvanceRoundCommand,
+		'FinalizeTurnAndAdvanceRoundCommand'
+	);
+	registerSerializableCommand(
+		FinalizeTurnAndReturnToInitiativeCommand,
+		'FinalizeTurnAndReturnToInitiativeCommand'
+	);
+	registerSerializableCommand(DelayCharacterCommand, 'DelayCharacterCommand');
+	registerSerializableCommand(
+		KnockOutCharacterCommand,
+		'KnockOutCharacterCommand'
+	);
+	registerSerializableCommand(
+		ReactivateCharacterCommand,
+		'ReactivateCharacterCommand'
+	);
+	registerSerializableCommand(
+		TriggerReinforcementEventCommand,
+		'TriggerReinforcementEventCommand'
+	);
+	registerSerializableCommand(ChangeHealthCommand, 'ChangeHealthCommand');
+	registerSerializableCommand(SetTempHealthCommand, 'SetTempHealthCommand');
 };

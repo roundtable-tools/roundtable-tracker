@@ -1,4 +1,4 @@
-import { getEncounterStore } from '@/store/instance';
+import { getEncounterStore } from '@/store/encounterRuntimeInstance';
 
 export const STATUS = {
 	success: 'SUCCESS',

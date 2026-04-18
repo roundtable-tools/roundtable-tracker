@@ -9,38 +9,39 @@ export class LevelDifference {
     toString(): string { // render + sign if positive
         return `${this.value >= 0 ? '+' : ''}${this.value}`;
     }
-    toExperience(simpleHazardModdifier:boolean = false): ExperienceBudget {
-        if (this.value <= -7) {
-            return new ExperienceBudget(0); // Default case for too low level difference
+    toExperience(isComplexHazard: boolean = true): ExperienceBudget {
+        if (this.value < -4) {
+            return new ExperienceBudget(0);
         }
-        const baseCost = 40; // Base cost for equivalent levels
-        const absMultiplier = Math.floor(1+Math.abs(this.value)/2) // Absolute value of level difference
-        const oddMultipier = this.value % 2 === 0 ? 1 : Math.SQRT2; // Odd multiplier for odd level differences
-        const getMultiplier = () => {
-            switch (true) {
-                case this.value > 0:
-                    return Math.pow(2,oddMultipier) * absMultiplier;
 
-                case this.value < 0:
-                    return 1 / (Math.pow(2,oddMultipier) * absMultiplier);
+        const baseCost = 40;
+        const isSimpleHazard = isComplexHazard === false;
+        const difference = Math.trunc(this.value);
 
-                default:
-                    return 1; // For level difference of 0
+        const multiplier = (() => {
+            if (difference === 0) return 1;
+
+            if (difference > 0) {
+                if (difference % 2 === 0) {
+                    return Math.pow(2, difference / 2);
+                }
+
+                return 1.5 * Math.pow(2, (difference - 1) / 2);
             }
-        }
-        const rawExp = baseCost * getMultiplier() / (simpleHazardModdifier ? 5 : 1); // Simple hazard modifier for smaller exp gain
 
-        switch (true){
-            case rawExp >= 10:
-                return new ExperienceBudget(rawExp).round(10); // Round up to the nearest tens
+            const absoluteDifference = Math.abs(difference);
 
-            case rawExp >= 4.5:
-                return new ExperienceBudget(rawExp).roundIfHigher(5) // Round up to the nearest int
-                
-            default:
-                return new ExperienceBudget(0);
-        }
+            if (absoluteDifference % 2 === 0) {
+                return 1 / Math.pow(2, absoluteDifference / 2);
+            }
 
+            return 0.75 / Math.pow(2, (absoluteDifference - 1) / 2);
+        })();
+
+        const complexHazardXp = baseCost * multiplier;
+        const finalXp = isSimpleHazard ? complexHazardXp / 5 : complexHazardXp;
+
+        return new ExperienceBudget(finalXp);
     }
     valueOf(): number {
         return this.value;

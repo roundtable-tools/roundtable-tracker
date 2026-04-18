@@ -1,14 +1,14 @@
 {
   "private": true,
   "workspaces": [
-    "web-roundtable-tracker",
-    "native-roundtable-tracker"
+    "web-roundtable-tracker"
   ],
   "packageManager": "yarn@4.9.0",
   "scripts": {
     "dev": "yarn workspace web-roundtable-tracker dev",
-    "start": "yarn workspace native-roundtable-tracker start",
-    "test": "yarn workspace web-roundtable-tracker test"
+    "start": "yarn workspace web-roundtable-tracker start",
+    "test": "yarn workspace web-roundtable-tracker test",
+    "verify:types": "yarn workspace web-roundtable-tracker typecheck && yarn workspace web-roundtable-tracker test --run"
   },
   "devDependencies": {
     "vitest": "^4.1.2"

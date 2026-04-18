@@ -3,7 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { use$ } from '@legendapp/state/react';
 import { $React } from '@legendapp/state/react-web';
 
-import { FolderOpen, PencilRuler, Play } from 'lucide-react';
+import { FolderOpen, LayoutDashboard, PencilRuler, Play, Users } from 'lucide-react';
 import { store$ } from '@/storage/store';
 import type { Todo } from '@/storage/store';
 
@@ -19,8 +19,20 @@ function Index() {
 		<div className="flex flex-col items-center justify-center h-screen">
 			<div className="flex gap-4 p-4 flex-wrap items-center justify-center">
 				<Button asChild className="text-xl h-auto">
-					<Link to="/initiative">
+					<Link to="/initiative_tracker">
 						<Play size={48} /> Continue
+					</Link>
+				</Button>
+
+				<Button asChild className="text-xl h-auto" variant="secondary">
+					<Link to="/initiative_tracker">
+						<LayoutDashboard size={48} /> Tracker PoC
+					</Link>
+				</Button>
+
+				<Button asChild className="text-xl h-auto" variant="secondary">
+					<Link to="/initiative_player">
+						<Users size={48} /> Player PoC
 					</Link>
 				</Button>
 
