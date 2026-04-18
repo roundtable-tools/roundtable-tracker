@@ -114,7 +114,7 @@ const expandSlotParticipants = (
 				sideTheme,
 				isSimpleHazard:
 					slotParticipant.type === 'hazard'
-						? (slotParticipant.isSimpleHazard ?? !slotParticipant.isComplexHazard)
+						? !slotParticipant.isComplexHazard
 						: false,
 				disableChecksRequired:
 					slotParticipant.type === 'hazard'
