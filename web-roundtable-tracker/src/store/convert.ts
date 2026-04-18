@@ -14,6 +14,7 @@ export const participantsToEncounterCharacters = (
 
 type RuntimeParticipantFields = {
 	type?: 'creature' | 'hazard';
+	hasHealthData?: boolean;
 	successesToDisable?: number;
 	isSimpleHazard?: boolean;
 	isComplexHazard?: boolean;
@@ -77,6 +78,7 @@ export const buildTrackerMetaMap = (
 		result[participant.uuid] = {
 			role: deriveRole(participant.side, runtime.type),
 			sideTheme: deriveSideTheme(participant.side),
+			hasHealthData: runtime.hasHealthData ?? true,
 			isSimpleHazard: runtime.isSimpleHazard ?? false,
 			disableChecksRequired: runtime.successesToDisable ?? 0,
 			disableChecksSucceeded: 0,

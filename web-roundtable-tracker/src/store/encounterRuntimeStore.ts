@@ -15,6 +15,7 @@ export type TrackerParticipantSideTheme = 'pc' | 'opponent' | 'ally' | 'other';
 export type TrackerParticipantMeta = {
 	role: TrackerParticipantRole;
 	sideTheme: TrackerParticipantSideTheme;
+	hasHealthData?: boolean;
 	isSimpleHazard: boolean;
 	disableChecksRequired: number;
 	disableChecksSucceeded: number;

@@ -25,8 +25,9 @@ export type PartyMember = {
 	uuid: string;
 	name: string;
 	level: number;
-	maxHealth: number;
+	maxHealth?: number;
 	tiePriority: boolean;
+	player?: string;
 	class?: string;
 	ancestry?: string;
 	ac?: number;

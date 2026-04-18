@@ -43,6 +43,10 @@ type PreviewDisplayProps = {
 	setView: (view: string) => void;
 };
 
+type PreviewCharacterConfig = CharacterConfig & {
+	hasHealthData?: boolean;
+};
+
 type TeamAppearance = {
 	borderClassName: string;
 	markerClassName: string;
@@ -157,7 +161,7 @@ export const generateParticipants = (
 				Number.isFinite(participant.initiativeBonus)
 					? participant.initiativeBonus
 					: 0;
-
+			const isSimpleHazard = participant.type === 'hazard' && !participant.isComplexHazard;
 			return Array.from({ length: count ?? 1 }).map((_, index, { length }) => ({
 				uuid: generateUUID(),
 				tiePriority: PRIORITY.NPC,
@@ -168,6 +172,7 @@ export const generateParticipants = (
 					length > 1
 						? `${baseName} ${indexToLetter(index).toUpperCase()}`
 						: baseName,
+				isSimpleHazard: isSimpleHazard,
 			}));
 		})
 	);
@@ -185,6 +190,7 @@ const generateParty = (
 			level: partyLevel,
 			side: ALIGNMENT.PCs,
 			name: `Player ${index + 1}`,
+			isSimpleHazard: false,
 		})
 	);
 };
@@ -198,16 +204,17 @@ const generatePartyFromData = (party: Party): InitiativeParticipant[] =>
 		tiePriority: member.tiePriority ? PRIORITY.PC : PRIORITY.NPC,
 		maxHealth: member.maxHealth,
 		health: member.maxHealth,
-		tempHealth: 0,
+		tempHealth: typeof member.maxHealth === 'number' ? 0 : undefined,
 		initiative: 0,
 		type: 'creature' as const,
+		isSimpleHazard: false,
 	}));
 
 export type Inputs = {
 	teams: {
 		side: number;
 		isParty: boolean;
-		characters: CharacterConfig[];
+		characters: PreviewCharacterConfig[];
 	}[];
 };
 
@@ -221,7 +228,7 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	const setView = props.setView;
 	const [showInitiativeChoice, setShowInitiativeChoice] = useState(false);
 	const [preparedParticipants, setPreparedParticipants] = useState<
-		CharacterConfig[]
+		PreviewCharacterConfig[]
 	>([]);
 
 	const parties = useSavedPartiesStore((s) => s.parties);
@@ -255,6 +262,10 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 					side: group[0].side,
 					isParty: index === 0,
 					characters: group.map((participant) => ({
+						hasHealthData:
+							typeof participant.maxHealth === 'number' ||
+							typeof participant.health === 'number' ||
+							typeof participant.tempHealth === 'number',
 						...participant,
 						initiative: participant.initiative ?? 0,
 						maxHealth: participant.maxHealth ?? 1,
@@ -264,6 +275,19 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 				})),
 		[fullParty]
 	);
+
+	const sourceParticipantsById = useMemo(() => {
+		type DefaultTeamCharacter = (typeof defaultTeams)[number]['characters'][number];
+		const source = new Map<string, DefaultTeamCharacter>();
+
+		for (const team of defaultTeams) {
+			for (const participant of team.characters) {
+				source.set(participant.uuid, participant);
+			}
+		}
+
+		return source;
+	}, [defaultTeams]);
 
 	const { control, register, getFieldState, handleSubmit, reset } = useForm<Inputs>({
 		mode: 'onChange',
@@ -282,39 +306,57 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 				const formParticipants = data.teams
 					.flatMap(({ characters }) => characters)
 					.map((participant) => {
+						const sourceParticipant = sourceParticipantsById.get(participant.uuid);
+						const mergedParticipant = {
+							...sourceParticipant,
+							...participant,
+						};
+						const hasHealthData = mergedParticipant.hasHealthData !== false;
 						const maxHealth =
-							typeof participant.maxHealth === 'number' &&
-							Number.isFinite(participant.maxHealth) &&
-							participant.maxHealth >= 0
-								? participant.maxHealth
+							typeof mergedParticipant.maxHealth === 'number' &&
+							Number.isFinite(mergedParticipant.maxHealth) &&
+							mergedParticipant.maxHealth >= 0
+								? mergedParticipant.maxHealth
 								: 1;
 						const health =
-							typeof participant.health === 'number' &&
-							Number.isFinite(participant.health) &&
-							participant.health >= 0
-								? participant.health
+							typeof mergedParticipant.health === 'number' &&
+							Number.isFinite(mergedParticipant.health) &&
+							mergedParticipant.health >= 0
+								? mergedParticipant.health
 								: maxHealth;
 						const tempHealth =
-							typeof participant.tempHealth === 'number' &&
-							Number.isFinite(participant.tempHealth) &&
-							participant.tempHealth >= 0
-								? participant.tempHealth
+							typeof mergedParticipant.tempHealth === 'number' &&
+							Number.isFinite(mergedParticipant.tempHealth) &&
+							mergedParticipant.tempHealth >= 0
+								? mergedParticipant.tempHealth
 								: 0;
 						const initiative =
-							typeof participant.initiative === 'number' &&
-							Number.isFinite(participant.initiative)
-								? participant.initiative
-								: 0;
+							typeof mergedParticipant.initiative === 'number' &&
+							Number.isFinite(mergedParticipant.initiative)
+								? mergedParticipant.initiative
+								: mergedParticipant.initiative ?? 0;
+
+						if (!hasHealthData) {
+							return {
+								...mergedParticipant,
+								hasHealthData: false,
+								initiative,
+								maxHealth: 1,
+								health: 1,
+								tempHealth: 0,
+							};
+						}
 
 						return {
-							...participant,
+							...mergedParticipant,
+							hasHealthData: true,
 							initiative,
 							maxHealth,
 							health,
 							tempHealth,
 						};
 					});
-
+				console.log('Prepared participants for encounter:', formParticipants);
 				setPreparedParticipants(formParticipants);
 				setShowInitiativeChoice(true);
 			},

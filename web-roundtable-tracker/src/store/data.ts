@@ -233,7 +233,6 @@ export type Hazard<
 	type: "hazard";
 	successesToDisable: number;
 	isComplexHazard?: boolean;
-	isSimpleHazard?: boolean;
 };
 
 export type Participant<
@@ -244,6 +243,7 @@ export type InitiativeParticipant = {
 	uuid: string;
 	tiePriority: Priority;
 	initiative?: number;
+	isSimpleHazard: boolean;
 	level: number;
 } & Omit<Creature<typeof LEVEL_REPRESENTATION.Exact>, "type" | "adjustment"> & {
 	adjustment?: ParticipantAdjustment;
@@ -285,6 +285,7 @@ export type NarrativeSlot = {
 export type EncounterTemplate = {
 	id: string; // Unique identifier for the encounter
 	name: string;
+	notes?: EncounterNotes;
 	difficultyLabel?: keyof typeof DIFFICULTY;
 	level?: [number, number]; // Range of levels for the encounter
 	levelRepresentation: typeof LEVEL_REPRESENTATION.Relative; // Abstract encounter with participants of levels relative to the encounter level

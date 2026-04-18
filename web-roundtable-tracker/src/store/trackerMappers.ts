@@ -23,6 +23,7 @@ export type PlayerTrackerParticipant = {
 const DEFAULT_META: TrackerParticipantMeta = {
 	role: 'opponent',
 	sideTheme: 'opponent',
+	hasHealthData: true,
 	isSimpleHazard: false,
 	disableChecksRequired: 0,
 	disableChecksSucceeded: 0,
@@ -52,15 +53,19 @@ function characterToTrackerParticipant(
 	meta: TrackerParticipantMeta,
 	inInitiative: boolean
 ): TrackerParticipant {
+	const hasHealthData = meta.hasHealthData !== false;
 	const base: TrackerParticipant = {
 		id: character.uuid,
 		name: character.name,
 		role: meta.role,
 		sideTheme: meta.sideTheme,
 		state: characterStateToTrackerState(character.turnState, inInitiative),
-		currentHp: character.health,
-		maxHp: character.maxHealth,
-		tempHp: character.tempHealth > 0 ? character.tempHealth : undefined,
+		currentHp: hasHealthData ? character.health : undefined,
+		maxHp: hasHealthData ? character.maxHealth : undefined,
+		tempHp:
+			hasHealthData && character.tempHealth > 0
+				? character.tempHealth
+				: undefined,
 		tempHpDescription: character.tempHealthDescription,
 		notes: meta.notes,
 		hardness: meta.hardness,
@@ -163,7 +168,6 @@ export function runtimeToOutOfInitiativeData(
 	const triggeredReinforcementSlots = new Set(
 		Object.values(trackerMetaMap)
 			.filter((meta) => meta.reinforcementSlotId && meta.reinforcementPending !== true)
-			.filter((meta) => meta.reinforcementSlotId && meta.reinforcementPending !== true)
 			.map((meta) => meta.reinforcementSlotId)
 			.filter((slotId): slotId is string => Boolean(slotId))
 	);
@@ -249,6 +253,10 @@ const toPlayerStatus = (state: TrackerParticipant['state']): PlayerTrackerPartic
 };
 
 const toCoarseHpLabel = (participant: TrackerParticipant): string => {
+	if (typeof participant.currentHp !== 'number' || typeof participant.maxHp !== 'number') {
+		return 'No HP Data';
+	}
+
 	const maxHp = participant.maxHp ?? 1;
 	const currentHp = participant.currentHp ?? maxHp;
 

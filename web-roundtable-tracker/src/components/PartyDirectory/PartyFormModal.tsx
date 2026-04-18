@@ -24,6 +24,7 @@ export type PartyFormValues = {
 		level: number | undefined;
 		maxHealth: number | undefined;
 		tiePriority: boolean;
+		player: string;
 		class: string;
 		ancestry: string;
 		ac: number | undefined;
@@ -44,6 +45,7 @@ const defaultMember = (): PartyFormValues['members'][number] => ({
 	level: undefined,
 	maxHealth: undefined,
 	tiePriority: true,
+	player: '',
 	class: '',
 	ancestry: '',
 	ac: undefined,
@@ -58,6 +60,7 @@ const partyToFormValues = (party: Party): PartyFormValues => ({
 		level: m.level,
 		maxHealth: m.maxHealth,
 		tiePriority: m.tiePriority,
+		player: m.player ?? '',
 		class: m.class ?? '',
 		ancestry: m.ancestry ?? '',
 		ac: m.ac,
@@ -174,7 +177,7 @@ export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmi
 										)}
 									</div>
 
-									{/* Row 1: Name + Level + MaxHP */}
+									{/* Row 1: Core member fields */}
 									<div className="flex flex-wrap gap-3">
 										<div className="min-w-40 flex-1 space-y-1">
 											<Label htmlFor={`member-name-${index}`} className="text-xs">
@@ -211,33 +214,21 @@ export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmi
 												})}
 											/>
 										</div>
-										<div className="w-24 space-y-1">
-											<Label htmlFor={`member-hp-${index}`} className="text-xs">
-												Max HP <span className="text-destructive">*</span>
-											</Label>
-											<Input
-												id={`member-hp-${index}`}
-												type="number"
-												min={0}
-												step={1}
-												placeholder="20"
-												className={cn(
-													'h-8 text-center',
-													errors.members?.[index]?.maxHealth && 'border-destructive bg-destructive/10'
-												)}
-												{...register(`members.${index}.maxHealth`, {
-													required: 'Required',
-													valueAsNumber: true,
-													validate: (v) =>
-														(v !== undefined && !isNaN(v as number) && (v as number) >= 0) ||
-														'Must be ≥ 0',
-												})}
-											/>
-										</div>
 									</div>
 
-									{/* Row 2: Class + Ancestry + AC */}
+									{/* Row 2: Flavor fields */}
 									<div className="flex flex-wrap gap-3">
+										<div className="min-w-28 flex-1 space-y-1">
+											<Label htmlFor={`member-player-${index}`} className="text-xs">
+												Player
+											</Label>
+											<Input
+												id={`member-player-${index}`}
+												placeholder="Player name"
+												className="h-8"
+												{...register(`members.${index}.player`)}
+											/>
+										</div>
 										<div className="min-w-28 flex-1 space-y-1">
 											<Label htmlFor={`member-class-${index}`} className="text-xs">
 												Class
@@ -260,22 +251,51 @@ export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmi
 												{...register(`members.${index}.ancestry`)}
 											/>
 										</div>
+									</div>
+
+									<div className="space-y-2 rounded-md border border-dashed px-3 py-2">
+										<p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+											Additional Participant Information
+										</p>
+										<div className="flex flex-wrap gap-3">
+											<div className="w-20 space-y-1">
+												<Label htmlFor={`member-ac-${index}`} className="text-xs">
+													AC
+												</Label>
+												<Input
+													id={`member-ac-${index}`}
+													type="number"
+													min={0}
+													step={1}
+													placeholder="16"
+													className="h-8 text-center"
+													{...register(`members.${index}.ac`, {
+														setValueAs: (v) =>
+															v === '' || v === undefined ? undefined : Number(v),
+														validate: (v) =>
+															typeof v !== 'number' || v >= 0 || 'Must be ≥ 0',
+													})}
+												/>
+											</div>
 										<div className="w-20 space-y-1">
-											<Label htmlFor={`member-ac-${index}`} className="text-xs">
-												AC
+											<Label htmlFor={`member-hp-${index}`} className="text-xs">
+												Max HP
 											</Label>
 											<Input
-												id={`member-ac-${index}`}
+												id={`member-hp-${index}`}
 												type="number"
 												min={0}
 												step={1}
-												placeholder="16"
+												placeholder="20"
 												className="h-8 text-center"
-												{...register(`members.${index}.ac`, {
+												{...register(`members.${index}.maxHealth`, {
 													setValueAs: (v) =>
 														v === '' || v === undefined ? undefined : Number(v),
+													validate: (v) =>
+														typeof v !== 'number' || v >= 0 || 'Must be ≥ 0',
 												})}
 											/>
+										</div>
 										</div>
 									</div>
 

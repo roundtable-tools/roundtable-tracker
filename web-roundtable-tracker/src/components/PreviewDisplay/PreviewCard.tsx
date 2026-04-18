@@ -13,7 +13,7 @@ type InitiativeCardProps = {
 	teamIndex: number;
 	sideTitle: ReactNode;
 	sideFlag: ReactNode;
-	participants: CharacterConfig[];
+	participants: Array<CharacterConfig & { hasHealthData?: boolean }>;
 	register: UseFormRegister<Inputs>;
 	getFieldState: UseFormGetFieldState<Inputs>;
 	/** Fields to render as read-only display text instead of inputs */
@@ -106,6 +106,8 @@ export const PreviewCard = (props: InitiativeCardProps) => {
 			</CardHeader>
 			<CardContent className="grid gap-3 px-4 py-4 sm:px-5">
 				{props.participants.map((participant, index) => {
+					const showHealthFields = participant.hasHealthData !== false;
+					const showInitiativeField = participant.isSimpleHazard == false; // Simple hazards don't have initiative
 					const nameFieldState = getFieldState(
 						`teams.${teamIndex}.characters.${index}.name`
 					);
@@ -141,32 +143,38 @@ export const PreviewCard = (props: InitiativeCardProps) => {
 								)})`}
 							</span>
 							<div className="flex flex-wrap items-center gap-3">
-								<div className="flex items-center gap-1.5">
-									<Activity className="h-4 w-4 text-muted-foreground" />
-									<NumberInput
-										name={`teams.${teamIndex}.characters.${index}.initiative`}
-										{...{ register, getFieldState }}
-									/>
-								</div>
-								<div className="flex items-center gap-1.5">
-									<Heart className="h-4 w-4 text-muted-foreground" />
-									<NumberInput
-										name={`teams.${teamIndex}.characters.${index}.health`}
-										{...{ register, getFieldState }}
-									/>
-									<span className="text-muted-foreground">/</span>
-									<NumberInput
-										name={`teams.${teamIndex}.characters.${index}.maxHealth`}
-										{...{ register, getFieldState }}
-									/>
-								</div>
-								<div className="flex items-center gap-1.5">
-									<ShieldPlus className="h-4 w-4 text-muted-foreground" />
-									<NumberInput
-										name={`teams.${teamIndex}.characters.${index}.tempHealth`}
-										{...{ register, getFieldState }}
-									/>
-								</div>
+								{showInitiativeField && (
+									<div className="flex items-center gap-1.5">
+										<Activity className="h-4 w-4 text-muted-foreground" />
+										<NumberInput
+											name={`teams.${teamIndex}.characters.${index}.initiative`}
+											{...{ register, getFieldState }}
+										/>
+									</div>
+								)}
+								{showHealthFields && (
+									<>
+										<div className="flex items-center gap-1.5">
+											<Heart className="h-4 w-4 text-muted-foreground" />
+											<NumberInput
+												name={`teams.${teamIndex}.characters.${index}.health`}
+												{...{ register, getFieldState }}
+											/>
+											<span className="text-muted-foreground">/</span>
+											<NumberInput
+												name={`teams.${teamIndex}.characters.${index}.maxHealth`}
+												{...{ register, getFieldState }}
+											/>
+										</div>
+										<div className="flex items-center gap-1.5">
+											<ShieldPlus className="h-4 w-4 text-muted-foreground" />
+											<NumberInput
+												name={`teams.${teamIndex}.characters.${index}.tempHealth`}
+												{...{ register, getFieldState }}
+											/>
+										</div>
+									</>
+								)}
 							</div>
 						</div>
 					);

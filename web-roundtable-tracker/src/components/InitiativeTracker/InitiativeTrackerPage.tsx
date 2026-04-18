@@ -152,6 +152,10 @@ function getParticipantIndicatorLabel(participant: TrackerParticipant) {
 		return getHazardDisableLabel(participant);
 	}
 
+	if (typeof participant.maxHp !== 'number' || typeof participant.currentHp !== 'number') {
+		return 'No HP Data';
+	}
+
 	const maxHp = participant.maxHp ?? 1;
 	const currentHp = participant.currentHp ?? maxHp;
 	const healthPercentage = (currentHp / maxHp) * 100;
@@ -386,7 +390,7 @@ function ParticipantDetails({ participant, onHeal, onDamage, onSetTempHp }: Part
 
 	const indicatorLabel = getParticipantIndicatorLabel(participant);
 	const isHazard = participant.role === 'hazard';
-	const showHpControls = !isHazard && (onHeal || onDamage || onSetTempHp);
+	const showHpControls = (onHeal || onDamage || onSetTempHp);
 	const hasHpData = typeof participant.currentHp === 'number' && typeof participant.maxHp === 'number';
 
 	const handleHeal = () => {
@@ -418,32 +422,35 @@ function ParticipantDetails({ participant, onHeal, onDamage, onSetTempHp }: Part
 				<Badge>{getParticipantRoleLabel(participant)}</Badge>
 				<Badge variant="secondary">{participant.state}</Badge>
 			</div>
-			{isHazard ? (
+			{isHazard && (
 				<p className="inline-flex items-center gap-1 text-sm text-muted-foreground">
 					<ShieldOff className="h-4 w-4" /> {indicatorLabel}
 				</p>
-			) : (
+			)}
+			{hasHpData && (<>
 				<p className="text-sm text-muted-foreground">
-					Health:{' '}
-					{hasHpData ? (
-						<span className="text-foreground">
-							{participant.currentHp} / {participant.maxHp}
-							{(participant.tempHp ?? 0) > 0 && (
-								<span className="ml-1 text-sky-400"> +{participant.tempHp} temp</span>
-							)}
-							<span className="ml-1 text-muted-foreground">({indicatorLabel})</span>
-						</span>
-					) : (
-						indicatorLabel
-					)}
+					Health:{' '} 
+					<span className="text-foreground">
+						{participant.currentHp} / {participant.maxHp}
+						{(participant.tempHp ?? 0) > 0 && (
+							<span className="ml-1 text-sky-400"> +{participant.tempHp} temp</span>
+						)}
+						<span className="ml-1 text-muted-foreground">({indicatorLabel})</span>
+					</span>
 				</p>
+				{typeof participant.hardness === 'number' && (
+					<p className="text-sm text-muted-foreground">
+						Hardness: <span className="text-foreground">{participant.hardness}</span>
+					</p>
+				)}
+				</>
 			)}
 			{(participant.tempHp ?? 0) > 0 && participant.tempHpDescription && (
 				<p className="text-xs text-muted-foreground">
 					Temp HP source: <span className="text-foreground">{participant.tempHpDescription}</span>
 				</p>
 			)}
-			{showHpControls && (
+			{showHpControls && hasHpData && (
 				<div className="space-y-2 rounded-md border p-3">
 					<h4 className="text-sm font-medium">HP</h4>
 					<div className="flex gap-2">
@@ -501,11 +508,6 @@ function ParticipantDetails({ participant, onHeal, onDamage, onSetTempHp }: Part
 					<p className="text-sm text-muted-foreground">
 						Initiative Bonus:{' '}
 						<span className="text-foreground">+{participant.initiativeBonus}</span>
-					</p>
-				)}
-				{typeof participant.hardness === 'number' && (
-					<p className="text-sm text-muted-foreground">
-						Hardness: <span className="text-foreground">{participant.hardness}</span>
 					</p>
 				)}
 				{typeof participant.adjustmentLevelModifier === 'number' && (
@@ -801,8 +803,8 @@ export function InitiativeTrackerPage() {
 	const outOfInitiativePanelDefault = hasReinforcements
 		? 'reinforcements'
 		: hasDelayed
-			? 'delaying'
-			: 'hazards';
+		? 'delaying'
+		: 'hazards';
 	const activeRoundBoundaryIndex = useMemo(
 		() => getRoundBoundaryIndex(initiativeParticipants, charactersWithTurn),
 		[initiativeParticipants, charactersWithTurn]
@@ -1444,10 +1446,10 @@ export function InitiativeTrackerPage() {
 					{hasOutOfInitiativePanel && (
 					<Card className="flex min-h-0 min-w-0 flex-col p-4">
 						<Tabs defaultValue={outOfInitiativePanelDefault} className="flex min-h-0 flex-1 flex-col">
-							<TabsList className={['grid w-full h-auto', [hasReinforcements, hasDelayed, hasHazards].filter(Boolean).length === 3 ? 'grid-cols-3' : [hasReinforcements, hasDelayed, hasHazards].filter(Boolean).length === 2 ? 'grid-cols-2' : 'grid-cols-1'].join(' ')}>
+							<TabsList className={['grid w-full h-auto', [hasReinforcements, hasDelayed, hasHazards].filter(Boolean).length === 2 ? 'grid-cols-2' : 'grid-cols-1'].join(' ')}>
 								{hasReinforcements && <TabsTrigger value="reinforcements" className="whitespace-normal">Reinforcements</TabsTrigger>}
 								{hasDelayed && <TabsTrigger value="delaying" className="whitespace-normal">Delaying</TabsTrigger>}
-								{hasHazards && <TabsTrigger value="hazards" className="whitespace-normal">Simple Hazards</TabsTrigger>}
+								{hasHazards && <TabsTrigger value="hazards" className="whitespace-normal">Hazards</TabsTrigger>}
 							</TabsList>
 							{hasReinforcements && (
 								<TabsContent value="reinforcements" className="mt-3 min-h-0 flex-1">
@@ -1669,7 +1671,7 @@ export function InitiativeTrackerPage() {
 				</Card>
 
 				<Tabs defaultValue="carousel" className="space-y-3">
-					<TabsList className={['grid w-full', hasOutOfInitiativePanel ? 'grid-cols-2' : 'grid-cols-1'].join(' ')}>
+					<TabsList className={['grid w-full', [hasOutOfInitiativePanel, hasHazards].filter(Boolean).length === 2 ? 'grid-cols-3' : [hasOutOfInitiativePanel, hasHazards].filter(Boolean).length === 1 ? 'grid-cols-2' : 'grid-cols-1'].join(' ')}>
 						<TabsTrigger value="carousel">Horizontal Carousel</TabsTrigger>
 						{hasOutOfInitiativePanel && <TabsTrigger value="inactive">Inactive Participants</TabsTrigger>}
 					</TabsList>
@@ -1677,10 +1679,10 @@ export function InitiativeTrackerPage() {
 						<TabsContent value="inactive" className="mt-0">
 							<Card className="p-4">
 								<Tabs defaultValue={outOfInitiativePanelDefault} className="space-y-3">
-									<TabsList className={['grid w-full h-auto', [hasReinforcements, hasDelayed, hasHazards].filter(Boolean).length === 3 ? 'grid-cols-3' : [hasReinforcements, hasDelayed, hasHazards].filter(Boolean).length === 2 ? 'grid-cols-2' : 'grid-cols-1'].join(' ')}>
+									<TabsList className={['grid w-full h-auto', [hasReinforcements, hasDelayed].filter(Boolean).length === 2 ? 'grid-cols-2' : 'grid-cols-1'].join(' ')}>
 										{hasReinforcements && <TabsTrigger value="reinforcements" className="whitespace-normal">Reinforcements</TabsTrigger>}
 										{hasDelayed && <TabsTrigger value="delaying" className="whitespace-normal">Delaying</TabsTrigger>}
-										{hasHazards && <TabsTrigger value="hazards" className="whitespace-normal">Simple Hazards</TabsTrigger>}
+										{hasHazards && <TabsTrigger value="hazards">Simple Hazards</TabsTrigger>}
 									</TabsList>
 									{hasReinforcements && (
 										<TabsContent value="reinforcements" className="mt-0">
