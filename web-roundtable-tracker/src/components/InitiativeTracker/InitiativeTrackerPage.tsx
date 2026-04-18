@@ -797,6 +797,9 @@ export function InitiativeTrackerPage() {
 	);
 	const currentInitiativeParticipantId = charactersOrder[0] ?? null;
 	const nextTurnTimeoutRef = useRef<number | null>(null);
+	const reorderScrollContainerRef = useRef<HTMLDivElement | null>(null);
+	const reorderAutoScrollVelocityRef = useRef(0);
+	const reorderAutoScrollFrameRef = useRef<number | null>(null);
 	const delayedSectionParticipants = outOfInitiative.delayed;
 	const hasReinforcements = pendingReinforcementParticipants.length > 0;
 	const hasDelayed = delayedSectionParticipants.length > 0;
@@ -817,6 +820,11 @@ export function InitiativeTrackerPage() {
 		return () => {
 			if (nextTurnTimeoutRef.current !== null) {
 				window.clearTimeout(nextTurnTimeoutRef.current);
+			}
+
+			if (reorderAutoScrollFrameRef.current !== null) {
+				window.cancelAnimationFrame(reorderAutoScrollFrameRef.current);
+				reorderAutoScrollFrameRef.current = null;
 			}
 		};
 	}, []);
@@ -1027,8 +1035,129 @@ export function InitiativeTrackerPage() {
 		setReorderDraftParticipants(storeAllInitiativeParticipants);
 	};
 
+	const stopReorderAutoScroll = () => {
+		reorderAutoScrollVelocityRef.current = 0;
+
+		if (reorderAutoScrollFrameRef.current !== null) {
+			window.cancelAnimationFrame(reorderAutoScrollFrameRef.current);
+			reorderAutoScrollFrameRef.current = null;
+		}
+	};
+
+	const stepReorderAutoScroll = () => {
+		const container = reorderScrollContainerRef.current;
+		const velocity = reorderAutoScrollVelocityRef.current;
+
+		if (!container || velocity === 0) {
+			reorderAutoScrollFrameRef.current = null;
+
+			return;
+		}
+
+		container.scrollTop += velocity;
+		reorderAutoScrollFrameRef.current = window.requestAnimationFrame(stepReorderAutoScroll);
+	};
+
+	const setReorderAutoScrollVelocity = (velocity: number) => {
+		if (velocity === reorderAutoScrollVelocityRef.current) {
+			return;
+		}
+
+		reorderAutoScrollVelocityRef.current = velocity;
+
+		if (velocity === 0) {
+			if (reorderAutoScrollFrameRef.current !== null) {
+				window.cancelAnimationFrame(reorderAutoScrollFrameRef.current);
+				reorderAutoScrollFrameRef.current = null;
+			}
+
+			return;
+		}
+
+		if (reorderAutoScrollFrameRef.current === null) {
+			reorderAutoScrollFrameRef.current = window.requestAnimationFrame(stepReorderAutoScroll);
+		}
+	};
+
+	const handleReorderDrag = (pointerY: number) => {
+		const container = reorderScrollContainerRef.current;
+
+		if (!container) {
+			return;
+		}
+
+		const rect = container.getBoundingClientRect();
+		const edgeThreshold = 72;
+		const maxVelocity = 16;
+		const distanceFromTop = pointerY - rect.top;
+		const distanceFromBottom = rect.bottom - pointerY;
+
+		if (distanceFromTop < edgeThreshold) {
+			const topRatio = Math.max(0, distanceFromTop) / edgeThreshold;
+			setReorderAutoScrollVelocity(-maxVelocity * (1 - topRatio));
+
+			return;
+		}
+
+		if (distanceFromBottom < edgeThreshold) {
+			const bottomRatio = Math.max(0, distanceFromBottom) / edgeThreshold;
+			setReorderAutoScrollVelocity(maxVelocity * (1 - bottomRatio));
+
+			return;
+		}
+
+		setReorderAutoScrollVelocity(0);
+	};
+
+	const hasReorderChanges = useMemo(() => {
+		if (reorderDraftParticipants.length !== storeAllInitiativeParticipants.length) {
+			return true;
+		}
+
+		return reorderDraftParticipants.some(
+			(participant, index) => participant.id !== storeAllInitiativeParticipants[index]?.id
+		);
+	}, [reorderDraftParticipants, storeAllInitiativeParticipants]);
+
+	const handleReorderSave = () => {
+		const draftOrderedIds = reorderDraftParticipants.map((participant) => participant.id);
+		const draftIdSet = new Set(draftOrderedIds);
+		let reorderedVisibleIndex = 0;
+
+		const newOrder = charactersOrder.map((participantId) => {
+			if (!draftIdSet.has(participantId)) {
+				return participantId;
+			}
+
+			const nextId = draftOrderedIds[reorderedVisibleIndex];
+			reorderedVisibleIndex += 1;
+
+			return nextId ?? participantId;
+		});
+
+		const orderDidChange = newOrder.some((participantId, index) => participantId !== charactersOrder[index]);
+
+		if (!orderDidChange) {
+			logTrackerButton('Manual reorder save ignored because order is unchanged');
+			handleReorderOpenChange(false);
+
+			return;
+		}
+
+		try {
+			executeCommand(new ReorderCharactersCommand({ newOrder }));
+			logTrackerButton('Manual reorder save applied', {
+				newOrderLength: newOrder.length,
+			});
+			handleReorderOpenChange(false);
+		} catch (error) {
+			console.error('Failed to save manual reorder', error);
+		}
+	};
+
 	const handleReorderOpenChange = (open: boolean) => {
 		if (!open) {
+			stopReorderAutoScroll();
 			resetReorderDraft();
 		}
 
@@ -1991,12 +2120,13 @@ export function InitiativeTrackerPage() {
 					<DialogHeader className="border-b px-6 py-4 sm:border-0 sm:px-0 sm:py-0">
 						<DialogTitle>Manual Reorder Draft</DialogTitle>
 						<DialogDescription>
-							This PoC dialog mirrors the initiative list in a separate draft space. Drag and save behavior will be enabled in MVP.
+							Drag participants to set initiative order, then save to apply it.
 						</DialogDescription>
 					</DialogHeader>
-					<div className="min-h-0 flex-1 overflow-y-auto px-6 py-4 sm:px-0 sm:py-0">
+					<div ref={reorderScrollContainerRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-4 sm:px-0 sm:py-0">
 						<Reorder.Group
 							axis="y"
+							layoutScroll
 							values={reorderDraftParticipants}
 							onReorder={setReorderDraftParticipants}
 							className="space-y-2"
@@ -2006,6 +2136,15 @@ export function InitiativeTrackerPage() {
 									key={participant.id}
 									value={participant}
 									whileDrag={{ scale: 1.01 }}
+									onDragStart={(_, info) => {
+										handleReorderDrag(info.point.y);
+									}}
+									onDrag={(_, info) => {
+										handleReorderDrag(info.point.y);
+									}}
+									onDragEnd={() => {
+										stopReorderAutoScroll();
+									}}
 									className={[
 										'cursor-grab rounded-md border p-2 text-sm active:cursor-grabbing',
 										participant.state === 'pending-reinforcement'
@@ -2031,7 +2170,13 @@ export function InitiativeTrackerPage() {
 						>
 							Cancel
 						</Button>
-						<Button disabled onClick={() => logTrackerButton('Manual reorder save clicked')}>
+						<Button
+							disabled={!hasReorderChanges}
+							onClick={() => {
+								logTrackerButton('Manual reorder save clicked');
+								handleReorderSave();
+							}}
+						>
 							Save Order
 						</Button>
 					</DialogFooter>
