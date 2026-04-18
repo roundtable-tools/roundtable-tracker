@@ -1,7 +1,10 @@
 {
-	"compilerOptions": {
-		"lib": ["dom"],
-	},
+	"target": "es5",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
 	"files": [],
 	"references": [
 		{ "path": "./tsconfig.app.json" },
