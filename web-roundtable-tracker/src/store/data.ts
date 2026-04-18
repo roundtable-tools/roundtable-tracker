@@ -248,6 +248,7 @@ export type InitiativeParticipant = {
 } & Omit<Creature<typeof LEVEL_REPRESENTATION.Exact>, "type" | "adjustment"> & {
 	adjustment?: ParticipantAdjustment;
 };
+
 export type ConcreteEncounterVariant = {
 	difficulty?: Difficulty;
 	partySize?: number;

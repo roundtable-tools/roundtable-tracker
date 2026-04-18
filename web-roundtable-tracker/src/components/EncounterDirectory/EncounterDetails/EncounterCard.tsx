@@ -115,9 +115,11 @@ export const EncounterCard = (props: EncounterCardProps) => {
 		if (source === 'template' && activeTemplateVariant) {
 			return buildTemplateVariantParticipants(activeTemplateVariant);
 		}
+
 		if (source !== 'template' && activeSavedVariant) {
 			return activeSavedVariant.participants as StoreParticipant[];
 		}
+
 		return selectedEncounter.participants ?? [];
 	})();
 
@@ -125,9 +127,11 @@ export const EncounterCard = (props: EncounterCardProps) => {
 		if (source === 'template' && activeTemplateVariant) {
 			return activeTemplateVariant.partySize;
 		}
+
 		if (source !== 'template' && activeSavedVariant) {
 			return activeSavedVariant.partySize ?? selectedEncounter.partySize ?? 4;
 		}
+
 		return selectedEncounter.partySize ?? 4;
 	})();
 
@@ -163,6 +167,7 @@ export const EncounterCard = (props: EncounterCardProps) => {
 					activeTemplateVariant.description ?? selectedEncounter.description,
 			} as Encounter;
 		}
+
 		if (source !== 'template' && activeSavedVariant) {
 			return {
 				...selectedEncounter,
@@ -173,6 +178,7 @@ export const EncounterCard = (props: EncounterCardProps) => {
 				participants: activeSavedVariant.participants,
 			} as Encounter;
 		}
+
 		return undefined;
 	};
 
@@ -270,6 +276,7 @@ export const EncounterCard = (props: EncounterCardProps) => {
 								allTemplateVariants.map((tv, idx) => {
 									const label = tv.description ?? `Variant ${String.fromCharCode(65 + idx)}`;
 									const isActive = tv.id === activeTemplateVariantId;
+
 									return (
 										<Button
 											key={tv.id}
