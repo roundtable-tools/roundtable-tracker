@@ -58,7 +58,10 @@ import { ReturnToInitiativeCommand } from '@/CommandHistory/Commands/ReturnToIni
 import { ReorderCharactersCommand } from '@/CommandHistory/Commands/ReorderCharactersCommand';
 import { ChangeHealthCommand } from '@/CommandHistory/Commands/ChangeHealthCommand';
 import { SetTempHealthCommand } from '@/CommandHistory/Commands/SetTempHealthCommand';
+import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/ReactivateCharacterCommand';
+import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 import { Input } from '@/components/ui/input';
+import { type SwipeAction } from './InitiativeActionCarouselCard';
 
 function logTrackerButton(action: string, details?: Record<string, unknown>) {
 	if (details) {
@@ -1062,8 +1065,35 @@ export function InitiativeTrackerPage() {
 
 	const handleParticipantSwipeAction = (
 		participantId: string,
-		action: 'delay' | 'ko'
+		action: SwipeAction
 	) => {
+		if (action === 'reactivate') {
+			try {
+				executeCommand(new ReactivateCharacterCommand({ uuid: participantId }));
+				queueFocusCurrentParticipant();
+				logTrackerButton('Participant reactivated via swipe action', {
+					participantId,
+				});
+			} catch (error) {
+				console.error('Failed to reactivate participant', error);
+			}
+
+			return;
+		}
+
+		if (action === 'slay') {
+			try {
+				executeCommand(new RemoveCharacterCommand({ uuid: participantId }));
+				logTrackerButton('Participant slain via swipe action', {
+					participantId,
+				});
+			} catch (error) {
+				console.error('Failed to slay participant', error);
+			}
+
+			return;
+		}
+
 		const isCurrentActive =
 			participantId === currentInitiativeParticipantId &&
 			charactersWithTurn.has(participantId);
@@ -1446,7 +1476,7 @@ export function InitiativeTrackerPage() {
 					{hasOutOfInitiativePanel && (
 					<Card className="flex min-h-0 min-w-0 flex-col p-4">
 						<Tabs defaultValue={outOfInitiativePanelDefault} className="flex min-h-0 flex-1 flex-col">
-							<TabsList className={['grid w-full h-auto', [hasReinforcements, hasDelayed, hasHazards].filter(Boolean).length === 2 ? 'grid-cols-2' : 'grid-cols-1'].join(' ')}>
+							<TabsList className="w-full h-auto">
 								{hasReinforcements && <TabsTrigger value="reinforcements" className="whitespace-normal">Reinforcements</TabsTrigger>}
 								{hasDelayed && <TabsTrigger value="delaying" className="whitespace-normal">Delaying</TabsTrigger>}
 								{hasHazards && <TabsTrigger value="hazards" className="whitespace-normal">Hazards</TabsTrigger>}
@@ -1492,6 +1522,18 @@ export function InitiativeTrackerPage() {
 													participant={participant}
 													onSelect={setSelectedParticipantId}
 													selected={participant.id === selectedParticipantId}
+													actionSlot={
+														<Button
+															size="sm"
+															variant="destructive"
+															onClick={(e) => {
+																e.stopPropagation();
+																handleParticipantSwipeAction(participant.id, 'ko');
+															}}
+														>
+															K.O.
+														</Button>
+													}
 												/>
 											))}
 										</div>
@@ -1523,7 +1565,7 @@ export function InitiativeTrackerPage() {
 
 					<Card className="flex min-h-0 min-w-0 flex-col p-4">
 						<Tabs defaultValue="description" className="flex min-h-0 flex-1 flex-col">
-							<TabsList className={['grid w-full h-auto', hasNarrativeEvents ? 'grid-cols-4' : 'grid-cols-3'].join(' ')}>
+							<TabsList className="w-full h-auto">
 								<TabsTrigger value="description" className="whitespace-normal">Description</TabsTrigger>
 								{hasNarrativeEvents && <TabsTrigger value="events" className="whitespace-normal">Narrative Events</TabsTrigger>}
 								<TabsTrigger value="history" className="whitespace-normal">Command History</TabsTrigger>
@@ -1671,7 +1713,7 @@ export function InitiativeTrackerPage() {
 				</Card>
 
 				<Tabs defaultValue="carousel" className="space-y-3">
-					<TabsList className={['grid w-full', [hasOutOfInitiativePanel, hasHazards].filter(Boolean).length === 2 ? 'grid-cols-3' : [hasOutOfInitiativePanel, hasHazards].filter(Boolean).length === 1 ? 'grid-cols-2' : 'grid-cols-1'].join(' ')}>
+					<TabsList className="grid w-full">
 						<TabsTrigger value="carousel">Horizontal Carousel</TabsTrigger>
 						{hasOutOfInitiativePanel && <TabsTrigger value="inactive">Inactive Participants</TabsTrigger>}
 					</TabsList>
@@ -1679,7 +1721,7 @@ export function InitiativeTrackerPage() {
 						<TabsContent value="inactive" className="mt-0">
 							<Card className="p-4">
 								<Tabs defaultValue={outOfInitiativePanelDefault} className="space-y-3">
-									<TabsList className={['grid w-full h-auto', [hasReinforcements, hasDelayed].filter(Boolean).length === 2 ? 'grid-cols-2' : 'grid-cols-1'].join(' ')}>
+									<TabsList className="grid w-full h-auto">
 										{hasReinforcements && <TabsTrigger value="reinforcements" className="whitespace-normal">Reinforcements</TabsTrigger>}
 										{hasDelayed && <TabsTrigger value="delaying" className="whitespace-normal">Delaying</TabsTrigger>}
 										{hasHazards && <TabsTrigger value="hazards">Simple Hazards</TabsTrigger>}
@@ -1722,6 +1764,18 @@ export function InitiativeTrackerPage() {
 														participant={participant}
 														onSelect={setSelectedParticipantId}
 														selected={participant.id === selectedParticipantId}
+														actionSlot={
+															<Button
+																size="sm"
+																variant="destructive"
+																onClick={(e) => {
+																	e.stopPropagation();
+																	handleParticipantSwipeAction(participant.id, 'ko');
+																}}
+															>
+																K.O.
+															</Button>
+														}
 													/>
 												))}
 											</div>
@@ -1792,14 +1846,14 @@ export function InitiativeTrackerPage() {
 				</Tabs>
 
 				<Tabs defaultValue="general" className="space-y-3">
-					<TabsList className="grid w-full grid-cols-2">
+					<TabsList className="w-full">
 						<TabsTrigger value="general">General Info</TabsTrigger>
 						<TabsTrigger value="selected">Selected Participant</TabsTrigger>
 					</TabsList>
 					<TabsContent value="general" className="mt-0">
 						<Card className="p-4">
 							<Tabs defaultValue="description" className="space-y-3">
-								<TabsList className={['grid w-full h-auto', hasNarrativeEvents ? 'grid-cols-4' : 'grid-cols-3'].join(' ')}>
+								<TabsList className="w-full h-auto">
 									<TabsTrigger value="description" className="whitespace-normal">Description</TabsTrigger>
 									{hasNarrativeEvents && <TabsTrigger value="events" className="whitespace-normal">Narrative Events</TabsTrigger>}
 									<TabsTrigger value="history" className="whitespace-normal">Command History</TabsTrigger>

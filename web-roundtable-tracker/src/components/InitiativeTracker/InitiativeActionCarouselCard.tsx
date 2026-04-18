@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Clock3, Heart, ShieldOff, Skull } from 'lucide-react';
+import { Ban, Clock3, Heart, RotateCcw, ShieldOff, Skull } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { type TrackerParticipant } from './mockData';
 
-export type SwipeAction = 'delay' | 'ko';
+export type SwipeAction = 'delay' | 'ko' | 'reactivate' | 'slay';
 
 export type InitiativeCardDensity = 'desktop' | 'mobile';
 
@@ -105,6 +105,11 @@ export function InitiativeActionCarouselCard({
 	const isMobileDensity = density === 'mobile';
 	const [swipeOffset, setSwipeOffset] = useState(0);
 	const [swipeActionFlash, setSwipeActionFlash] = useState<SwipeAction | null>(null);
+	const isKnockedOut = participant.state === 'knocked-out';
+	const delaySideAction: SwipeAction = isKnockedOut ? 'reactivate' : 'delay';
+	const koSideAction: SwipeAction = isKnockedOut ? 'slay' : 'ko';
+	const delaySideLabel = isKnockedOut ? 'Reactivate' : 'Delay';
+	const koSideLabel = isKnockedOut ? 'Slay' : 'Knock Out';
 	const swipeFlashTimeoutRef = useRef<number | null>(null);
 	const actionTriggerTimeoutRef = useRef<number | null>(null);
 	const swipeStateRef = useRef({
@@ -147,7 +152,7 @@ export function InitiativeActionCarouselCard({
 	};
 
 	const triggerActionWithSlide = (action: SwipeAction) => {
-		setSwipeOffset(action === 'delay' ? delaySlideTarget : koSlideTarget);
+		setSwipeOffset(action === delaySideAction ? delaySlideTarget : koSlideTarget);
 
 		if (actionTriggerTimeoutRef.current !== null) {
 			window.clearTimeout(actionTriggerTimeoutRef.current);
@@ -201,10 +206,10 @@ export function InitiativeActionCarouselCard({
 
 		switch (true) {
 			case swipeOffset <= -swipeSnapPx:
-				triggerActionWithSlide('delay');
+				triggerActionWithSlide(delaySideAction);
 				return;
 			case swipeOffset >= swipeSnapPx:
-				triggerActionWithSlide('ko');
+				triggerActionWithSlide(koSideAction);
 				return;
 		}
 		setSwipeOffset(0);
@@ -258,19 +263,23 @@ export function InitiativeActionCarouselCard({
 							type="button"
 							onClick={(event) => {
 								event.stopPropagation();
-								triggerActionWithSlide('delay');
+								triggerActionWithSlide(delaySideAction);
 							}}
 							className={[
 								actionButtonDelayClass,
-								swipeActionFlash === 'delay' ? 'border-current/60 after:border-current/60' : '',
+								swipeActionFlash === delaySideAction
+									? 'border-current/60 after:border-current/60'
+									: '',
 							].join(' ')}
-							aria-label={`Delay ${participant.name}`}
-							title={density === 'mobile' ? 'Delay' : `Delay ${participant.name}`}
+							aria-label={`${delaySideLabel} ${participant.name}`}
+							title={density === 'mobile' ? delaySideLabel : `${delaySideLabel} ${participant.name}`}
 						>
-							<Clock3 className={iconClass} />
+							{isKnockedOut ? <RotateCcw className={iconClass} /> : <Clock3 className={iconClass} />}
 						</button>
 					</TooltipTrigger>
-					<TooltipContent side="top">Press or swipe card here to delay {participant.name}</TooltipContent>
+					<TooltipContent side="top">
+						Press or swipe card here to {delaySideLabel.toLowerCase()} {participant.name}
+					</TooltipContent>
 				</Tooltip>
 
 				<button
@@ -342,24 +351,32 @@ export function InitiativeActionCarouselCard({
 							type="button"
 							onClick={(event) => {
 								event.stopPropagation();
-								triggerActionWithSlide('ko');
+								triggerActionWithSlide(koSideAction);
 							}}
 							className={[
 								actionButtonKoClass,
-								swipeActionFlash === 'ko' ? 'border-current/60 after:border-current/60' : '',
+								swipeActionFlash === koSideAction
+									? 'border-current/60 after:border-current/60'
+									: '',
 							].join(' ')}
-							aria-label={`Knock out ${participant.name}`}
-							title={density === 'mobile' ? 'Knock Out' : `Press or swipe card here to knock out ${participant.name}`}
+							aria-label={`${koSideLabel} ${participant.name}`}
+							title={
+								density === 'mobile'
+									? koSideLabel
+									: `Press or swipe card here to ${koSideLabel.toLowerCase()} ${participant.name}`
+							}
 						>
-							<Skull className={iconClass} />
+							{isKnockedOut ? <Skull className={iconClass} /> : <Ban className={iconClass} />}
 							{showKoLabel ? (
 								<span className="pointer-events-none absolute bottom-[calc(100%+0.25rem)] max-h-0 overflow-hidden whitespace-nowrap text-[10px] uppercase tracking-[0.16em] opacity-0 transition-all duration-200 group-hover/action:max-h-6 group-hover/action:opacity-100">
-									KO
+									{isKnockedOut ? 'Slay' : 'KO'}
 								</span>
 							) : null}
 						</button>
 					</TooltipTrigger>
-					<TooltipContent side="top">Press or swipe card here to knock out {participant.name}</TooltipContent>
+					<TooltipContent side="top">
+						Press or swipe card here to {koSideLabel.toLowerCase()} {participant.name}
+					</TooltipContent>
 				</Tooltip>
 			</div>
 		</div>

@@ -6,6 +6,7 @@ import { EndTurnCommand } from './Commands/EndTurnCommand';
 import { FinalizeTurnAndAdvanceRoundCommand } from './Commands/FinalizeTurnAndAdvanceRoundCommand';
 import { FinalizeTurnAndReturnToInitiativeCommand } from './Commands/FinalizeTurnAndReturnToInitiativeCommand';
 import { KnockOutCharacterCommand } from './Commands/KnockOutCharacterCommand';
+import { ReactivateCharacterCommand } from './Commands/ReactivateCharacterCommand';
 import { RemoveCharacterCommand } from './Commands/RemoveCharacterCommand';
 import { ReorderCharactersCommand } from './Commands/ReorderCharactersCommand';
 import { TriggerReinforcementEventCommand } from './Commands/TriggerReinforcementEventCommand';
@@ -60,6 +61,10 @@ export const registerSerializableCommands = () => {
 	registerSerializableCommand(
 		KnockOutCharacterCommand,
 		'KnockOutCharacterCommand'
+	);
+	registerSerializableCommand(
+		ReactivateCharacterCommand,
+		'ReactivateCharacterCommand'
 	);
 	registerSerializableCommand(
 		TriggerReinforcementEventCommand,
