@@ -20,6 +20,7 @@ function creature(overrides: Partial<BuilderSlot> = {}): BuilderSlot {
 		adjustment: 'none',
 		isSimpleHazard: false,
 		reinforcementRound: 1,
+		reinforcementParticipants: [],
 		eventRound: 1,
 		repeatInterval: undefined,
 		...overrides,
