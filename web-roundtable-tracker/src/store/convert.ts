@@ -1,5 +1,13 @@
-import { Character, CharacterConfig, characterConfigToCharacter, ALIGNMENT } from './data';
-import { TrackerParticipantMeta, TrackerParticipantRole } from './encounterRuntimeStore';
+import {
+	Character,
+	CharacterConfig,
+	characterConfigToCharacter,
+	ALIGNMENT,
+} from './data';
+import {
+	TrackerParticipantMeta,
+	TrackerParticipantRole,
+} from './encounterRuntimeStore';
 import { UUID } from '@/utils/uuid';
 
 export const participantsToEncounterCharacters = (
@@ -35,7 +43,7 @@ type RuntimeParticipantFields = {
 };
 
 function deriveRole(
-	side: typeof ALIGNMENT[keyof typeof ALIGNMENT],
+	side: (typeof ALIGNMENT)[keyof typeof ALIGNMENT],
 	type?: 'creature' | 'hazard'
 ): TrackerParticipantRole {
 	if (type === 'hazard') return 'hazard';
@@ -53,7 +61,7 @@ function deriveRole(
 }
 
 function deriveSideTheme(
-	side: typeof ALIGNMENT[keyof typeof ALIGNMENT]
+	side: (typeof ALIGNMENT)[keyof typeof ALIGNMENT]
 ): TrackerParticipantMeta['sideTheme'] {
 	switch (side) {
 		case ALIGNMENT.PCs:

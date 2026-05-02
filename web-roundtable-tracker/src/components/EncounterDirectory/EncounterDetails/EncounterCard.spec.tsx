@@ -1,7 +1,12 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DIFFICULTY, LEVEL_REPRESENTATION, ALIGNMENT, type Encounter } from '@/store/data';
+import {
+	DIFFICULTY,
+	LEVEL_REPRESENTATION,
+	ALIGNMENT,
+	type Encounter,
+} from '@/store/data';
 
 const mocks = vi.hoisted(() => ({
 	navigate: vi.fn(),
@@ -14,13 +19,21 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('@/store/encounterRuntimeInstance', () => ({
-	useEncounterStore: (selector: (state: { partyLevel: number; setPartyLevel: (value: number) => void }) => unknown) =>
-		mocks.useEncounterStore(selector),
+	useEncounterStore: (
+		selector: (state: {
+			partyLevel: number;
+			setPartyLevel: (value: number) => void;
+		}) => unknown
+	) => mocks.useEncounterStore(selector),
 }));
 
 vi.mock('@/store/savedEncounterInstance', () => ({
-	useSavedEncountersStore: (selector: (state: { addEncounter: (encounter: unknown) => void; savedEncounters: Array<{ id: string }> }) => unknown) =>
-		mocks.useSavedEncountersStore(selector),
+	useSavedEncountersStore: (
+		selector: (state: {
+			addEncounter: (encounter: unknown) => void;
+			savedEncounters: Array<{ id: string }>;
+		}) => unknown
+	) => mocks.useSavedEncountersStore(selector),
 }));
 
 import { EncounterCard } from './EncounterCard';
@@ -65,12 +78,20 @@ describe('EncounterCard imported encounter actions', () => {
 	beforeEach(() => {
 		mocks.navigate.mockReset();
 		mocks.useEncounterStore.mockImplementation(
-			(selector: (state: { partyLevel: number; setPartyLevel: (value: number) => void }) => unknown) =>
-				selector({ partyLevel: 2, setPartyLevel: vi.fn() })
+			(
+				selector: (state: {
+					partyLevel: number;
+					setPartyLevel: (value: number) => void;
+				}) => unknown
+			) => selector({ partyLevel: 2, setPartyLevel: vi.fn() })
 		);
 		mocks.useSavedEncountersStore.mockImplementation(
-			(selector: (state: { addEncounter: (encounter: unknown) => void; savedEncounters: Array<{ id: string }> }) => unknown) =>
-				selector({ addEncounter: vi.fn(), savedEncounters: [] })
+			(
+				selector: (state: {
+					addEncounter: (encounter: unknown) => void;
+					savedEncounters: Array<{ id: string }>;
+				}) => unknown
+			) => selector({ addEncounter: vi.fn(), savedEncounters: [] })
 		);
 	});
 

@@ -53,7 +53,11 @@ describe('FinalizeTurnAndReturnToInitiativeCommand', () => {
 
 	it('returns delayed participant and advances round for final active turn', () => {
 		encounterStore.setState((state) => ({
-			charactersOrder: [characters[0].uuid, characters[1].uuid, characters[2].uuid],
+			charactersOrder: [
+				characters[0].uuid,
+				characters[1].uuid,
+				characters[2].uuid,
+			],
 			delayedOrder: [characters[1].uuid],
 			charactersWithTurn: new Set([characters[0].uuid]),
 			charactersMap: {
@@ -91,7 +95,11 @@ describe('FinalizeTurnAndReturnToInitiativeCommand', () => {
 
 	it('undo restores pre-command round and initiative state', () => {
 		encounterStore.setState((state) => ({
-			charactersOrder: [characters[0].uuid, characters[1].uuid, characters[2].uuid],
+			charactersOrder: [
+				characters[0].uuid,
+				characters[1].uuid,
+				characters[2].uuid,
+			],
 			delayedOrder: [characters[1].uuid],
 			charactersWithTurn: new Set([characters[0].uuid]),
 			charactersMap: {
@@ -121,18 +129,24 @@ describe('FinalizeTurnAndReturnToInitiativeCommand', () => {
 			characters[1].uuid,
 			characters[2].uuid,
 		]);
-		expect(encounterStore.getState().delayedOrder).toEqual([characters[1].uuid]);
+		expect(encounterStore.getState().delayedOrder).toEqual([
+			characters[1].uuid,
+		]);
 		expect(encounterStore.getState().charactersWithTurn).toEqual(
 			new Set([characters[0].uuid])
 		);
-		expect(encounterStore.getState().charactersMap[characters[1].uuid].turnState).toBe(
-			'delayed'
-		);
+		expect(
+			encounterStore.getState().charactersMap[characters[1].uuid].turnState
+		).toBe('delayed');
 	});
 
 	it('fails if active participant is not final active turn', () => {
 		encounterStore.setState(() => ({
-			charactersOrder: [characters[0].uuid, characters[1].uuid, characters[2].uuid],
+			charactersOrder: [
+				characters[0].uuid,
+				characters[1].uuid,
+				characters[2].uuid,
+			],
 			delayedOrder: [characters[1].uuid],
 			charactersWithTurn: new Set([characters[0].uuid, characters[2].uuid]),
 		}));

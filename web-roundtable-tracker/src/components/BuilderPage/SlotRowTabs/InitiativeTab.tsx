@@ -20,7 +20,12 @@ interface InitiativeTabProps {
 	onRemove: () => void;
 }
 
-export function InitiativeTab({ index, slot, control, onRemove }: InitiativeTabProps) {
+export function InitiativeTab({
+	index,
+	slot,
+	control,
+	onRemove,
+}: InitiativeTabProps) {
 	return (
 		<TabsContent value="initiative" className="space-y-3 mt-3">
 			<div className="flex items-center justify-between gap-2 mb-3">

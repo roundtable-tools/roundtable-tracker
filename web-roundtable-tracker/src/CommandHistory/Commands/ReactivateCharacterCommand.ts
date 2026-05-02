@@ -12,7 +12,10 @@ export class ReactivateCharacterCommand implements Command {
 	description = 'Reactivate Character Command';
 	data: CommandData;
 
-	constructor(data: Pick<CommandData, 'uuid'>, private deps?: CommandDeps) {
+	constructor(
+		data: Pick<CommandData, 'uuid'>,
+		private deps?: CommandDeps
+	) {
 		this.data = {
 			uuid: data.uuid,
 		};
@@ -30,11 +33,16 @@ export class ReactivateCharacterCommand implements Command {
 		}
 
 		if (!this.data.command) {
-			this.data.command = getChangeCharacterState(character, 'normal', {
-				charactersWithTurn: state.charactersWithTurn,
-				charactersOrder: state.charactersOrder,
-				delayedOrder: state.delayedOrder,
-			}, this.deps);
+			this.data.command = getChangeCharacterState(
+				character,
+				'normal',
+				{
+					charactersWithTurn: state.charactersWithTurn,
+					charactersOrder: state.charactersOrder,
+					delayedOrder: state.delayedOrder,
+				},
+				this.deps
+			);
 		}
 
 		return this.data.command.execute();

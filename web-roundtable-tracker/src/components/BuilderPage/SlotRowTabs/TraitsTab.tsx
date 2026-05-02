@@ -33,7 +33,9 @@ const TRAIT_CATEGORIES: TraitCategory[] = [
 	},
 ];
 
-function getTraitColor(trait: string): 'blue' | 'orange' | 'purple' | 'green' | 'red' {
+function getTraitColor(
+	trait: string
+): 'blue' | 'orange' | 'purple' | 'green' | 'red' {
 	for (const category of TRAIT_CATEGORIES) {
 		if (category.traits.includes(trait)) {
 			return category.color;
@@ -91,7 +93,9 @@ export function TraitsTab({ index, slot, setValue, onRemove }: TraitsTabProps) {
 							variant={getTraitColor(trait) as any}
 							className="cursor-pointer"
 							onClick={() => {
-								const nextTraits = (slot.traits ?? []).filter((_, idx) => idx !== traitIndex);
+								const nextTraits = (slot.traits ?? []).filter(
+									(_, idx) => idx !== traitIndex
+								);
 								setValue(`slots.${index}.traits`, nextTraits, {
 									shouldDirty: true,
 									shouldTouch: true,

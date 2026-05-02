@@ -20,8 +20,8 @@ const config: UserConfig & { test: InlineConfig } = {
 	build: {
 		sourcemap: true,
 		modulePreload: {
-			polyfill: false
-		}
+			polyfill: false,
+		},
 	},
 	test: {
 		setupFiles: ['./vitest.setup.ts'],

@@ -16,7 +16,11 @@ import { useSavedEncountersStore } from '@/store/savedEncounterInstance';
 import type { ConcreteEncounter } from '@/store/data';
 import encounterTemplates from '@/store/Encounters/migratedEncounterTemplates';
 import { ThreatTracker } from './ThreatTracker';
-import { EVENT_SLOT_TYPES, PARTICIPANT_SLOT_TYPES, SlotRow } from './SlotRow.tsx';
+import {
+	EVENT_SLOT_TYPES,
+	PARTICIPANT_SLOT_TYPES,
+	SlotRow,
+} from './SlotRow.tsx';
 import type { AdditionalDataBlockKey } from './SlotRow.tsx';
 import { SaveSuccessModal } from './SaveSuccessModal';
 import { computeEncounterXpUsage, type SlotType } from './builderXp';
@@ -43,7 +47,10 @@ import {
 	getSlotSectionIndices,
 } from './slotSections';
 
-function hasAdditionalBlock(slot: BuilderFormValues['slots'][number], key: AdditionalDataBlockKey): boolean {
+function hasAdditionalBlock(
+	slot: BuilderFormValues['slots'][number],
+	key: AdditionalDataBlockKey
+): boolean {
 	if (slot.type !== 'creature' && slot.type !== 'hazard') {
 		return false;
 	}
@@ -93,9 +100,9 @@ export function BuilderPage({
 	templatePartySize,
 }: BuilderPageProps) {
 	const navigate = useNavigate();
-	const [activeEncounterId, setActiveEncounterId] = useState<string | undefined>(
-		encounterId
-	);
+	const [activeEncounterId, setActiveEncounterId] = useState<
+		string | undefined
+	>(encounterId);
 	const [savedEncounter, setSavedEncounter] =
 		useState<ConcreteEncounter | null>(null);
 	const attritionRatePercent = 5;
@@ -176,9 +183,7 @@ export function BuilderPage({
 		const variantToUse = selectedVariant ?? defaultVariant;
 
 		if (!variantToUse) {
-			console.warn(
-				`No usable variant found in template ${templateId}`
-			);
+			console.warn(`No usable variant found in template ${templateId}`);
 
 			return;
 		}
@@ -211,13 +216,21 @@ export function BuilderPage({
 		typeof partySize === 'number' && Number.isFinite(partySize) && partySize > 0
 			? partySize
 			: 4;
-	const xpUsage = computeEncounterXpUsage(slots ?? [], safePartyLevel, safePartySize, {
-		attritionRate: Math.max(0, attritionRatePercent) / 100,
-		maxRounds: Math.max(1, maxRounds),
-		basePartyOutputPerRound: Math.max(0, basePartyOutputPerRound),
-	});
+	const xpUsage = computeEncounterXpUsage(
+		slots ?? [],
+		safePartyLevel,
+		safePartySize,
+		{
+			attritionRate: Math.max(0, attritionRatePercent) / 100,
+			maxRounds: Math.max(1, maxRounds),
+			basePartyOutputPerRound: Math.max(0, basePartyOutputPerRound),
+		}
+	);
 	const resolvedSlots = slots ?? [];
-	const participantIndices = getSlotSectionIndices(resolvedSlots, 'participants');
+	const participantIndices = getSlotSectionIndices(
+		resolvedSlots,
+		'participants'
+	);
 	const eventIndices = getSlotSectionIndices(resolvedSlots, 'events');
 	const participantSummary = getParticipantSectionSummary(resolvedSlots);
 	const eventSummary = getEventSectionSummary(resolvedSlots);
@@ -230,7 +243,9 @@ export function BuilderPage({
 			'adjustment',
 		];
 
-		return keys.filter((key) => resolvedSlots.some((slot) => hasAdditionalBlock(slot, key)));
+		return keys.filter((key) =>
+			resolvedSlots.some((slot) => hasAdditionalBlock(slot, key))
+		);
 	}, [resolvedSlots]);
 
 	const templateShadowVariants = templateId
@@ -332,9 +347,15 @@ export function BuilderPage({
 				<Tabs defaultValue="details" className="w-full space-y-4">
 					<TabsList className="h-auto w-full flex-wrap justify-start gap-2 rounded-md bg-muted/50 p-1">
 						<TabsTrigger value="details">Details</TabsTrigger>
-						<TabsTrigger value="participants">Participants ({participantSummary.count})</TabsTrigger>
-						<TabsTrigger value="events">Events ({eventSummary.count})</TabsTrigger>
-						<TabsTrigger value="variants">Variants ({variants.length})</TabsTrigger>
+						<TabsTrigger value="participants">
+							Participants ({participantSummary.count})
+						</TabsTrigger>
+						<TabsTrigger value="events">
+							Events ({eventSummary.count})
+						</TabsTrigger>
+						<TabsTrigger value="variants">
+							Variants ({variants.length})
+						</TabsTrigger>
 					</TabsList>
 
 					<TabsContent value="details" className="space-y-3">
@@ -348,7 +369,11 @@ export function BuilderPage({
 										<FormItem className="space-y-1">
 											<FormLabel>Encounter Name</FormLabel>
 											<FormControl>
-												<Input placeholder="Training Grounds" type="text" {...field} />
+												<Input
+													placeholder="Training Grounds"
+													type="text"
+													{...field}
+												/>
 											</FormControl>
 											<FormMessage />
 										</FormItem>
@@ -369,7 +394,9 @@ export function BuilderPage({
 														value={field.value ?? ''}
 														onChange={(event) => {
 															const value = event.target.value;
-															field.onChange(value === '' ? undefined : Number(value));
+															field.onChange(
+																value === '' ? undefined : Number(value)
+															);
 														}}
 														onBlur={field.onBlur}
 														name={field.name}
@@ -393,7 +420,9 @@ export function BuilderPage({
 														value={field.value ?? ''}
 														onChange={(event) => {
 															const value = event.target.value;
-															field.onChange(value === '' ? undefined : Number(value));
+															field.onChange(
+																value === '' ? undefined : Number(value)
+															);
 														}}
 														onBlur={field.onBlur}
 														name={field.name}
@@ -474,7 +503,6 @@ export function BuilderPage({
 									)}
 								/>
 							</div>
-
 						</section>
 					</TabsContent>
 
@@ -580,21 +608,29 @@ export function BuilderPage({
 
 							{variants.length === 0 ? (
 								<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-									No variants saved yet. Create one to store a reusable snapshot.
+									No variants saved yet. Create one to store a reusable
+									snapshot.
 								</div>
 							) : (
 								<div className="space-y-2">
 									{variants.map((snapshot, idx) => (
-										<div key={snapshot.id} className="rounded-md border p-3 space-y-2">
+										<div
+											key={snapshot.id}
+											className="rounded-md border p-3 space-y-2"
+										>
 											<div className="flex items-center gap-2">
 												<Input
 													className="h-7 text-sm"
 													value={snapshot.description}
 													onChange={(e) => {
 														const updated = variants.map((v, i) =>
-															i === idx ? { ...v, description: e.target.value } : v
+															i === idx
+																? { ...v, description: e.target.value }
+																: v
 														);
-														form.setValue('variants', updated, { shouldDirty: true });
+														form.setValue('variants', updated, {
+															shouldDirty: true,
+														});
 													}}
 												/>
 												<Button
@@ -608,9 +644,17 @@ export function BuilderPage({
 														);
 
 														if (!confirmed) return;
-														form.setValue('partyLevel', snapshot.partyLevel, { shouldDirty: true });
-														form.setValue('partySize', snapshot.partySize, { shouldDirty: true });
-														form.setValue('slots', snapshot.slots.map((s) => ({ ...s })), { shouldDirty: true });
+														form.setValue('partyLevel', snapshot.partyLevel, {
+															shouldDirty: true,
+														});
+														form.setValue('partySize', snapshot.partySize, {
+															shouldDirty: true,
+														});
+														form.setValue(
+															'slots',
+															snapshot.slots.map((s) => ({ ...s })),
+															{ shouldDirty: true }
+														);
 													}}
 												>
 													<RotateCcw className="h-4 w-4" />
@@ -621,18 +665,32 @@ export function BuilderPage({
 													size="icon"
 													title="Remove variant"
 													onClick={() => {
-														const updated = variants.filter((_, i) => i !== idx);
-														form.setValue('variants', updated, { shouldDirty: true });
+														const updated = variants.filter(
+															(_, i) => i !== idx
+														);
+														form.setValue('variants', updated, {
+															shouldDirty: true,
+														});
 													}}
 												>
 													<Trash2 className="h-4 w-4 text-destructive" />
 												</Button>
 											</div>
 											<div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-												<span className="rounded border px-2 py-1">Party size: {snapshot.partySize}</span>
-												<span className="rounded border px-2 py-1">Party level: {snapshot.partyLevel}</span>
 												<span className="rounded border px-2 py-1">
-													Participants: {snapshot.slots.filter((s) => s.type === 'creature' || s.type === 'hazard').length}
+													Party size: {snapshot.partySize}
+												</span>
+												<span className="rounded border px-2 py-1">
+													Party level: {snapshot.partyLevel}
+												</span>
+												<span className="rounded border px-2 py-1">
+													Participants:{' '}
+													{
+														snapshot.slots.filter(
+															(s) =>
+																s.type === 'creature' || s.type === 'hazard'
+														).length
+													}
 												</span>
 											</div>
 										</div>
@@ -644,9 +702,13 @@ export function BuilderPage({
 						{templateShadowVariants.length > 0 && (
 							<section className="space-y-3">
 								<div>
-									<h3 className="text-sm font-medium text-muted-foreground">From template</h3>
+									<h3 className="text-sm font-medium text-muted-foreground">
+										From template
+									</h3>
 									<p className="text-xs text-muted-foreground">
-										These are the original template variants. Load one to apply it to the current form, or load and save to create a concrete variant snapshot.
+										These are the original template variants. Load one to apply
+										it to the current form, or load and save to create a
+										concrete variant snapshot.
 									</p>
 								</div>
 								<div className="space-y-2">
@@ -670,9 +732,16 @@ export function BuilderPage({
 															size="sm"
 															className="text-xs"
 															onClick={() => {
-																const partial = templateVariantToFormPartial(tv, safePartyLevel);
-																form.setValue('partySize', partial.partySize, { shouldDirty: true });
-																form.setValue('slots', partial.slots, { shouldDirty: true });
+																const partial = templateVariantToFormPartial(
+																	tv,
+																	safePartyLevel
+																);
+																form.setValue('partySize', partial.partySize, {
+																	shouldDirty: true,
+																});
+																form.setValue('slots', partial.slots, {
+																	shouldDirty: true,
+																});
 															}}
 														>
 															Load
@@ -683,14 +752,23 @@ export function BuilderPage({
 															size="sm"
 															className="text-xs"
 															onClick={() => {
-																const partial = templateVariantToFormPartial(tv, safePartyLevel);
-																form.setValue('partySize', partial.partySize, { shouldDirty: true });
-																form.setValue('slots', partial.slots, { shouldDirty: true });
+																const partial = templateVariantToFormPartial(
+																	tv,
+																	safePartyLevel
+																);
+																form.setValue('partySize', partial.partySize, {
+																	shouldDirty: true,
+																});
+																form.setValue('slots', partial.slots, {
+																	shouldDirty: true,
+																});
 																const label =
 																	window.prompt(
 																		'Variant description:',
 																		tv.description ?? `Party of ${tv.partySize}`
-																	) ?? (tv.description ?? `Party of ${tv.partySize}`);
+																	) ??
+																	tv.description ??
+																	`Party of ${tv.partySize}`;
 																const snapshot: BuilderVariantSnapshot = {
 																	id: uuidv4(),
 																	description: label,
@@ -710,9 +788,13 @@ export function BuilderPage({
 													</div>
 												</div>
 												<div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-													<span className="rounded border border-dashed px-2 py-1">Party size: {tv.partySize}</span>
+													<span className="rounded border border-dashed px-2 py-1">
+														Party size: {tv.partySize}
+													</span>
 													{tv.partyLevel && (
-														<span className="rounded border border-dashed px-2 py-1">Party level: {tv.partyLevel}</span>
+														<span className="rounded border border-dashed px-2 py-1">
+															Party level: {tv.partyLevel}
+														</span>
 													)}
 													<span className="rounded border border-dashed px-2 py-1">
 														Participants: {tv.participants.length}
@@ -745,10 +827,10 @@ export function BuilderPage({
 					</div>
 				</div>
 
-			<SaveSuccessModal
-				encounter={savedEncounter}
-				onClose={() => setSavedEncounter(null)}
-			/>
+				<SaveSuccessModal
+					encounter={savedEncounter}
+					onClose={() => setSavedEncounter(null)}
+				/>
 			</form>
 		</Form>
 	);

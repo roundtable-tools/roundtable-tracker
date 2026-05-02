@@ -2,7 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Inputs } from './PreviewDisplay';
 import { UseFormGetFieldState, UseFormRegister } from 'react-hook-form';
-import { adjustedLevel, CharacterConfig, formatAdjustedLevel } from '@/store/data';
+import {
+	adjustedLevel,
+	CharacterConfig,
+	formatAdjustedLevel,
+} from '@/store/data';
 import { Activity, Heart, ShieldPlus } from 'lucide-react';
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
@@ -117,22 +121,23 @@ export const PreviewCard = (props: InitiativeCardProps) => {
 							key={participant.uuid}
 							className="flex flex-wrap items-center gap-2 rounded-lg border border-border/70 bg-background/70 p-3"
 						>
-						{isNameReadonly ? (
-							<span className="h-8 min-w-40 flex-1 content-center truncate text-sm font-medium sm:max-w-48">
-								{participant.name}
-							</span>
-						) : (
-							<Input
-								type="text"
-								placeholder="Character Name"
-								className={cn(
-									'h-8 w-full min-w-40 flex-1 sm:max-w-48',
-									nameFieldState.invalid && 'border-destructive bg-destructive/10'
-								)}
-								aria-invalid={nameFieldState.invalid || undefined}
-								{...register(`teams.${teamIndex}.characters.${index}.name`)}
-							/>
-						)}
+							{isNameReadonly ? (
+								<span className="h-8 min-w-40 flex-1 content-center truncate text-sm font-medium sm:max-w-48">
+									{participant.name}
+								</span>
+							) : (
+								<Input
+									type="text"
+									placeholder="Character Name"
+									className={cn(
+										'h-8 w-full min-w-40 flex-1 sm:max-w-48',
+										nameFieldState.invalid &&
+											'border-destructive bg-destructive/10'
+									)}
+									aria-invalid={nameFieldState.invalid || undefined}
+									{...register(`teams.${teamIndex}.characters.${index}.name`)}
+								/>
+							)}
 							<span className="min-w-fit text-sm font-medium text-muted-foreground">
 								{`(${formatAdjustedLevel(
 									adjustedLevel(

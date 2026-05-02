@@ -75,7 +75,11 @@ interface DCNameComboboxProps {
 	placeholder?: string;
 }
 
-function DCNameCombobox({ value, onChange, placeholder = 'Select or type name' }: DCNameComboboxProps) {
+function DCNameCombobox({
+	value,
+	onChange,
+	placeholder = 'Select or type name',
+}: DCNameComboboxProps) {
 	const [open, setOpen] = useState(false);
 	const [inputValue, setInputValue] = useState(value);
 
@@ -130,7 +134,13 @@ interface DcsTabProps {
 	onRemove: () => void;
 }
 
-export function DcsTab({ index, slot, slotType, setValue, onRemove }: DcsTabProps) {
+export function DcsTab({
+	index,
+	slot,
+	slotType,
+	setValue,
+	onRemove,
+}: DcsTabProps) {
 	return (
 		<TabsContent value="dcs" className="space-y-3 mt-3">
 			<div className="flex items-center justify-between gap-2">
@@ -261,7 +271,9 @@ export function DcsTab({ index, slot, slotType, setValue, onRemove }: DcsTabProp
 						variant="ghost"
 						size="sm"
 						onClick={() => {
-							const nextDcs = (slot.dcs ?? []).filter((_, idx) => idx !== dcIndex);
+							const nextDcs = (slot.dcs ?? []).filter(
+								(_, idx) => idx !== dcIndex
+							);
 							setValue(`slots.${index}.dcs`, nextDcs, {
 								shouldDirty: true,
 								shouldTouch: true,

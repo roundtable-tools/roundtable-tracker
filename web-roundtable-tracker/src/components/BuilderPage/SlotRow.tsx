@@ -75,13 +75,14 @@ const SIDE_OPTIONS: { value: SideType; label: string }[] = [
 	{ value: 'other', label: 'Other' },
 ];
 
-const ADJUSTMENT_OPTIONS: { value: LevelAdjustment | 'none'; label: string }[] = [
-	{ value: 'none', label: 'None' },
-	{ value: 'weak', label: 'Weak' },
-	{ value: 'elite', label: 'Elite' },
-	{ value: 'elite-offense', label: 'Elite Offense' },
-	{ value: 'elite-defense', label: 'Elite Defense' },
-];
+const ADJUSTMENT_OPTIONS: { value: LevelAdjustment | 'none'; label: string }[] =
+	[
+		{ value: 'none', label: 'None' },
+		{ value: 'weak', label: 'Weak' },
+		{ value: 'elite', label: 'Elite' },
+		{ value: 'elite-offense', label: 'Elite Offense' },
+		{ value: 'elite-defense', label: 'Elite Defense' },
+	];
 
 const ACCOMPLISHMENT_OPTIONS: {
 	value: AccomplishmentLevel;
@@ -99,8 +100,7 @@ export type AdditionalDataBlockKey =
 	| 'initiative'
 	| 'adjustment'
 	| 'traits'
-    | 'combat-ready';
-
+	| 'combat-ready';
 
 const COMBAT_TAB_ORDER: AdditionalDataBlockKey[] = [
 	'combat-ready',
@@ -124,7 +124,8 @@ const ADDITIONAL_BLOCKS: Array<{
 	{
 		key: 'dcs',
 		label: 'DC List',
-		description: 'Adds icon, name, and value entries. Hazards can set disable successes.',
+		description:
+			'Adds icon, name, and value entries. Hazards can set disable successes.',
 	},
 	{
 		key: 'initiative',
@@ -136,19 +137,24 @@ const ADDITIONAL_BLOCKS: Array<{
 		label: 'Adjustment',
 		description: 'Pick preset adjustment or set a custom level modifier.',
 	},
-    {
-        key: 'traits',
-        label: 'Traits',
-        description: 'Add traits to this participant, which can be used for filtering and recall knowledge.',
-    },
-    {
-        key: 'combat-ready',
-        label: 'Combat Ready State',
-        description: 'Set whether this participant is active at the start of combat, or is waiting to be deployed.',
-    }
+	{
+		key: 'traits',
+		label: 'Traits',
+		description:
+			'Add traits to this participant, which can be used for filtering and recall knowledge.',
+	},
+	{
+		key: 'combat-ready',
+		label: 'Combat Ready State',
+		description:
+			'Set whether this participant is active at the start of combat, or is waiting to be deployed.',
+	},
 ];
 
-function hasAdditionalBlock(slot: BuilderSlot, key: AdditionalDataBlockKey): boolean {
+function hasAdditionalBlock(
+	slot: BuilderSlot,
+	key: AdditionalDataBlockKey
+): boolean {
 	if (slot.type !== 'creature' && slot.type !== 'hazard') {
 		return false;
 	}
@@ -186,8 +192,7 @@ function hasAdditionalBlock(slot: BuilderSlot, key: AdditionalDataBlockKey): boo
 
 	if (key === 'combat-ready') {
 		return (
-			slot.combatReadyState !== 'active' ||
-			slot.hiddenFromPlayers === true
+			slot.combatReadyState !== 'active' || slot.hiddenFromPlayers === true
 		);
 	}
 
@@ -196,12 +201,13 @@ function hasAdditionalBlock(slot: BuilderSlot, key: AdditionalDataBlockKey): boo
 
 function hasReinforcementAdditionalBlock(
 	participant: BuilderReinforcementParticipant,
-	key: AdditionalDataBlockKey,
+	key: AdditionalDataBlockKey
 ): boolean {
 	if (key === 'hp') {
 		return (
 			typeof participant.maxHealth === 'number' ||
-			(participant.type === 'hazard' && typeof participant.hardness === 'number')
+			(participant.type === 'hazard' &&
+				typeof participant.hardness === 'number')
 		);
 	}
 
@@ -242,7 +248,7 @@ function hasReinforcementAdditionalBlock(
 function isBlockAllowed(
 	block: AdditionalDataBlockKey,
 	slotType: SlotType,
-	isSimpleHazard: boolean,
+	isSimpleHazard: boolean
 ): boolean {
 	if (block === 'adjustment' && slotType !== 'creature') return false;
 
@@ -289,7 +295,7 @@ function inferEnabledTabsFromSlot(slot: BuilderSlot): AdditionalDataBlockKey[] {
 }
 
 function inferEnabledTabsFromReinforcementParticipant(
-	participant: BuilderReinforcementParticipant,
+	participant: BuilderReinforcementParticipant
 ): AdditionalDataBlockKey[] {
 	const tabs: AdditionalDataBlockKey[] = [];
 
@@ -308,7 +314,8 @@ function inferEnabledTabsFromReinforcementParticipant(
 		tabs.push('adjustment');
 	}
 
-	if (hasReinforcementAdditionalBlock(participant, 'traits')) tabs.push('traits');
+	if (hasReinforcementAdditionalBlock(participant, 'traits'))
+		tabs.push('traits');
 
 	if (hasReinforcementAdditionalBlock(participant, 'combat-ready')) {
 		tabs.push('combat-ready');
@@ -344,24 +351,27 @@ export function SlotRow({
 	const [activeTabs, setActiveTabs] = useState<AdditionalDataBlockKey[]>(() =>
 		inferEnabledTabsFromSlot(slot)
 	);
-	const [enabledBlocks, setEnabledBlocks] = useState<AdditionalDataBlockKey[]>([]);
+	const [enabledBlocks, setEnabledBlocks] = useState<AdditionalDataBlockKey[]>(
+		[]
+	);
 	const [reinforcementEnabledBlocks, setReinforcementEnabledBlocks] = useState<
 		Record<string, AdditionalDataBlockKey[]>
 	>({});
 	const [reinforcementActiveTabs, setReinforcementActiveTabs] = useState<
 		Record<string, string>
 	>({});
-	const [activeReinforcementParticipantId, setActiveReinforcementParticipantId] = useState<
-		string | null
-	>(null);
+	const [
+		activeReinforcementParticipantId,
+		setActiveReinforcementParticipantId,
+	] = useState<string | null>(null);
 	const availableSlotTypes = SLOT_TYPES.filter(({ value }) =>
 		allowedTypes.includes(value)
 	);
 	const reinforcementParticipants = slot.reinforcementParticipants ?? [];
 	const availableCombatTabs = useMemo(
 		() =>
-			COMBAT_TAB_ORDER.filter(
-				(tab) => isBlockAllowed(tab as AdditionalDataBlockKey, slotType, isSimpleHazard)
+			COMBAT_TAB_ORDER.filter((tab) =>
+				isBlockAllowed(tab as AdditionalDataBlockKey, slotType, isSimpleHazard)
 			),
 		[slotType, isSimpleHazard]
 	);
@@ -391,14 +401,18 @@ export function SlotRow({
 	}, [slot.id]);
 
 	useEffect(() => {
-		const ids = new Set(reinforcementParticipants.map((participant) => participant.id));
+		const ids = new Set(
+			reinforcementParticipants.map((participant) => participant.id)
+		);
 
 		setReinforcementEnabledBlocks((current) => {
 			const next = Object.fromEntries(
 				Object.entries(current).filter(([id]) => ids.has(id))
 			) as Record<string, AdditionalDataBlockKey[]>;
 
-			return Object.keys(next).length === Object.keys(current).length ? current : next;
+			return Object.keys(next).length === Object.keys(current).length
+				? current
+				: next;
 		});
 
 		setReinforcementActiveTabs((current) => {
@@ -406,7 +420,9 @@ export function SlotRow({
 				Object.entries(current).filter(([id]) => ids.has(id))
 			) as Record<string, string>;
 
-			return Object.keys(next).length === Object.keys(current).length ? current : next;
+			return Object.keys(next).length === Object.keys(current).length
+				? current
+				: next;
 		});
 
 		if (
@@ -439,7 +455,8 @@ export function SlotRow({
 
 		if (
 			visibleTabs.length > 0 &&
-			(activeTab === '' || !visibleTabs.includes(activeTab as AdditionalDataBlockKey))
+			(activeTab === '' ||
+				!visibleTabs.includes(activeTab as AdditionalDataBlockKey))
 		) {
 			setActiveTab(visibleTabs[0]);
 		}
@@ -447,30 +464,38 @@ export function SlotRow({
 		if (visibleTabs.length === 0 && activeTab !== '') {
 			setActiveTab('');
 		}
-	}, [activeTab, activeTabs.length, isCombatSlot, isSimpleHazard, slotType, visibleTabs]);
+	}, [
+		activeTab,
+		activeTabs.length,
+		isCombatSlot,
+		isSimpleHazard,
+		slotType,
+		visibleTabs,
+	]);
 
-	const createDefaultReinforcementParticipant = (): BuilderReinforcementParticipant => ({
-		id: uuidv4(),
-		type: 'creature',
-		name: '',
-		side: 'opponent',
-		level: 1,
-		count: 1,
-		maxHealth: undefined,
-		hardness: undefined,
-		initiativeBonus: undefined,
-		initiativeDescription: undefined,
-		dcs: [],
-		successesToDisable: 1,
-		adjustment: 'none',
-		adjustmentDescription: undefined,
-		adjustmentLevelModifier: undefined,
-		isSimpleHazard: false,
-		traits: [],
-		combatReadyState: 'active',
-		initiativeModifier: undefined,
-		hiddenFromPlayers: false,
-	});
+	const createDefaultReinforcementParticipant =
+		(): BuilderReinforcementParticipant => ({
+			id: uuidv4(),
+			type: 'creature',
+			name: '',
+			side: 'opponent',
+			level: 1,
+			count: 1,
+			maxHealth: undefined,
+			hardness: undefined,
+			initiativeBonus: undefined,
+			initiativeDescription: undefined,
+			dcs: [],
+			successesToDisable: 1,
+			adjustment: 'none',
+			adjustmentDescription: undefined,
+			adjustmentLevelModifier: undefined,
+			isSimpleHazard: false,
+			traits: [],
+			combatReadyState: 'active',
+			initiativeModifier: undefined,
+			hiddenFromPlayers: false,
+		});
 
 	const applyAdditionalBlock = (block: AdditionalDataBlockKey) => {
 		if (!isCombatSlot) {
@@ -482,16 +507,24 @@ export function SlotRow({
 		);
 
 		const tab = getTabForBlock(block);
-		setActiveTabs((current) => (current.includes(tab) ? current : [...current, tab]));
+		setActiveTabs((current) =>
+			current.includes(tab) ? current : [...current, tab]
+		);
 		setActiveTab(tab);
 
 		if (block === 'hp') {
 			if (typeof slot.maxHealth !== 'number') {
-				setValue(`slots.${index}.maxHealth`, 1, { shouldDirty: true, shouldTouch: true });
+				setValue(`slots.${index}.maxHealth`, 1, {
+					shouldDirty: true,
+					shouldTouch: true,
+				});
 			}
 
 			if (slot.type === 'hazard' && typeof slot.hardness !== 'number') {
-				setValue(`slots.${index}.hardness`, 0, { shouldDirty: true, shouldTouch: true });
+				setValue(`slots.${index}.hardness`, 0, {
+					shouldDirty: true,
+					shouldTouch: true,
+				});
 			}
 		}
 
@@ -603,8 +636,10 @@ export function SlotRow({
 		const availableTabs = COMBAT_TAB_ORDER.filter((tab) =>
 			isBlockAllowed(tab, participant.type, participantIsSimpleHazard)
 		);
-		const inferredTabs = inferEnabledTabsFromReinforcementParticipant(participant);
-		const enabledForParticipant = reinforcementEnabledBlocks[participant.id] ?? [];
+		const inferredTabs =
+			inferEnabledTabsFromReinforcementParticipant(participant);
+		const enabledForParticipant =
+			reinforcementEnabledBlocks[participant.id] ?? [];
 
 		return availableTabs.filter(
 			(tab) =>
@@ -618,7 +653,8 @@ export function SlotRow({
 	): AdditionalDataBlockKey[] => {
 		const participantIsSimpleHazard =
 			participant.type === 'hazard' && participant.isSimpleHazard;
-		const enabledForParticipant = reinforcementEnabledBlocks[participant.id] ?? [];
+		const enabledForParticipant =
+			reinforcementEnabledBlocks[participant.id] ?? [];
 
 		return usedAdditionalDataBlocks.filter(
 			(block) =>
@@ -630,7 +666,7 @@ export function SlotRow({
 
 	const handleSetReinforcementTab = (
 		participant: BuilderReinforcementParticipant,
-		tab: string,
+		tab: string
 	) => {
 		setReinforcementActiveTabs((current) => ({
 			...current,
@@ -640,7 +676,7 @@ export function SlotRow({
 
 	const handleApplyReinforcementAdditionalBlock = (
 		participantIndex: number,
-		block: AdditionalDataBlockKey,
+		block: AdditionalDataBlockKey
 	) => {
 		const participant = reinforcementParticipants[participantIndex];
 
@@ -688,7 +724,10 @@ export function SlotRow({
 			});
 		}
 
-		if (block === 'initiative' && typeof participant.initiativeBonus !== 'number') {
+		if (
+			block === 'initiative' &&
+			typeof participant.initiativeBonus !== 'number'
+		) {
 			handleReinforcementParticipantChange(participantIndex, {
 				initiativeBonus: 0,
 			});
@@ -720,7 +759,7 @@ export function SlotRow({
 
 	const handleRemoveReinforcementTab = (
 		participantIndex: number,
-		tab: AdditionalDataBlockKey,
+		tab: AdditionalDataBlockKey
 	) => {
 		const participant = reinforcementParticipants[participantIndex];
 
@@ -735,7 +774,8 @@ export function SlotRow({
 		if (tab === 'hp') {
 			handleReinforcementParticipantChange(participantIndex, {
 				maxHealth: undefined,
-				hardness: participant.type === 'hazard' ? undefined : participant.hardness,
+				hardness:
+					participant.type === 'hazard' ? undefined : participant.hardness,
 			});
 		}
 
@@ -768,7 +808,7 @@ export function SlotRow({
 		setReinforcementEnabledBlocks((current) => ({
 			...current,
 			[participant.id]: (current[participant.id] ?? []).filter(
-				(block) => getTabForBlock(block) !== tab,
+				(block) => getTabForBlock(block) !== tab
 			),
 		}));
 
@@ -810,14 +850,20 @@ export function SlotRow({
 				</div>
 
 				<div className="ml-auto">
-					<Button type="button" variant="destructive" size="sm" onClick={handleRemove}>
+					<Button
+						type="button"
+						variant="destructive"
+						size="sm"
+						onClick={handleRemove}
+					>
 						Remove
 					</Button>
 				</div>
 			</div>
 
 			<div className="rounded-md border bg-muted/20 p-2 text-xs text-muted-foreground">
-				Optional parameters are collapsed by default. Expand below when you need overrides.
+				Optional parameters are collapsed by default. Expand below when you need
+				overrides.
 			</div>
 
 			<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
@@ -830,7 +876,9 @@ export function SlotRow({
 							<FormControl>
 								<Input
 									placeholder={
-										slotType === 'creature' ? `Training Dummy ${index + 1}` : 'Goblin'
+										slotType === 'creature'
+											? `Training Dummy ${index + 1}`
+											: 'Goblin'
 									}
 									{...field}
 								/>
@@ -851,7 +899,9 @@ export function SlotRow({
 									<FormControl>
 										<Select
 											value={normalizeSideType(field.value as SideType)}
-											onValueChange={(value) => field.onChange(value as SideType)}
+											onValueChange={(value) =>
+												field.onChange(value as SideType)
+											}
 										>
 											<SelectTrigger className="w-full">
 												<SelectValue />
@@ -883,7 +933,9 @@ export function SlotRow({
 											value={field.value ?? ''}
 											onChange={(event) => {
 												const value = event.target.value;
-												field.onChange(value === '' ? undefined : Number(value));
+												field.onChange(
+													value === '' ? undefined : Number(value)
+												);
 											}}
 											onBlur={field.onBlur}
 											name={field.name}
@@ -908,7 +960,9 @@ export function SlotRow({
 											value={field.value ?? ''}
 											onChange={(event) => {
 												const value = event.target.value;
-												field.onChange(value === '' ? undefined : Number(value));
+												field.onChange(
+													value === '' ? undefined : Number(value)
+												);
 											}}
 											onBlur={field.onBlur}
 											name={field.name}
@@ -933,13 +987,17 @@ export function SlotRow({
 													id={`simple-hazard-${index}`}
 													className="h-4 w-4"
 													checked={Boolean(field.value)}
-													onChange={(event) => field.onChange(event.target.checked)}
+													onChange={(event) =>
+														field.onChange(event.target.checked)
+													}
 													onBlur={field.onBlur}
 													name={field.name}
 													ref={field.ref}
 												/>
 											</FormControl>
-											<FormLabel htmlFor={`simple-hazard-${index}`}>Simple Hazard</FormLabel>
+											<FormLabel htmlFor={`simple-hazard-${index}`}>
+												Simple Hazard
+											</FormLabel>
 											<FormMessage />
 										</FormItem>
 									)}
@@ -958,7 +1016,9 @@ export function SlotRow({
 													value={field.value ?? ''}
 													onChange={(event) => {
 														const value = event.target.value;
-														field.onChange(value === '' ? undefined : Number(value));
+														field.onChange(
+															value === '' ? undefined : Number(value)
+														);
 													}}
 													onBlur={field.onBlur}
 													name={field.name}
@@ -1016,7 +1076,9 @@ export function SlotRow({
 											value={field.value ?? ''}
 											onChange={(event) => {
 												const value = event.target.value;
-												field.onChange(value === '' ? undefined : Number(value));
+												field.onChange(
+													value === '' ? undefined : Number(value)
+												);
 											}}
 											onBlur={field.onBlur}
 											name={field.name}
@@ -1041,7 +1103,9 @@ export function SlotRow({
 											value={field.value ?? ''}
 											onChange={(event) => {
 												const value = event.target.value;
-												field.onChange(value === '' ? undefined : Number(value));
+												field.onChange(
+													value === '' ? undefined : Number(value)
+												);
 											}}
 											onBlur={field.onBlur}
 											name={field.name}
@@ -1111,15 +1175,20 @@ export function SlotRow({
 						{reinforcementParticipants.map((participant, participantIndex) => {
 							const participantIsSimpleHazard =
 								participant.type === 'hazard' && participant.isSimpleHazard;
-							const participantVisibleTabs = getReinforcementVisibleTabs(participant);
-							const participantSuggestedBlocks = getReinforcementSuggestedBlocks(participant);
+							const participantVisibleTabs =
+								getReinforcementVisibleTabs(participant);
+							const participantSuggestedBlocks =
+								getReinforcementSuggestedBlocks(participant);
 							const participantAvailableTabs = COMBAT_TAB_ORDER.filter((tab) =>
 								isBlockAllowed(tab, participant.type, participantIsSimpleHazard)
 							);
-							const participantActiveTab = reinforcementActiveTabs[participant.id];
+							const participantActiveTab =
+								reinforcementActiveTabs[participant.id];
 							const resolvedParticipantActiveTab =
 								participantActiveTab &&
-								participantVisibleTabs.includes(participantActiveTab as AdditionalDataBlockKey)
+								participantVisibleTabs.includes(
+									participantActiveTab as AdditionalDataBlockKey
+								)
 									? participantActiveTab
 									: (participantVisibleTabs[0] ?? '');
 
@@ -1129,12 +1198,16 @@ export function SlotRow({
 									className="space-y-3 rounded-md border bg-muted/10 p-3"
 								>
 									<div className="flex items-center justify-between gap-2">
-										<p className="text-sm font-medium">Participant {participantIndex + 1}</p>
+										<p className="text-sm font-medium">
+											Participant {participantIndex + 1}
+										</p>
 										<Button
 											type="button"
 											variant="ghost"
 											size="sm"
-											onClick={() => handleRemoveReinforcementParticipant(participantIndex)}
+											onClick={() =>
+												handleRemoveReinforcementParticipant(participantIndex)
+											}
 										>
 											<Trash2 className="size-4" />
 										</Button>
@@ -1146,9 +1219,12 @@ export function SlotRow({
 											<Select
 												value={participant.type}
 												onValueChange={(value) =>
-													handleReinforcementParticipantChange(participantIndex, {
-														type: value as 'creature' | 'hazard',
-													})
+													handleReinforcementParticipantChange(
+														participantIndex,
+														{
+															type: value as 'creature' | 'hazard',
+														}
+													)
 												}
 											>
 												<SelectTrigger className="w-full">
@@ -1166,9 +1242,12 @@ export function SlotRow({
 											<Input
 												value={participant.name}
 												onChange={(event) =>
-													handleReinforcementParticipantChange(participantIndex, {
-														name: event.target.value,
-													})
+													handleReinforcementParticipantChange(
+														participantIndex,
+														{
+															name: event.target.value,
+														}
+													)
 												}
 												placeholder="Goblin Reinforcement"
 											/>
@@ -1179,9 +1258,12 @@ export function SlotRow({
 											<Select
 												value={normalizeSideType(participant.side)}
 												onValueChange={(value) =>
-													handleReinforcementParticipantChange(participantIndex, {
-														side: value as SideType,
-													})
+													handleReinforcementParticipantChange(
+														participantIndex,
+														{
+															side: value as SideType,
+														}
+													)
 												}
 											>
 												<SelectTrigger className="w-full">
@@ -1204,9 +1286,12 @@ export function SlotRow({
 												min={-1}
 												value={participant.level ?? ''}
 												onChange={(event) =>
-													handleReinforcementParticipantChange(participantIndex, {
-														level: Number(event.target.value || 0),
-													})
+													handleReinforcementParticipantChange(
+														participantIndex,
+														{
+															level: Number(event.target.value || 0),
+														}
+													)
 												}
 											/>
 										</div>
@@ -1218,9 +1303,12 @@ export function SlotRow({
 												min={0}
 												value={participant.count ?? ''}
 												onChange={(event) =>
-													handleReinforcementParticipantChange(participantIndex, {
-														count: Number(event.target.value || 0),
-													})
+													handleReinforcementParticipantChange(
+														participantIndex,
+														{
+															count: Number(event.target.value || 0),
+														}
+													)
 												}
 											/>
 										</div>
@@ -1234,9 +1322,14 @@ export function SlotRow({
 														min={1}
 														value={participant.successesToDisable ?? ''}
 														onChange={(event) =>
-															handleReinforcementParticipantChange(participantIndex, {
-																successesToDisable: Number(event.target.value || 1),
-															})
+															handleReinforcementParticipantChange(
+																participantIndex,
+																{
+																	successesToDisable: Number(
+																		event.target.value || 1
+																	),
+																}
+															)
 														}
 													/>
 												</div>
@@ -1245,9 +1338,12 @@ export function SlotRow({
 														type="checkbox"
 														checked={participant.isSimpleHazard}
 														onChange={(event) =>
-															handleReinforcementParticipantChange(participantIndex, {
-																isSimpleHazard: event.target.checked,
-															})
+															handleReinforcementParticipantChange(
+																participantIndex,
+																{
+																	isSimpleHazard: event.target.checked,
+																}
+															)
 														}
 													/>
 													Simple Hazard
@@ -1258,7 +1354,9 @@ export function SlotRow({
 
 									<Tabs
 										value={resolvedParticipantActiveTab}
-										onValueChange={(tab) => handleSetReinforcementTab(participant, tab)}
+										onValueChange={(tab) =>
+											handleSetReinforcementTab(participant, tab)
+										}
 										className="w-full"
 									>
 										<TabsList className="flex flex-wrap w-full gap-2 h-auto p-1 bg-muted justify-start items-center">
@@ -1277,7 +1375,9 @@ export function SlotRow({
 												</TabsTrigger>
 											))}
 											{participantSuggestedBlocks.map((block) => {
-												const blockLabel = ADDITIONAL_BLOCKS.find((b) => b.key === block)?.label || block;
+												const blockLabel =
+													ADDITIONAL_BLOCKS.find((b) => b.key === block)
+														?.label || block;
 
 												return (
 													<Button
@@ -1287,9 +1387,17 @@ export function SlotRow({
 														size="sm"
 														className={[
 															'border border-dashed h-8 bg-gray-200/50',
-															participantAvailableTabs.length === participantVisibleTabs.length ? 'opacity-50 cursor-not-allowed': 'hover:bg-gray-200',
+															participantAvailableTabs.length ===
+															participantVisibleTabs.length
+																? 'opacity-50 cursor-not-allowed'
+																: 'hover:bg-gray-200',
 														].join(' ')}
-														onClick={() => handleApplyReinforcementAdditionalBlock(participantIndex, block)}
+														onClick={() =>
+															handleApplyReinforcementAdditionalBlock(
+																participantIndex,
+																block
+															)
+														}
 													>
 														+ {blockLabel}
 													</Button>
@@ -1300,323 +1408,499 @@ export function SlotRow({
 												size="sm"
 												className={[
 													'border border-dashed h-8 bg-gray-200/50',
-													participantAvailableTabs.length === participantVisibleTabs.length ? 'opacity-50 cursor-not-allowed': 'hover:bg-gray-200',
+													participantAvailableTabs.length ===
+													participantVisibleTabs.length
+														? 'opacity-50 cursor-not-allowed'
+														: 'hover:bg-gray-200',
 												].join(' ')}
 												onClick={() => {
 													setActiveReinforcementParticipantId(participant.id);
 													setAddDataOpen(true);
 												}}
-												disabled={participantAvailableTabs.length === participantVisibleTabs.length}
+												disabled={
+													participantAvailableTabs.length ===
+													participantVisibleTabs.length
+												}
 											>
 												+ More
 											</Button>
 										</TabsList>
 
 										<Card className="p-2">
-											{participantVisibleTabs.includes('dcs') && resolvedParticipantActiveTab === 'dcs' && (
-												<div className="space-y-2">
-													<div className="flex items-center justify-between gap-2">
-														<p className="text-sm font-medium">DCs</p>
-														<div className="flex gap-2">
+											{participantVisibleTabs.includes('dcs') &&
+												resolvedParticipantActiveTab === 'dcs' && (
+													<div className="space-y-2">
+														<div className="flex items-center justify-between gap-2">
+															<p className="text-sm font-medium">DCs</p>
+															<div className="flex gap-2">
+																<Button
+																	type="button"
+																	variant="outline"
+																	size="sm"
+																	onClick={() => {
+																		const nextDcs = [
+																			...(participant.dcs ?? []),
+																			{ name: '', value: 10 },
+																		];
+																		handleReinforcementParticipantChange(
+																			participantIndex,
+																			{
+																				dcs: nextDcs,
+																			}
+																		);
+																	}}
+																>
+																	Add DC
+																</Button>
+																<Button
+																	type="button"
+																	variant="destructive"
+																	size="sm"
+																	onClick={() =>
+																		handleRemoveReinforcementTab(
+																			participantIndex,
+																			'dcs'
+																		)
+																	}
+																>
+																	<Trash2 className="h-4 w-4" />
+																</Button>
+															</div>
+														</div>
+														{(participant.dcs ?? []).map((dc, dcIndex) => (
+															<div
+																key={`r-dc-${participant.id}-${dcIndex}`}
+																className="grid grid-cols-1 gap-2 rounded-md border p-2 sm:grid-cols-2 lg:grid-cols-5"
+															>
+																<Input
+																	placeholder="Name"
+																	value={dc.name ?? dc.inline ?? ''}
+																	onChange={(event) => {
+																		const nextDcs = [
+																			...(participant.dcs ?? []),
+																		];
+																		nextDcs[dcIndex] = {
+																			...nextDcs[dcIndex],
+																			name: event.target.value,
+																		};
+																		handleReinforcementParticipantChange(
+																			participantIndex,
+																			{ dcs: nextDcs }
+																		);
+																	}}
+																/>
+																<Input
+																	type="number"
+																	placeholder="Value"
+																	value={dc.value ?? ''}
+																	onChange={(event) => {
+																		const nextDcs = [
+																			...(participant.dcs ?? []),
+																		];
+																		nextDcs[dcIndex] = {
+																			...nextDcs[dcIndex],
+																			value: Number(event.target.value || 0),
+																		};
+																		handleReinforcementParticipantChange(
+																			participantIndex,
+																			{ dcs: nextDcs }
+																		);
+																	}}
+																/>
+																<Input
+																	placeholder="Icon key"
+																	value={dc.icon ?? ''}
+																	onChange={(event) => {
+																		const nextDcs = [
+																			...(participant.dcs ?? []),
+																		];
+																		nextDcs[dcIndex] = {
+																			...nextDcs[dcIndex],
+																			icon: event.target.value || undefined,
+																		};
+																		handleReinforcementParticipantChange(
+																			participantIndex,
+																			{ dcs: nextDcs }
+																		);
+																	}}
+																/>
+																{participant.type === 'hazard' ? (
+																	<Input
+																		type="number"
+																		min={1}
+																		placeholder="Disable Successes"
+																		value={dc.disableSuccesses ?? ''}
+																		onChange={(event) => {
+																			const nextDcs = [
+																				...(participant.dcs ?? []),
+																			];
+																			nextDcs[dcIndex] = {
+																				...nextDcs[dcIndex],
+																				disableSuccesses:
+																					event.target.value === ''
+																						? undefined
+																						: Number(event.target.value),
+																			};
+																			handleReinforcementParticipantChange(
+																				participantIndex,
+																				{ dcs: nextDcs }
+																			);
+																		}}
+																	/>
+																) : (
+																	<div />
+																)}
+																<Button
+																	type="button"
+																	variant="ghost"
+																	size="sm"
+																	onClick={() => {
+																		const nextDcs = (
+																			participant.dcs ?? []
+																		).filter((_, idx) => idx !== dcIndex);
+																		handleReinforcementParticipantChange(
+																			participantIndex,
+																			{ dcs: nextDcs }
+																		);
+																	}}
+																>
+																	Remove
+																</Button>
+															</div>
+														))}
+													</div>
+												)}
+											{participantVisibleTabs.includes('initiative') &&
+												resolvedParticipantActiveTab === 'initiative' && (
+													<div className="space-y-2">
+														<div className="flex items-center justify-between gap-2">
+															<p className="text-sm font-medium">Initiative</p>
 															<Button
 																type="button"
-																variant="outline"
+																variant="destructive"
 																size="sm"
-																onClick={() => {
-																	const nextDcs = [...(participant.dcs ?? []), { name: '', value: 10 }];
-																	handleReinforcementParticipantChange(participantIndex, {
-																		dcs: nextDcs,
-																	});
-																}}
+																onClick={() =>
+																	handleRemoveReinforcementTab(
+																		participantIndex,
+																		'initiative'
+																	)
+																}
 															>
-																Add DC
-															</Button>
-															<Button type="button" variant="destructive" size="sm" onClick={() => handleRemoveReinforcementTab(participantIndex, 'dcs')}>
 																<Trash2 className="h-4 w-4" />
 															</Button>
 														</div>
-													</div>
-													{(participant.dcs ?? []).map((dc, dcIndex) => (
-														<div
-															key={`r-dc-${participant.id}-${dcIndex}`}
-															className="grid grid-cols-1 gap-2 rounded-md border p-2 sm:grid-cols-2 lg:grid-cols-5"
-														>
-															<Input
-																placeholder="Name"
-																value={dc.name ?? dc.inline ?? ''}
-																onChange={(event) => {
-																	const nextDcs = [...(participant.dcs ?? [])];
-																	nextDcs[dcIndex] = {
-																		...nextDcs[dcIndex],
-																		name: event.target.value,
-																	};
-																	handleReinforcementParticipantChange(participantIndex, { dcs: nextDcs });
-																}}
-															/>
+														<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 															<Input
 																type="number"
-																placeholder="Value"
-																value={dc.value ?? ''}
+																placeholder="Initiative bonus"
+																value={participant.initiativeBonus ?? ''}
 																onChange={(event) => {
-																	const nextDcs = [...(participant.dcs ?? [])];
-																	nextDcs[dcIndex] = {
-																		...nextDcs[dcIndex],
-																		value: Number(event.target.value || 0),
-																	};
-																	handleReinforcementParticipantChange(participantIndex, { dcs: nextDcs });
+																	const value = event.target.value;
+																	handleReinforcementParticipantChange(
+																		participantIndex,
+																		{
+																			initiativeBonus:
+																				value === ''
+																					? undefined
+																					: Number(value),
+																		}
+																	);
 																}}
 															/>
 															<Input
-																placeholder="Icon key"
-																value={dc.icon ?? ''}
+																placeholder="Initiative description"
+																value={participant.initiativeDescription ?? ''}
+																onChange={(event) =>
+																	handleReinforcementParticipantChange(
+																		participantIndex,
+																		{
+																			initiativeDescription: event.target.value,
+																		}
+																	)
+																}
+															/>
+														</div>
+													</div>
+												)}
+											{participantVisibleTabs.includes('hp') &&
+												resolvedParticipantActiveTab === 'hp' && (
+													<div className="space-y-2">
+														<div className="flex items-center justify-between gap-2">
+															<p className="text-sm font-medium">
+																HP / Hardness
+															</p>
+															<Button
+																type="button"
+																variant="destructive"
+																size="sm"
+																onClick={() =>
+																	handleRemoveReinforcementTab(
+																		participantIndex,
+																		'hp'
+																	)
+																}
+															>
+																<Trash2 className="h-4 w-4" />
+															</Button>
+														</div>
+														<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+															<Input
+																type="number"
+																min={1}
+																placeholder="HP override"
+																value={participant.maxHealth ?? ''}
 																onChange={(event) => {
-																	const nextDcs = [...(participant.dcs ?? [])];
-																	nextDcs[dcIndex] = {
-																		...nextDcs[dcIndex],
-																		icon: event.target.value || undefined,
-																	};
-																	handleReinforcementParticipantChange(participantIndex, { dcs: nextDcs });
+																	const value = event.target.value;
+																	handleReinforcementParticipantChange(
+																		participantIndex,
+																		{
+																			maxHealth:
+																				value === ''
+																					? undefined
+																					: Number(value),
+																		}
+																	);
 																}}
 															/>
 															{participant.type === 'hazard' ? (
 																<Input
 																	type="number"
-																	min={1}
-																	placeholder="Disable Successes"
-																	value={dc.disableSuccesses ?? ''}
+																	min={0}
+																	placeholder="Hardness"
+																	value={participant.hardness ?? ''}
 																	onChange={(event) => {
-																		const nextDcs = [...(participant.dcs ?? [])];
-																		nextDcs[dcIndex] = {
-																			...nextDcs[dcIndex],
-																			disableSuccesses:
-																				event.target.value === '' ? undefined : Number(event.target.value),
-																		};
-																		handleReinforcementParticipantChange(participantIndex, { dcs: nextDcs });
+																		const value = event.target.value;
+																		handleReinforcementParticipantChange(
+																			participantIndex,
+																			{
+																				hardness:
+																					value === ''
+																						? undefined
+																						: Number(value),
+																			}
+																		);
 																	}}
 																/>
-															) : (
-																<div />
-															)}
+															) : null}
+														</div>
+													</div>
+												)}
+											{participant.type === 'creature' &&
+												participantVisibleTabs.includes('adjustment') &&
+												resolvedParticipantActiveTab === 'adjustment' && (
+													<div className="space-y-2">
+														<div className="flex items-center justify-between gap-2">
+															<p className="text-sm font-medium">Adjustment</p>
 															<Button
 																type="button"
-																variant="ghost"
+																variant="destructive"
 																size="sm"
-																onClick={() => {
-																	const nextDcs = (participant.dcs ?? []).filter((_, idx) => idx !== dcIndex);
-																	handleReinforcementParticipantChange(participantIndex, { dcs: nextDcs });
-																}}
+																onClick={() =>
+																	handleRemoveReinforcementTab(
+																		participantIndex,
+																		'adjustment'
+																	)
+																}
 															>
-																Remove
+																<Trash2 className="h-4 w-4" />
 															</Button>
 														</div>
-													))}
-												</div>
-											)}
-											{participantVisibleTabs.includes('initiative') && resolvedParticipantActiveTab === 'initiative' && (
-												<div className="space-y-2">
-													<div className="flex items-center justify-between gap-2">
-														<p className="text-sm font-medium">Initiative</p>
-														<Button type="button" variant="destructive" size="sm" onClick={() => handleRemoveReinforcementTab(participantIndex, 'initiative')}>
-															<Trash2 className="h-4 w-4" />
-														</Button>
-													</div>
-													<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-														<Input
-															type="number"
-															placeholder="Initiative bonus"
-															value={participant.initiativeBonus ?? ''}
-															onChange={(event) => {
-																const value = event.target.value;
-																handleReinforcementParticipantChange(participantIndex, {
-																	initiativeBonus: value === '' ? undefined : Number(value),
-																});
-															}}
-														/>
-														<Input
-															placeholder="Initiative description"
-															value={participant.initiativeDescription ?? ''}
-															onChange={(event) =>
-																handleReinforcementParticipantChange(participantIndex, {
-																	initiativeDescription: event.target.value,
-																})
-															}
-														/>
-													</div>
-												</div>
-											)}
-											{participantVisibleTabs.includes('hp') && resolvedParticipantActiveTab === 'hp' && (
-												<div className="space-y-2">
-													<div className="flex items-center justify-between gap-2">
-														<p className="text-sm font-medium">HP / Hardness</p>
-														<Button type="button" variant="destructive" size="sm" onClick={() => handleRemoveReinforcementTab(participantIndex, 'hp')}>
-															<Trash2 className="h-4 w-4" />
-														</Button>
-													</div>
-													<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-														<Input
-															type="number"
-															min={1}
-															placeholder="HP override"
-															value={participant.maxHealth ?? ''}
-															onChange={(event) => {
-																const value = event.target.value;
-																handleReinforcementParticipantChange(participantIndex, {
-																	maxHealth: value === '' ? undefined : Number(value),
-																});
-															}}
-														/>
-														{participant.type === 'hazard' ? (
+														<div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+															<Select
+																value={participant.adjustment}
+																onValueChange={(value) =>
+																	handleReinforcementParticipantChange(
+																		participantIndex,
+																		{
+																			adjustment: value as
+																				| LevelAdjustment
+																				| 'none',
+																		}
+																	)
+																}
+															>
+																<SelectTrigger className="w-full">
+																	<SelectValue />
+																</SelectTrigger>
+																<SelectContent>
+																	{ADJUSTMENT_OPTIONS.map((option) => (
+																		<SelectItem
+																			key={option.value}
+																			value={option.value}
+																		>
+																			{option.label}
+																		</SelectItem>
+																	))}
+																</SelectContent>
+															</Select>
+															<Input
+																placeholder="Custom adjustment description"
+																value={participant.adjustmentDescription ?? ''}
+																onChange={(event) =>
+																	handleReinforcementParticipantChange(
+																		participantIndex,
+																		{
+																			adjustmentDescription: event.target.value,
+																		}
+																	)
+																}
+															/>
 															<Input
 																type="number"
-																min={0}
-																placeholder="Hardness"
-																value={participant.hardness ?? ''}
+																step="0.1"
+																placeholder="Custom level modifier"
+																value={
+																	participant.adjustmentLevelModifier ?? ''
+																}
 																onChange={(event) => {
 																	const value = event.target.value;
-																	handleReinforcementParticipantChange(participantIndex, {
-																		hardness: value === '' ? undefined : Number(value),
-																	});
+																	handleReinforcementParticipantChange(
+																		participantIndex,
+																		{
+																			adjustmentLevelModifier:
+																				value === ''
+																					? undefined
+																					: Number(value),
+																		}
+																	);
 																}}
 															/>
-														) : null}
+														</div>
 													</div>
-												</div>
-											)}
-											{participant.type === 'creature' && participantVisibleTabs.includes('adjustment') && resolvedParticipantActiveTab === 'adjustment' && (
-												<div className="space-y-2">
-													<div className="flex items-center justify-between gap-2">
-														<p className="text-sm font-medium">Adjustment</p>
-														<Button type="button" variant="destructive" size="sm" onClick={() => handleRemoveReinforcementTab(participantIndex, 'adjustment')}>
-															<Trash2 className="h-4 w-4" />
-														</Button>
-													</div>
-													<div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-														<Select
-															value={participant.adjustment}
-															onValueChange={(value) =>
-																handleReinforcementParticipantChange(participantIndex, {
-																	adjustment: value as LevelAdjustment | 'none',
-																})
-															}
-														>
-															<SelectTrigger className="w-full">
-																<SelectValue />
-															</SelectTrigger>
-															<SelectContent>
-																{ADJUSTMENT_OPTIONS.map((option) => (
-																	<SelectItem key={option.value} value={option.value}>
-																		{option.label}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
-														<Input
-															placeholder="Custom adjustment description"
-															value={participant.adjustmentDescription ?? ''}
-															onChange={(event) =>
-																handleReinforcementParticipantChange(participantIndex, {
-																	adjustmentDescription: event.target.value,
-																})
-															}
-														/>
-														<Input
-															type="number"
-															step="0.1"
-															placeholder="Custom level modifier"
-															value={participant.adjustmentLevelModifier ?? ''}
-															onChange={(event) => {
-																const value = event.target.value;
-																handleReinforcementParticipantChange(participantIndex, {
-																	adjustmentLevelModifier: value === '' ? undefined : Number(value),
-																});
-															}}
-														/>
-													</div>
-												</div>
-											)}
-											{participantVisibleTabs.includes('traits') && resolvedParticipantActiveTab === 'traits' && (
-												<div className="space-y-2">
-													<div className="flex items-center justify-between gap-2">
-														<p className="text-sm font-medium">Traits</p>
-														<Button type="button" variant="destructive" size="sm" onClick={() => handleRemoveReinforcementTab(participantIndex, 'traits')}>
-															<Trash2 className="h-4 w-4" />
-														</Button>
-													</div>
-													<div className="flex gap-2">
-														<Input
-															placeholder="Add trait..."
-															onKeyDown={(event) => {
-																if (event.key === 'Enter' && event.currentTarget.value.trim()) {
-																	const nextTraits = [
-																		...(participant.traits ?? []),
-																		event.currentTarget.value.trim(),
-																	];
-																	handleReinforcementParticipantChange(participantIndex, {
-																		traits: nextTraits,
-																	});
-																	event.currentTarget.value = '';
+												)}
+											{participantVisibleTabs.includes('traits') &&
+												resolvedParticipantActiveTab === 'traits' && (
+													<div className="space-y-2">
+														<div className="flex items-center justify-between gap-2">
+															<p className="text-sm font-medium">Traits</p>
+															<Button
+																type="button"
+																variant="destructive"
+																size="sm"
+																onClick={() =>
+																	handleRemoveReinforcementTab(
+																		participantIndex,
+																		'traits'
+																	)
 																}
-															}}
-														/>
-													</div>
-													<div className="flex flex-wrap gap-2">
-														{(participant.traits ?? []).map((trait, traitIndex) => (
-															<span
-																key={`r-trait-${participant.id}-${traitIndex}`}
-																className="rounded border px-2 py-1 text-xs cursor-pointer"
-																onClick={() => {
-																	const nextTraits = (participant.traits ?? []).filter((_, idx) => idx !== traitIndex);
-																	handleReinforcementParticipantChange(participantIndex, {
-																		traits: nextTraits,
-																	});
-																}}
 															>
-																{trait} ×
-															</span>
-														))}
+																<Trash2 className="h-4 w-4" />
+															</Button>
+														</div>
+														<div className="flex gap-2">
+															<Input
+																placeholder="Add trait..."
+																onKeyDown={(event) => {
+																	if (
+																		event.key === 'Enter' &&
+																		event.currentTarget.value.trim()
+																	) {
+																		const nextTraits = [
+																			...(participant.traits ?? []),
+																			event.currentTarget.value.trim(),
+																		];
+																		handleReinforcementParticipantChange(
+																			participantIndex,
+																			{
+																				traits: nextTraits,
+																			}
+																		);
+																		event.currentTarget.value = '';
+																	}
+																}}
+															/>
+														</div>
+														<div className="flex flex-wrap gap-2">
+															{(participant.traits ?? []).map(
+																(trait, traitIndex) => (
+																	<span
+																		key={`r-trait-${participant.id}-${traitIndex}`}
+																		className="rounded border px-2 py-1 text-xs cursor-pointer"
+																		onClick={() => {
+																			const nextTraits = (
+																				participant.traits ?? []
+																			).filter((_, idx) => idx !== traitIndex);
+																			handleReinforcementParticipantChange(
+																				participantIndex,
+																				{
+																					traits: nextTraits,
+																				}
+																			);
+																		}}
+																	>
+																		{trait} ×
+																	</span>
+																)
+															)}
+														</div>
 													</div>
-												</div>
-											)}
-											{participantVisibleTabs.includes('combat-ready') && resolvedParticipantActiveTab === 'combat-ready' && (
-												<div className="space-y-2">
-													<div className="flex items-center justify-between gap-2">
-														<p className="text-sm font-medium">Combat Ready</p>
-														<Button type="button" variant="destructive" size="sm" onClick={() => handleRemoveReinforcementTab(participantIndex, 'combat-ready')}>
-															<Trash2 className="h-4 w-4" />
-														</Button>
+												)}
+											{participantVisibleTabs.includes('combat-ready') &&
+												resolvedParticipantActiveTab === 'combat-ready' && (
+													<div className="space-y-2">
+														<div className="flex items-center justify-between gap-2">
+															<p className="text-sm font-medium">
+																Combat Ready
+															</p>
+															<Button
+																type="button"
+																variant="destructive"
+																size="sm"
+																onClick={() =>
+																	handleRemoveReinforcementTab(
+																		participantIndex,
+																		'combat-ready'
+																	)
+																}
+															>
+																<Trash2 className="h-4 w-4" />
+															</Button>
+														</div>
+														<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+															<Select
+																value={participant.combatReadyState ?? 'active'}
+																onValueChange={(value) =>
+																	handleReinforcementParticipantChange(
+																		participantIndex,
+																		{
+																			combatReadyState:
+																				value as BuilderReinforcementParticipant['combatReadyState'],
+																		}
+																	)
+																}
+															>
+																<SelectTrigger>
+																	<SelectValue />
+																</SelectTrigger>
+																<SelectContent>
+																	<SelectItem value="active">Active</SelectItem>
+																	<SelectItem value="delayed">
+																		Delayed
+																	</SelectItem>
+																	<SelectItem value="knocked-out">
+																		Defeated
+																	</SelectItem>
+																</SelectContent>
+															</Select>
+															<Toggle
+																pressed={participant.hiddenFromPlayers ?? false}
+																onPressedChange={(pressed) =>
+																	handleReinforcementParticipantChange(
+																		participantIndex,
+																		{
+																			hiddenFromPlayers: pressed,
+																		}
+																	)
+																}
+																className="w-fit"
+															>
+																{participant.hiddenFromPlayers
+																	? 'Hidden'
+																	: 'Visible'}
+															</Toggle>
+														</div>
 													</div>
-													<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-														<Select
-															value={participant.combatReadyState ?? 'active'}
-															onValueChange={(value) =>
-																handleReinforcementParticipantChange(participantIndex, {
-																	combatReadyState: value as BuilderReinforcementParticipant['combatReadyState'],
-																})
-															}
-														>
-															<SelectTrigger>
-																<SelectValue />
-															</SelectTrigger>
-															<SelectContent>
-																<SelectItem value="active">Active</SelectItem>
-																<SelectItem value="delayed">Delayed</SelectItem>
-																<SelectItem value="knocked-out">Defeated</SelectItem>
-															</SelectContent>
-														</Select>
-														<Toggle
-															pressed={participant.hiddenFromPlayers ?? false}
-															onPressedChange={(pressed) =>
-																handleReinforcementParticipantChange(participantIndex, {
-																	hiddenFromPlayers: pressed,
-																})
-															}
-															className="w-fit"
-														>
-															{participant.hiddenFromPlayers ? 'Hidden' : 'Visible'}
-														</Toggle>
-													</div>
-												</div>
-											)}
+												)}
 										</Card>
 									</Tabs>
 								</div>
@@ -1634,7 +1918,10 @@ export function SlotRow({
 						<FormItem className="space-y-1">
 							<FormLabel>Slot Notes</FormLabel>
 							<FormControl>
-								<Textarea placeholder="Optional notes for this slot" {...field} />
+								<Textarea
+									placeholder="Optional notes for this slot"
+									{...field}
+								/>
 							</FormControl>
 							<FormMessage />
 						</FormItem>
@@ -1642,222 +1929,265 @@ export function SlotRow({
 				/>
 
 				{/* Tabs for combat slots */}
-                {isCombatSlot && (
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                        <TabsList className="flex flex-wrap w-full gap-2 h-auto p-1 bg-muted justify-start items-center">
-                            {/* Active tabs with solid borders */}
+				{isCombatSlot && (
+					<Tabs
+						value={activeTab}
+						onValueChange={setActiveTab}
+						className="w-full"
+					>
+						<TabsList className="flex flex-wrap w-full gap-2 h-auto p-1 bg-muted justify-start items-center">
+							{/* Active tabs with solid borders */}
 							{visibleTabs.map((tab) => (
-                                <TabsTrigger
-                                    key={tab}
-                                    value={tab}
-                                    className="border border-solid data-[state=active]:border-foreground"
-                                >
-                                    {tab === 'dcs' && 'DCs'}
-                                    {tab === 'hp' && 'HP/Hardness'}
-                                    {tab === 'initiative' && 'Initiative'}
-                                    {tab === 'adjustment' && 'Adjustment'}
-                                    {tab === 'traits' && 'Traits'}
-                                    {tab === 'combat-ready' && 'Combat Ready'}
-                                </TabsTrigger>
-                            ))}
+								<TabsTrigger
+									key={tab}
+									value={tab}
+									className="border border-solid data-[state=active]:border-foreground"
+								>
+									{tab === 'dcs' && 'DCs'}
+									{tab === 'hp' && 'HP/Hardness'}
+									{tab === 'initiative' && 'Initiative'}
+									{tab === 'adjustment' && 'Adjustment'}
+									{tab === 'traits' && 'Traits'}
+									{tab === 'combat-ready' && 'Combat Ready'}
+								</TabsTrigger>
+							))}
 
-                            {/* Suggested blocks with dashed borders */}
-                            {missingSuggestedBlocks.map((block) => {
-                                const blockLabel = ADDITIONAL_BLOCKS.find((b) => b.key === block)?.label || block;
+							{/* Suggested blocks with dashed borders */}
+							{missingSuggestedBlocks.map((block) => {
+								const blockLabel =
+									ADDITIONAL_BLOCKS.find((b) => b.key === block)?.label ||
+									block;
 
-                                return (
-                                    <Button
-                                        key={`suggest-${block}`}
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        className={[
-                                            'border border-dashed h-8 bg-gray-200/50',
-                                            availableCombatTabs.length === visibleTabs.length ? 'opacity-50 cursor-not-allowed': 'hover:bg-gray-200',
-                                        ].join(' ')}
-                                        onClick={() => applyAdditionalBlock(block)}
-                                    >
-                                        + {blockLabel}
-                                    </Button>
-                                );
-                            })}
+								return (
+									<Button
+										key={`suggest-${block}`}
+										type="button"
+										variant="outline"
+										size="sm"
+										className={[
+											'border border-dashed h-8 bg-gray-200/50',
+											availableCombatTabs.length === visibleTabs.length
+												? 'opacity-50 cursor-not-allowed'
+												: 'hover:bg-gray-200',
+										].join(' ')}
+										onClick={() => applyAdditionalBlock(block)}
+									>
+										+ {blockLabel}
+									</Button>
+								);
+							})}
 
-                            {/* "+ More" button */}
+							{/* "+ More" button */}
 							<Button
-                                type="button"
-                                size="sm"
-                                className={[
-                                    'border border-dashed h-8 bg-gray-200/50',
-                                    availableCombatTabs.length === visibleTabs.length ? 'opacity-50 cursor-not-allowed': 'hover:bg-gray-200',
-                                ].join(' ')}
+								type="button"
+								size="sm"
+								className={[
+									'border border-dashed h-8 bg-gray-200/50',
+									availableCombatTabs.length === visibleTabs.length
+										? 'opacity-50 cursor-not-allowed'
+										: 'hover:bg-gray-200',
+								].join(' ')}
 								onClick={() => {
 									setActiveReinforcementParticipantId(null);
 									setAddDataOpen(true);
 								}}
-                                disabled={availableCombatTabs.length === visibleTabs.length}
-                            >
-                                + More
-                            </Button>
-                        </TabsList>
-                        <Card className='p-2'>
-                            {visibleTabs.includes('dcs') && (
-                                <DcsTab
-                                    index={index}
-                                    slot={slot}
-                                    slotType={slotType}
-                                    setValue={setValue as any}
-                                    onRemove={() => {
-                                        setValue(`slots.${index}.dcs`, [], {
-                                            shouldDirty: true,
-                                            shouldTouch: true,
-                                        });
-                                        setEnabledBlocks((current) =>
-                                            current.filter((block) => getTabForBlock(block) !== 'dcs')
-                                        );
-                                        setActiveTabs((current) => current.filter((tab) => tab !== 'dcs'));
+								disabled={availableCombatTabs.length === visibleTabs.length}
+							>
+								+ More
+							</Button>
+						</TabsList>
+						<Card className="p-2">
+							{visibleTabs.includes('dcs') && (
+								<DcsTab
+									index={index}
+									slot={slot}
+									slotType={slotType}
+									setValue={setValue as any}
+									onRemove={() => {
+										setValue(`slots.${index}.dcs`, [], {
+											shouldDirty: true,
+											shouldTouch: true,
+										});
+										setEnabledBlocks((current) =>
+											current.filter((block) => getTabForBlock(block) !== 'dcs')
+										);
+										setActiveTabs((current) =>
+											current.filter((tab) => tab !== 'dcs')
+										);
 
-                                        if (activeTab === 'dcs') {
-                                            setActiveTab('');
-                                        }
-                                    }}
-                                />
-                            )}
+										if (activeTab === 'dcs') {
+											setActiveTab('');
+										}
+									}}
+								/>
+							)}
 
-                            {visibleTabs.includes('hp') && (
-                                <HpTab
-                                    index={index}
-                                    slot={slot}
-                                    slotType={slotType}
-                                    control={control}
-                                    onRemove={() => {
-                                        setValue(`slots.${index}.maxHealth`, undefined, {
-                                            shouldDirty: true,
-                                            shouldTouch: true,
-                                        });
+							{visibleTabs.includes('hp') && (
+								<HpTab
+									index={index}
+									slot={slot}
+									slotType={slotType}
+									control={control}
+									onRemove={() => {
+										setValue(`slots.${index}.maxHealth`, undefined, {
+											shouldDirty: true,
+											shouldTouch: true,
+										});
 
-                                        if (slotType === 'hazard') {
-                                            setValue(`slots.${index}.hardness`, undefined, {
-                                                shouldDirty: true,
-                                                shouldTouch: true,
-                                            });
-                                        }
-                                        setEnabledBlocks((current) =>
-                                            current.filter((block) => getTabForBlock(block) !== 'hp')
-                                        );
-                                        setActiveTabs((current) => current.filter((tab) => tab !== 'hp'));
+										if (slotType === 'hazard') {
+											setValue(`slots.${index}.hardness`, undefined, {
+												shouldDirty: true,
+												shouldTouch: true,
+											});
+										}
+										setEnabledBlocks((current) =>
+											current.filter((block) => getTabForBlock(block) !== 'hp')
+										);
+										setActiveTabs((current) =>
+											current.filter((tab) => tab !== 'hp')
+										);
 
-                                        if (activeTab === 'hp') {
-                                            setActiveTab('');
-                                        }
-                                    }}
-                                />
-                            )}
+										if (activeTab === 'hp') {
+											setActiveTab('');
+										}
+									}}
+								/>
+							)}
 
-                            {visibleTabs.includes('initiative') && !isSimpleHazard && (
-                                <InitiativeTab
-                                    index={index}
-                                    slot={slot}
-                                    control={control}
-                                    onRemove={() => {
-                                        setValue(`slots.${index}.initiativeBonus`, undefined, {
-                                            shouldDirty: true,
-                                            shouldTouch: true,
-                                        });
-                                        setValue(`slots.${index}.initiativeDescription`, undefined, {
-                                            shouldDirty: true,
-                                            shouldTouch: true,
-                                        });
-                                        setEnabledBlocks((current) =>
-                                            current.filter((block) => getTabForBlock(block) !== 'initiative')
-                                        );
-                                        setActiveTabs((current) => current.filter((tab) => tab !== 'initiative'));
+							{visibleTabs.includes('initiative') && !isSimpleHazard && (
+								<InitiativeTab
+									index={index}
+									slot={slot}
+									control={control}
+									onRemove={() => {
+										setValue(`slots.${index}.initiativeBonus`, undefined, {
+											shouldDirty: true,
+											shouldTouch: true,
+										});
+										setValue(
+											`slots.${index}.initiativeDescription`,
+											undefined,
+											{
+												shouldDirty: true,
+												shouldTouch: true,
+											}
+										);
+										setEnabledBlocks((current) =>
+											current.filter(
+												(block) => getTabForBlock(block) !== 'initiative'
+											)
+										);
+										setActiveTabs((current) =>
+											current.filter((tab) => tab !== 'initiative')
+										);
 
-                                        if (activeTab === 'initiative') {
-                                            setActiveTab('');
-                                        }
-                                    }}
-                                />
-                            )}
+										if (activeTab === 'initiative') {
+											setActiveTab('');
+										}
+									}}
+								/>
+							)}
 
-                            {slotType === 'creature' && visibleTabs.includes('adjustment') && (
-                                <AdjustmentTab
-                                    index={index}
-                                    slot={slot}
-                                    setValue={setValue as any}
-                                    control={control}
-                                    onRemove={() => {
-                                        setValue(`slots.${index}.adjustment`, 'none', {
-                                            shouldDirty: true,
-                                            shouldTouch: true,
-                                        });
-                                        setValue(`slots.${index}.adjustmentDescription`, undefined, {
-                                            shouldDirty: true,
-                                            shouldTouch: true,
-                                        });
-                                        setValue(`slots.${index}.adjustmentLevelModifier`, undefined, {
-                                            shouldDirty: true,
-                                            shouldTouch: true,
-                                        });
-                                        setEnabledBlocks((current) =>
-                                            current.filter((block) => getTabForBlock(block) !== 'adjustment')
-                                        );
-                                        setActiveTabs((current) => current.filter((tab) => tab !== 'adjustment'));
+							{slotType === 'creature' &&
+								visibleTabs.includes('adjustment') && (
+									<AdjustmentTab
+										index={index}
+										slot={slot}
+										setValue={setValue as any}
+										control={control}
+										onRemove={() => {
+											setValue(`slots.${index}.adjustment`, 'none', {
+												shouldDirty: true,
+												shouldTouch: true,
+											});
+											setValue(
+												`slots.${index}.adjustmentDescription`,
+												undefined,
+												{
+													shouldDirty: true,
+													shouldTouch: true,
+												}
+											);
+											setValue(
+												`slots.${index}.adjustmentLevelModifier`,
+												undefined,
+												{
+													shouldDirty: true,
+													shouldTouch: true,
+												}
+											);
+											setEnabledBlocks((current) =>
+												current.filter(
+													(block) => getTabForBlock(block) !== 'adjustment'
+												)
+											);
+											setActiveTabs((current) =>
+												current.filter((tab) => tab !== 'adjustment')
+											);
 
-                                        if (activeTab === 'adjustment') {
-                                            setActiveTab('');
-                                        }
-                                    }}
-                                />
-                            )}
+											if (activeTab === 'adjustment') {
+												setActiveTab('');
+											}
+										}}
+									/>
+								)}
 
-                            {visibleTabs.includes('traits') && (
-                                <TraitsTab
-                                    index={index}
-                                    slot={slot}
-                                    setValue={setValue as any}
-                                    onRemove={() => {
-                                        setValue(`slots.${index}.traits`, [], {
-                                            shouldDirty: true,
-                                            shouldTouch: true,
-                                        });
-                                        setEnabledBlocks((current) =>
-                                            current.filter((block) => getTabForBlock(block) !== 'traits')
-                                        );
-                                        setActiveTabs((current) => current.filter((tab) => tab !== 'traits'));
+							{visibleTabs.includes('traits') && (
+								<TraitsTab
+									index={index}
+									slot={slot}
+									setValue={setValue as any}
+									onRemove={() => {
+										setValue(`slots.${index}.traits`, [], {
+											shouldDirty: true,
+											shouldTouch: true,
+										});
+										setEnabledBlocks((current) =>
+											current.filter(
+												(block) => getTabForBlock(block) !== 'traits'
+											)
+										);
+										setActiveTabs((current) =>
+											current.filter((tab) => tab !== 'traits')
+										);
 
-                                        if (activeTab === 'traits') {
-                                            setActiveTab('');
-                                        }
-                                    }}
-                                />
-                            )}
+										if (activeTab === 'traits') {
+											setActiveTab('');
+										}
+									}}
+								/>
+							)}
 
-                            {visibleTabs.includes('combat-ready') && (
-                                <CombatReadyTab
-                                    index={index}
-                                    slot={slot}
-                                    control={control}
-                                    onRemove={() => {
-                                        setValue(`slots.${index}.combatReadyState`, 'active', {
-                                            shouldDirty: true,
-                                            shouldTouch: true,
-                                        });
-                                        setValue(`slots.${index}.hiddenFromPlayers`, false, {
-                                            shouldDirty: true,
-                                            shouldTouch: true,
-                                        });
-                                        setEnabledBlocks((current) =>
-                                            current.filter((block) => getTabForBlock(block) !== 'combat-ready')
-                                        );
-                                        setActiveTabs((current) => current.filter((tab) => tab !== 'combat-ready'));
+							{visibleTabs.includes('combat-ready') && (
+								<CombatReadyTab
+									index={index}
+									slot={slot}
+									control={control}
+									onRemove={() => {
+										setValue(`slots.${index}.combatReadyState`, 'active', {
+											shouldDirty: true,
+											shouldTouch: true,
+										});
+										setValue(`slots.${index}.hiddenFromPlayers`, false, {
+											shouldDirty: true,
+											shouldTouch: true,
+										});
+										setEnabledBlocks((current) =>
+											current.filter(
+												(block) => getTabForBlock(block) !== 'combat-ready'
+											)
+										);
+										setActiveTabs((current) =>
+											current.filter((tab) => tab !== 'combat-ready')
+										);
 
-                                        if (activeTab === 'combat-ready') {
-                                            setActiveTab('');
-                                        }
-                                    }}
-                                />
-                            )}
-                        </Card>
+										if (activeTab === 'combat-ready') {
+											setActiveTab('');
+										}
+									}}
+								/>
+							)}
+						</Card>
 					</Tabs>
 				)}
 			</div>
@@ -1878,7 +2208,8 @@ export function SlotRow({
 						{(() => {
 							if (activeReinforcementParticipantId) {
 								const participantIndex = reinforcementParticipants.findIndex(
-									(participant) => participant.id === activeReinforcementParticipantId
+									(participant) =>
+										participant.id === activeReinforcementParticipantId
 								);
 								const participant = reinforcementParticipants[participantIndex];
 
@@ -1893,21 +2224,29 @@ export function SlotRow({
 
 								return ADDITIONAL_BLOCKS.filter(
 									(block) =>
-										isBlockAllowed(block.key, participant.type, participantIsSimpleHazard) &&
-										!enabledForParticipant.includes(block.key)
+										isBlockAllowed(
+											block.key,
+											participant.type,
+											participantIsSimpleHazard
+										) && !enabledForParticipant.includes(block.key)
 								).map((block) => (
 									<div
 										key={`${participant.id}-${block.key}`}
 										className="rounded-md border p-3 cursor-pointer hover:bg-muted"
 										onClick={() => {
-											handleApplyReinforcementAdditionalBlock(participantIndex, block.key);
+											handleApplyReinforcementAdditionalBlock(
+												participantIndex,
+												block.key
+											);
 											setAddDataOpen(false);
 										}}
 									>
 										<div className="flex items-center justify-between gap-2">
 											<div>
 												<p className="text-sm font-medium">{block.label}</p>
-												<p className="text-xs text-muted-foreground">{block.description}</p>
+												<p className="text-xs text-muted-foreground">
+													{block.description}
+												</p>
 											</div>
 										</div>
 									</div>
@@ -1930,7 +2269,9 @@ export function SlotRow({
 									<div className="flex items-center justify-between gap-2">
 										<div>
 											<p className="text-sm font-medium">{block.label}</p>
-											<p className="text-xs text-muted-foreground">{block.description}</p>
+											<p className="text-xs text-muted-foreground">
+												{block.description}
+											</p>
 										</div>
 									</div>
 								</div>

@@ -1,6 +1,19 @@
-import { Character, Encounter, NarrativeSlot, DIFFICULTY, difficultyToString, LEVEL_REPRESENTATION } from './data';
-import type { EncounterStore, TrackerParticipantMeta } from './encounterRuntimeStore';
-import type { TrackerParticipant, TimelineEvent } from '@/components/InitiativeTracker/mockData';
+import {
+	Character,
+	Encounter,
+	NarrativeSlot,
+	DIFFICULTY,
+	difficultyToString,
+	LEVEL_REPRESENTATION,
+} from './data';
+import type {
+	EncounterStore,
+	TrackerParticipantMeta,
+} from './encounterRuntimeStore';
+import type {
+	TrackerParticipant,
+	TimelineEvent,
+} from '@/components/InitiativeTracker/mockData';
 
 export type TrackerHeader = {
 	encounterTitle: string;
@@ -139,7 +152,10 @@ export function runtimeToInitiativeQueueWithPending(
 			const participant = characterToTrackerParticipant(character, meta, true);
 
 			if (meta.reinforcementPending) {
-				return { ...participant, state: 'pending-reinforcement' as TrackerParticipant['state'] };
+				return {
+					...participant,
+					state: 'pending-reinforcement' as TrackerParticipant['state'],
+				};
 			}
 
 			return participant;
@@ -162,12 +178,19 @@ export function runtimeToOutOfInitiativeData(
 	delayed: TrackerParticipant[];
 	hazards: TrackerParticipant[];
 } {
-	const { charactersMap, trackerMetaMap, encounterData, partyLevel, delayedOrder } =
-		store;
+	const {
+		charactersMap,
+		trackerMetaMap,
+		encounterData,
+		partyLevel,
+		delayedOrder,
+	} = store;
 
 	const triggeredReinforcementSlots = new Set(
 		Object.values(trackerMetaMap)
-			.filter((meta) => meta.reinforcementSlotId && meta.reinforcementPending !== true)
+			.filter(
+				(meta) => meta.reinforcementSlotId && meta.reinforcementPending !== true
+			)
 			.map((meta) => meta.reinforcementSlotId)
 			.filter((slotId): slotId is string => Boolean(slotId))
 	);
@@ -188,13 +211,15 @@ export function runtimeToOutOfInitiativeData(
 	)
 		.filter(
 			(slot) =>
-				slot.type === 'reinforcement' && !triggeredReinforcementSlots.has(slot.id)
+				slot.type === 'reinforcement' &&
+				!triggeredReinforcementSlots.has(slot.id)
 		)
 		.flatMap((slot) =>
 			(slot.participants ?? []).map((participant, index) => {
 				const id = `${slot.id}-${index}`;
 				const initiative =
-					typeof (participant as { initiative?: unknown }).initiative === 'number'
+					typeof (participant as { initiative?: unknown }).initiative ===
+					'number'
 						? ((participant as { initiative?: number }).initiative ?? 0)
 						: stableInitiativeFromId(id);
 				const level =
@@ -237,12 +262,16 @@ export function runtimeToOutOfInitiativeData(
 
 			return characterToTrackerParticipant(character, meta, false);
 		})
-		.filter((participant): participant is TrackerParticipant => participant !== null);
+		.filter(
+			(participant): participant is TrackerParticipant => participant !== null
+		);
 
 	return { reinforcements, delayed, hazards };
 }
 
-const toPlayerStatus = (state: TrackerParticipant['state']): PlayerTrackerParticipant['status'] => {
+const toPlayerStatus = (
+	state: TrackerParticipant['state']
+): PlayerTrackerParticipant['status'] => {
 	if (state === 'delayed') return 'Delayed';
 
 	if (state === 'knocked-out') return 'Knocked Out';
@@ -253,7 +282,10 @@ const toPlayerStatus = (state: TrackerParticipant['state']): PlayerTrackerPartic
 };
 
 const toCoarseHpLabel = (participant: TrackerParticipant): string => {
-	if (typeof participant.currentHp !== 'number' || typeof participant.maxHp !== 'number') {
+	if (
+		typeof participant.currentHp !== 'number' ||
+		typeof participant.maxHp !== 'number'
+	) {
 		return 'No HP Data';
 	}
 
@@ -353,7 +385,9 @@ export function encounterToTrackerHeader(
 	};
 }
 
-export function historyToPreviewLines(history: EncounterStore['history']): string[] {
+export function historyToPreviewLines(
+	history: EncounterStore['history']
+): string[] {
 	return history
 		.filter((command) => command.description)
 		.map((command) => command.description as string);

@@ -108,7 +108,9 @@ export const EncounterCard = (props: EncounterCardProps) => {
 		(v) => v.id === activeTemplateVariantId
 	);
 	const activeSavedVariant =
-		activeSavedVariantIdx !== null ? savedVariants[activeSavedVariantIdx] : null;
+		activeSavedVariantIdx !== null
+			? savedVariants[activeSavedVariantIdx]
+			: null;
 
 	// Derived display values based on active variant
 	const displayedParticipants: StoreParticipant[] = (() => {
@@ -152,7 +154,9 @@ export const EncounterCard = (props: EncounterCardProps) => {
 	useEffect(() => {
 		const level = levelRange
 			? Math.max(levelRange[0], Math.min(levelRange[1], partyLevel))
-			: (typeof selectedEncounter.level === 'number' ? selectedEncounter.level : 0);
+			: typeof selectedEncounter.level === 'number'
+				? selectedEncounter.level
+				: 0;
 		setLevel(level);
 	}, [levelRange, partyLevel, selectedEncounter.level]);
 
@@ -173,8 +177,10 @@ export const EncounterCard = (props: EncounterCardProps) => {
 				...selectedEncounter,
 				partySize: activeSavedVariant.partySize ?? selectedEncounter.partySize,
 				level: activeSavedVariant.level ?? selectedEncounter.level,
-				difficulty: activeSavedVariant.difficulty ?? selectedEncounter.difficulty,
-				description: activeSavedVariant.description ?? selectedEncounter.description,
+				difficulty:
+					activeSavedVariant.difficulty ?? selectedEncounter.difficulty,
+				description:
+					activeSavedVariant.description ?? selectedEncounter.description,
 				participants: activeSavedVariant.participants,
 			} as Encounter;
 		}
@@ -187,8 +193,8 @@ export const EncounterCard = (props: EncounterCardProps) => {
 			return;
 		}
 
-		const encounterToEdit =
-			(buildVariantEncounter() ?? selectedEncounter) as ConcreteEncounter;
+		const encounterToEdit = (buildVariantEncounter() ??
+			selectedEncounter) as ConcreteEncounter;
 		const importDraftId = saveImportedEncounterDraft(encounterToEdit);
 		close();
 		navigate({
@@ -213,7 +219,9 @@ export const EncounterCard = (props: EncounterCardProps) => {
 							</span>
 						</div>
 						<div>
-							<CardTitle className="text-2xl">{selectedEncounter.name}</CardTitle>
+							<CardTitle className="text-2xl">
+								{selectedEncounter.name}
+							</CardTitle>
 							<CardDescription className="mt-2 max-w-2xl text-sm leading-6">
 								{selectedEncounter.description}
 							</CardDescription>
@@ -233,7 +241,9 @@ export const EncounterCard = (props: EncounterCardProps) => {
 											const nextValue = Number.parseInt(event.target.value, 10);
 
 											setLevel(
-												clampLevel(Number.isNaN(nextValue) ? levelRange[0] : nextValue)
+												clampLevel(
+													Number.isNaN(nextValue) ? levelRange[0] : nextValue
+												)
 											);
 										}}
 										className="h-9 w-24"
@@ -243,7 +253,9 @@ export const EncounterCard = (props: EncounterCardProps) => {
 									</p>
 								</div>
 							) : (
-								<p className="mt-2 text-lg font-semibold">{selectedEncounter.level}</p>
+								<p className="mt-2 text-lg font-semibold">
+									{selectedEncounter.level}
+								</p>
 							)}
 						</div>
 						<div className="rounded-xl border bg-muted/40 px-4 py-3 text-sm">
@@ -254,7 +266,7 @@ export const EncounterCard = (props: EncounterCardProps) => {
 										key={index}
 										className={cn(
 											'h-4 w-4',
-										index < displayedPartySize
+											index < displayedPartySize
 												? 'text-foreground'
 												: 'text-muted-foreground/40'
 										)}
@@ -274,7 +286,9 @@ export const EncounterCard = (props: EncounterCardProps) => {
 						<div className="flex flex-wrap gap-2">
 							{source === 'template' &&
 								allTemplateVariants.map((tv, idx) => {
-									const label = tv.description ?? `Variant ${String.fromCharCode(65 + idx)}`;
+									const label =
+										tv.description ??
+										`Variant ${String.fromCharCode(65 + idx)}`;
 									const isActive = tv.id === activeTemplateVariantId;
 
 									return (
@@ -294,7 +308,9 @@ export const EncounterCard = (props: EncounterCardProps) => {
 									<Button
 										type="button"
 										size="sm"
-										variant={activeSavedVariantIdx === null ? 'default' : 'outline'}
+										variant={
+											activeSavedVariantIdx === null ? 'default' : 'outline'
+										}
 										onClick={() => setActiveSavedVariantIdx(null)}
 									>
 										Base
@@ -304,7 +320,9 @@ export const EncounterCard = (props: EncounterCardProps) => {
 											key={idx}
 											type="button"
 											size="sm"
-											variant={activeSavedVariantIdx === idx ? 'default' : 'outline'}
+											variant={
+												activeSavedVariantIdx === idx ? 'default' : 'outline'
+											}
 											onClick={() => setActiveSavedVariantIdx(idx)}
 										>
 											{sv.description || `Variant ${idx + 1}`}
@@ -332,7 +350,9 @@ export const EncounterCard = (props: EncounterCardProps) => {
 								))}
 							</ul>
 						) : (
-							<p className="text-sm text-muted-foreground">No participants listed.</p>
+							<p className="text-sm text-muted-foreground">
+								No participants listed.
+							</p>
 						)}
 					</div>
 				</section>
@@ -354,10 +374,13 @@ export const EncounterCard = (props: EncounterCardProps) => {
 							onClick={() => {
 								const templateLevel = levelRange
 									? level
-									: (typeof selectedEncounter.level === 'number'
+									: typeof selectedEncounter.level === 'number'
 										? selectedEncounter.level
-										: undefined);
-								const templatePartySize = activeTemplateVariant?.partySize ?? selectedEncounter.partySize ?? 4;
+										: undefined;
+								const templatePartySize =
+									activeTemplateVariant?.partySize ??
+									selectedEncounter.partySize ??
+									4;
 
 								close();
 								navigate({

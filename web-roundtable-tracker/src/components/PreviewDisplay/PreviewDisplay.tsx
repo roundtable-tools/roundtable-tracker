@@ -15,7 +15,10 @@ import { PreviewCard } from './PreviewCard';
 import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { useEffect, useMemo, useState } from 'react';
 import { AppHeader } from '@/AppHeader';
-import { buildTrackerMetaMap, participantsToEncounterCharacters } from '@/store/convert';
+import {
+	buildTrackerMetaMap,
+	participantsToEncounterCharacters,
+} from '@/store/convert';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
@@ -161,7 +164,8 @@ export const generateParticipants = (
 				Number.isFinite(participant.initiativeBonus)
 					? participant.initiativeBonus
 					: 0;
-			const isSimpleHazard = participant.type === 'hazard' && !participant.isComplexHazard;
+			const isSimpleHazard =
+				participant.type === 'hazard' && !participant.isComplexHazard;
 
 			return Array.from({ length: count ?? 1 }).map((_, index, { length }) => ({
 				uuid: generateUUID(),
@@ -221,7 +225,9 @@ export type Inputs = {
 
 export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	const startEncounter = useEncounterStore((state) => state.startEncounter);
-	const setTrackerMetaMap = useEncounterStore((state) => state.setTrackerMetaMap);
+	const setTrackerMetaMap = useEncounterStore(
+		(state) => state.setTrackerMetaMap
+	);
 	const navigate = useNavigate();
 
 	const encounterData = useEncounterStore((state) => state.encounterData);
@@ -254,7 +260,10 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 		[selectedParty, encounterData, partyLevel]
 	);
 
-	const fullParty = useMemo(() => [party, ...participants], [party, participants]);
+	const fullParty = useMemo(
+		() => [party, ...participants],
+		[party, participants]
+	);
 	const defaultTeams = useMemo(
 		() =>
 			fullParty
@@ -278,7 +287,8 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	);
 
 	const sourceParticipantsById = useMemo(() => {
-		type DefaultTeamCharacter = (typeof defaultTeams)[number]['characters'][number];
+		type DefaultTeamCharacter =
+			(typeof defaultTeams)[number]['characters'][number];
 		const source = new Map<string, DefaultTeamCharacter>();
 
 		for (const team of defaultTeams) {
@@ -290,12 +300,13 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 		return source;
 	}, [defaultTeams]);
 
-	const { control, register, getFieldState, handleSubmit, reset } = useForm<Inputs>({
-		mode: 'onChange',
-		defaultValues: {
-			teams: defaultTeams,
-		},
-	});
+	const { control, register, getFieldState, handleSubmit, reset } =
+		useForm<Inputs>({
+			mode: 'onChange',
+			defaultValues: {
+				teams: defaultTeams,
+			},
+		});
 
 	useEffect(() => {
 		reset({ teams: defaultTeams });
@@ -307,7 +318,9 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 				const formParticipants = data.teams
 					.flatMap(({ characters }) => characters)
 					.map((participant) => {
-						const sourceParticipant = sourceParticipantsById.get(participant.uuid);
+						const sourceParticipant = sourceParticipantsById.get(
+							participant.uuid
+						);
 						const mergedParticipant = {
 							...sourceParticipant,
 							...participant,
@@ -335,7 +348,7 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 							typeof mergedParticipant.initiative === 'number' &&
 							Number.isFinite(mergedParticipant.initiative)
 								? mergedParticipant.initiative
-								: mergedParticipant.initiative ?? 0;
+								: (mergedParticipant.initiative ?? 0);
 
 						if (!hasHealthData) {
 							return {
@@ -399,16 +412,23 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 
 	return (
 		<>
-			<Dialog open={showInitiativeChoice} onOpenChange={setShowInitiativeChoice}>
+			<Dialog
+				open={showInitiativeChoice}
+				onOpenChange={setShowInitiativeChoice}
+			>
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>Choose Initiative View</DialogTitle>
 						<DialogDescription>
-							Select which initiative experience you want to use for this encounter.
+							Select which initiative experience you want to use for this
+							encounter.
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter className="flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-						<Button variant="outline" onClick={() => setShowInitiativeChoice(false)}>
+						<Button
+							variant="outline"
+							onClick={() => setShowInitiativeChoice(false)}
+						>
 							Cancel
 						</Button>
 						<Button
@@ -458,10 +478,10 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 								</SelectContent>
 							</Select>
 						)}
-						<div
-							className="rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary shadow-sm"
-						>
-							{difficultyToString(encounterData.difficulty ?? DIFFICULTY.Moderate)}{' '}
+						<div className="rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary shadow-sm">
+							{difficultyToString(
+								encounterData.difficulty ?? DIFFICULTY.Moderate
+							)}{' '}
 							{partyLevel}
 						</div>
 					</div>
@@ -487,10 +507,10 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 									sideTitle={appearance.label}
 									participants={teamField.characters}
 									readonlyFields={
-									selectedParty !== null && teamField.side === ALIGNMENT.PCs
-										? ['name']
-										: []
-								}
+										selectedParty !== null && teamField.side === ALIGNMENT.PCs
+											? ['name']
+											: []
+									}
 								/>
 							);
 						})}

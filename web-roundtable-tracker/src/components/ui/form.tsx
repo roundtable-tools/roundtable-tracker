@@ -56,7 +56,10 @@ const FormItemContext = React.createContext<FormItemContextValue>(
 	{} as FormItemContextValue
 );
 
-function FormItem({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+function FormItem({
+	className,
+	...props
+}: React.HTMLAttributes<HTMLDivElement>) {
 	const id = React.useId();
 
 	return (
@@ -82,7 +85,8 @@ function FormLabel({
 }
 
 function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
-	const { error, formItemId, formDescriptionId, formMessageId } = useFormField();
+	const { error, formItemId, formDescriptionId, formMessageId } =
+		useFormField();
 
 	return (
 		<Slot

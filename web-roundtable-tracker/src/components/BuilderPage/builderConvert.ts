@@ -142,22 +142,22 @@ export function fromEncounterTemplate(
 			side: alignmentToBuilderSide(participant.side),
 			level: participant.relativeLevel.toLevel(partyLevel).valueOf(),
 			count: participant.count,
-				maxHealth:
-					participant.type === 'creature'
-						? participant.maxHealthOverride
-						: undefined,
-				hardness:
-					participant.type === 'hazard' ? participant.hardnessValue : undefined,
-				initiativeBonus:
-					participant.type === 'creature'
-						? participant.initiativeModifierOverride
-						: undefined,
-				dcs: [],
+			maxHealth:
+				participant.type === 'creature'
+					? participant.maxHealthOverride
+					: undefined,
+			hardness:
+				participant.type === 'hazard' ? participant.hardnessValue : undefined,
+			initiativeBonus:
+				participant.type === 'creature'
+					? participant.initiativeModifierOverride
+					: undefined,
+			dcs: [],
 			successesToDisable:
 				participant.type === 'hazard' ? participant.successesToDisable : 1,
 			adjustment: 'none',
-				adjustmentDescription: undefined,
-				adjustmentLevelModifier: undefined,
+			adjustmentDescription: undefined,
+			adjustmentLevelModifier: undefined,
 			isSimpleHazard:
 				participant.type === 'hazard' && participant.role === 'simple',
 			reinforcementRound: 1,
@@ -183,14 +183,20 @@ function threatToDifficulty(
 	return DIFFICULTY.Extreme;
 }
 
-function toRelativeLevelString(level: number, partyLevel: number): `+${number}` | `-${number}` {
+function toRelativeLevelString(
+	level: number,
+	partyLevel: number
+): `+${number}` | `-${number}` {
 	const diff = Math.trunc(level - partyLevel);
 	const signed = `${diff >= 0 ? '+' : ''}${diff}`;
 
 	return signed as `+${number}` | `-${number}`;
 }
 
-function fromRelativeLevelString(relativeLevel: string, partyLevel: number): number {
+function fromRelativeLevelString(
+	relativeLevel: string,
+	partyLevel: number
+): number {
 	const parsed = Number(relativeLevel);
 
 	if (!Number.isFinite(parsed)) {
@@ -209,14 +215,47 @@ export function toConcreteEncounter(
 	const threat = Threat.fromExperienceBudget(xp, values.partySize);
 	const difficulty = threatToDifficulty(threat.threat);
 
-	const participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[] = values.slots
-		.filter((s) => s.type === 'creature' || s.type === 'hazard')
-		.map((s) => {
-			const side = builderSideToAlignment(s.side);
+	const participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[] =
+		values.slots
+			.filter((s) => s.type === 'creature' || s.type === 'hazard')
+			.map((s) => {
+				const side = builderSideToAlignment(s.side);
 
-			if (s.type === 'hazard') {
+				if (s.type === 'hazard') {
+					return {
+						type: 'hazard' as const,
+						name: s.name,
+						level: s.level,
+						side,
+						count: s.count,
+						maxHealth: s.maxHealth || undefined,
+						hardness: s.hardness || undefined,
+						initiativeBonus: s.initiativeBonus || undefined,
+						dcs:
+							s.dcs && s.dcs.length > 0
+								? s.dcs
+										.map((dc) => ({
+											...dc,
+											name: dc.name ?? dc.inline,
+										}))
+										.filter(
+											(dc) => (dc.name ?? dc.inline ?? '').trim().length > 0
+										)
+								: undefined,
+						successesToDisable: s.successesToDisable ?? 1,
+						isComplexHazard: !s.isSimpleHazard,
+						adjustmentDescription: s.adjustmentDescription || undefined,
+						adjustmentLevelModifier:
+							typeof s.adjustmentLevelModifier === 'number' &&
+							Number.isFinite(s.adjustmentLevelModifier)
+								? s.adjustmentLevelModifier
+								: undefined,
+						description: s.description || undefined,
+					};
+				}
+
 				return {
-					type: 'hazard' as const,
+					type: 'creature' as const,
 					name: s.name,
 					level: s.level,
 					side,
@@ -227,14 +266,18 @@ export function toConcreteEncounter(
 					dcs:
 						s.dcs && s.dcs.length > 0
 							? s.dcs
-								.map((dc) => ({
-									...dc,
-									name: dc.name ?? dc.inline,
-								}))
-								.filter((dc) => (dc.name ?? dc.inline ?? '').trim().length > 0)
+									.map((dc) => ({
+										...dc,
+										name: dc.name ?? dc.inline,
+									}))
+									.filter(
+										(dc) => (dc.name ?? dc.inline ?? '').trim().length > 0
+									)
 							: undefined,
-					successesToDisable: s.successesToDisable ?? 1,
-					isComplexHazard: !s.isSimpleHazard,
+					adjustment:
+						s.adjustment === 'none'
+							? undefined
+							: (s.adjustment as LevelAdjustment),
 					adjustmentDescription: s.adjustmentDescription || undefined,
 					adjustmentLevelModifier:
 						typeof s.adjustmentLevelModifier === 'number' &&
@@ -243,59 +286,27 @@ export function toConcreteEncounter(
 							: undefined,
 					description: s.description || undefined,
 				};
-			}
-
-			return {
-				type: 'creature' as const,
-				name: s.name,
-				level: s.level,
-				side,
-				count: s.count,
-				maxHealth: s.maxHealth || undefined,
-				hardness: s.hardness || undefined,
-				initiativeBonus: s.initiativeBonus || undefined,
-				dcs:
-					s.dcs && s.dcs.length > 0
-						? s.dcs
-							.map((dc) => ({
-								...dc,
-								name: dc.name ?? dc.inline,
-							}))
-							.filter((dc) => (dc.name ?? dc.inline ?? '').trim().length > 0)
-						: undefined,
-				adjustment:
-					s.adjustment === 'none'
-						? undefined
-						: (s.adjustment as LevelAdjustment),
-				adjustmentDescription: s.adjustmentDescription || undefined,
-				adjustmentLevelModifier:
-					typeof s.adjustmentLevelModifier === 'number' &&
-					Number.isFinite(s.adjustmentLevelModifier)
-						? s.adjustmentLevelModifier
-						: undefined,
-				description: s.description || undefined,
-			};
-		});
+			});
 
 	const narrativeSlots: NarrativeSlot[] = values.slots
-		.filter(
-			(s) => s.type === 'narrative' || s.type === 'reinforcement'
-		)
+		.filter((s) => s.type === 'narrative' || s.type === 'reinforcement')
 		.map((s) => ({
 			id: s.id,
 			type:
 				s.type === 'reinforcement'
-						? ('reinforcement' as const)
-						: s.repeatInterval
-							? ('ongoing' as const)
-							: ('default' as const),
+					? ('reinforcement' as const)
+					: s.repeatInterval
+						? ('ongoing' as const)
+						: ('default' as const),
 			description: s.description || undefined,
 			accomplishmentLevel:
 				s.type === 'reinforcement' ? undefined : s.accomplishmentLevel,
 			trigger: {
 				round: s.type === 'reinforcement' ? s.reinforcementRound : s.eventRound,
 				frequency:
-					s.type === 'reinforcement' ? undefined : s.repeatInterval || undefined,
+					s.type === 'reinforcement'
+						? undefined
+						: s.repeatInterval || undefined,
 			},
 			participants:
 				s.type === 'reinforcement'
@@ -306,7 +317,10 @@ export function toConcreteEncounter(
 								return {
 									type: 'hazard' as const,
 									name: participant.name,
-									level: toRelativeLevelString(participant.level, values.partyLevel),
+									level: toRelativeLevelString(
+										participant.level,
+										values.partyLevel
+									),
 									side,
 									count: participant.count,
 									maxHealth: participant.maxHealth || undefined,
@@ -315,11 +329,14 @@ export function toConcreteEncounter(
 									dcs:
 										participant.dcs && participant.dcs.length > 0
 											? participant.dcs
-												.map((dc) => ({
-													...dc,
-													name: dc.name ?? dc.inline,
-												}))
-												.filter((dc) => (dc.name ?? dc.inline ?? '').trim().length > 0)
+													.map((dc) => ({
+														...dc,
+														name: dc.name ?? dc.inline,
+													}))
+													.filter(
+														(dc) =>
+															(dc.name ?? dc.inline ?? '').trim().length > 0
+													)
 											: undefined,
 									successesToDisable: participant.successesToDisable,
 									isComplexHazard: !participant.isSimpleHazard,
@@ -336,7 +353,10 @@ export function toConcreteEncounter(
 							return {
 								type: 'creature' as const,
 								name: participant.name,
-								level: toRelativeLevelString(participant.level, values.partyLevel),
+								level: toRelativeLevelString(
+									participant.level,
+									values.partyLevel
+								),
 								side,
 								count: participant.count,
 								maxHealth: participant.maxHealth || undefined,
@@ -345,11 +365,13 @@ export function toConcreteEncounter(
 								dcs:
 									participant.dcs && participant.dcs.length > 0
 										? participant.dcs
-											.map((dc) => ({
-												...dc,
-												name: dc.name ?? dc.inline,
-											}))
-											.filter((dc) => (dc.name ?? dc.inline ?? '').trim().length > 0)
+												.map((dc) => ({
+													...dc,
+													name: dc.name ?? dc.inline,
+												}))
+												.filter(
+													(dc) => (dc.name ?? dc.inline ?? '').trim().length > 0
+												)
 										: undefined,
 								adjustment:
 									participant.adjustment !== 'none'
@@ -370,39 +392,20 @@ export function toConcreteEncounter(
 		values.variants.length > 0
 			? values.variants.map((snapshot) => {
 					const snapXp = computeBuilderXP(snapshot.slots, snapshot.partyLevel);
-					const snapThreat = Threat.fromExperienceBudget(snapXp, snapshot.partySize);
-					const snapParticipants: Participant<typeof LEVEL_REPRESENTATION.Exact>[] =
-						snapshot.slots
-							.filter((s) => s.type === 'creature' || s.type === 'hazard')
-							.map((s) => {
-								const side =
-									builderSideToAlignment(s.side);
+					const snapThreat = Threat.fromExperienceBudget(
+						snapXp,
+						snapshot.partySize
+					);
+					const snapParticipants: Participant<
+						typeof LEVEL_REPRESENTATION.Exact
+					>[] = snapshot.slots
+						.filter((s) => s.type === 'creature' || s.type === 'hazard')
+						.map((s) => {
+							const side = builderSideToAlignment(s.side);
 
-								if (s.type === 'hazard') {
-									return {
-										type: 'hazard' as const,
-										name: s.name,
-										level: s.level,
-										side,
-										count: s.count,
-										maxHealth: s.maxHealth || undefined,
-										hardness: s.hardness || undefined,
-										initiativeBonus: s.initiativeBonus || undefined,
-										dcs: s.dcs,
-										successesToDisable: s.successesToDisable ?? 1,
-										isComplexHazard: !s.isSimpleHazard,
-										adjustmentDescription: s.adjustmentDescription || undefined,
-										adjustmentLevelModifier:
-											typeof s.adjustmentLevelModifier === 'number' &&
-											Number.isFinite(s.adjustmentLevelModifier)
-												? s.adjustmentLevelModifier
-												: undefined,
-										description: s.description || undefined,
-									};
-								}
-
+							if (s.type === 'hazard') {
 								return {
-									type: 'creature' as const,
+									type: 'hazard' as const,
 									name: s.name,
 									level: s.level,
 									side,
@@ -411,10 +414,8 @@ export function toConcreteEncounter(
 									hardness: s.hardness || undefined,
 									initiativeBonus: s.initiativeBonus || undefined,
 									dcs: s.dcs,
-									adjustment:
-										s.adjustment === 'none'
-											? undefined
-											: (s.adjustment as LevelAdjustment),
+									successesToDisable: s.successesToDisable ?? 1,
+									isComplexHazard: !s.isSimpleHazard,
 									adjustmentDescription: s.adjustmentDescription || undefined,
 									adjustmentLevelModifier:
 										typeof s.adjustmentLevelModifier === 'number' &&
@@ -423,7 +424,31 @@ export function toConcreteEncounter(
 											: undefined,
 									description: s.description || undefined,
 								};
-							});
+							}
+
+							return {
+								type: 'creature' as const,
+								name: s.name,
+								level: s.level,
+								side,
+								count: s.count,
+								maxHealth: s.maxHealth || undefined,
+								hardness: s.hardness || undefined,
+								initiativeBonus: s.initiativeBonus || undefined,
+								dcs: s.dcs,
+								adjustment:
+									s.adjustment === 'none'
+										? undefined
+										: (s.adjustment as LevelAdjustment),
+								adjustmentDescription: s.adjustmentDescription || undefined,
+								adjustmentLevelModifier:
+									typeof s.adjustmentLevelModifier === 'number' &&
+									Number.isFinite(s.adjustmentLevelModifier)
+										? s.adjustmentLevelModifier
+										: undefined,
+								description: s.description || undefined,
+							};
+						});
 
 					return {
 						level: snapshot.partyLevel,
@@ -551,7 +576,9 @@ export function fromConcreteEncounter(
 						adjustmentDescription: participant.adjustmentDescription,
 						adjustmentLevelModifier: participant.adjustmentLevelModifier,
 						isSimpleHazard:
-							participant.type === 'hazard' ? !participant.isComplexHazard : false,
+							participant.type === 'hazard'
+								? !participant.isComplexHazard
+								: false,
 					}))
 				: [],
 			eventRound: ns.trigger.round,
@@ -567,13 +594,14 @@ export function fromConcreteEncounter(
 		description: encounter.description,
 		partyLevel: encounter.level,
 		partySize: encounter.partySize,
-		variants: encounter.variants?.map((v) => ({
-			id: uuidv4(),
-			description: v.description,
-			partyLevel: v.level ?? encounter.level,
-			partySize: v.partySize ?? encounter.partySize,
-			slots: participantsToBuilderSlots(v.participants),
-		})) ?? [],
+		variants:
+			encounter.variants?.map((v) => ({
+				id: uuidv4(),
+				description: v.description,
+				partyLevel: v.level ?? encounter.level,
+				partySize: v.partySize ?? encounter.partySize,
+				slots: participantsToBuilderSlots(v.participants),
+			})) ?? [],
 		gmNotes: encounter.notes?.gm ?? '',
 		monsterNotes: encounter.notes?.monster ?? '',
 		playerNotes: encounter.notes?.player ?? '',
@@ -634,7 +662,7 @@ function participantsToBuilderSlots(
 			repeatInterval: undefined,
 			accomplishmentLevel: undefined,
 		};
-		});
+	});
 }
 
 /**
@@ -649,7 +677,10 @@ export function templateVariantToFormPartial(
 		partySize: variant.partySize,
 		slots: variant.participants.map((participant) => ({
 			id: participant.id,
-			type: participant.type === 'creature' ? 'creature' as const : 'hazard' as const,
+			type:
+				participant.type === 'creature'
+					? ('creature' as const)
+					: ('hazard' as const),
 			name:
 				participant.type === 'creature'
 					? `${participant.role || 'creature'} (${participant.count})`

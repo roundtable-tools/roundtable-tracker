@@ -24,7 +24,7 @@ export function InitiativePlayerViewPage() {
 				charactersMap,
 				trackerMetaMap,
 			}),
-		[charactersOrder, delayedOrder, charactersMap, trackerMetaMap],
+		[charactersOrder, delayedOrder, charactersMap, trackerMetaMap]
 	);
 
 	const trackerHeader = useMemo(
@@ -32,7 +32,7 @@ export function InitiativePlayerViewPage() {
 			encounterData
 				? encounterToTrackerHeader(encounterData, partyLevel, round)
 				: null,
-		[encounterData, partyLevel, round],
+		[encounterData, partyLevel, round]
 	);
 
 	const encounterDescription = useMemo(() => {
@@ -64,13 +64,17 @@ export function InitiativePlayerViewPage() {
 								<p className="text-sm font-medium">
 									{index + 1}. {participant.name}
 								</p>
-								<p className="text-xs text-muted-foreground">{participant.status}</p>
+								<p className="text-xs text-muted-foreground">
+									{participant.status}
+								</p>
 							</div>
 							<Badge variant="secondary">{participant.hpLabel}</Badge>
 						</div>
 					))}
 					{initiativeParticipants.length === 0 ? (
-						<p className="text-sm text-muted-foreground">No visible participants in initiative.</p>
+						<p className="text-sm text-muted-foreground">
+							No visible participants in initiative.
+						</p>
 					) : null}
 				</div>
 			</Card>

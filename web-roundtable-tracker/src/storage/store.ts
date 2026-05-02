@@ -1,7 +1,5 @@
 import { observable } from '@legendapp/state';
-import {
-	configureSyncedSupabase,
-} from '@legendapp/state/sync-plugins/supabase';
+import { configureSyncedSupabase } from '@legendapp/state/sync-plugins/supabase';
 import { generateUUID, UUID } from '@/utils/uuid';
 
 import { observablePersistIndexedDB } from '@legendapp/state/persist-plugins/indexeddb';
@@ -35,9 +33,7 @@ export type Todo = {
 
 // Supabase expects a record keyed by id, so we use an object
 
-export const store$ = observable({
-	
-});
+export const store$ = observable({});
 
 const persistOptions = configureSynced({
 	persist: {

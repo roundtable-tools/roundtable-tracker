@@ -107,7 +107,10 @@ describe('Import encounter validation gap', () => {
 
 		expect(parsed.narrativeSlots).toHaveLength(1);
 		expect(parsed.narrativeSlots?.[0].type).toBe('reinforcement');
-		expect(parsed.narrativeSlots?.[0].trigger).toEqual({ round: 2, frequency: 1 });
+		expect(parsed.narrativeSlots?.[0].trigger).toEqual({
+			round: 2,
+			frequency: 1,
+		});
 	});
 
 	it('rejects narrative slot elements with invalid type', () => {

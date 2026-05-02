@@ -3,7 +3,12 @@ export type TrackerParticipant = {
 	name: string;
 	role: 'pc' | 'opponent' | 'neutral' | 'ally' | 'hazard' | 'reinforcement';
 	sideTheme?: 'pc' | 'opponent' | 'ally' | 'other' | 'neutral';
-	state: 'active' | 'delayed' | 'knocked-out' | 'inactive' | 'pending-reinforcement';
+	state:
+		| 'active'
+		| 'delayed'
+		| 'knocked-out'
+		| 'inactive'
+		| 'pending-reinforcement';
 	initiative?: number;
 	eventId?: string;
 	eventRound?: number;
@@ -56,10 +61,26 @@ export const trackerMockData = {
 		'Round 1: Ember Wisp A knocked out.',
 	],
 	timeline: [
-		{ round: 1, title: 'Encounter Start', detail: 'Ritual channel stabilizes.' },
-		{ round: 2, title: 'Vent Burst', detail: 'Environmental hazard is introduced.' },
-		{ round: 4, title: 'Smoke Wall', detail: 'Narrative visibility penalty begins.' },
-		{ round: 6, title: 'Collapse', detail: 'Encounter fail state timer triggers.' },
+		{
+			round: 1,
+			title: 'Encounter Start',
+			detail: 'Ritual channel stabilizes.',
+		},
+		{
+			round: 2,
+			title: 'Vent Burst',
+			detail: 'Environmental hazard is introduced.',
+		},
+		{
+			round: 4,
+			title: 'Smoke Wall',
+			detail: 'Narrative visibility penalty begins.',
+		},
+		{
+			round: 6,
+			title: 'Collapse',
+			detail: 'Encounter fail state timer triggers.',
+		},
 	] satisfies TimelineEvent[],
 	initiativeParticipants: [
 		{
@@ -150,7 +171,8 @@ export const trackerMockData = {
 			state: 'active',
 			disableChecksSucceeded: 2,
 			disableChecksRequired: 5,
-			notes: 'Takes initiative turns to emit chained arc bursts along rune lines.',
+			notes:
+				'Takes initiative turns to emit chained arc bursts along rune lines.',
 		},
 		{
 			id: 'npc-4',
@@ -210,7 +232,8 @@ export const trackerMockData = {
 				state: 'inactive',
 				disableChecksSucceeded: 1,
 				disableChecksRequired: 2,
-				notes: 'Simple hazard: each turn, random lane becomes difficult terrain.',
+				notes:
+					'Simple hazard: each turn, random lane becomes difficult terrain.',
 			},
 			{
 				id: 'hazard-3',

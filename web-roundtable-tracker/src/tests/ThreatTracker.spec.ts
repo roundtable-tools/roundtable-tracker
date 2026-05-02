@@ -67,7 +67,14 @@ describe('getMergedThresholds', () => {
 	});
 
 	it('all groups are present regardless of party size', () => {
-		const expected = ['Trivial', 'Low', 'Moderate', 'Severe', 'Extreme', 'Impossible'];
+		const expected = [
+			'Trivial',
+			'Low',
+			'Moderate',
+			'Severe',
+			'Extreme',
+			'Impossible',
+		];
 
 		for (const size of [1, 2, 3, 4, 5, 6, 8]) {
 			const groups = getMergedThresholds(threatEntries(), size);

@@ -64,14 +64,16 @@ export const AppHeader = (props: AppHeaderProps) => {
 					variant="ghost"
 					className="-ml-2 text-white hover:bg-white/10 hover:text-white"
 					onClick={() => {
-					setView('landingPage');
-					navigate({ to: '/' });
-				}}
+						setView('landingPage');
+						navigate({ to: '/' });
+					}}
 				>
 					<ArrowLeft className="h-4 w-4" />
 					Exit
 				</Button>
-				<div className="flex flex-1 items-center justify-end gap-2">{toolbar}</div>
+				<div className="flex flex-1 items-center justify-end gap-2">
+					{toolbar}
+				</div>
 			</div>
 		</header>
 	);

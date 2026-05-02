@@ -3,7 +3,9 @@ import { generateUUID } from '@/utils/uuid';
 
 const importedEncounterDrafts = new Map<string, ConcreteEncounter>();
 
-export function saveImportedEncounterDraft(encounter: ConcreteEncounter): string {
+export function saveImportedEncounterDraft(
+	encounter: ConcreteEncounter
+): string {
 	const draftId = generateUUID();
 
 	importedEncounterDrafts.set(draftId, encounter);

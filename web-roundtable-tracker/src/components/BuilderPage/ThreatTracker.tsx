@@ -6,7 +6,10 @@ import {
 } from '@/components/ui/hover-card';
 import { ExperienceBudget } from '@/models/utility/experienceBudget/ExperienceBudget';
 import { THREAT_TYPE, Threat } from '@/models/utility/threat/Threat.class';
-import type { EncounterThreatSimulation, EncounterWaveInteraction } from './builderXp';
+import type {
+	EncounterThreatSimulation,
+	EncounterWaveInteraction,
+} from './builderXp';
 import { useEffect, useRef, useState } from 'react';
 
 interface ThreatTrackerProps {
@@ -89,7 +92,9 @@ export function getMergedThresholds(
 	let previousMaxXp = 0;
 	const merged = groups.map((group, i) => {
 		const computedMaxXp = Math.max(
-			...group.keys.map((key) => getAdjustedXpForThreat(key, group.baseLabel, partySize))
+			...group.keys.map((key) =>
+				getAdjustedXpForThreat(key, group.baseLabel, partySize)
+			)
 		);
 		const maxXp = Math.max(computedMaxXp, previousMaxXp);
 		const threshold: ThresholdGroup = {
@@ -107,8 +112,12 @@ export function getMergedThresholds(
 	if (merged.length > 0) {
 		const firstThreshold = merged[0];
 		const lastThreshold = merged[merged.length - 1];
-		const firstAdjustment = getCharacterAdjustmentForThreat(firstThreshold.baseLabel);
-		const lastAdjustment = getCharacterAdjustmentForThreat(lastThreshold.baseLabel);
+		const firstAdjustment = getCharacterAdjustmentForThreat(
+			firstThreshold.baseLabel
+		);
+		const lastAdjustment = getCharacterAdjustmentForThreat(
+			lastThreshold.baseLabel
+		);
 
 		firstThreshold.minXp = Math.max(
 			0,
@@ -148,22 +157,21 @@ export function ThreatTracker({
 		);
 
 		const thresholdLabel = merged[thresholdIdx]?.baseLabel ?? 'Trivial';
-		const exactLabel =
-			threatEntries
-				.map(([key, label]) => ({
-					label,
-					xp: new Threat({ threat: key as keyof typeof THREAT_TYPE }).toExpBudget(
-						partySize
-					).valueOf(),
-				}))
-				.sort((a, b) => a.xp - b.xp)
-				.reduce<string>((activeLabel, threat) => {
-					if (targetBudgetXp >= threat.xp) {
-						return threat.label;
-					}
+		const exactLabel = threatEntries
+			.map(([key, label]) => ({
+				label,
+				xp: new Threat({ threat: key as keyof typeof THREAT_TYPE })
+					.toExpBudget(partySize)
+					.valueOf(),
+			}))
+			.sort((a, b) => a.xp - b.xp)
+			.reduce<string>((activeLabel, threat) => {
+				if (targetBudgetXp >= threat.xp) {
+					return threat.label;
+				}
 
-					return activeLabel;
-				}, THREAT_TYPE[0]);
+				return activeLabel;
+			}, THREAT_TYPE[0]);
 
 		const exactBaseLabel = stripThreatSuffix(exactLabel);
 
@@ -205,24 +213,24 @@ export function ThreatTracker({
 			return currentBudgetXp >= group.minXp && currentBudgetXp < group.maxXp;
 		})
 	);
-	const currentThresholdLabel = merged[currentThresholdIdx]?.baseLabel ?? 'Trivial';
+	const currentThresholdLabel =
+		merged[currentThresholdIdx]?.baseLabel ?? 'Trivial';
 
-	const exactThreatLabel =
-		threatEntries
-			.map(([key, label]) => ({
-				label,
-				xp: new Threat({ threat: key as keyof typeof THREAT_TYPE }).toExpBudget(
-					partySize
-				).valueOf(),
-			}))
-			.sort((a, b) => a.xp - b.xp)
-			.reduce<string>((activeLabel, threat) => {
-				if (currentBudgetXp >= threat.xp) {
-					return threat.label;
-				}
+	const exactThreatLabel = threatEntries
+		.map(([key, label]) => ({
+			label,
+			xp: new Threat({ threat: key as keyof typeof THREAT_TYPE })
+				.toExpBudget(partySize)
+				.valueOf(),
+		}))
+		.sort((a, b) => a.xp - b.xp)
+		.reduce<string>((activeLabel, threat) => {
+			if (currentBudgetXp >= threat.xp) {
+				return threat.label;
+			}
 
-				return activeLabel;
-			}, THREAT_TYPE[0]);
+			return activeLabel;
+		}, THREAT_TYPE[0]);
 
 	const exactThreatBaseLabel = stripThreatSuffix(exactThreatLabel);
 	const currentDisplayLabel =
@@ -283,87 +291,93 @@ export function ThreatTracker({
 	return (
 		<HoverCard>
 			<HoverCardTrigger asChild>
-				<div ref={containerRef} className="relative h-10 w-full overflow-visible">
+				<div
+					ref={containerRef}
+					className="relative h-10 w-full overflow-visible"
+				>
 					<div className="absolute left-0 w-full pointer-events-none h-4">
-				{visibleThresholds.map((t, i) => {
-					const left =
-						((t.minXp - visibleMin) / (visibleMax - visibleMin)) * 100;
-					const width =
-						((t.maxXp - t.minXp) / (visibleMax - visibleMin)) * 100;
+						{visibleThresholds.map((t, i) => {
+							const left =
+								((t.minXp - visibleMin) / (visibleMax - visibleMin)) * 100;
+							const width =
+								((t.maxXp - t.minXp) / (visibleMax - visibleMin)) * 100;
 
-					return (
-						<div
-							key={i}
-							className="absolute text-xs text-gray-300 font-semibold px-1 truncate pointer-events-none"
-							style={{
-								left: `${left}%`,
-								width: `${width}%`,
-								minWidth: 0,
-								top: 0,
-								overflow: 'hidden',
-								textOverflow: 'ellipsis',
-								whiteSpace: 'nowrap',
-							}}
-						>
-							{Math.round(t.minXp)}
-						</div>
-					);
-				})}
+							return (
+								<div
+									key={i}
+									className="absolute text-xs text-gray-300 font-semibold px-1 truncate pointer-events-none"
+									style={{
+										left: `${left}%`,
+										width: `${width}%`,
+										minWidth: 0,
+										top: 0,
+										overflow: 'hidden',
+										textOverflow: 'ellipsis',
+										whiteSpace: 'nowrap',
+									}}
+								>
+									{Math.round(t.minXp)}
+								</div>
+							);
+						})}
 					</div>
-					<Progress value={Math.max(0, Math.min(100, scaledValue))} className="h-4" />
+					<Progress
+						value={Math.max(0, Math.min(100, scaledValue))}
+						className="h-4"
+					/>
 					<div className="absolute inset-0 flex h-4 w-full pointer-events-none">
-				{visibleThresholds.map((t, i) => {
-					const left =
-						((t.minXp - visibleMin) / (visibleMax - visibleMin)) * 100;
-					const width =
-						((t.maxXp - t.minXp) / (visibleMax - visibleMin)) * 100;
+						{visibleThresholds.map((t, i) => {
+							const left =
+								((t.minXp - visibleMin) / (visibleMax - visibleMin)) * 100;
+							const width =
+								((t.maxXp - t.minXp) / (visibleMax - visibleMin)) * 100;
 
-					return (
-						<div
-							key={i}
-							className={`${t.color} mix-blend-multiply h-full absolute border-r border`}
-							style={{
-								left: `${left}%`,
-								width: `${width}%`,
-								opacity: 0.4,
-								zIndex: 2,
-								borderRight:
-									i === visibleThresholds.length - 1 ? 'none' : undefined,
-							}}
-						/>
-					);
-				})}
+							return (
+								<div
+									key={i}
+									className={`${t.color} mix-blend-multiply h-full absolute border-r border`}
+									style={{
+										left: `${left}%`,
+										width: `${width}%`,
+										opacity: 0.4,
+										zIndex: 2,
+										borderRight:
+											i === visibleThresholds.length - 1 ? 'none' : undefined,
+									}}
+								/>
+							);
+						})}
 					</div>
 					<div className="absolute left-0 top-4 w-full h-6 pointer-events-none">
-				{visibleThresholds.map((t, i) => {
-					const left =
-						((t.minXp - visibleMin) / (visibleMax - visibleMin)) * 100;
-					const width =
-						((t.maxXp - t.minXp) / (visibleMax - visibleMin)) * 100;
-					const isCurrent = merged.indexOf(t) === currentThresholdIdx;
-					const label = isCurrent ? currentDisplayLabel : t.baseLabel;
+						{visibleThresholds.map((t, i) => {
+							const left =
+								((t.minXp - visibleMin) / (visibleMax - visibleMin)) * 100;
+							const width =
+								((t.maxXp - t.minXp) / (visibleMax - visibleMin)) * 100;
+							const isCurrent = merged.indexOf(t) === currentThresholdIdx;
+							const label = isCurrent ? currentDisplayLabel : t.baseLabel;
 
-					return (
-						<span
-							key={i}
-							className={
-								'absolute px-1 truncate ' +
-								(isCurrent ? 'font-bold drop-shadow-sm' : 'text-gray-700')
-							}
-							style={{
-								left: `${left}%`,
-								width: `${width}%`,
-								minWidth: 0,
-								textAlign: 'left',
-								overflow: 'hidden',
-								textOverflow: 'ellipsis',
-								whiteSpace: 'nowrap',
-							}}
-						>
-							{label}
-						</span>
-					);
-				})}
+							return (
+								<span
+									key={i}
+									className={
+										'absolute px-1 truncate ' +
+										(isCurrent ? 'font-bold drop-shadow-sm' : 'text-gray-700')
+									}
+									style={{
+										left: `${left}%`,
+										width: `${width}%`,
+										minWidth: 0,
+										textAlign: 'left',
+										overflow: 'hidden',
+										textOverflow: 'ellipsis',
+										whiteSpace: 'nowrap',
+									}}
+								>
+									{label}
+								</span>
+							);
+						})}
 					</div>
 				</div>
 			</HoverCardTrigger>
@@ -385,8 +399,10 @@ export function ThreatTracker({
 							<div className="w-[min(78vw,28rem)]">
 								<div className="flex h-28 items-end rounded border bg-muted/25 p-2">
 									{simulation.history.map((point) => {
-										const wave0Height = (point.wave0 / simulationMaxStack) * 100;
-										const wave1Height = (point.wave1 / simulationMaxStack) * 100;
+										const wave0Height =
+											(point.wave0 / simulationMaxStack) * 100;
+										const wave1Height =
+											(point.wave1 / simulationMaxStack) * 100;
 										const attritionHeight =
 											(point.attrition / simulationMaxStack) * 100;
 

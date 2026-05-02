@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Ban, Clock3, Heart, RotateCcw, ShieldOff, Skull } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { type TrackerParticipant } from './mockData';
 
 export type SwipeAction = 'delay' | 'ko' | 'reactivate' | 'slay';
@@ -104,7 +108,9 @@ export function InitiativeActionCarouselCard({
 	} = DENSITY_CONFIG[density];
 	const isMobileDensity = density === 'mobile';
 	const [swipeOffset, setSwipeOffset] = useState(0);
-	const [swipeActionFlash, setSwipeActionFlash] = useState<SwipeAction | null>(null);
+	const [swipeActionFlash, setSwipeActionFlash] = useState<SwipeAction | null>(
+		null
+	);
 	const isKnockedOut = participant.state === 'knocked-out';
 	const canUseDelayAction = isKnockedOut || isCurrent;
 	const delaySideAction: SwipeAction = isKnockedOut ? 'reactivate' : 'delay';
@@ -153,7 +159,9 @@ export function InitiativeActionCarouselCard({
 	};
 
 	const triggerActionWithSlide = (action: SwipeAction) => {
-		setSwipeOffset(action === delaySideAction ? delaySlideTarget : koSlideTarget);
+		setSwipeOffset(
+			action === delaySideAction ? delaySlideTarget : koSlideTarget
+		);
 
 		if (actionTriggerTimeoutRef.current !== null) {
 			window.clearTimeout(actionTriggerTimeoutRef.current);
@@ -190,7 +198,10 @@ export function InitiativeActionCarouselCard({
 		const crossDelta = isMobileDensity ? deltaX : deltaY;
 
 		if (!swipeStateRef.current.isSwiping) {
-			if (Math.abs(axisDelta) < swipeIntentPx || Math.abs(axisDelta) <= Math.abs(crossDelta)) {
+			if (
+				Math.abs(axisDelta) < swipeIntentPx ||
+				Math.abs(axisDelta) <= Math.abs(crossDelta)
+			) {
 				return;
 			}
 			swipeStateRef.current.isSwiping = true;
@@ -198,7 +209,9 @@ export function InitiativeActionCarouselCard({
 
 		swipeStateRef.current.didDrag = true;
 		const minSwipeOffset = canUseDelayAction ? -swipeRevealPx : 0;
-		setSwipeOffset(Math.max(minSwipeOffset, Math.min(swipeRevealPx, axisDelta)));
+		setSwipeOffset(
+			Math.max(minSwipeOffset, Math.min(swipeRevealPx, axisDelta))
+		);
 	};
 
 	const finishSwipe = () => {
@@ -246,10 +259,13 @@ export function InitiativeActionCarouselCard({
 			return;
 		}
 
-		logAction(`${density === 'mobile' ? 'Mobile ' : ''}initiative card selected`, {
-			participantId: participant.id,
-			participantName: participant.name,
-		});
+		logAction(
+			`${density === 'mobile' ? 'Mobile ' : ''}initiative card selected`,
+			{
+				participantId: participant.id,
+				participantName: participant.name,
+			}
+		);
 		onSelect(participant.id);
 	};
 
@@ -258,10 +274,18 @@ export function InitiativeActionCarouselCard({
 			className={[
 				'relative overflow-hidden rounded-xl',
 				isMobileDensity ? 'h-full' : '',
-				selected ? 'ring-2 ring-primary/60 ring-offset-2 ring-offset-background' : '',
+				selected
+					? 'ring-2 ring-primary/60 ring-offset-2 ring-offset-background'
+					: '',
 			].join(' ')}
 		>
-			<div className={isMobileDensity ? 'flex h-full min-h-0 flex-col items-stretch' : 'flex min-h-15 items-stretch'}>
+			<div
+				className={
+					isMobileDensity
+						? 'flex h-full min-h-0 flex-col items-stretch'
+						: 'flex min-h-15 items-stretch'
+				}
+			>
 				{canUseDelayAction ? (
 					<Tooltip>
 						<TooltipTrigger asChild>
@@ -278,13 +302,22 @@ export function InitiativeActionCarouselCard({
 										: '',
 								].join(' ')}
 								aria-label={`${delaySideLabel} ${participant.name}`}
-								title={density === 'mobile' ? delaySideLabel : `${delaySideLabel} ${participant.name}`}
+								title={
+									density === 'mobile'
+										? delaySideLabel
+										: `${delaySideLabel} ${participant.name}`
+								}
 							>
-								{isKnockedOut ? <RotateCcw className={iconClass} /> : <Clock3 className={iconClass} />}
+								{isKnockedOut ? (
+									<RotateCcw className={iconClass} />
+								) : (
+									<Clock3 className={iconClass} />
+								)}
 							</button>
 						</TooltipTrigger>
 						<TooltipContent side="top">
-							Press or swipe card here to {delaySideLabel.toLowerCase()} {participant.name}
+							Press or swipe card here to {delaySideLabel.toLowerCase()}{' '}
+							{participant.name}
 						</TooltipContent>
 					</Tooltip>
 				) : null}
@@ -309,15 +342,25 @@ export function InitiativeActionCarouselCard({
 							: canUseDelayAction
 								? 'relative z-10 -mx-1 flex min-h-10 min-w-0 flex-1 touch-pan-y items-center rounded-xl border px-3 py-2 text-left transition-transform'
 								: 'relative z-10 -mr-1 flex min-h-10 min-w-0 flex-1 touch-pan-y items-center rounded-xl border px-3 py-2 text-left transition-transform',
-						isCurrent ? accent.activeCard : `${accent.inactiveCard} ${accent.inactiveMarker}`,
+						isCurrent
+							? accent.activeCard
+							: `${accent.inactiveCard} ${accent.inactiveMarker}`,
 					].join(' ')}
 				>
-					<div className={density === 'mobile' ? 'min-w-0 flex-1 space-y-1' : 'min-w-0 flex-1'}>
+					<div
+						className={
+							density === 'mobile'
+								? 'min-w-0 flex-1 space-y-1'
+								: 'min-w-0 flex-1'
+						}
+					>
 						{density === 'mobile' ? (
 							<>
 								<p
 									className={[
-                                        isMobileDensity ? 'text-wrap text-align-center' : 'text-nowrap',
+										isMobileDensity
+											? 'text-wrap text-align-center'
+											: 'text-nowrap',
 										'truncate text-sm font-semibold',
 										!isCurrent ? accent.name : '',
 									].join(' ')}
@@ -377,7 +420,11 @@ export function InitiativeActionCarouselCard({
 									: `Press or swipe card here to ${koSideLabel.toLowerCase()} ${participant.name}`
 							}
 						>
-							{isKnockedOut ? <Skull className={iconClass} /> : <Ban className={iconClass} />}
+							{isKnockedOut ? (
+								<Skull className={iconClass} />
+							) : (
+								<Ban className={iconClass} />
+							)}
 							{showKoLabel ? (
 								<span className="pointer-events-none absolute bottom-[calc(100%+0.25rem)] max-h-0 overflow-hidden whitespace-nowrap text-[10px] uppercase tracking-[0.16em] opacity-0 transition-all duration-200 group-hover/action:max-h-6 group-hover/action:opacity-100">
 									{isKnockedOut ? 'Slay' : 'KO'}
@@ -386,7 +433,8 @@ export function InitiativeActionCarouselCard({
 						</button>
 					</TooltipTrigger>
 					<TooltipContent side="top">
-						Press or swipe card here to {koSideLabel.toLowerCase()} {participant.name}
+						Press or swipe card here to {koSideLabel.toLowerCase()}{' '}
+						{participant.name}
 					</TooltipContent>
 				</Tooltip>
 			</div>

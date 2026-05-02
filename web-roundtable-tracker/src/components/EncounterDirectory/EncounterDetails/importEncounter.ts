@@ -14,7 +14,9 @@ import { generateUUID } from '@/utils/uuid';
 type EncounterDifficulty = (typeof DIFFICULTY)[keyof typeof DIFFICULTY];
 
 function formatZodError(error: z.ZodError) {
-	return error.errors.map((entry) => `${entry.path}: ${entry.message}`).join(',\n');
+	return error.errors
+		.map((entry) => `${entry.path}: ${entry.message}`)
+		.join(',\n');
 }
 
 function difficultyFromTags(tags?: string[]): EncounterDifficulty {
@@ -29,7 +31,9 @@ function difficultyFromTags(tags?: string[]): EncounterDifficulty {
 	return difficultyKey ? DIFFICULTY[difficultyKey] : DIFFICULTY.Low;
 }
 
-function toRelativeLevel(level: EncounterTemplateData['variants'][number]['participants'][number]['relativeLevel']) {
+function toRelativeLevel(
+	level: EncounterTemplateData['variants'][number]['participants'][number]['relativeLevel']
+) {
 	return level.toString() as `+${number}` | `-${number}`;
 }
 
@@ -61,10 +65,13 @@ function toStoreParticipants(
 	});
 }
 
-function normalizeImportedTemplate(template: EncounterTemplateData): EncounterTemplate {
+function normalizeImportedTemplate(
+	template: EncounterTemplateData
+): EncounterTemplate {
 	const defaultVariant =
-		template.variants.find((variant) => variant.id === template.defaultVariantId) ??
-		template.variants[0];
+		template.variants.find(
+			(variant) => variant.id === template.defaultVariantId
+		) ?? template.variants[0];
 
 	if (!defaultVariant) {
 		throw new z.ZodError([
@@ -93,7 +100,9 @@ function normalizeImportedTemplate(template: EncounterTemplateData): EncounterTe
 	};
 }
 
-export function validateImportedEncounter(dataString: string): [Encounter | null, string] {
+export function validateImportedEncounter(
+	dataString: string
+): [Encounter | null, string] {
 	try {
 		const parsedJson = JSON.parse(dataString) as unknown;
 		const parsedTemplate = EncounterTemplateDataSchema.safeParse(parsedJson);
@@ -102,7 +111,11 @@ export function validateImportedEncounter(dataString: string): [Encounter | null
 			return [normalizeImportedTemplate(parsedTemplate.data), ''];
 		}
 
-		if (typeof parsedJson !== 'object' || parsedJson === null || Array.isArray(parsedJson)) {
+		if (
+			typeof parsedJson !== 'object' ||
+			parsedJson === null ||
+			Array.isArray(parsedJson)
+		) {
 			return [null, 'Encounter JSON must be an object.'];
 		}
 

@@ -98,9 +98,9 @@ describe('FinalizeTurnAndAdvanceRoundCommand', () => {
 
 		expect(status).toBe(STATUS.success);
 		expect(encounterStore.getState().round).toBe(2);
-		expect(encounterStore.getState().charactersMap[characters[1].uuid].turnState).toBe(
-			'knocked-out'
-		);
+		expect(
+			encounterStore.getState().charactersMap[characters[1].uuid].turnState
+		).toBe('knocked-out');
 		expect(encounterStore.getState().charactersWithTurn).toEqual(
 			new Set([characters[0].uuid, characters[1].uuid])
 		);
@@ -109,10 +109,12 @@ describe('FinalizeTurnAndAdvanceRoundCommand', () => {
 
 		expect(undoStatus).toBe(STATUS.success);
 		expect(encounterStore.getState().round).toBe(1);
-		expect(encounterStore.getState().charactersMap[characters[1].uuid].turnState).toBe(
-			'normal'
-		);
-		expect(encounterStore.getState().delayedOrder).toEqual([characters[0].uuid]);
+		expect(
+			encounterStore.getState().charactersMap[characters[1].uuid].turnState
+		).toBe('normal');
+		expect(encounterStore.getState().delayedOrder).toEqual([
+			characters[0].uuid,
+		]);
 	});
 
 	it('fails when the participant is not the final active turn in the round', () => {

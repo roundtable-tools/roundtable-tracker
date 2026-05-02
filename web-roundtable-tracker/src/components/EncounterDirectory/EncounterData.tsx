@@ -22,11 +22,7 @@ type EncounterDataProps<T extends { directoryId: string }> = {
 	) => void;
 };
 
-const SortIcon = ({
-	direction,
-}: {
-	direction: false | 'asc' | 'desc';
-}) => {
+const SortIcon = ({ direction }: { direction: false | 'asc' | 'desc' }) => {
 	if (direction === 'asc') {
 		return <ArrowUp className="h-4 w-4 text-muted-foreground" />;
 	}

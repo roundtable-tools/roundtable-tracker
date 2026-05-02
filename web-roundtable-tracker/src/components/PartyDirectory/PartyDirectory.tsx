@@ -1,6 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useSavedPartiesStore } from '@/store/savedPartiesInstance';
-import { Party, PartyIcon, PartyMember, PARTY_ICONS } from '@/store/savedParties';
+import {
+	Party,
+	PartyIcon,
+	PartyMember,
+	PARTY_ICONS,
+} from '@/store/savedParties';
 import { PartyCard } from './PartyCard';
 import { PartyFormModal, PartyFormValues } from './PartyFormModal';
 import { Button } from '@/components/ui/button';
@@ -57,13 +62,17 @@ export function PartyDirectory() {
 			if (sortKey === 'size') return a.members.length - b.members.length;
 
 			if (sortKey === 'level') {
-				const minA = a.members.length > 0 ? Math.min(...a.members.map((m) => m.level)) : 0;
-				const minB = b.members.length > 0 ? Math.min(...b.members.map((m) => m.level)) : 0;
+				const minA =
+					a.members.length > 0 ? Math.min(...a.members.map((m) => m.level)) : 0;
+				const minB =
+					b.members.length > 0 ? Math.min(...b.members.map((m) => m.level)) : 0;
 
 				if (minA !== minB) return minA - minB;
 
-				const maxA = a.members.length > 0 ? Math.max(...a.members.map((m) => m.level)) : 0;
-				const maxB = b.members.length > 0 ? Math.max(...b.members.map((m) => m.level)) : 0;
+				const maxA =
+					a.members.length > 0 ? Math.max(...a.members.map((m) => m.level)) : 0;
+				const maxB =
+					b.members.length > 0 ? Math.max(...b.members.map((m) => m.level)) : 0;
 
 				return maxA - maxB;
 			}
@@ -144,7 +153,9 @@ export function PartyDirectory() {
 		const icon: PartyIcon = PARTY_ICONS.includes(raw.icon as PartyIcon)
 			? (raw.icon as PartyIcon)
 			: 'Users';
-		const members: PartyMember[] = (raw.members as Record<string, unknown>[]).map((m) => ({
+		const members: PartyMember[] = (
+			raw.members as Record<string, unknown>[]
+		).map((m) => ({
 			uuid: typeof m.uuid === 'string' ? m.uuid : generateUUID(),
 			name: typeof m.name === 'string' ? m.name : '',
 			level: typeof m.level === 'number' ? m.level : 1,
@@ -180,7 +191,14 @@ export function PartyDirectory() {
 				<Button onClick={() => setModal({ open: true, mode: 'create' })}>
 					New Party
 				</Button>
-				<Button variant="outline" onClick={() => { setImportError(null); setImportText(''); setImportOpen(true); }}>
+				<Button
+					variant="outline"
+					onClick={() => {
+						setImportError(null);
+						setImportText('');
+						setImportOpen(true);
+					}}
+				>
 					Import from JSON
 				</Button>
 			</div>
@@ -206,11 +224,13 @@ export function PartyDirectory() {
 				</Select>
 
 				<div className="ml-auto flex items-center gap-1 rounded-lg border bg-background p-1">
-					{([
-						{ key: 'list', Icon: LayoutList, label: 'List' },
-						{ key: 'grid', Icon: Grid2x2, label: 'Grid' },
-						{ key: 'big-grid', Icon: LayoutGrid, label: 'Large Grid' },
-					] as const).map(({ key, Icon, label }) => (
+					{(
+						[
+							{ key: 'list', Icon: LayoutList, label: 'List' },
+							{ key: 'grid', Icon: Grid2x2, label: 'Grid' },
+							{ key: 'big-grid', Icon: LayoutGrid, label: 'Large Grid' },
+						] as const
+					).map(({ key, Icon, label }) => (
 						<button
 							key={key}
 							type="button"
@@ -257,7 +277,12 @@ export function PartyDirectory() {
 			)}
 
 			{/* Import JSON Dialog */}
-		<Dialog open={importOpen} onOpenChange={(open) => { if (!open) setImportOpen(false); }}>
+			<Dialog
+				open={importOpen}
+				onOpenChange={(open) => {
+					if (!open) setImportOpen(false);
+				}}
+			>
 				<DialogContent className="max-w-lg">
 					<DialogHeader>
 						<DialogTitle>Import Party from JSON</DialogTitle>
@@ -287,7 +312,7 @@ export function PartyDirectory() {
 				</DialogContent>
 			</Dialog>
 
-		{/* Modal */}
+			{/* Modal */}
 			<PartyFormModal
 				open={modal.open}
 				onOpenChange={(open) => {

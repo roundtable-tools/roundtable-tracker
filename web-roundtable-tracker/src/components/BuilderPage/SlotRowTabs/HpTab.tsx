@@ -21,7 +21,13 @@ interface HpTabProps {
 	onRemove: () => void;
 }
 
-export function HpTab({ index, slot, slotType, control, onRemove }: HpTabProps) {
+export function HpTab({
+	index,
+	slot,
+	slotType,
+	control,
+	onRemove,
+}: HpTabProps) {
 	return (
 		<TabsContent value="hp" className="space-y-3 mt-3">
 			<div className="flex items-center justify-between gap-2 mb-3">

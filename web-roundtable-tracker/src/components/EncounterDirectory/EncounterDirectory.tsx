@@ -77,7 +77,7 @@ const summarizeParticipants = (participants?: StoreParticipant[]) =>
 	participants
 		? participants.reduce<string>((acc, participant) => {
 				return `${acc}${acc ? ', ' : ''}${participant.name}${participant.count ? ` (x${participant.count})` : ''}`;
-		  }, '')
+			}, '')
 		: '';
 
 const summarizeVariantInfo = (entry: EncounterDirectoryEntry) => {
@@ -101,7 +101,9 @@ const summarizeVariantInfo = (entry: EncounterDirectoryEntry) => {
 		return `${entry.templateVariantCount} template variants`;
 	}
 
-	return entry.templateVariantLabel ? `Variant ${entry.templateVariantLabel}` : 'Variant A';
+	return entry.templateVariantLabel
+		? `Variant ${entry.templateVariantLabel}`
+		: 'Variant A';
 };
 
 const directoryGlobalFilter: FilterFn<EncounterDirectoryEntry> = (
@@ -144,9 +146,8 @@ const partySizeFilter: FilterFn<EncounterDirectoryEntry> = (
 	return row.getValue<number>(columnId) === filterValue;
 };
 
-const toRelativeLevel = (
-	level: LevelDifference
-): `+${number}` | `-${number}` => level.toString() as `+${number}` | `-${number}`;
+const toRelativeLevel = (level: LevelDifference): `+${number}` | `-${number}` =>
+	level.toString() as `+${number}` | `-${number}`;
 
 const toDirectoryDifficulty = (tags?: string[]) => {
 	if (!tags || tags.length === 0) {
@@ -298,8 +299,12 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 	const { setView } = props;
 	const navigate = useNavigate();
 	const setEncounterData = useEncounterStore((state) => state.setEncounterData);
-	const savedEncounters = useSavedEncountersStore((state) => state.savedEncounters);
-	const removeEncounter = useSavedEncountersStore((state) => state.removeEncounter);
+	const savedEncounters = useSavedEncountersStore(
+		(state) => state.savedEncounters
+	);
+	const removeEncounter = useSavedEncountersStore(
+		(state) => state.removeEncounter
+	);
 	const [showTemplates, setShowTemplates] = useState(
 		getDefaultShowTemplates(savedEncounters.length)
 	);
@@ -355,7 +360,9 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			}),
 			columnHelper.accessor('name', {
 				header: 'Name',
-				cell: ({ getValue }) => <span className="font-medium">{getValue()}</span>,
+				cell: ({ getValue }) => (
+					<span className="font-medium">{getValue()}</span>
+				),
 			}),
 			columnHelper.accessor(
 				(row) => (Array.isArray(row.level) ? row.level[0] : row.level),
@@ -423,7 +430,10 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 		setView('builder');
 		const params: Record<string, string | null> = {};
 
-		if (selectedEncounterData?.source === 'saved' && selectedEncounterData?.id) {
+		if (
+			selectedEncounterData?.source === 'saved' &&
+			selectedEncounterData?.id
+		) {
 			params.encounterId = selectedEncounterData.id;
 		} else if (
 			selectedEncounterData?.source === 'template' &&
@@ -438,7 +448,9 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 
 		navigate({
 			to: '/builder',
-			search: Object.fromEntries(Object.entries(params).filter(([, v]) => v !== null)),
+			search: Object.fromEntries(
+				Object.entries(params).filter(([, v]) => v !== null)
+			),
 		});
 	};
 
@@ -465,15 +477,17 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 		getSortedRowModel: getSortedRowModel(),
 	});
 
-	const difficultyFilterValue = table.getColumn('difficultyLabel')?.getFilterValue() as
-		| string
-		| undefined;
-	const partySizeFilterValue = table.getColumn('partySize')?.getFilterValue() as
-		| number
-		| undefined;
+	const difficultyFilterValue = table
+		.getColumn('difficultyLabel')
+		?.getFilterValue() as string | undefined;
+	const partySizeFilterValue = table
+		.getColumn('partySize')
+		?.getFilterValue() as number | undefined;
 	const visibleRowCount = table.getRowModel().rows.length;
 	const hasActiveFilters = Boolean(
-		globalFilter || difficultyFilterValue !== undefined || partySizeFilterValue !== undefined
+		globalFilter ||
+		difficultyFilterValue !== undefined ||
+		partySizeFilterValue !== undefined
 	);
 
 	const deleteSelectedEncounter = () => {
@@ -490,22 +504,22 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 			<AppHeader setView={setView}>
 				<div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
 					<div className="flex items-center gap-2">
-					<Button
-						className="bg-white text-slate-900 hover:bg-white/90"
-						onClick={openBuilder}
-					>
-						<Plus className="h-4 w-4" />
-						New Encounter
-					</Button>
-					<Button
-						variant="ghost"
-						size="icon"
-						className="text-white hover:bg-white/10 hover:text-white"
-						onClick={() => setShowImportLayer(true)}
-					>
-						<Upload className="h-4 w-4" />
-						<span className="sr-only">Import Encounter</span>
-					</Button>
+						<Button
+							className="bg-white text-slate-900 hover:bg-white/90"
+							onClick={openBuilder}
+						>
+							<Plus className="h-4 w-4" />
+							New Encounter
+						</Button>
+						<Button
+							variant="ghost"
+							size="icon"
+							className="text-white hover:bg-white/10 hover:text-white"
+							onClick={() => setShowImportLayer(true)}
+						>
+							<Upload className="h-4 w-4" />
+							<span className="sr-only">Import Encounter</span>
+						</Button>
 					</div>
 					<div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
 						{savedEncounters.length > 0 ? (
@@ -570,7 +584,9 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 								<DropdownMenuSeparator />
 								<DropdownMenuLabel>Party Size</DropdownMenuLabel>
 								<DropdownMenuRadioGroup
-									value={partySizeFilterValue ? `${partySizeFilterValue}` : 'all'}
+									value={
+										partySizeFilterValue ? `${partySizeFilterValue}` : 'all'
+									}
 									onValueChange={(value) => {
 										table
 											.getColumn('partySize')
@@ -667,7 +683,11 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 				templateVariantId={selectedEncounterData?.templateVariantId}
 				onDelete={deleteSelectedEncounter}
 				submit={(encounter) => {
-					const data = encounter ?? (selectedEncounterData ? toEncounter(selectedEncounterData) : undefined);
+					const data =
+						encounter ??
+						(selectedEncounterData
+							? toEncounter(selectedEncounterData)
+							: undefined);
 
 					if (data) setEncounterData(data);
 					setSelected(undefined);

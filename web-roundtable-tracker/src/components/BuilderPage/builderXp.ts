@@ -6,11 +6,7 @@ import type { LevelAdjustment } from '@/models/utility/level/Level';
 import type { AccomplishmentLevel } from '@/models/encounters/encounter.types';
 import type { ParticipantDcEntry } from '@/store/data';
 
-export type SlotType =
-	| 'creature'
-	| 'hazard'
-	| 'reinforcement'
-	| 'narrative';
+export type SlotType = 'creature' | 'hazard' | 'reinforcement' | 'narrative';
 
 export type CanonicalSideType = 'opponent' | 'ally' | 'other';
 
@@ -139,11 +135,12 @@ export interface EncounterXpUsage {
 	simulation: EncounterThreatSimulation | null;
 }
 
-const DEFAULT_DELAYED_REINFORCEMENT_CONFIG: Required<DelayedReinforcementConfig> = {
-	attritionRate: 0.05,
-	maxRounds: 20,
-	basePartyOutputPerRound: 20,
-};
+const DEFAULT_DELAYED_REINFORCEMENT_CONFIG: Required<DelayedReinforcementConfig> =
+	{
+		attritionRate: 0.05,
+		maxRounds: 20,
+		basePartyOutputPerRound: 20,
+	};
 
 const ROUND_DIFF_THRESHOLD_BY_THREAT: Record<number, number> = {
 	0: 3,
@@ -207,12 +204,18 @@ function resolveCombatValuesBaseXp(
 		return null;
 	}
 
-	if (values.level === undefined || values.level === null || isNaN(values.level)) {
+	if (
+		values.level === undefined ||
+		values.level === null ||
+		isNaN(values.level)
+	) {
 		return null;
 	}
 
 	const countValue =
-		typeof values.count === 'number' && Number.isFinite(values.count) ? values.count : 1;
+		typeof values.count === 'number' && Number.isFinite(values.count)
+			? values.count
+			: 1;
 	const count = Math.max(0, countValue);
 
 	const adjustment: LevelAdjustment | undefined =
@@ -234,7 +237,10 @@ function resolveCombatValuesBaseXp(
 	return new ExperienceBudget(contribution);
 }
 
-function resolveSlotBaseXp(slot: BuilderSlot, partyLevel: number): ExperienceBudget | null {
+function resolveSlotBaseXp(
+	slot: BuilderSlot,
+	partyLevel: number
+): ExperienceBudget | null {
 	return resolveCombatValuesBaseXp(
 		{
 			side: slot.side,
@@ -289,7 +295,8 @@ function calculateWaveInteractionThreat(
 } {
 	const wave0RawXp = wave0Threat.toExpBudget(partySizeForCalc);
 	const roundDiffThreshold = getRoundDiffThreshold(wave0Threat.threat);
-	const affectsOtherWave = Boolean(wave1Threat) && roundDiff <= roundDiffThreshold;
+	const affectsOtherWave =
+		Boolean(wave1Threat) && roundDiff <= roundDiffThreshold;
 
 	if (!wave1Threat) {
 		return {
@@ -304,7 +311,10 @@ function calculateWaveInteractionThreat(
 			wave1Adjusted: null,
 			roundDiffThreshold,
 			affectsOtherWave: false,
-			effectiveThreat: Threat.fromExperienceBudget(effectiveXp, partySizeForCalc),
+			effectiveThreat: Threat.fromExperienceBudget(
+				effectiveXp,
+				partySizeForCalc
+			),
 		};
 	}
 
@@ -353,7 +363,11 @@ function simulateEncounterThreat(
 	const partyReductionPerRound =
 		config.basePartyOutputPerRound * (Math.max(1, partySize) / 4);
 
-	while (currentWave0 > 0 || currentWave1 > 0 || round <= normalizedArrivalRound) {
+	while (
+		currentWave0 > 0 ||
+		currentWave1 > 0 ||
+		round <= normalizedArrivalRound
+	) {
 		if (round === normalizedArrivalRound) {
 			currentWave1 = Math.max(0, wave1Xp);
 		}
@@ -366,7 +380,8 @@ function simulateEncounterThreat(
 			accumulatedAttrition = 0;
 		}
 
-		const newAttrition = (currentBaseThreat + accumulatedAttrition) * config.attritionRate;
+		const newAttrition =
+			(currentBaseThreat + accumulatedAttrition) * config.attritionRate;
 		pendingAttrition = newAttrition;
 
 		const totalExact = currentBaseThreat + accumulatedAttrition;
@@ -467,7 +482,9 @@ export function computeEncounterXpUsage(
 	const immediateSlots = slots.filter((slot) => slot.type !== 'reinforcement');
 	const immediateXp = computeBuilderXP(immediateSlots, partyLevel);
 
-	const reinforcementSlots = slots.filter((slot) => slot.type === 'reinforcement');
+	const reinforcementSlots = slots.filter(
+		(slot) => slot.type === 'reinforcement'
+	);
 	const rawReinforcementXp = reinforcementSlots.reduce((sum, slot) => {
 		const hasParticipantList = Array.isArray(slot.reinforcementParticipants);
 		const slotParticipants = hasParticipantList
@@ -498,7 +515,9 @@ export function computeEncounterXpUsage(
 	const rawXp = immediateXp.sum(rawReinforcementXp);
 	const hasSimulatedReinforcement = rawReinforcementXp.valueOf() > 0;
 	const reinforcementRound = reinforcementSlots.length
-		? Math.min(...reinforcementSlots.map((slot) => slot.reinforcementRound || 1))
+		? Math.min(
+				...reinforcementSlots.map((slot) => slot.reinforcementRound || 1)
+			)
 		: 1;
 
 	const simulation = hasSimulatedReinforcement
@@ -519,24 +538,25 @@ export function computeEncounterXpUsage(
 		? rawReinforcementXp
 		: new ExperienceBudget(0);
 
-	const waves: ReinforcementWaveBreakdown[] = reinforcementSlots.length > 0
-		? [
-				{
-					round: Math.max(1, Math.floor(reinforcementRound || 1)),
-					rawXp: rawReinforcementXp,
-					delayFactor: 1,
-					attritionFactor: 1,
-					effectiveXp: effectiveReinforcementXp,
-				},
-			]
-		: [];
+	const waves: ReinforcementWaveBreakdown[] =
+		reinforcementSlots.length > 0
+			? [
+					{
+						round: Math.max(1, Math.floor(reinforcementRound || 1)),
+						rawXp: rawReinforcementXp,
+						delayFactor: 1,
+						attritionFactor: 1,
+						effectiveXp: effectiveReinforcementXp,
+					},
+				]
+			: [];
 
 	const wave0Threat = Threat.fromExperienceBudget(immediateXp, partySize);
 	const wave1Threat =
 		rawReinforcementXp.valueOf() !== 0
 			? Threat.fromExperienceBudget(rawReinforcementXp, partySize)
 			: null;
-	const roundDiff = Math.max(0, (reinforcementRound - 1) || 0);
+	const roundDiff = Math.max(0, reinforcementRound - 1 || 0);
 	const waveInteractionData = calculateWaveInteractionThreat(
 		wave0Threat,
 		wave1Threat,

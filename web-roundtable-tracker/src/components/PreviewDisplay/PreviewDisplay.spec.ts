@@ -20,7 +20,8 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('@tanstack/react-router')>();
+	const actual =
+		await importOriginal<typeof import('@tanstack/react-router')>();
 
 	return {
 		...actual,
@@ -29,7 +30,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
 });
 
 vi.mock('@/store/encounterRuntimeInstance', () => ({
-	useEncounterStore: <T,>(selector: (state: typeof mocks.storeState) => T) =>
+	useEncounterStore: <T>(selector: (state: typeof mocks.storeState) => T) =>
 		selector(mocks.storeState),
 }));
 
@@ -128,7 +129,8 @@ describe('PreviewDisplay form defaulting path', () => {
 			maxHealth: 1,
 			tempHealth: 0,
 			...participantWithHealth,
-			health: participantWithHealth.health ?? participantWithHealth.maxHealth ?? 1,
+			health:
+				participantWithHealth.health ?? participantWithHealth.maxHealth ?? 1,
 		};
 
 		expect(formDefaults.health).toBe(45);
@@ -156,7 +158,10 @@ describe('PreviewDisplay form defaulting path', () => {
 			maxHealth: 1,
 			tempHealth: 0,
 			...participantPartialHealth,
-			health: participantPartialHealth.health ?? participantPartialHealth.maxHealth ?? 1,
+			health:
+				participantPartialHealth.health ??
+				participantPartialHealth.maxHealth ??
+				1,
 		};
 
 		expect(formDefaults.health).toBe(20);
