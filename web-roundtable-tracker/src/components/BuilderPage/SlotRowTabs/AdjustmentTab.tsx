@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Trash2 } from 'lucide-react';
 import type { BuilderSlot } from '../builderXp';
-import type { UseFormReturn } from 'react-hook-form';
+import type { UseFormReturn, UseFormSetValue } from 'react-hook-form';
 import type { BuilderFormValues } from '../builderConvert';
 import { LevelAdjustment } from '@/models/utility/level/Level';
 
@@ -33,7 +33,7 @@ const ADJUSTMENT_OPTIONS: { value: LevelAdjustment | 'none'; label: string }[] =
 interface AdjustmentTabProps {
 	index: number;
 	slot: BuilderSlot;
-	setValue: (path: string, value: any, options: any) => void;
+	setValue: UseFormSetValue<BuilderFormValues>;
 	control: UseFormReturn<BuilderFormValues>['control'];
 	onRemove: () => void;
 }

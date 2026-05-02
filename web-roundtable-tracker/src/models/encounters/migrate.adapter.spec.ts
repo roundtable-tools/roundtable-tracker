@@ -326,7 +326,7 @@ describe('Encounter Template Migration (Phase 0)', () => {
 		});
 
 		it('should generate UUIDs for missing IDs', () => {
-			const template = { ...edgeCaseTemplateFixture, id: undefined as any };
+			const template = { ...edgeCaseTemplateFixture, id: ''};
 			const migrated = migrateOldTemplate(template);
 			expect(migrated.id).toMatch(
 				/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i

@@ -1,4 +1,4 @@
-import { expect, afterEach, vi } from 'vitest';
+import { afterEach } from 'vitest';
 
 // Mock localStorage for test environment
 const localStorageMock = (() => {

@@ -35,7 +35,7 @@ function createTestTemplate(
 	const baseVariant = {
 		id: variantId,
 		partySize: 4,
-		participants: defaultParticipants || ([] as any[]),
+		participants: defaultParticipants || [],
 		events: [],
 		description: 'Base variant',
 	};
@@ -105,7 +105,7 @@ describe('EncounterTemplate Business Logic', () => {
 				variants: [],
 				defaultVariantId: 'nope',
 			};
-			expect(() => new EncounterTemplate(invalid as any)).toThrow();
+			expect(() => new EncounterTemplate(invalid)).toThrow();
 		});
 
 		it('should store validated data', () => {

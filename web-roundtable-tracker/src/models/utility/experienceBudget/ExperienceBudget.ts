@@ -146,8 +146,7 @@ export class ExperienceBudget extends Number {
 	};
 
 	static budgetToCharacterAdjustment = (
-		xpBudget: ExperienceBudget,
-		_partySize: number = 4
+		xpBudget: ExperienceBudget
 	): ExperienceBudget => {
 		return new ExperienceBudget(
 			ExperienceBudget.resolveCharacterAdjustmentValue(xpBudget.valueOf())

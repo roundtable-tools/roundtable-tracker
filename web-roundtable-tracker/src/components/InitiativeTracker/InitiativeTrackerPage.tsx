@@ -284,7 +284,6 @@ function getSideAccent(sideTheme: SideTheme) {
 			};
 
 		case 'ally':
-
 		default:
 			return {
 				badge: 'bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/40',

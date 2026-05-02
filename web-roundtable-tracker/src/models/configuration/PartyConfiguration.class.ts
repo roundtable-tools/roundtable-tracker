@@ -11,7 +11,7 @@ type Activity<
 	skill: Skill;
 };
 
-const ExplorationActivity = {
+export const ExplorationActivity = {
 	avoidNotice: {
 		label: 'Avoid Notice',
 		bonus: 'Hidden from enemies lower in the initiative order',

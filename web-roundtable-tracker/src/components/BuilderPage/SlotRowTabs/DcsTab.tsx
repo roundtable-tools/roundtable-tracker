@@ -22,6 +22,8 @@ import {
 import type { BuilderSlot } from '../builderXp';
 import type { ParticipantDcEntry } from '@/store/data';
 import { PARTICIPANT_DC_ICON_KEYS } from '@/store/data';
+import { UseFormSetValue } from 'react-hook-form';
+import { BuilderFormValues } from '../builderConvert';
 
 const DC_ICON_OPTIONS = PARTICIPANT_DC_ICON_KEYS.map((key) => ({
 	value: key,
@@ -130,7 +132,7 @@ interface DcsTabProps {
 	index: number;
 	slot: BuilderSlot;
 	slotType: string;
-	setValue: (path: string, value: any, options: any) => void;
+	setValue: UseFormSetValue<BuilderFormValues>;
 	onRemove: () => void;
 }
 

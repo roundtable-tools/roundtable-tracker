@@ -34,6 +34,7 @@ export default tseslint.config(
         "error",
         { blankLine: "always", prev: ["case", "default"], next: "*" },
         { blankLine: "always", prev: "*", next: ["case", "default"] },
+        { "blankLine": "any", "prev": "case", "next": ["case", "default"] },
         {
           blankLine: "any",
           prev: ["const", "let", "var"],

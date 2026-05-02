@@ -2002,7 +2002,7 @@ export function SlotRow({
 									index={index}
 									slot={slot}
 									slotType={slotType}
-									setValue={setValue as any}
+									setValue={setValue}
 									onRemove={() => {
 										setValue(`slots.${index}.dcs`, [], {
 											shouldDirty: true,
@@ -2093,7 +2093,7 @@ export function SlotRow({
 									<AdjustmentTab
 										index={index}
 										slot={slot}
-										setValue={setValue as any}
+										setValue={setValue}
 										control={control}
 										onRemove={() => {
 											setValue(`slots.${index}.adjustment`, 'none', {
@@ -2136,7 +2136,7 @@ export function SlotRow({
 								<TraitsTab
 									index={index}
 									slot={slot}
-									setValue={setValue as any}
+									setValue={setValue}
 									onRemove={() => {
 										setValue(`slots.${index}.traits`, [], {
 											shouldDirty: true,
