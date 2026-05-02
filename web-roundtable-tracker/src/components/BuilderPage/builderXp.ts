@@ -498,7 +498,7 @@ export function computeEncounterXpUsage(
 			return sum.sum(legacyContribution);
 		}
 
-		const slotContribution = slotParticipants.reduce(
+		const slotContribution = slotParticipants?.reduce(
 			(participantSum, participant) => {
 				const contribution =
 					resolveReinforcementParticipantXp(participant, partyLevel) ??
@@ -509,7 +509,7 @@ export function computeEncounterXpUsage(
 			new ExperienceBudget(0)
 		);
 
-		return sum.sum(slotContribution);
+		return slotContribution != undefined ? sum.sum(slotContribution) : sum;
 	}, new ExperienceBudget(0));
 
 	const rawXp = immediateXp.sum(rawReinforcementXp);

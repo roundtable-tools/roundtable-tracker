@@ -310,7 +310,7 @@ export function toConcreteEncounter(
 			},
 			participants:
 				s.type === 'reinforcement'
-					? s.reinforcementParticipants.map((participant) => {
+					? s.reinforcementParticipants?.map((participant) => {
 							const side = builderSideToAlignment(participant.side);
 
 							if (participant.type === 'hazard') {
