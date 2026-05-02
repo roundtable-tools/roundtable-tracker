@@ -243,7 +243,7 @@ export type InitiativeParticipant = {
 	uuid: string;
 	tiePriority: Priority;
 	initiative?: number;
-	isSimpleHazard: boolean;
+	isSimpleHazard?: boolean;
 	level: number;
 } & Omit<Creature<typeof LEVEL_REPRESENTATION.Exact>, "type" | "adjustment"> & {
 	adjustment?: ParticipantAdjustment;
@@ -259,6 +259,7 @@ export type ConcreteEncounterVariant = {
 type EncounterTemplateVariant = {
 	difficulty?: Difficulty;
 	partySize?: number;
+	level?: number;
 	description: string; // Description of external conditions that trigger the variant
 	participants: Participant<typeof LEVEL_REPRESENTATION.Relative>[];
 };

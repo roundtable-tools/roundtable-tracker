@@ -110,7 +110,10 @@ describe('Encounter Template Migration (Phase 0)', () => {
         simpleTemplateFixture.name,
         migrated,
       );
-      expect(validation.passed).toBe(true, () => `Validation errors: ${validation.errors.join(', ')}`);
+      expect(validation.passed).toBe(
+        true, 
+        //() => `Validation errors: ${validation.errors.join(', ')}`
+      );
     });
 
     it('should have one base variant', () => {
@@ -277,7 +280,7 @@ describe('Encounter Template Migration (Phase 0)', () => {
         const result = EncounterTemplateDataSchema.safeParse(template);
         expect(result.success).toBe(
           true,
-          `Template ${template.id} failed validation: ${result.success ? '' : result.error?.issues.map((i) => i.message).join(', ')}`,
+          //`Template ${template.id} failed validation: ${result.success ? '' : result.error?.issues.map((i) => i.message).join(', ')}`,
         );
       });
     });
@@ -301,7 +304,10 @@ describe('Encounter Template Migration (Phase 0)', () => {
       allFixtures.forEach((fixture) => {
         const migrated = migrateOldTemplate(fixture);
         const hasDefault = migrated.variants.some((v) => v.id === migrated.defaultVariantId);
-        expect(hasDefault).toBe(true, `Template ${fixture.id} has invalid defaultVariantId`);
+        expect(hasDefault).toBe(
+          true, 
+          //`Template ${fixture.id} has invalid defaultVariantId`
+        );
       });
     });
 

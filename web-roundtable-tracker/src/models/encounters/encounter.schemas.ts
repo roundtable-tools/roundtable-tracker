@@ -26,7 +26,13 @@ export const AccomplishmentLevelSchema = z
 // Participant Schemas
 // ============================================================================
 
-const LevelDifferenceSchema: z.ZodType<LevelDifference> = z
+type LevelDifferenceInput = LevelDifference | number | { value: number };
+
+const LevelDifferenceSchema: z.ZodType<
+  LevelDifference,
+  z.ZodTypeDef,
+  LevelDifferenceInput
+> = z
   .union([
     z.instanceof(LevelDifference),
     z.number().int(),

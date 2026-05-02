@@ -2,9 +2,18 @@ import { describe, it, expect } from 'vitest';
 import { v4 as uuidV4 } from 'uuid';
 import { EncounterTemplate } from './EncounterTemplate';
 import { EncounterTemplateData, CreatureParticipant, HazardParticipant } from './encounter.types';
-import { ExperienceBudget } from '../utility/experienceBudget/ExperienceBudget';
 import { ALIGNMENT } from '@/store/data';
 import { LevelDifference } from '../utility/level/LevelDifference';
+
+type RelativeLevelInput = LevelDifference | number;
+
+type CreatureParticipantInput = Omit<CreatureParticipant, 'relativeLevel'> & {
+  relativeLevel: RelativeLevelInput;
+};
+
+type HazardParticipantInput = Omit<HazardParticipant, 'relativeLevel'> & {
+  relativeLevel: RelativeLevelInput;
+};
 
 /**
  * Helper to create test templates easily
@@ -35,31 +44,41 @@ function createTestTemplate(overrides?: Partial<EncounterTemplateData>): Encount
 }
 
 function createCreature(
-  overrides?: Partial<CreatureParticipant>,
+  overrides?: Partial<CreatureParticipantInput>,
 ): CreatureParticipant {
+  const { relativeLevel, ...rest } = overrides ?? {};
+
   return {
     id: uuidV4(),
     type: 'creature',
     count: 1,
-    relativeLevel: new LevelDifference(0),
+    relativeLevel:
+      relativeLevel instanceof LevelDifference
+        ? relativeLevel
+        : new LevelDifference(relativeLevel ?? 0),
     side: ALIGNMENT.Opponents,
     role: 'opponent',
-    ...overrides,
+    ...rest,
   };
 }
 
 function createHazard(
-  overrides?: Partial<HazardParticipant>,
+  overrides?: Partial<HazardParticipantInput>,
 ): HazardParticipant {
+  const { relativeLevel, ...rest } = overrides ?? {};
+
   return {
     id: uuidV4(),
     type: 'hazard',
     count: 1,
-    relativeLevel: new LevelDifference(0),
+    relativeLevel:
+      relativeLevel instanceof LevelDifference
+        ? relativeLevel
+        : new LevelDifference(relativeLevel ?? 0),
     side: ALIGNMENT.Opponents,
     role: 'complex',
     successesToDisable: 2,
-    ...overrides,
+    ...rest,
   };
 }
 
