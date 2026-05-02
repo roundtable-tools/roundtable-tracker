@@ -93,6 +93,7 @@ export class PartyConfiguration {
 	}
 	get partyLevelAverage(): number {
 		if (this.partySize === 0) return 0;
+		
 		return (
 			this.party.reduce(
 				(acc, character) => acc + character.level.valueOf(),
