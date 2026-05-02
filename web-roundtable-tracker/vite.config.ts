@@ -9,7 +9,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://vite.dev/config/
 const config: UserConfig & { test: InlineConfig } = {
-	// base: '/roundtable-tracker/',
+	base: '/roundtable-tracker/',
 	plugins: [
 		tailwindcss(),
 		tsconfigPaths(),
