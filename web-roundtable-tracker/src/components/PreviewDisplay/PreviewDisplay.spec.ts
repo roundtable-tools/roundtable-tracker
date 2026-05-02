@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => ({
 		partyLevel: 3,
 		startEncounter: vi.fn(),
 		encounterData: undefined,
-	} satisfies PreviewStoreState,
+	} as PreviewStoreState,
 }));
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -182,6 +182,8 @@ describe('PreviewDisplay form defaulting path', () => {
 			difficulty: DIFFICULTY.Severe,
 			partySize: 2,
 			level: 3,
+			id: '',
+			levelRepresentation: 1,
 			participants: [
 				{
 					type: 'creature',
