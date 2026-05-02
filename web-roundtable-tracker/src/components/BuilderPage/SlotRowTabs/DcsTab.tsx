@@ -21,9 +21,9 @@ import {
 } from 'lucide-react';
 import type { BuilderSlot } from '../builderXp';
 import type { ParticipantDcEntry } from '@/store/data';
+import type { UseFormSetValue } from 'react-hook-form';
+import type { BuilderFormValues } from '../builderConvert';
 import { PARTICIPANT_DC_ICON_KEYS } from '@/store/data';
-import { UseFormSetValue } from 'react-hook-form';
-import { BuilderFormValues } from '../builderConvert';
 
 const DC_ICON_OPTIONS = PARTICIPANT_DC_ICON_KEYS.map((key) => ({
 	value: key,

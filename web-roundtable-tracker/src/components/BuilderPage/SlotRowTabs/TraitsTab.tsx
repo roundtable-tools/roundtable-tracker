@@ -45,6 +45,14 @@ function getTraitColor(trait: string): TraitCategory['color'] {
 	return 'red';
 }
 
+const TRAIT_COLOR_CLASSES: Record<TraitCategory['color'], string> = {
+	blue: 'bg-blue-500 text-white',
+	orange: 'bg-orange-500 text-white',
+	purple: 'bg-purple-500 text-white',
+	green: 'bg-green-500 text-white',
+	red: 'bg-red-500 text-white',
+};
+
 interface TraitsTabProps {
 	index: number;
 	slot: BuilderSlot;
@@ -91,7 +99,7 @@ export function TraitsTab({ index, slot, setValue, onRemove }: TraitsTabProps) {
 						<Badge
 							key={`trait-${index}-${traitIndex}`}
 							variant="outline"
-							className={`cursor-pointer bg-${getTraitColor(trait)}`}
+							className={`cursor-pointer ${TRAIT_COLOR_CLASSES[getTraitColor(trait)]}`}
 							onClick={() => {
 								const nextTraits = (slot.traits ?? []).filter(
 									(_, idx) => idx !== traitIndex
