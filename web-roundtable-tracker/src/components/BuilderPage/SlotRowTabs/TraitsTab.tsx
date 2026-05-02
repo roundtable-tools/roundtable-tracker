@@ -35,9 +35,7 @@ const TRAIT_CATEGORIES: TraitCategory[] = [
 	},
 ];
 
-function getTraitColor(
-	trait: string
-): TraitCategory["color"] {
+function getTraitColor(trait: string): TraitCategory['color'] {
 	for (const category of TRAIT_CATEGORIES) {
 		if (category.traits.includes(trait)) {
 			return category.color;
@@ -92,7 +90,7 @@ export function TraitsTab({ index, slot, setValue, onRemove }: TraitsTabProps) {
 					{(slot.traits ?? []).map((trait, traitIndex) => (
 						<Badge
 							key={`trait-${index}-${traitIndex}`}
-							variant='outline'
+							variant="outline"
 							className={`cursor-pointer background-${getTraitColor(trait)}`}
 							onClick={() => {
 								const nextTraits = (slot.traits ?? []).filter(

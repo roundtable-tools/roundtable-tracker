@@ -80,7 +80,7 @@ function migrateParticipant(oldParticipant: OldParticipant): Participant {
 
 		default:
 			throw new Error(
-				`Unknown participant type: ${(oldParticipant as unknown as {type:unknown}).type}`
+				`Unknown participant type: ${(oldParticipant as unknown as { type: unknown }).type}`
 			);
 	}
 }
@@ -89,16 +89,25 @@ function migrateParticipant(oldParticipant: OldParticipant): Participant {
  * Migrate a single variant.
  */
 function migrateVariant(
-	oldVariant: Record<string,unknown>,
+	oldVariant: Record<string, unknown>,
 	partySize: number,
 	defaultParticipants: OldParticipant[]
 ): EncounterVariant {
-	const participantsToMigrate = (oldVariant?.participants instanceof Array) ? oldVariant?.participants : defaultParticipants;
+	const participantsToMigrate =
+		oldVariant?.participants instanceof Array
+			? oldVariant?.participants
+			: defaultParticipants;
 
 	return {
 		id: uuidV4(),
-		partySize: (oldVariant?.partySize instanceof Number) ? oldVariant?.partySize as number: partySize,
-		description: (oldVariant?.description instanceof String) ? oldVariant?.description as string : 'Default variant',
+		partySize:
+			oldVariant?.partySize instanceof Number
+				? (oldVariant?.partySize as number)
+				: partySize,
+		description:
+			oldVariant?.description instanceof String
+				? (oldVariant?.description as string)
+				: 'Default variant',
 		participants: participantsToMigrate.map(migrateParticipant),
 		events: [],
 	};
