@@ -17,7 +17,6 @@ Roundtable Tracker is a tool designed to help manage encounters and track charac
 This repository is a monorepo containing the following workspaces:
 
 - **`web-roundtable-tracker`**: The web application built with React and Vite.
-- **`native-roundtable-tracker`**: The native application built with Expo.
 
 ## Prerequisites 📋
 
@@ -64,10 +63,6 @@ This repository is a monorepo containing the following workspaces:
   ```bash
   yarn workspace web-roundtable-tracker test
   ```
-- Run tests for the native application:
-  ```bash
-  yarn workspace native-roundtable-tracker test
-  ```
 
 ### Repository Validation
 
@@ -82,11 +77,6 @@ This repository is a monorepo containing the following workspaces:
 
   ```bash
   yarn workspace web-roundtable-tracker build
-  ```
-
-- Build the native application:
-  ```bash
-  yarn workspace native-roundtable-tracker build
   ```
 
 ## Deployment 🌐📱
