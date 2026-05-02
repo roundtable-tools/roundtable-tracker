@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { useSavedPartiesStore } from '@/store/savedPartiesInstance';
 import { Party, PartyIcon, PartyMember, PARTY_ICONS } from '@/store/savedParties';
 import { PartyCard } from './PartyCard';

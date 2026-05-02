@@ -49,7 +49,7 @@ export function CombatReadyTab({ index, slot, control, onRemove }: CombatReadyTa
 					render={({ field }) => (
 						<FormItem className="space-y-1">
 							<FormLabel>Combat Ready State</FormLabel>
-							<Select value={field.value ?? 'active'} onValueChange={field.onChange}>
+							<Select value={field.value ?? slot.combatReadyState ?? 'active'} onValueChange={field.onChange}>
 								<FormControl>
 									<SelectTrigger>
 										<SelectValue />

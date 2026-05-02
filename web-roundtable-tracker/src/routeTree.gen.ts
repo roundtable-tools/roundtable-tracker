@@ -8,150 +8,79 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-// Import Routes
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as PreviewRouteImport } from './routes/preview'
+import { Route as Party_setupRouteImport } from './routes/party_setup'
+import { Route as Initiative_trackerRouteImport } from './routes/initiative_tracker'
+import { Route as Initiative_playerRouteImport } from './routes/initiative_player'
+import { Route as EncountersRouteImport } from './routes/encounters'
+import { Route as BuilderRouteImport } from './routes/builder'
+import { Route as IndexRouteImport } from './routes/index'
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as PreviewImport } from './routes/preview'
-import { Route as PartysetupImport } from './routes/party_setup'
-import { Route as InitiativetrackerImport } from './routes/initiative_tracker'
-import { Route as InitiativeplayerImport } from './routes/initiative_player'
-import { Route as EncountersImport } from './routes/encounters'
-import { Route as BuilderImport } from './routes/builder'
-import { Route as IndexImport } from './routes/index'
-
-// Create/Update Routes
-
-const PreviewRoute = PreviewImport.update({
+const PreviewRoute = PreviewRouteImport.update({
   id: '/preview',
   path: '/preview',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const PartysetupRoute = PartysetupImport.update({
+const Party_setupRoute = Party_setupRouteImport.update({
   id: '/party_setup',
   path: '/party_setup',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const InitiativetrackerRoute = InitiativetrackerImport.update({
+const Initiative_trackerRoute = Initiative_trackerRouteImport.update({
   id: '/initiative_tracker',
   path: '/initiative_tracker',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const InitiativeplayerRoute = InitiativeplayerImport.update({
+const Initiative_playerRoute = Initiative_playerRouteImport.update({
   id: '/initiative_player',
   path: '/initiative_player',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const EncountersRoute = EncountersImport.update({
+const EncountersRoute = EncountersRouteImport.update({
   id: '/encounters',
   path: '/encounters',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const BuilderRoute = BuilderImport.update({
+const BuilderRoute = BuilderRouteImport.update({
   id: '/builder',
   path: '/builder',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const IndexRoute = IndexImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-// Populate the FileRoutesByPath interface
-
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/builder': {
-      id: '/builder'
-      path: '/builder'
-      fullPath: '/builder'
-      preLoaderRoute: typeof BuilderImport
-      parentRoute: typeof rootRoute
-    }
-    '/encounters': {
-      id: '/encounters'
-      path: '/encounters'
-      fullPath: '/encounters'
-      preLoaderRoute: typeof EncountersImport
-      parentRoute: typeof rootRoute
-    }
-    '/initiative_player': {
-      id: '/initiative_player'
-      path: '/initiative_player'
-      fullPath: '/initiative_player'
-      preLoaderRoute: typeof InitiativeplayerImport
-      parentRoute: typeof rootRoute
-    }
-    '/initiative_tracker': {
-      id: '/initiative_tracker'
-      path: '/initiative_tracker'
-      fullPath: '/initiative_tracker'
-      preLoaderRoute: typeof InitiativetrackerImport
-      parentRoute: typeof rootRoute
-    }
-    '/party_setup': {
-      id: '/party_setup'
-      path: '/party_setup'
-      fullPath: '/party_setup'
-      preLoaderRoute: typeof PartysetupImport
-      parentRoute: typeof rootRoute
-    }
-    '/preview': {
-      id: '/preview'
-      path: '/preview'
-      fullPath: '/preview'
-      preLoaderRoute: typeof PreviewImport
-      parentRoute: typeof rootRoute
-    }
-  }
-}
-
-// Create and export the route tree
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/encounters': typeof EncountersRoute
-  '/initiative_player': typeof InitiativeplayerRoute
-  '/initiative_tracker': typeof InitiativetrackerRoute
-  '/party_setup': typeof PartysetupRoute
+  '/initiative_player': typeof Initiative_playerRoute
+  '/initiative_tracker': typeof Initiative_trackerRoute
+  '/party_setup': typeof Party_setupRoute
   '/preview': typeof PreviewRoute
 }
-
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/encounters': typeof EncountersRoute
-  '/initiative_player': typeof InitiativeplayerRoute
-  '/initiative_tracker': typeof InitiativetrackerRoute
-  '/party_setup': typeof PartysetupRoute
+  '/initiative_player': typeof Initiative_playerRoute
+  '/initiative_tracker': typeof Initiative_trackerRoute
+  '/party_setup': typeof Party_setupRoute
   '/preview': typeof PreviewRoute
 }
-
 export interface FileRoutesById {
-  __root__: typeof rootRoute
+  __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
   '/encounters': typeof EncountersRoute
-  '/initiative_player': typeof InitiativeplayerRoute
-  '/initiative_tracker': typeof InitiativetrackerRoute
-  '/party_setup': typeof PartysetupRoute
+  '/initiative_player': typeof Initiative_playerRoute
+  '/initiative_tracker': typeof Initiative_trackerRoute
+  '/party_setup': typeof Party_setupRoute
   '/preview': typeof PreviewRoute
 }
-
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
@@ -182,67 +111,79 @@ export interface FileRouteTypes {
     | '/preview'
   fileRoutesById: FileRoutesById
 }
-
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BuilderRoute: typeof BuilderRoute
   EncountersRoute: typeof EncountersRoute
-  InitiativeplayerRoute: typeof InitiativeplayerRoute
-  InitiativetrackerRoute: typeof InitiativetrackerRoute
-  PartysetupRoute: typeof PartysetupRoute
+  Initiative_playerRoute: typeof Initiative_playerRoute
+  Initiative_trackerRoute: typeof Initiative_trackerRoute
+  Party_setupRoute: typeof Party_setupRoute
   PreviewRoute: typeof PreviewRoute
+}
+
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/preview': {
+      id: '/preview'
+      path: '/preview'
+      fullPath: '/preview'
+      preLoaderRoute: typeof PreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/party_setup': {
+      id: '/party_setup'
+      path: '/party_setup'
+      fullPath: '/party_setup'
+      preLoaderRoute: typeof Party_setupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/initiative_tracker': {
+      id: '/initiative_tracker'
+      path: '/initiative_tracker'
+      fullPath: '/initiative_tracker'
+      preLoaderRoute: typeof Initiative_trackerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/initiative_player': {
+      id: '/initiative_player'
+      path: '/initiative_player'
+      fullPath: '/initiative_player'
+      preLoaderRoute: typeof Initiative_playerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/encounters': {
+      id: '/encounters'
+      path: '/encounters'
+      fullPath: '/encounters'
+      preLoaderRoute: typeof EncountersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/builder': {
+      id: '/builder'
+      path: '/builder'
+      fullPath: '/builder'
+      preLoaderRoute: typeof BuilderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+  }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BuilderRoute: BuilderRoute,
   EncountersRoute: EncountersRoute,
-  InitiativeplayerRoute: InitiativeplayerRoute,
-  InitiativetrackerRoute: InitiativetrackerRoute,
-  PartysetupRoute: PartysetupRoute,
+  Initiative_playerRoute: Initiative_playerRoute,
+  Initiative_trackerRoute: Initiative_trackerRoute,
+  Party_setupRoute: Party_setupRoute,
   PreviewRoute: PreviewRoute,
 }
-
-export const routeTree = rootRoute
+export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/",
-        "/builder",
-        "/encounters",
-        "/initiative_player",
-        "/initiative_tracker",
-        "/party_setup",
-        "/preview"
-      ]
-    },
-    "/": {
-      "filePath": "index.tsx"
-    },
-    "/builder": {
-      "filePath": "builder.tsx"
-    },
-    "/encounters": {
-      "filePath": "encounters.tsx"
-    },
-    "/initiative_player": {
-      "filePath": "initiative_player.tsx"
-    },
-    "/initiative_tracker": {
-      "filePath": "initiative_tracker.tsx"
-    },
-    "/party_setup": {
-      "filePath": "party_setup.tsx"
-    },
-    "/preview": {
-      "filePath": "preview.tsx"
-    }
-  }
-}
-ROUTE_MANIFEST_END */

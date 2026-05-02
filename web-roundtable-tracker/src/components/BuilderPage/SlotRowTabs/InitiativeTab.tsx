@@ -45,7 +45,7 @@ export function InitiativeTab({ index, slot, control, onRemove }: InitiativeTabP
 							<FormControl>
 								<Input
 									type="number"
-									value={field.value ?? ''}
+									value={field.value ?? slot.initiativeBonus ?? ''}
 									onChange={(event) => {
 										const value = event.target.value;
 										field.onChange(value === '' ? undefined : Number(value));

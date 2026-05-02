@@ -1,7 +1,7 @@
 import { useRouter, Link, useMatchRoute } from '@tanstack/react-router';
 import * as React from 'react';
 
-import { FileRoutesByFullPath } from 'src/routeTree.gen';
+import { FileRoutesByFullPath } from '@/routeTree.gen';
 
 import {
 	Sidebar,
@@ -14,7 +14,7 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarRail,
-} from 'src/components/ui/sidebar';
+} from '@/components/ui/sidebar';
 
 function MenuItem({
 	item,

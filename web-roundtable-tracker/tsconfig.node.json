@@ -21,11 +21,10 @@
 		"noUncheckedSideEffectImports": true,
 		"allowUnusedLabels": true,
 
-		"baseUrl": "./",
 		"paths": {
 			"@/*": ["./src/*"]
 		},
 		"jsx": "react-jsx"
 	},
-	"include": ["vite.config.ts", "src/**/*"]
+	"include": ["vite.config.ts"]
 }

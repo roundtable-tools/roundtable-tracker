@@ -15,7 +15,7 @@ const mocks = vi.hoisted(() => ({
 	storeState: {
 		partyLevel: 3,
 		startEncounter: vi.fn(),
-		encounterData: undefined,
+		encounterData: {},
 	},
 }));
 
@@ -41,7 +41,7 @@ describe('PreviewDisplay form defaulting path', () => {
 		mocks.startEncounterSpy.mockReset();
 		mocks.storeState.partyLevel = 3;
 		mocks.storeState.startEncounter = mocks.startEncounterSpy;
-		mocks.storeState.encounterData = undefined;
+		mocks.storeState.encounterData = {};
 	});
 
 	it('materializes form defaults for initiative participants missing health fields', () => {
