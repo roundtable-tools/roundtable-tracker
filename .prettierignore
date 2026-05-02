@@ -1,0 +1,2 @@
+# Ignore the TanStack Router generated tree
+routeTree.gen.ts

@@ -136,7 +136,7 @@ export const generateParticipants = (
 		.flatMap((slot) => slot.participants ?? []);
 
 	const allParticipants = [
-		...encounterData.participants,
+		...(encounterData.participants ?? []),
 		...reinforcementParticipants,
 	];
 

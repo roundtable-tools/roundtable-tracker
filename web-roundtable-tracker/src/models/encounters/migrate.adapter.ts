@@ -101,11 +101,11 @@ function migrateVariant(
 	return {
 		id: uuidV4(),
 		partySize:
-			oldVariant?.partySize instanceof Number
+			typeof oldVariant?.partySize === 'number'
 				? (oldVariant?.partySize as number)
 				: partySize,
 		description:
-			oldVariant?.description instanceof String
+			typeof oldVariant?.description === 'string'
 				? (oldVariant?.description as string)
 				: 'Default variant',
 		participants: participantsToMigrate.map(migrateParticipant),

@@ -66,7 +66,7 @@ export interface BuilderSlot {
 	adjustmentLevelModifier?: number;
 	isSimpleHazard: boolean;
 	reinforcementRound: number;
-	reinforcementParticipants: BuilderReinforcementParticipant[];
+	reinforcementParticipants?: BuilderReinforcementParticipant[];
 	eventRound: number;
 	repeatInterval?: number;
 	accomplishmentLevel?: AccomplishmentLevel;

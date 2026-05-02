@@ -8,6 +8,12 @@ import {
 	PRIORITY,
 	InitiativeParticipant,
 } from '@/store/data';
+import type { EncounterStore } from '@/store/encounterRuntimeStore';
+
+type PreviewStoreState = Pick<
+	EncounterStore,
+	'partyLevel' | 'startEncounter' | 'encounterData'
+>;
 
 const mocks = vi.hoisted(() => ({
 	navigateSpy: vi.fn(),
@@ -15,8 +21,8 @@ const mocks = vi.hoisted(() => ({
 	storeState: {
 		partyLevel: 3,
 		startEncounter: vi.fn(),
-		encounterData: {},
-	},
+		encounterData: undefined,
+	} satisfies PreviewStoreState,
 }));
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
@@ -42,7 +48,7 @@ describe('PreviewDisplay form defaulting path', () => {
 		mocks.startEncounterSpy.mockReset();
 		mocks.storeState.partyLevel = 3;
 		mocks.storeState.startEncounter = mocks.startEncounterSpy;
-		mocks.storeState.encounterData = {};
+		mocks.storeState.encounterData = undefined;
 	});
 
 	it('materializes form defaults for initiative participants missing health fields', () => {
@@ -233,8 +239,8 @@ describe('PreviewDisplay form defaulting path', () => {
 
 		expect(participants).toHaveLength(1);
 		expect(participants[0]).toHaveLength(2);
-		expect(participants[0][0]?.name).toBe('Enemy A');
-		expect(participants[0][1]?.name).toBe('Enemy B');
+		expect(participants[0][0]?.name).toBe('Opponent A');
+		expect(participants[0][1]?.name).toBe('Opponent B');
 	});
 
 	it('renders nothing when encounter data is absent', () => {
