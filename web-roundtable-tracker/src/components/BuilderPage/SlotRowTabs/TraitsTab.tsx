@@ -4,8 +4,8 @@ import { TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Trash2 } from 'lucide-react';
 import type { BuilderSlot } from '../builderXp';
-import { UseFormSetValue } from 'react-hook-form';
-import { BuilderFormValues } from '../builderConvert';
+import type { UseFormSetValue } from 'react-hook-form';
+import type { BuilderFormValues } from '../builderConvert';
 
 interface TraitCategory {
 	color: 'blue' | 'orange' | 'purple' | 'green' | 'red';
@@ -91,7 +91,7 @@ export function TraitsTab({ index, slot, setValue, onRemove }: TraitsTabProps) {
 						<Badge
 							key={`trait-${index}-${traitIndex}`}
 							variant="outline"
-							className={`cursor-pointer background-${getTraitColor(trait)}`}
+							className={`cursor-pointer bg-${getTraitColor(trait)}`}
 							onClick={() => {
 								const nextTraits = (slot.traits ?? []).filter(
 									(_, idx) => idx !== traitIndex

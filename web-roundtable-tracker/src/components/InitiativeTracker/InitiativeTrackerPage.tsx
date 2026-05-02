@@ -1797,7 +1797,7 @@ export function InitiativeTrackerPage() {
 									)}
 									{hasHazards && (
 										<TabsTrigger value="hazards" className="whitespace-normal">
-											Hazards
+											Simple Hazards
 										</TabsTrigger>
 									)}
 								</TabsList>
