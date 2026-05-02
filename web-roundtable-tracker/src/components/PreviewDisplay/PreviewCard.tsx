@@ -111,7 +111,7 @@ export const PreviewCard = (props: InitiativeCardProps) => {
 			<CardContent className="grid gap-3 px-4 py-4 sm:px-5">
 				{props.participants.map((participant, index) => {
 					const showHealthFields = participant.hasHealthData !== false;
-					const showInitiativeField = participant.isSimpleHazard == false; // Simple hazards don't have initiative
+					const showInitiativeField = participant.isSimpleHazard != true; // Simple hazards don't have initiative
 					const nameFieldState = getFieldState(
 						`teams.${teamIndex}.characters.${index}.name`
 					);
