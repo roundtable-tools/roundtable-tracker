@@ -121,12 +121,15 @@ export function PartyDirectory() {
 	const handleImportJson = () => {
 		setImportError(null);
 		let parsed: unknown;
+
 		try {
 			parsed = JSON.parse(importText);
 		} catch {
 			setImportError('Invalid JSON. Please check your input.');
+
 			return;
 		}
+
 		if (
 			typeof parsed !== 'object' ||
 			parsed === null ||
@@ -134,6 +137,7 @@ export function PartyDirectory() {
 			!Array.isArray((parsed as Record<string, unknown>).members)
 		) {
 			setImportError('JSON must have a "name" string and "members" array.');
+
 			return;
 		}
 		const raw = parsed as Record<string, unknown>;

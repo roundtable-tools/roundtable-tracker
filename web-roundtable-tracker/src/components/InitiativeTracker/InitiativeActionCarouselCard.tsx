@@ -209,9 +209,12 @@ export function InitiativeActionCarouselCard({
 		switch (true) {
 			case canUseDelayAction && swipeOffset <= -swipeSnapPx:
 				triggerActionWithSlide(delaySideAction);
+
 				return;
+
 			case swipeOffset >= swipeSnapPx:
 				triggerActionWithSlide(koSideAction);
+
 				return;
 		}
 		setSwipeOffset(0);

@@ -1,4 +1,4 @@
-import { createElement, type ComponentType } from 'react';
+import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DIFFICULTY, LEVEL_REPRESENTATION, ALIGNMENT, type Encounter } from '@/store/data';
@@ -76,7 +76,7 @@ describe('EncounterCard imported encounter actions', () => {
 
 	it('shows Load to Editor for imported exact encounters', () => {
 		const html = renderToStaticMarkup(
-			createElement(EncounterCard as ComponentType<typeof EncounterCard>, {
+			createElement(EncounterCard, {
 				selectedEncounter: importedEncounter,
 				submit: vi.fn(),
 				close: vi.fn(),
@@ -89,7 +89,7 @@ describe('EncounterCard imported encounter actions', () => {
 
 	it('does not show Load to Editor for templates', () => {
 		const html = renderToStaticMarkup(
-			createElement(EncounterCard as ComponentType<typeof EncounterCard>, {
+			createElement(EncounterCard, {
 				selectedEncounter: importedEncounter,
 				source: 'template',
 				submit: vi.fn(),

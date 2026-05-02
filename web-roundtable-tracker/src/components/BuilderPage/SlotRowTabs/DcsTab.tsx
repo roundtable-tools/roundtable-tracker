@@ -65,6 +65,7 @@ function getIconComponent(iconKey: string): LucideIcon | null {
 		'triangle-alert': TriangleAlert,
 		target: Target,
 	};
+
 	return iconMap[iconKey] || null;
 }
 
@@ -219,6 +220,7 @@ export function DcsTab({ index, slot, slotType, setValue, onRemove }: DcsTabProp
 							<SelectItem value="__none__">No icon</SelectItem>
 							{DC_ICON_OPTIONS.map((option) => {
 								const IconComponent = getIconComponent(option.value);
+
 								return (
 									<SelectItem key={option.value} value={option.value}>
 										<div className="flex items-center gap-2">

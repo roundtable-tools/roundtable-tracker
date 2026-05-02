@@ -268,6 +268,7 @@ function getSideAccent(sideTheme: SideTheme) {
 			};
 
 		case 'ally':
+
 		default:
 			return {
 				badge: 'bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/40',
@@ -398,6 +399,7 @@ function ParticipantDetails({ participant, onHeal, onDamage, onSetTempHp }: Part
 
 	const handleHeal = () => {
 		const amount = parseInt(hpAmount, 10);
+
 		if (!Number.isFinite(amount) || amount <= 0) return;
 		onHeal?.(amount);
 		setHpAmount('');
@@ -405,6 +407,7 @@ function ParticipantDetails({ participant, onHeal, onDamage, onSetTempHp }: Part
 
 	const handleDamage = () => {
 		const amount = parseInt(hpAmount, 10);
+
 		if (!Number.isFinite(amount) || amount <= 0) return;
 		onDamage?.(amount);
 		setHpAmount('');
@@ -412,6 +415,7 @@ function ParticipantDetails({ participant, onHeal, onDamage, onSetTempHp }: Part
 
 	const handleSetTempHp = () => {
 		const amount = parseInt(tempHpAmount, 10);
+
 		if (!Number.isFinite(amount) || amount < 0) return;
 		onSetTempHp?.(amount, tempHpDescription);
 		setTempHpAmount('');
