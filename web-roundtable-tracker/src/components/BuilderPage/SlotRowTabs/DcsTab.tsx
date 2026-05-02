@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import type { BuilderSlot } from '../builderXp';
 import type { ParticipantDcEntry } from '@/store/data';
+import type { UseFormSetValue } from 'react-hook-form';
+import type { BuilderFormValues } from '../builderConvert';
 import { PARTICIPANT_DC_ICON_KEYS } from '@/store/data';
 
 const DC_ICON_OPTIONS = PARTICIPANT_DC_ICON_KEYS.map((key) => ({
@@ -75,7 +77,11 @@ interface DCNameComboboxProps {
 	placeholder?: string;
 }
 
-function DCNameCombobox({ value, onChange, placeholder = 'Select or type name' }: DCNameComboboxProps) {
+function DCNameCombobox({
+	value,
+	onChange,
+	placeholder = 'Select or type name',
+}: DCNameComboboxProps) {
 	const [open, setOpen] = useState(false);
 	const [inputValue, setInputValue] = useState(value);
 
@@ -126,11 +132,17 @@ interface DcsTabProps {
 	index: number;
 	slot: BuilderSlot;
 	slotType: string;
-	setValue: (path: string, value: any, options: any) => void;
+	setValue: UseFormSetValue<BuilderFormValues>;
 	onRemove: () => void;
 }
 
-export function DcsTab({ index, slot, slotType, setValue, onRemove }: DcsTabProps) {
+export function DcsTab({
+	index,
+	slot,
+	slotType,
+	setValue,
+	onRemove,
+}: DcsTabProps) {
 	return (
 		<TabsContent value="dcs" className="space-y-3 mt-3">
 			<div className="flex items-center justify-between gap-2">
@@ -261,7 +273,9 @@ export function DcsTab({ index, slot, slotType, setValue, onRemove }: DcsTabProp
 						variant="ghost"
 						size="sm"
 						onClick={() => {
-							const nextDcs = (slot.dcs ?? []).filter((_, idx) => idx !== dcIndex);
+							const nextDcs = (slot.dcs ?? []).filter(
+								(_, idx) => idx !== dcIndex
+							);
 							setValue(`slots.${index}.dcs`, nextDcs, {
 								shouldDirty: true,
 								shouldTouch: true,

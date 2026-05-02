@@ -32,7 +32,10 @@ export class ChangeHealthCommand implements Command {
 
 				if (this.data.delta >= 0) {
 					// Healing — capped at maxHealth, never increases tempHealth
-					const newHealth = Math.min(old.health + this.data.delta, old.maxHealth);
+					const newHealth = Math.min(
+						old.health + this.data.delta,
+						old.maxHealth
+					);
 
 					return { ...old, health: newHealth };
 				}
@@ -47,7 +50,8 @@ export class ChangeHealthCommand implements Command {
 				return {
 					...old,
 					tempHealth: newTempHealth,
-					tempHealthDescription: newTempHealth === 0 ? undefined : old.tempHealthDescription,
+					tempHealthDescription:
+						newTempHealth === 0 ? undefined : old.tempHealthDescription,
 					health: newHealth,
 				};
 			});

@@ -30,8 +30,7 @@ export function BuilderRouteComponent() {
 		templateVariantId,
 		templateLevel,
 		templatePartySize,
-	} =
-		Route.useSearch();
+	} = Route.useSearch();
 
 	return (
 		<>

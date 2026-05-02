@@ -55,7 +55,11 @@ describe('ReturnToInitiativeCommand', () => {
 		encounterStore.getState().startEncounter(characters);
 
 		encounterStore.setState(() => ({
-			charactersOrder: [characters[0].uuid, characters[1].uuid, characters[2].uuid],
+			charactersOrder: [
+				characters[0].uuid,
+				characters[1].uuid,
+				characters[2].uuid,
+			],
 			delayedOrder: [characters[1].uuid],
 			charactersWithTurn: new Set([characters[0].uuid, characters[2].uuid]),
 			charactersMap: {
@@ -88,14 +92,20 @@ describe('ReturnToInitiativeCommand', () => {
 			characters[0].uuid,
 		]);
 		expect(
-			stateAfterExecute.charactersOrder.filter((id) => id === characters[1].uuid)
+			stateAfterExecute.charactersOrder.filter(
+				(id) => id === characters[1].uuid
+			)
 		).toHaveLength(1);
 		expect(stateAfterExecute.delayedOrder).toEqual([characters[0].uuid]);
 		expect(stateAfterExecute.charactersWithTurn).toEqual(
 			new Set([characters[1].uuid, characters[2].uuid])
 		);
-		expect(stateAfterExecute.charactersMap[characters[0].uuid].turnState).toBe('delayed');
-		expect(stateAfterExecute.charactersMap[characters[1].uuid].turnState).toBe('normal');
+		expect(stateAfterExecute.charactersMap[characters[0].uuid].turnState).toBe(
+			'delayed'
+		);
+		expect(stateAfterExecute.charactersMap[characters[1].uuid].turnState).toBe(
+			'normal'
+		);
 
 		const undoStatus = command.undo();
 		expect(undoStatus).toBe(STATUS.success);
@@ -110,7 +120,11 @@ describe('ReturnToInitiativeCommand', () => {
 		expect(stateAfterUndo.charactersWithTurn).toEqual(
 			new Set([characters[0].uuid, characters[2].uuid])
 		);
-		expect(stateAfterUndo.charactersMap[characters[0].uuid].turnState).toBe('normal');
-		expect(stateAfterUndo.charactersMap[characters[1].uuid].turnState).toBe('delayed');
+		expect(stateAfterUndo.charactersMap[characters[0].uuid].turnState).toBe(
+			'normal'
+		);
+		expect(stateAfterUndo.charactersMap[characters[1].uuid].turnState).toBe(
+			'delayed'
+		);
 	});
 });

@@ -1,5 +1,8 @@
 import { useStore } from 'zustand/react';
-import { createSavedEncountersStore, SavedEncountersStore } from './savedEncounters';
+import {
+	createSavedEncountersStore,
+	SavedEncountersStore,
+} from './savedEncounters';
 
 let savedEncounterStore: ReturnType<typeof createSavedEncountersStore> | null =
 	null;

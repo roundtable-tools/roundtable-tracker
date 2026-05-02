@@ -8,9 +8,7 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import {
-	Encounter,
-} from '@/store/data';
+import { Encounter } from '@/store/data';
 import { useState } from 'react';
 import { validateImportedEncounter } from './importEncounter';
 
@@ -22,14 +20,18 @@ type ImportCardProps = {
 export const ImportCard = (props: ImportCardProps) => {
 	const { submit, close } = props;
 	const [value, setValue] = useState(
-		JSON.stringify({
-			name: 'Imported Encounter',
-			description: 'Imported Encounter',
-			difficulty: 0,
-			level: 1,
-			partySize: 4,
-			participants: [],
-		}, null, 2)
+		JSON.stringify(
+			{
+				name: 'Imported Encounter',
+				description: 'Imported Encounter',
+				difficulty: 0,
+				level: 1,
+				partySize: 4,
+				participants: [],
+			},
+			null,
+			2
+		)
 	);
 	const [error, setError] = useState<string | null>(null);
 
@@ -60,7 +62,8 @@ export const ImportCard = (props: ImportCardProps) => {
 				</Button>
 				<Button
 					onClick={() => {
-						const [encounterData, validationError] = validateImportedEncounter(value);
+						const [encounterData, validationError] =
+							validateImportedEncounter(value);
 
 						if (encounterData) {
 							setError(null);

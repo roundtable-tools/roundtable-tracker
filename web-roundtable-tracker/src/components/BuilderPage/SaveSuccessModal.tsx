@@ -18,10 +18,15 @@ interface SaveSuccessModalProps {
 	onClose: () => void;
 }
 
-export function SaveSuccessModal({ encounter, onClose }: SaveSuccessModalProps) {
+export function SaveSuccessModal({
+	encounter,
+	onClose,
+}: SaveSuccessModalProps) {
 	const navigate = useNavigate();
 	const setEncounterData = useEncounterStore((state) => state.setEncounterData);
-	const [copyState, setCopyState] = useState<'idle' | 'success' | 'error'>('idle');
+	const [copyState, setCopyState] = useState<'idle' | 'success' | 'error'>(
+		'idle'
+	);
 
 	useEffect(() => {
 		setCopyState('idle');
@@ -51,7 +56,10 @@ export function SaveSuccessModal({ encounter, onClose }: SaveSuccessModalProps) 
 	};
 
 	return (
-		<Dialog open={encounter !== null} onOpenChange={(open) => !open && onClose()}>
+		<Dialog
+			open={encounter !== null}
+			onOpenChange={(open) => !open && onClose()}
+		>
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>Encounter Saved</DialogTitle>

@@ -17,27 +17,34 @@ import {
 } from '@/components/ui/select';
 import { Trash2 } from 'lucide-react';
 import type { BuilderSlot } from '../builderXp';
-import type { UseFormReturn } from 'react-hook-form';
+import type { UseFormReturn, UseFormSetValue } from 'react-hook-form';
 import type { BuilderFormValues } from '../builderConvert';
 import { LevelAdjustment } from '@/models/utility/level/Level';
 
-const ADJUSTMENT_OPTIONS: { value: LevelAdjustment | 'none'; label: string }[] = [
-	{ value: 'none', label: 'None' },
-	{ value: 'weak', label: 'Weak' },
-	{ value: 'elite', label: 'Elite' },
-	{ value: 'elite-offense', label: 'Elite Offense' },
-	{ value: 'elite-defense', label: 'Elite Defense' },
-];
+const ADJUSTMENT_OPTIONS: { value: LevelAdjustment | 'none'; label: string }[] =
+	[
+		{ value: 'none', label: 'None' },
+		{ value: 'weak', label: 'Weak' },
+		{ value: 'elite', label: 'Elite' },
+		{ value: 'elite-offense', label: 'Elite Offense' },
+		{ value: 'elite-defense', label: 'Elite Defense' },
+	];
 
 interface AdjustmentTabProps {
 	index: number;
 	slot: BuilderSlot;
-	setValue: (path: string, value: any, options: any) => void;
+	setValue: UseFormSetValue<BuilderFormValues>;
 	control: UseFormReturn<BuilderFormValues>['control'];
 	onRemove: () => void;
 }
 
-export function AdjustmentTab({ index, slot, setValue, control, onRemove }: AdjustmentTabProps) {
+export function AdjustmentTab({
+	index,
+	slot,
+	setValue,
+	control,
+	onRemove,
+}: AdjustmentTabProps) {
 	return (
 		<TabsContent value="adjustment" className="space-y-3 mt-3">
 			<div className="flex items-center justify-between gap-2 mb-3">
@@ -66,10 +73,14 @@ export function AdjustmentTab({ index, slot, setValue, control, onRemove }: Adju
 
 								return;
 							}
-							setValue(`slots.${index}.adjustment`, value as LevelAdjustment | 'none', {
-								shouldDirty: true,
-								shouldTouch: true,
-							});
+							setValue(
+								`slots.${index}.adjustment`,
+								value as LevelAdjustment | 'none',
+								{
+									shouldDirty: true,
+									shouldTouch: true,
+								}
+							);
 						}}
 					>
 						<SelectTrigger className="w-full">

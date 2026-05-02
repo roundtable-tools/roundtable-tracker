@@ -1,12 +1,12 @@
-import { UUID } from "@/utils/uuid";
-import { z } from "zod";
+import { UUID } from '@/utils/uuid';
+import { z } from 'zod';
 
 export const STATE = [
-	"normal",
-	"active",
-	"on-hold",
-	"delayed",
-	"knocked-out",
+	'normal',
+	'active',
+	'on-hold',
+	'delayed',
+	'knocked-out',
 ] as const;
 type State = (typeof STATE)[number];
 export const indexToLetter = (index: number) => String.fromCharCode(97 + index);
@@ -19,7 +19,7 @@ export type CharacterConfig = {
 } & InitiativeParticipant;
 
 export const characterConfigToCharacter = (
-	participant: CharacterConfig,
+	participant: CharacterConfig
 ): Character => {
 	const maxHealth = participant.maxHealth ?? 1;
 	const health = participant.health ?? maxHealth;
@@ -32,8 +32,8 @@ export const characterConfigToCharacter = (
 		health,
 		maxHealth,
 		tempHealth,
-		turnState: participant.startingState ?? "normal",
-		group: participant.side === ALIGNMENT.PCs ? "players" : "enemies",
+		turnState: participant.startingState ?? 'normal',
+		group: participant.side === ALIGNMENT.PCs ? 'players' : 'enemies',
 		hasTurn: false,
 	};
 };
@@ -46,7 +46,9 @@ export interface Character {
 	hasTurn: boolean;
 	health: number;
 	maxHealth: number;
-	tempHealth: number;	tempHealthDescription?: string;	group?: "players" | "enemies";
+	tempHealth: number;
+	tempHealthDescription?: string;
+	group?: 'players' | 'enemies';
 	wounded?: number;
 	knockedBy?: UUID;
 	level?: number; // Optional level property
@@ -62,10 +64,10 @@ export const DIFFICULTY = {
 } as const;
 
 export const difficultyToString: (
-	difficulty: Difficulty,
+	difficulty: Difficulty
 ) => keyof typeof DIFFICULTY = (difficulty: Difficulty) =>
 	(Object.entries(DIFFICULTY).find(([, value]) => value == difficulty)?.[0] ??
-		"Unknown") as keyof typeof DIFFICULTY;
+		'Unknown') as keyof typeof DIFFICULTY;
 
 export const PRIORITY = {
 	PC: 0,
@@ -86,17 +88,18 @@ export const LEVEL_REPRESENTATION = {
 
 export const normalizeLevel = (
 	partyLevel: number,
-	level: LevelFormat[0 | 1],
-) => Number.isInteger(level)
-	? (level as number)
-	: partyLevel + Number.parseInt(level as string);
+	level: LevelFormat[0 | 1]
+) =>
+	Number.isInteger(level)
+		? (level as number)
+		: partyLevel + Number.parseInt(level as string);
 
 export type ParticipantAdjustment =
-	| "weak"
-	| "elite"
-	| "elite-offense"
-	| "elite-defense"
-	| "none";
+	| 'weak'
+	| 'elite'
+	| 'elite-offense'
+	| 'elite-defense'
+	| 'none';
 
 export const PARTICIPANT_DC_ICON_KEYS = [
 	'shield',
@@ -120,24 +123,23 @@ export type ParticipantDcEntry = {
 export const adjustedLevel = (
 	baseLevel: number,
 	adjustment?: ParticipantAdjustment,
-	customAdjustmentLevelModifier?: number,
+	customAdjustmentLevelModifier?: number
 ): number => {
 	const levelWithPreset = (() => {
-	switch (adjustment) {
-		case "elite":
-			return baseLevel + (baseLevel <= 0 ? 2 : 1);
+		switch (adjustment) {
+			case 'elite':
+				return baseLevel + (baseLevel <= 0 ? 2 : 1);
 
-		case "weak":
-			return baseLevel - (baseLevel === 1 ? 2 : 1);
+			case 'weak':
+				return baseLevel - (baseLevel === 1 ? 2 : 1);
 
-		case "elite-offense":
+			case 'elite-offense':
+			case 'elite-defense':
+				return baseLevel + (baseLevel <= 0 ? 1 : 0.5);
 
-		case "elite-defense":
-			return baseLevel + (baseLevel <= 0 ? 1 : 0.5);
-
-		default:
-			return baseLevel;
-	}
+			default:
+				return baseLevel;
+		}
 	})();
 
 	if (
@@ -163,7 +165,7 @@ export const formatAdjustedLevel = (level: number): string => {
 };
 
 export const participantsToLevelRange: <T extends LevelRepresentation>(
-	participants: Participant<T>[],
+	participants: Participant<T>[]
 ) => [number, number] = (participants) => {
 	const levels = participants.map((participant) => {
 		const level = Number.isInteger(participant.level)
@@ -184,7 +186,7 @@ export const participantsToLevelRange: <T extends LevelRepresentation>(
 export const INITIATIVE_STATE = {
 	Normal: 0,
 	Delayed: 1,
-	"Knocked-Out": 2,
+	'Knocked-Out': 2,
 } as const;
 
 type ValueOf<T> = T[keyof T];
@@ -215,7 +217,7 @@ export type CombatantParticipant<
 	adjustmentLevelModifier?: number;
 	// TEMP: Set state to @ostatni5's format until the types get unified
 	// startingState?: INITIATIVE_STATE.Normal,
-	startingState?: "normal" | "delayed" | "knocked-out";
+	startingState?: 'normal' | 'delayed' | 'knocked-out';
 	description?: string;
 	dcs?: ParticipantDcEntry[];
 };
@@ -223,14 +225,14 @@ export type CombatantParticipant<
 export type Creature<
 	IsAbstract extends LevelRepresentation = LevelRepresentation,
 > = CombatantParticipant<IsAbstract> & {
-	type: "creature";
+	type: 'creature';
 	adjustment?: ParticipantAdjustment;
 };
 
 export type Hazard<
 	IsAbstract extends LevelRepresentation = LevelRepresentation,
 > = CombatantParticipant<IsAbstract> & {
-	type: "hazard";
+	type: 'hazard';
 	successesToDisable: number;
 	isComplexHazard?: boolean;
 };
@@ -243,11 +245,11 @@ export type InitiativeParticipant = {
 	uuid: string;
 	tiePriority: Priority;
 	initiative?: number;
-	isSimpleHazard: boolean;
+	isSimpleHazard?: boolean;
 	level: number;
-} & Omit<Creature<typeof LEVEL_REPRESENTATION.Exact>, "type" | "adjustment"> & {
-	adjustment?: ParticipantAdjustment;
-};
+} & Omit<Creature<typeof LEVEL_REPRESENTATION.Exact>, 'type' | 'adjustment'> & {
+		adjustment?: ParticipantAdjustment;
+	};
 
 export type ConcreteEncounterVariant = {
 	difficulty?: Difficulty;
@@ -259,6 +261,7 @@ export type ConcreteEncounterVariant = {
 type EncounterTemplateVariant = {
 	difficulty?: Difficulty;
 	partySize?: number;
+	level?: number;
 	description: string; // Description of external conditions that trigger the variant
 	participants: Participant<typeof LEVEL_REPRESENTATION.Relative>[];
 };
@@ -273,9 +276,9 @@ export type AuraElement = {
 
 export type NarrativeSlot = {
 	id: string;
-	type: "default" | "reinforcement" | "ongoing";
+	type: 'default' | 'reinforcement' | 'ongoing';
 	description?: string;
-	accomplishmentLevel?: "story" | "minor" | "moderate" | "major";
+	accomplishmentLevel?: 'story' | 'minor' | 'moderate' | 'major';
 	trigger: {
 		round: number;
 		frequency?: number;
@@ -294,7 +297,7 @@ export type EncounterTemplate = {
 	partySize?: number; // Optional party size for abstract encounters
 	description: string; // Description of the encounter
 	participants: Participant<typeof LEVEL_REPRESENTATION.Relative>[]; // List of participants
-		auras?: AuraElement[];
+	auras?: AuraElement[];
 	narrativeSlots?: NarrativeSlot[];
 	variants?: EncounterTemplateVariant[];
 };
@@ -317,7 +320,7 @@ export type ConcreteEncounter = {
 	difficulty: Difficulty; // Difficulty setting
 	description: string; // Description of the encounter
 	participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[]; // List of participants
-		auras?: AuraElement[];
+	auras?: AuraElement[];
 	narrativeSlots?: NarrativeSlot[];
 	variants?: ConcreteEncounterVariant[];
 	notes?: EncounterNotes;
@@ -348,20 +351,20 @@ const combatantParticipantSchema = z.object({
 	adjustmentLevelModifier: z.number().optional(),
 	// TEMP: Set state to @ostatni5's format until the types get unified
 	// startingState: z.nativeEnum(INITIATIVE_STATE).optional(),
-	startingState: z.enum(["normal", "delayed", "knocked-out"]).optional(),
+	startingState: z.enum(['normal', 'delayed', 'knocked-out']).optional(),
 	description: z.string().optional(),
 	dcs: dcsSchema.optional(),
 });
 
 const creatureSchema = combatantParticipantSchema.extend({
-	type: z.literal("creature"),
+	type: z.literal('creature'),
 	adjustment: z
-		.enum(["weak", "elite", "elite-offense", "elite-defense", "none"])
+		.enum(['weak', 'elite', 'elite-offense', 'elite-defense', 'none'])
 		.optional(),
 });
 
 const hazardSchema = combatantParticipantSchema.extend({
-	type: z.literal("hazard"),
+	type: z.literal('hazard'),
 	successesToDisable: z.number(),
 	isComplexHazard: z.boolean().optional(),
 	isSimpleHazard: z.boolean().optional(),
@@ -371,10 +374,10 @@ const participantSchema = z.union([creatureSchema, hazardSchema]);
 
 const narrativeSlotSchema = z.object({
 	id: z.string(),
-	type: z.enum(["default", "reinforcement", "ongoing"]),
+	type: z.enum(['default', 'reinforcement', 'ongoing']),
 	description: z.string().optional(),
 	accomplishmentLevel: z
-		.enum(["story", "minor", "moderate", "major"])
+		.enum(['story', 'minor', 'moderate', 'major'])
 		.optional(),
 	trigger: z.object({
 		round: z.number(),
@@ -424,65 +427,65 @@ export type Encounter = EncounterTemplate | ConcreteEncounter;
 // Example usage
 
 export const exampleEncounter: Encounter = {
-	id: "encounter-001",
-	name: "Goblin Ambush",
+	id: 'encounter-001',
+	name: 'Goblin Ambush',
 	level: 2,
 	difficulty: DIFFICULTY.Moderate,
-	description: "A group of goblins ambush the party",
+	description: 'A group of goblins ambush the party',
 	partySize: 4,
 	levelRepresentation: LEVEL_REPRESENTATION.Exact,
 	participants: [
 		{
-			name: "Goblin",
+			name: 'Goblin',
 			level: -1,
 			side: ALIGNMENT.Opponents,
-			type: "creature",
+			type: 'creature',
 			count: 4,
 		},
 	],
 	variants: [
 		{
 			level: 1,
-			description: "PCs found the goblins before level up",
+			description: 'PCs found the goblins before level up',
 			participants: [
 				{
-					name: "Weak Goblin",
+					name: 'Weak Goblin',
 					level: -2,
 					side: ALIGNMENT.Opponents,
-					type: "creature",
+					type: 'creature',
 					count: 4,
 				},
 			],
 		},
 		{
 			difficulty: DIFFICULTY.Low,
-			description: "Scout did not report back to the main group",
+			description: 'Scout did not report back to the main group',
 			participants: [
 				{
-					name: "Goblin",
+					name: 'Goblin',
 					level: -1,
 					side: ALIGNMENT.Opponents,
-					type: "creature",
+					type: 'creature',
 					count: 3,
 				},
 			],
 		},
 		{
 			partySize: 5,
-			description: "Bigger party size",
+			description: 'Bigger party size',
 			participants: [
 				{
-					name: "Goblin",
+					name: 'Goblin',
 					level: -1,
 					side: ALIGNMENT.Opponents,
-					type: "creature",
+					type: 'creature',
 					count: 2,
 				},
 				{
-					name: "Elite Goblin",
+					name: 'Elite Goblin',
 					level: 0,
 					side: ALIGNMENT.Opponents,
-					type: "creature",
+					type: 'creature',
 					count: 2,
 				},
 			],

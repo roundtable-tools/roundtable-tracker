@@ -8,6 +8,12 @@ import {
 	PRIORITY,
 	InitiativeParticipant,
 } from '@/store/data';
+import type { EncounterStore } from '@/store/encounterRuntimeStore';
+
+type PreviewStoreState = Pick<
+	EncounterStore,
+	'partyLevel' | 'startEncounter' | 'encounterData'
+>;
 
 const mocks = vi.hoisted(() => ({
 	navigateSpy: vi.fn(),
@@ -16,11 +22,12 @@ const mocks = vi.hoisted(() => ({
 		partyLevel: 3,
 		startEncounter: vi.fn(),
 		encounterData: undefined,
-	},
+	} as PreviewStoreState,
 }));
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('@tanstack/react-router')>();
+	const actual =
+		await importOriginal<typeof import('@tanstack/react-router')>();
 
 	return {
 		...actual,
@@ -29,7 +36,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
 });
 
 vi.mock('@/store/encounterRuntimeInstance', () => ({
-	useEncounterStore: <T,>(selector: (state: typeof mocks.storeState) => T) =>
+	useEncounterStore: <T>(selector: (state: typeof mocks.storeState) => T) =>
 		selector(mocks.storeState),
 }));
 
@@ -128,7 +135,8 @@ describe('PreviewDisplay form defaulting path', () => {
 			maxHealth: 1,
 			tempHealth: 0,
 			...participantWithHealth,
-			health: participantWithHealth.health ?? participantWithHealth.maxHealth ?? 1,
+			health:
+				participantWithHealth.health ?? participantWithHealth.maxHealth ?? 1,
 		};
 
 		expect(formDefaults.health).toBe(45);
@@ -156,7 +164,10 @@ describe('PreviewDisplay form defaulting path', () => {
 			maxHealth: 1,
 			tempHealth: 0,
 			...participantPartialHealth,
-			health: participantPartialHealth.health ?? participantPartialHealth.maxHealth ?? 1,
+			health:
+				participantPartialHealth.health ??
+				participantPartialHealth.maxHealth ??
+				1,
 		};
 
 		expect(formDefaults.health).toBe(20);
@@ -171,6 +182,8 @@ describe('PreviewDisplay form defaulting path', () => {
 			difficulty: DIFFICULTY.Severe,
 			partySize: 2,
 			level: 3,
+			id: '',
+			levelRepresentation: 1,
 			participants: [
 				{
 					type: 'creature',
@@ -228,8 +241,8 @@ describe('PreviewDisplay form defaulting path', () => {
 
 		expect(participants).toHaveLength(1);
 		expect(participants[0]).toHaveLength(2);
-		expect(participants[0][0]?.name).toBe('Enemy A');
-		expect(participants[0][1]?.name).toBe('Enemy B');
+		expect(participants[0][0]?.name).toBe('Opponent A');
+		expect(participants[0][1]?.name).toBe('Opponent B');
 	});
 
 	it('renders nothing when encounter data is absent', () => {

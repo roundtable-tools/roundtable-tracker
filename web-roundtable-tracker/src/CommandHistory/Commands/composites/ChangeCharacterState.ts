@@ -48,26 +48,40 @@ export const getChangeCharacterState = (
 	commandDeps?: CommandDeps
 ) => {
 	const commands: Command[] = [
-		new UpdateCharacterDataCommand({
-			uuid: character.uuid,
-			newCharacterProps: { turnState: newState },
-		}, commandDeps),
+		new UpdateCharacterDataCommand(
+			{
+				uuid: character.uuid,
+				newCharacterProps: { turnState: newState },
+			},
+			commandDeps
+		),
 	];
-	const moveToEndInInitiative = new ReorderCharactersCommand({
-		newOrder: deps.charactersOrder.filter((id) => id !== character.uuid).concat(character.uuid),
-	}, commandDeps);
+	const moveToEndInInitiative = new ReorderCharactersCommand(
+		{
+			newOrder: deps.charactersOrder
+				.filter((id) => id !== character.uuid)
+				.concat(character.uuid),
+		},
+		commandDeps
+	);
 
-	const removeFromDelayed = new ReorderCharactersCommand({
-		newOrder: deps.delayedOrder.filter((id) => id !== character.uuid),
-		type: 'delay',
-	}, commandDeps);
+	const removeFromDelayed = new ReorderCharactersCommand(
+		{
+			newOrder: deps.delayedOrder.filter((id) => id !== character.uuid),
+			type: 'delay',
+		},
+		commandDeps
+	);
 
-	const addToDelayed = new ReorderCharactersCommand({
-		newOrder: deps.delayedOrder.includes(character.uuid)
-			? deps.delayedOrder
-			: deps.delayedOrder.concat(character.uuid),
-		type: 'delay',
-	}, commandDeps);
+	const addToDelayed = new ReorderCharactersCommand(
+		{
+			newOrder: deps.delayedOrder.includes(character.uuid)
+				? deps.delayedOrder
+				: deps.delayedOrder.concat(character.uuid),
+			type: 'delay',
+		},
+		commandDeps
+	);
 
 	const additionalCommands: Partial<
 		Record<
@@ -77,14 +91,20 @@ export const getChangeCharacterState = (
 	> = {
 		normal: {
 			'knocked-out': [getKnockOutCommand(character.uuid, deps, commandDeps)],
-			delayed: [new EndTurnCommand({ uuid: character.uuid }, commandDeps), addToDelayed],
+			delayed: [
+				new EndTurnCommand({ uuid: character.uuid }, commandDeps),
+				addToDelayed,
+			],
 		},
 		delayed: {
 			normal: [
 				removeFromDelayed,
-				new ReorderCharactersCommand({
-					newOrder: [character.uuid].concat(deps.charactersOrder),
-				}, commandDeps),
+				new ReorderCharactersCommand(
+					{
+						newOrder: [character.uuid].concat(deps.charactersOrder),
+					},
+					commandDeps
+				),
 			],
 			'knocked-out': [
 				removeFromDelayed,

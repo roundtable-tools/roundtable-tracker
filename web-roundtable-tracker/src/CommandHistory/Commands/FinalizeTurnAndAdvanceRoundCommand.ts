@@ -40,7 +40,10 @@ export class FinalizeTurnAndAdvanceRoundCommand implements Command {
 	description = 'Finalize Turn And Advance Round Command';
 	data: CommandData;
 
-	constructor(data: Pick<CommandData, 'uuid' | 'action'>, private deps?: CommandDeps) {
+	constructor(
+		data: Pick<CommandData, 'uuid' | 'action'>,
+		private deps?: CommandDeps
+	) {
 		this.data = {
 			uuid: data.uuid,
 			action: data.action,

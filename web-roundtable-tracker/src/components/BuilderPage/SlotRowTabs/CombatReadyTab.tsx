@@ -27,7 +27,12 @@ interface CombatReadyTabProps {
 	onRemove: () => void;
 }
 
-export function CombatReadyTab({ index, slot, control, onRemove }: CombatReadyTabProps) {
+export function CombatReadyTab({
+	index,
+	slot,
+	control,
+	onRemove,
+}: CombatReadyTabProps) {
 	return (
 		<TabsContent value="combat-ready" className="space-y-3 mt-3">
 			<div className="flex items-center justify-between gap-2 mb-3">
@@ -49,7 +54,10 @@ export function CombatReadyTab({ index, slot, control, onRemove }: CombatReadyTa
 					render={({ field }) => (
 						<FormItem className="space-y-1">
 							<FormLabel>Combat Ready State</FormLabel>
-							<Select value={field.value ?? 'active'} onValueChange={field.onChange}>
+							<Select
+								value={field.value ?? slot.combatReadyState ?? 'active'}
+								onValueChange={field.onChange}
+							>
 								<FormControl>
 									<SelectTrigger>
 										<SelectValue />

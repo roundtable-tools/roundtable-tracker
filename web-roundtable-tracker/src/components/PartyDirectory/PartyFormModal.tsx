@@ -67,17 +67,33 @@ const partyToFormValues = (party: Party): PartyFormValues => ({
 	})),
 });
 
-export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmit }: PartyFormModalProps) {
-	const formId = mode === 'edit' && initialParty ? initialParty.id : generateUUID();
+export function PartyFormModal({
+	open,
+	onOpenChange,
+	initialParty,
+	mode,
+	onSubmit,
+}: PartyFormModalProps) {
+	const formId =
+		mode === 'edit' && initialParty ? initialParty.id : generateUUID();
 
-	const { control, register, handleSubmit, reset, formState: { errors } } = useForm<PartyFormValues>({
+	const {
+		control,
+		register,
+		handleSubmit,
+		reset,
+		formState: { errors },
+	} = useForm<PartyFormValues>({
 		mode: 'onChange',
 		defaultValues: initialParty
 			? partyToFormValues(initialParty)
 			: { name: '', icon: 'Users', members: [defaultMember()] },
 	});
 
-	const { fields, append, remove } = useFieldArray({ control, name: 'members' });
+	const { fields, append, remove } = useFieldArray({
+		control,
+		name: 'members',
+	});
 
 	useEffect(() => {
 		if (open) {
@@ -87,7 +103,10 @@ export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmi
 				if (mode === 'copy') {
 					values.name = `${values.name} (Copy)`;
 					// give each member a fresh uuid so copy is independent
-					values.members = values.members.map((m) => ({ ...m, uuid: generateUUID() }));
+					values.members = values.members.map((m) => ({
+						...m,
+						uuid: generateUUID(),
+					}));
 				}
 
 				reset(values);
@@ -102,8 +121,11 @@ export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmi
 		onOpenChange(false);
 	});
 
-	const titleMap = { create: 'New Party', edit: 'Edit Party', copy: 'Copy Party' };
-
+	const titleMap = {
+		create: 'New Party',
+		edit: 'Edit Party',
+		copy: 'Copy Party',
+	};
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -124,11 +146,15 @@ export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmi
 							<Input
 								id="party-name"
 								placeholder="e.g. The Ironfall Company"
-								className={cn(errors.name && 'border-destructive bg-destructive/10')}
+								className={cn(
+									errors.name && 'border-destructive bg-destructive/10'
+								)}
 								{...register('name', { required: 'Name is required' })}
 							/>
 							{errors.name && (
-								<p className="text-xs text-destructive">{errors.name.message}</p>
+								<p className="text-xs text-destructive">
+									{errors.name.message}
+								</p>
 							)}
 						</div>
 
@@ -161,7 +187,10 @@ export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmi
 							</div>
 
 							{fields.map((field, index) => (
-								<div key={field.id} className="rounded-lg border bg-card p-4 space-y-3">
+								<div
+									key={field.id}
+									className="rounded-lg border bg-card p-4 space-y-3"
+								>
 									<div className="flex items-center justify-between">
 										<span className="text-sm font-medium text-muted-foreground">
 											Member {index + 1}
@@ -180,7 +209,10 @@ export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmi
 									{/* Row 1: Core member fields */}
 									<div className="flex flex-wrap gap-3">
 										<div className="min-w-40 flex-1 space-y-1">
-											<Label htmlFor={`member-name-${index}`} className="text-xs">
+											<Label
+												htmlFor={`member-name-${index}`}
+												className="text-xs"
+											>
 												Name <span className="text-destructive">*</span>
 											</Label>
 											<Input
@@ -188,13 +220,19 @@ export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmi
 												placeholder="Character name"
 												className={cn(
 													'h-8',
-													errors.members?.[index]?.name && 'border-destructive bg-destructive/10'
+													errors.members?.[index]?.name &&
+														'border-destructive bg-destructive/10'
 												)}
-												{...register(`members.${index}.name`, { required: 'Required' })}
+												{...register(`members.${index}.name`, {
+													required: 'Required',
+												})}
 											/>
 										</div>
 										<div className="w-20 space-y-1">
-											<Label htmlFor={`member-level-${index}`} className="text-xs">
+											<Label
+												htmlFor={`member-level-${index}`}
+												className="text-xs"
+											>
 												Level <span className="text-destructive">*</span>
 											</Label>
 											<Input
@@ -205,12 +243,15 @@ export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmi
 												placeholder="1"
 												className={cn(
 													'h-8 text-center',
-													errors.members?.[index]?.level && 'border-destructive bg-destructive/10'
+													errors.members?.[index]?.level &&
+														'border-destructive bg-destructive/10'
 												)}
 												{...register(`members.${index}.level`, {
 													required: 'Required',
 													valueAsNumber: true,
-													validate: (v) => (v !== undefined && !isNaN(v as number)) || 'Required',
+													validate: (v) =>
+														(v !== undefined && !isNaN(v as number)) ||
+														'Required',
 												})}
 											/>
 										</div>
@@ -219,7 +260,10 @@ export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmi
 									{/* Row 2: Flavor fields */}
 									<div className="flex flex-wrap gap-3">
 										<div className="min-w-28 flex-1 space-y-1">
-											<Label htmlFor={`member-player-${index}`} className="text-xs">
+											<Label
+												htmlFor={`member-player-${index}`}
+												className="text-xs"
+											>
 												Player
 											</Label>
 											<Input
@@ -230,7 +274,10 @@ export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmi
 											/>
 										</div>
 										<div className="min-w-28 flex-1 space-y-1">
-											<Label htmlFor={`member-class-${index}`} className="text-xs">
+											<Label
+												htmlFor={`member-class-${index}`}
+												className="text-xs"
+											>
 												Class
 											</Label>
 											<Input
@@ -241,7 +288,10 @@ export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmi
 											/>
 										</div>
 										<div className="min-w-28 flex-1 space-y-1">
-											<Label htmlFor={`member-ancestry-${index}`} className="text-xs">
+											<Label
+												htmlFor={`member-ancestry-${index}`}
+												className="text-xs"
+											>
 												Ancestry
 											</Label>
 											<Input
@@ -259,7 +309,10 @@ export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmi
 										</p>
 										<div className="flex flex-wrap gap-3">
 											<div className="w-20 space-y-1">
-												<Label htmlFor={`member-ac-${index}`} className="text-xs">
+												<Label
+													htmlFor={`member-ac-${index}`}
+													className="text-xs"
+												>
 													AC
 												</Label>
 												<Input
@@ -271,31 +324,38 @@ export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmi
 													className="h-8 text-center"
 													{...register(`members.${index}.ac`, {
 														setValueAs: (v) =>
-															v === '' || v === undefined ? undefined : Number(v),
+															v === '' || v === undefined
+																? undefined
+																: Number(v),
 														validate: (v) =>
 															typeof v !== 'number' || v >= 0 || 'Must be ≥ 0',
 													})}
 												/>
 											</div>
-										<div className="w-20 space-y-1">
-											<Label htmlFor={`member-hp-${index}`} className="text-xs">
-												Max HP
-											</Label>
-											<Input
-												id={`member-hp-${index}`}
-												type="number"
-												min={0}
-												step={1}
-												placeholder="20"
-												className="h-8 text-center"
-												{...register(`members.${index}.maxHealth`, {
-													setValueAs: (v) =>
-														v === '' || v === undefined ? undefined : Number(v),
-													validate: (v) =>
-														typeof v !== 'number' || v >= 0 || 'Must be ≥ 0',
-												})}
-											/>
-										</div>
+											<div className="w-20 space-y-1">
+												<Label
+													htmlFor={`member-hp-${index}`}
+													className="text-xs"
+												>
+													Max HP
+												</Label>
+												<Input
+													id={`member-hp-${index}`}
+													type="number"
+													min={0}
+													step={1}
+													placeholder="20"
+													className="h-8 text-center"
+													{...register(`members.${index}.maxHealth`, {
+														setValueAs: (v) =>
+															v === '' || v === undefined
+																? undefined
+																: Number(v),
+														validate: (v) =>
+															typeof v !== 'number' || v >= 0 || 'Must be ≥ 0',
+													})}
+												/>
+											</div>
 										</div>
 									</div>
 
@@ -321,7 +381,11 @@ export function PartyFormModal({ open, onOpenChange, initialParty, mode, onSubmi
 				</form>
 
 				<DialogFooter className="border-t px-6 py-4">
-					<Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
+					<Button
+						variant="outline"
+						type="button"
+						onClick={() => onOpenChange(false)}
+					>
 						Cancel
 					</Button>
 					<Button type="submit" form="party-form">

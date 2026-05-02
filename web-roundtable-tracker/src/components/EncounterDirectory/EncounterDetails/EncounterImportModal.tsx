@@ -50,7 +50,5 @@ export const EncounterImportModal = (props: EncounterImportModalProps) => {
 				)}
 			</DialogContent>
 		</Dialog>
-	) : (
-		null
-	);
+	) : null;
 };

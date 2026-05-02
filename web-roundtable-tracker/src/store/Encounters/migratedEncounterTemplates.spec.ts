@@ -14,7 +14,9 @@ describe('migratedEncounterTemplates', () => {
 	it('keeps defaultVariantId aligned to an existing variant', () => {
 		for (const template of encounterTemplates) {
 			expect(
-				template.variants.some((variant) => variant.id === template.defaultVariantId)
+				template.variants.some(
+					(variant) => variant.id === template.defaultVariantId
+				)
 			).toBe(true);
 		}
 	});

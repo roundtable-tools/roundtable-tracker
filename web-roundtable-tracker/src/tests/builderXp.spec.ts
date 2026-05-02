@@ -20,7 +20,6 @@ function creature(overrides: Partial<BuilderSlot> = {}): BuilderSlot {
 		adjustment: 'none',
 		isSimpleHazard: false,
 		reinforcementRound: 1,
-		reinforcementParticipants: [],
 		eventRound: 1,
 		repeatInterval: undefined,
 		...overrides,
@@ -155,7 +154,11 @@ describe('computeThreat', () => {
 
 describe('computeEncounterXpUsage', () => {
 	it('uses immediate threat mapping when there is no reinforcement wave', () => {
-		const usage = computeEncounterXpUsage([creature({ level: 5, count: 2 })], 5, 4);
+		const usage = computeEncounterXpUsage(
+			[creature({ level: 5, count: 2 })],
+			5,
+			4
+		);
 
 		expect(usage.immediateXp.valueOf()).toBe(80);
 		expect(usage.rawReinforcementXp.valueOf()).toBe(0);
@@ -242,8 +245,18 @@ describe('computeEncounterXpUsage', () => {
 	it('sums multiple reinforcement slots into the same wave budget', () => {
 		const usage = computeEncounterXpUsage(
 			[
-				creature({ type: 'reinforcement', level: 5, count: 2, reinforcementRound: 2 }),
-				creature({ type: 'reinforcement', level: 5, count: 1, reinforcementRound: 2 }),
+				creature({
+					type: 'reinforcement',
+					level: 5,
+					count: 2,
+					reinforcementRound: 2,
+				}),
+				creature({
+					type: 'reinforcement',
+					level: 5,
+					count: 1,
+					reinforcementRound: 2,
+				}),
 			],
 			5,
 			4
@@ -259,7 +272,12 @@ describe('computeEncounterXpUsage', () => {
 	it('scales party output by party size during simulation', () => {
 		const slots = [
 			creature({ type: 'creature', level: 5, count: 2 }),
-			creature({ type: 'reinforcement', level: 5, count: 1, reinforcementRound: 3 }),
+			creature({
+				type: 'reinforcement',
+				level: 5,
+				count: 1,
+				reinforcementRound: 3,
+			}),
 		];
 
 		const smallPartyUsage = computeEncounterXpUsage(slots, 5, 2);
@@ -282,9 +300,9 @@ describe('Wave Interaction Threat', () => {
 			5
 		);
 
-		expect(strongerUsage.waveInteraction.wave0.adjustedThreat.threat).toBeGreaterThan(
-			baseUsage.waveInteraction.wave0.adjustedThreat.threat
-		);
+		expect(
+			strongerUsage.waveInteraction.wave0.adjustedThreat.threat
+		).toBeGreaterThan(baseUsage.waveInteraction.wave0.adjustedThreat.threat);
 	});
 
 	it('increasing participant count increases wave 0 threat', () => {

@@ -4,6 +4,8 @@ import { TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Trash2 } from 'lucide-react';
 import type { BuilderSlot } from '../builderXp';
+import type { UseFormSetValue } from 'react-hook-form';
+import type { BuilderFormValues } from '../builderConvert';
 
 interface TraitCategory {
 	color: 'blue' | 'orange' | 'purple' | 'green' | 'red';
@@ -33,7 +35,7 @@ const TRAIT_CATEGORIES: TraitCategory[] = [
 	},
 ];
 
-function getTraitColor(trait: string): 'blue' | 'orange' | 'purple' | 'green' | 'red' {
+function getTraitColor(trait: string): TraitCategory['color'] {
 	for (const category of TRAIT_CATEGORIES) {
 		if (category.traits.includes(trait)) {
 			return category.color;
@@ -43,10 +45,18 @@ function getTraitColor(trait: string): 'blue' | 'orange' | 'purple' | 'green' | 
 	return 'red';
 }
 
+const TRAIT_COLOR_CLASSES: Record<TraitCategory['color'], string> = {
+	blue: 'bg-blue-500 text-white',
+	orange: 'bg-orange-500 text-white',
+	purple: 'bg-purple-500 text-white',
+	green: 'bg-green-500 text-white',
+	red: 'bg-red-500 text-white',
+};
+
 interface TraitsTabProps {
 	index: number;
 	slot: BuilderSlot;
-	setValue: (path: string, value: any, options: any) => void;
+	setValue: UseFormSetValue<BuilderFormValues>;
 	onRemove: () => void;
 }
 
@@ -88,10 +98,12 @@ export function TraitsTab({ index, slot, setValue, onRemove }: TraitsTabProps) {
 					{(slot.traits ?? []).map((trait, traitIndex) => (
 						<Badge
 							key={`trait-${index}-${traitIndex}`}
-							variant={getTraitColor(trait) as any}
-							className="cursor-pointer"
+							variant="outline"
+							className={`cursor-pointer ${TRAIT_COLOR_CLASSES[getTraitColor(trait)]}`}
 							onClick={() => {
-								const nextTraits = (slot.traits ?? []).filter((_, idx) => idx !== traitIndex);
+								const nextTraits = (slot.traits ?? []).filter(
+									(_, idx) => idx !== traitIndex
+								);
 								setValue(`slots.${index}.traits`, nextTraits, {
 									shouldDirty: true,
 									shouldTouch: true,

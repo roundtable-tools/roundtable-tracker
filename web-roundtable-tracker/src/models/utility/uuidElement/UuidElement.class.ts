@@ -1,13 +1,13 @@
-import { generateUUID, UUID } from "@/utils/uuid";
+import { generateUUID, UUID } from '@/utils/uuid';
 
 export interface UuidElementProps {
-    id?: UUID;
+	id?: UUID;
 }
 
 export abstract class UuidElement {
-    public id: UUID;
+	public id: UUID;
 
-    constructor({id}: UuidElementProps) {
-        this.id = id ?? generateUUID();
-    }
+	constructor({ id }: UuidElementProps) {
+		this.id = id ?? generateUUID();
+	}
 }

@@ -1,7 +1,18 @@
-import { ALIGNMENT, Character, NarrativeSlot, normalizeLevel } from '@/store/data';
+import {
+	ALIGNMENT,
+	Character,
+	NarrativeSlot,
+	normalizeLevel,
+} from '@/store/data';
 import { TrackerParticipantMeta } from '@/store/encounterRuntimeStore';
 import { generateUUID, UUID } from '@/utils/uuid';
-import { Command, CommandDeps, getDeps, STATUS, undoOriginalState } from '../common';
+import {
+	Command,
+	CommandDeps,
+	getDeps,
+	STATUS,
+	undoOriginalState,
+} from '../common';
 
 type CommandProps = {
 	slotId: string;
@@ -12,7 +23,9 @@ type SpawnedParticipant = {
 	meta: TrackerParticipantMeta;
 };
 
-type ReinforcementSlotParticipant = NonNullable<NarrativeSlot['participants']>[number];
+type ReinforcementSlotParticipant = NonNullable<
+	NarrativeSlot['participants']
+>[number];
 
 type CommandData = CommandProps & {
 	spawnedParticipants?: SpawnedParticipant[];
@@ -91,10 +104,14 @@ const expandSlotParticipants = (
 		return Array.from({ length: count }).map((_, countIndex) => {
 			const uuid = generateUUID();
 			const fallbackId = `${slot.id}-${slotIndex}-${countIndex}`;
-			const initiative = normalizeParticipantInitiative(slotParticipant, fallbackId);
+			const initiative = normalizeParticipantInitiative(
+				slotParticipant,
+				fallbackId
+			);
 			const baseName = slotParticipant.name.trim() || 'Reinforcement';
 			const withSuffix = count > 1 ? `${baseName} ${countIndex + 1}` : baseName;
-			const notes = slot.description?.trim() || slotParticipant.description?.trim() || '';
+			const notes =
+				slot.description?.trim() || slotParticipant.description?.trim() || '';
 
 			const character: Character = {
 				uuid,
@@ -118,7 +135,7 @@ const expandSlotParticipants = (
 						: false,
 				disableChecksRequired:
 					slotParticipant.type === 'hazard'
-						? slotParticipant.successesToDisable ?? 0
+						? (slotParticipant.successesToDisable ?? 0)
 						: 0,
 				disableChecksSucceeded: 0,
 				notes,
@@ -146,7 +163,9 @@ function insertByInitiative(
 	const nextOrder = [...currentOrder];
 	const currentTurnOffset = nextOrder.length > 0 ? 1 : 0;
 
-	const sortedSpawned = [...spawned].sort((a, b) => b.initiative - a.initiative);
+	const sortedSpawned = [...spawned].sort(
+		(a, b) => b.initiative - a.initiative
+	);
 
 	for (const character of sortedSpawned) {
 		let insertionIndex = nextOrder.length;
@@ -175,7 +194,10 @@ export class TriggerReinforcementEventCommand implements Command {
 	description = 'Trigger Reinforcement Event Command';
 	data: CommandData;
 
-	constructor(props: CommandProps, private deps?: CommandDeps) {
+	constructor(
+		props: CommandProps,
+		private deps?: CommandDeps
+	) {
 		this.data = structuredClone(props);
 	}
 
@@ -194,11 +216,16 @@ export class TriggerReinforcementEventCommand implements Command {
 		}
 
 		if (!this.data.spawnedParticipants) {
-			this.data.spawnedParticipants = expandSlotParticipants(slot, state.partyLevel);
+			this.data.spawnedParticipants = expandSlotParticipants(
+				slot,
+				state.partyLevel
+			);
 		}
 
 		if (this.data.spawnedParticipants.length === 0) {
-			console.error(`Reinforcement slot ${this.data.slotId} has no participants`);
+			console.error(
+				`Reinforcement slot ${this.data.slotId} has no participants`
+			);
 
 			return STATUS.failure;
 		}
@@ -207,7 +234,11 @@ export class TriggerReinforcementEventCommand implements Command {
 
 		// Check if participants were pre-added as pending reinforcements for this slot
 		const preAddedUuids = existingMetaValues
-			.filter(([, meta]) => meta.reinforcementSlotId === this.data.slotId && meta.reinforcementPending === true)
+			.filter(
+				([, meta]) =>
+					meta.reinforcementSlotId === this.data.slotId &&
+					meta.reinforcementPending === true
+			)
 			.map(([uuid]) => uuid);
 
 		const alreadyTriggered = existingMetaValues.some(
@@ -266,11 +297,16 @@ export class TriggerReinforcementEventCommand implements Command {
 		} else {
 			// No pre-added participants — spawn fresh
 			if (!this.data.spawnedParticipants) {
-				this.data.spawnedParticipants = expandSlotParticipants(slot, state.partyLevel);
+				this.data.spawnedParticipants = expandSlotParticipants(
+					slot,
+					state.partyLevel
+				);
 			}
 
 			if (this.data.spawnedParticipants.length === 0) {
-				console.error(`Reinforcement slot ${this.data.slotId} has no participants`);
+				console.error(
+					`Reinforcement slot ${this.data.slotId} has no participants`
+				);
 
 				return STATUS.failure;
 			}

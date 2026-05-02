@@ -23,11 +23,13 @@ export const EncounterDetailsModal = (props: EncounterDetailsModalProps) => {
 		templateVariantId,
 		onDelete,
 		submit,
-	} =
-		props;
+	} = props;
 
 	return selectedEncounter ? (
-		<Dialog open={Boolean(selectedEncounter)} onOpenChange={(open) => !open && closeLayer()}>
+		<Dialog
+			open={Boolean(selectedEncounter)}
+			onOpenChange={(open) => !open && closeLayer()}
+		>
 			<DialogContent className="max-w-3xl gap-0 overflow-hidden p-0 sm:max-w-3xl">
 				<EncounterCard
 					selectedEncounter={selectedEncounter}
@@ -41,7 +43,5 @@ export const EncounterDetailsModal = (props: EncounterDetailsModalProps) => {
 				/>
 			</DialogContent>
 		</Dialog>
-	) : (
-		null
-	);
+	) : null;
 };

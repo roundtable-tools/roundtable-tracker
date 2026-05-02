@@ -22,7 +22,11 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
 	ArrowRight,
 	ArrowUpDown,
@@ -103,7 +107,7 @@ function getHealthLabelFromPercentage(healthPercentage: number) {
 	}
 
 	return 'Near Death';
-	}
+}
 
 function getHazardDisableStageNames(requiredChecks: number) {
 	const clampedRequiredChecks = Math.min(Math.max(requiredChecks, 1), 5);
@@ -145,7 +149,8 @@ function getHazardDisableLabel(participant: TrackerParticipant) {
 	}
 
 	const stageNames = getHazardDisableStageNames(requiredChecks);
-	const stageIndex = Math.min(Math.max(successfulChecks, 1), requiredChecks) - 1;
+	const stageIndex =
+		Math.min(Math.max(successfulChecks, 1), requiredChecks) - 1;
 
 	return stageNames[Math.min(stageIndex, stageNames.length - 1)] ?? 'Disabled';
 }
@@ -155,7 +160,10 @@ function getParticipantIndicatorLabel(participant: TrackerParticipant) {
 		return getHazardDisableLabel(participant);
 	}
 
-	if (typeof participant.maxHp !== 'number' || typeof participant.currentHp !== 'number') {
+	if (
+		typeof participant.maxHp !== 'number' ||
+		typeof participant.currentHp !== 'number'
+	) {
 		return 'No HP Data';
 	}
 
@@ -200,7 +208,9 @@ function getDcName(dc: NonNullable<TrackerParticipant['dcs']>[number]) {
 
 type SideTheme = 'pc' | 'opponent' | 'ally' | 'other';
 
-function resolveParticipantSideTheme(participant: TrackerParticipant): SideTheme {
+function resolveParticipantSideTheme(
+	participant: TrackerParticipant
+): SideTheme {
 	if (participant.sideTheme === 'pc') {
 		return 'pc';
 	}
@@ -209,7 +219,10 @@ function resolveParticipantSideTheme(participant: TrackerParticipant): SideTheme
 		return 'ally';
 	}
 
-	if (participant.sideTheme === 'other' || participant.sideTheme === 'neutral') {
+	if (
+		participant.sideTheme === 'other' ||
+		participant.sideTheme === 'neutral'
+	) {
 		return 'other';
 	}
 
@@ -237,7 +250,8 @@ function getSideAccent(sideTheme: SideTheme) {
 		case 'pc':
 			return {
 				badge: 'bg-sky-500/15 text-sky-200 ring-1 ring-sky-400/40',
-				inactiveCard: 'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-sky-500/60 hover:bg-slate-900/95',
+				inactiveCard:
+					'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-sky-500/60 hover:bg-slate-900/95',
 				inactiveMarker: 'border-l-4 border-l-sky-400',
 				name: 'text-sky-200',
 				activeCard:
@@ -248,7 +262,8 @@ function getSideAccent(sideTheme: SideTheme) {
 		case 'opponent':
 			return {
 				badge: 'bg-rose-500/15 text-rose-200 ring-1 ring-rose-400/40',
-				inactiveCard: 'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-rose-500/60 hover:bg-slate-900/95',
+				inactiveCard:
+					'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-rose-500/60 hover:bg-slate-900/95',
 				inactiveMarker: 'border-l-4 border-l-rose-400',
 				name: 'text-rose-200',
 				activeCard:
@@ -259,7 +274,8 @@ function getSideAccent(sideTheme: SideTheme) {
 		case 'other':
 			return {
 				badge: 'bg-violet-500/15 text-violet-200 ring-1 ring-violet-400/40',
-				inactiveCard: 'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-violet-500/60 hover:bg-slate-900/95',
+				inactiveCard:
+					'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-violet-500/60 hover:bg-slate-900/95',
 				inactiveMarker: 'border-l-4 border-l-violet-400',
 				name: 'text-violet-200',
 				activeCard:
@@ -268,11 +284,11 @@ function getSideAccent(sideTheme: SideTheme) {
 			};
 
 		case 'ally':
-
 		default:
 			return {
 				badge: 'bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/40',
-				inactiveCard: 'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-emerald-500/60 hover:bg-slate-900/95',
+				inactiveCard:
+					'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-emerald-500/60 hover:bg-slate-900/95',
 				inactiveMarker: 'border-l-4 border-l-emerald-400',
 				name: 'text-emerald-200',
 				activeCard:
@@ -294,8 +310,7 @@ function getParticipantAccent(participant: TrackerParticipant) {
 		pc: 'bg-[repeating-linear-gradient(135deg,rgba(56,189,248,0.14)_0_6px,rgba(56,189,248,0)_6px_12px)]',
 		opponent:
 			'bg-[repeating-linear-gradient(135deg,rgba(251,113,133,0.14)_0_6px,rgba(251,113,133,0)_6px_12px)]',
-		ally:
-			'bg-[repeating-linear-gradient(135deg,rgba(52,211,153,0.14)_0_6px,rgba(52,211,153,0)_6px_12px)]',
+		ally: 'bg-[repeating-linear-gradient(135deg,rgba(52,211,153,0.14)_0_6px,rgba(52,211,153,0)_6px_12px)]',
 		other:
 			'bg-[repeating-linear-gradient(135deg,rgba(167,139,250,0.14)_0_6px,rgba(167,139,250,0)_6px_12px)]',
 	};
@@ -335,7 +350,9 @@ function ParticipantRow({
 			}}
 			className={[
 				'flex w-full items-center justify-between rounded-md border px-3 py-2 text-left transition-colors',
-				selected ? 'border-primary bg-primary/10' : 'border-border hover:bg-accent',
+				selected
+					? 'border-primary bg-primary/10'
+					: 'border-border hover:bg-accent',
 			].join(' ')}
 		>
 			<div>
@@ -379,7 +396,12 @@ type ParticipantDetailsProps = {
 	onSetTempHp?: (amount: number, description: string) => void;
 };
 
-function ParticipantDetails({ participant, onHeal, onDamage, onSetTempHp }: ParticipantDetailsProps) {
+function ParticipantDetails({
+	participant,
+	onHeal,
+	onDamage,
+	onSetTempHp,
+}: ParticipantDetailsProps) {
 	const [hpAmount, setHpAmount] = useState('');
 	const [tempHpAmount, setTempHpAmount] = useState('');
 	const [tempHpDescription, setTempHpDescription] = useState('');
@@ -394,8 +416,10 @@ function ParticipantDetails({ participant, onHeal, onDamage, onSetTempHp }: Part
 
 	const indicatorLabel = getParticipantIndicatorLabel(participant);
 	const isHazard = participant.role === 'hazard';
-	const showHpControls = (onHeal || onDamage || onSetTempHp);
-	const hasHpData = typeof participant.currentHp === 'number' && typeof participant.maxHp === 'number';
+	const showHpControls = onHeal || onDamage || onSetTempHp;
+	const hasHpData =
+		typeof participant.currentHp === 'number' &&
+		typeof participant.maxHp === 'number';
 
 	const handleHeal = () => {
 		const amount = parseInt(hpAmount, 10);
@@ -434,27 +458,37 @@ function ParticipantDetails({ participant, onHeal, onDamage, onSetTempHp }: Part
 					<ShieldOff className="h-4 w-4" /> {indicatorLabel}
 				</p>
 			)}
-			{hasHpData && (<>
-				<p className="text-sm text-muted-foreground">
-					Health:{' '} 
-					<span className="text-foreground">
-						{participant.currentHp} / {participant.maxHp}
-						{(participant.tempHp ?? 0) > 0 && (
-							<span className="ml-1 text-sky-400"> +{participant.tempHp} temp</span>
-						)}
-						<span className="ml-1 text-muted-foreground">({indicatorLabel})</span>
-					</span>
-				</p>
-				{typeof participant.hardness === 'number' && (
+			{hasHpData && (
+				<>
 					<p className="text-sm text-muted-foreground">
-						Hardness: <span className="text-foreground">{participant.hardness}</span>
+						Health:{' '}
+						<span className="text-foreground">
+							{participant.currentHp} / {participant.maxHp}
+							{(participant.tempHp ?? 0) > 0 && (
+								<span className="ml-1 text-sky-400">
+									{' '}
+									+{participant.tempHp} temp
+								</span>
+							)}
+							<span className="ml-1 text-muted-foreground">
+								({indicatorLabel})
+							</span>
+						</span>
 					</p>
-				)}
+					{typeof participant.hardness === 'number' && (
+						<p className="text-sm text-muted-foreground">
+							Hardness:{' '}
+							<span className="text-foreground">{participant.hardness}</span>
+						</p>
+					)}
 				</>
 			)}
 			{(participant.tempHp ?? 0) > 0 && participant.tempHpDescription && (
 				<p className="text-xs text-muted-foreground">
-					Temp HP source: <span className="text-foreground">{participant.tempHpDescription}</span>
+					Temp HP source:{' '}
+					<span className="text-foreground">
+						{participant.tempHpDescription}
+					</span>
 				</p>
 			)}
 			{showHpControls && hasHpData && (
@@ -472,10 +506,20 @@ function ParticipantDetails({ participant, onHeal, onDamage, onSetTempHp }: Part
 								if (e.key === 'Enter') handleHeal();
 							}}
 						/>
-						<Button size="sm" variant="outline" className="shrink-0 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10" onClick={handleHeal}>
+						<Button
+							size="sm"
+							variant="outline"
+							className="shrink-0 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10"
+							onClick={handleHeal}
+						>
 							Heal
 						</Button>
-						<Button size="sm" variant="outline" className="shrink-0 border-rose-500/50 text-rose-400 hover:bg-rose-500/10" onClick={handleDamage}>
+						<Button
+							size="sm"
+							variant="outline"
+							className="shrink-0 border-rose-500/50 text-rose-400 hover:bg-rose-500/10"
+							onClick={handleDamage}
+						>
 							Damage
 						</Button>
 					</div>
@@ -499,7 +543,12 @@ function ParticipantDetails({ participant, onHeal, onDamage, onSetTempHp }: Part
 								}}
 							/>
 						</div>
-						<Button size="sm" variant="outline" className="w-full border-sky-500/50 text-sky-400 hover:bg-sky-500/10" onClick={handleSetTempHp}>
+						<Button
+							size="sm"
+							variant="outline"
+							className="w-full border-sky-500/50 text-sky-400 hover:bg-sky-500/10"
+							onClick={handleSetTempHp}
+						>
 							Set Temp HP
 						</Button>
 					</div>
@@ -508,32 +557,43 @@ function ParticipantDetails({ participant, onHeal, onDamage, onSetTempHp }: Part
 			<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 				{typeof participant.initiative === 'number' && (
 					<p className="text-sm text-muted-foreground">
-						Initiative: <span className="text-foreground">{participant.initiative}</span>
+						Initiative:{' '}
+						<span className="text-foreground">{participant.initiative}</span>
 					</p>
 				)}
 				{typeof participant.initiativeBonus === 'number' && (
 					<p className="text-sm text-muted-foreground">
 						Initiative Bonus:{' '}
-						<span className="text-foreground">+{participant.initiativeBonus}</span>
+						<span className="text-foreground">
+							+{participant.initiativeBonus}
+						</span>
 					</p>
 				)}
 				{typeof participant.adjustmentLevelModifier === 'number' && (
 					<p className="text-sm text-muted-foreground">
 						Custom Level Modifier:{' '}
-						<span className="text-foreground">{participant.adjustmentLevelModifier}</span>
+						<span className="text-foreground">
+							{participant.adjustmentLevelModifier}
+						</span>
 					</p>
 				)}
 			</div>
 			{participant.adjustmentDescription && (
 				<p className="text-sm text-muted-foreground">
-					Adjustment Notes: <span className="text-foreground">{participant.adjustmentDescription}</span>
+					Adjustment Notes:{' '}
+					<span className="text-foreground">
+						{participant.adjustmentDescription}
+					</span>
 				</p>
 			)}
 			{(participant.dcs?.length ?? 0) > 0 && (
 				<div className="space-y-2 rounded-md border p-3">
 					<h4 className="text-sm font-medium">DCs</h4>
 					{participant.dcs?.map((dc, index) => (
-						<div key={`${participant.id}-dc-${index}`} className="rounded-md border p-2 text-sm">
+						<div
+							key={`${participant.id}-dc-${index}`}
+							className="rounded-md border p-2 text-sm"
+						>
 							<p className="font-medium">
 								{getDcName(dc)}: {dc.value}
 							</p>
@@ -558,7 +618,9 @@ function TrackerDescriptionSections({
 	sections: Array<{ label: string; content: string }>;
 }) {
 	if (sections.length === 0) {
-		return <p className="text-muted-foreground">No encounter notes available.</p>;
+		return (
+			<p className="text-muted-foreground">No encounter notes available.</p>
+		);
 	}
 
 	return (
@@ -593,7 +655,9 @@ function NextRoundMarkerCard({
 				<p className="text-xs font-medium uppercase tracking-[0.24em] text-primary/80">
 					Next Round
 				</p>
-				<p className="text-xl font-semibold tabular-nums text-primary">{nextRound}</p>
+				<p className="text-xl font-semibold tabular-nums text-primary">
+					{nextRound}
+				</p>
 			</div>
 		</div>
 	);
@@ -639,7 +703,12 @@ function DelayedMarkerCard({
 					theme.line,
 				].join(' ')}
 			/>
-			<p className={['relative truncate bg-background px-2 text-left text-xs font-medium', theme.label].join(' ')}>
+			<p
+				className={[
+					'relative truncate bg-background px-2 text-left text-xs font-medium',
+					theme.label,
+				].join(' ')}
+			>
 				{participant.name} is delaying
 			</p>
 		</div>
@@ -658,14 +727,14 @@ function getRoundBoundaryIndex(
 
 type InitiativeCarouselItemData =
 	| {
-		key: string;
-		type: 'marker';
-	}
+			key: string;
+			type: 'marker';
+	  }
 	| {
-		key: string;
-		type: 'participant';
-		participant: TrackerParticipant;
-	};
+			key: string;
+			type: 'participant';
+			participant: TrackerParticipant;
+	  };
 
 function buildInitiativeCarouselItems(
 	participants: TrackerParticipant[],
@@ -713,12 +782,15 @@ type RoundAnnouncementState = {
 };
 
 export function InitiativeTrackerPage() {
-	const { executeCommand, undo, redo, canUndo, canRedo } =
-		useContext(CommandHistoryContext);
+	const { executeCommand, undo, redo, canUndo, canRedo } = useContext(
+		CommandHistoryContext
+	);
 	const charactersOrder = useEncounterStore((state) => state.charactersOrder);
 	const delayedOrder = useEncounterStore((state) => state.delayedOrder);
 	const charactersMap = useEncounterStore((state) => state.charactersMap);
-	const charactersWithTurn = useEncounterStore((state) => state.charactersWithTurn);
+	const charactersWithTurn = useEncounterStore(
+		(state) => state.charactersWithTurn
+	);
 	const trackerMetaMap = useEncounterStore((state) => state.trackerMetaMap);
 	const encounterData = useEncounterStore((state) => state.encounterData);
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
@@ -726,22 +798,52 @@ export function InitiativeTrackerPage() {
 	const history = useEncounterStore((state) => state.history);
 
 	const storeInitiativeParticipants = useMemo(
-		() => runtimeToInitiativeQueue({ charactersOrder, delayedOrder, charactersMap, trackerMetaMap }),
+		() =>
+			runtimeToInitiativeQueue({
+				charactersOrder,
+				delayedOrder,
+				charactersMap,
+				trackerMetaMap,
+			}),
 		[charactersOrder, delayedOrder, charactersMap, trackerMetaMap]
 	);
 
 	const storeAllInitiativeParticipants = useMemo(
-		() => runtimeToInitiativeQueueWithPending({ charactersOrder, delayedOrder, charactersMap, trackerMetaMap }),
+		() =>
+			runtimeToInitiativeQueueWithPending({
+				charactersOrder,
+				delayedOrder,
+				charactersMap,
+				trackerMetaMap,
+			}),
 		[charactersOrder, delayedOrder, charactersMap, trackerMetaMap]
 	);
 
 	const outOfInitiative = useMemo(
-		() => runtimeToOutOfInitiativeData({ charactersOrder, delayedOrder, charactersMap, trackerMetaMap, encounterData, partyLevel }),
-		[charactersOrder, delayedOrder, charactersMap, trackerMetaMap, encounterData, partyLevel]
+		() =>
+			runtimeToOutOfInitiativeData({
+				charactersOrder,
+				delayedOrder,
+				charactersMap,
+				trackerMetaMap,
+				encounterData,
+				partyLevel,
+			}),
+		[
+			charactersOrder,
+			delayedOrder,
+			charactersMap,
+			trackerMetaMap,
+			encounterData,
+			partyLevel,
+		]
 	);
 
 	const trackerHeader = useMemo(
-		() => encounterData ? encounterToTrackerHeader(encounterData, partyLevel, round) : null,
+		() =>
+			encounterData
+				? encounterToTrackerHeader(encounterData, partyLevel, round)
+				: null,
 		[encounterData, partyLevel, round]
 	);
 
@@ -754,8 +856,14 @@ export function InitiativeTrackerPage() {
 		() =>
 			new Set(
 				Object.values(trackerMetaMap)
-					.filter((meta) => meta.reinforcementSlotId && meta.reinforcementPending !== true)
-					.filter((meta) => meta.reinforcementSlotId && meta.reinforcementPending !== true)
+					.filter(
+						(meta) =>
+							meta.reinforcementSlotId && meta.reinforcementPending !== true
+					)
+					.filter(
+						(meta) =>
+							meta.reinforcementSlotId && meta.reinforcementPending !== true
+					)
 					.map((meta) => meta.reinforcementSlotId)
 					.filter((slotId): slotId is string => Boolean(slotId))
 			),
@@ -766,7 +874,8 @@ export function InitiativeTrackerPage() {
 		() =>
 			outOfInitiative.reinforcements.filter(
 				(participant) =>
-					participant.eventId && !triggeredReinforcementSlotIds.has(participant.eventId)
+					participant.eventId &&
+					!triggeredReinforcementSlotIds.has(participant.eventId)
 			),
 		[outOfInitiative.reinforcements, triggeredReinforcementSlotIds]
 	);
@@ -779,26 +888,34 @@ export function InitiativeTrackerPage() {
 		[encounterData]
 	);
 
-	const historyPreview = useMemo(() => historyToPreviewLines(history), [history]);
-
-	const [initiativeCarouselApi, setInitiativeCarouselApi] = useState<CarouselApi>();
-	const initiativeParticipants = storeInitiativeParticipants;
-	const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(
-		storeInitiativeParticipants[0]?.id ?? null
+	const historyPreview = useMemo(
+		() => historyToPreviewLines(history),
+		[history]
 	);
+
+	const [initiativeCarouselApi, setInitiativeCarouselApi] =
+		useState<CarouselApi>();
+	const initiativeParticipants = storeInitiativeParticipants;
+	const [selectedParticipantId, setSelectedParticipantId] = useState<
+		string | null
+	>(storeInitiativeParticipants[0]?.id ?? null);
 	const [reorderOpen, setReorderOpen] = useState(false);
 	const [nextRoundAnnouncement, setNextRoundAnnouncement] =
 		useState<RoundAnnouncementState | null>(null);
-	const [pinnedMarkerRound, setPinnedMarkerRound] = useState<number | null>(null);
+	const [pinnedMarkerRound, setPinnedMarkerRound] = useState<number | null>(
+		null
+	);
 	type ReturnPromptState = {
 		participantId: string;
 		action: 'end-turn' | 'delay' | 'ko';
 		focusCurrentOnSuccess: boolean;
 	};
-	const [returnPrompt, setReturnPrompt] = useState<ReturnPromptState | null>(null);
-	const [reorderDraftParticipants, setReorderDraftParticipants] = useState<TrackerParticipant[]>(
-		storeInitiativeParticipants
+	const [returnPrompt, setReturnPrompt] = useState<ReturnPromptState | null>(
+		null
 	);
+	const [reorderDraftParticipants, setReorderDraftParticipants] = useState<
+		TrackerParticipant[]
+	>(storeInitiativeParticipants);
 	const currentInitiativeParticipantId = charactersOrder[0] ?? null;
 	const nextTurnTimeoutRef = useRef<number | null>(null);
 	const reorderScrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -813,8 +930,8 @@ export function InitiativeTrackerPage() {
 	const outOfInitiativePanelDefault = hasReinforcements
 		? 'reinforcements'
 		: hasDelayed
-		? 'delaying'
-		: 'hazards';
+			? 'delaying'
+			: 'hazards';
 	const activeRoundBoundaryIndex = useMemo(
 		() => getRoundBoundaryIndex(initiativeParticipants, charactersWithTurn),
 		[initiativeParticipants, charactersWithTurn]
@@ -890,7 +1007,9 @@ export function InitiativeTrackerPage() {
 		activeRoundBoundaryIndex === 1 && charactersWithTurn.has(participantId);
 
 	const isNextParticipantDelayed = () => {
-		return charactersOrder.length > 1 && delayedOrder.includes(charactersOrder[1]);
+		return (
+			charactersOrder.length > 1 && delayedOrder.includes(charactersOrder[1])
+		);
 	};
 	const executeRoundAction = ({
 		participantId,
@@ -995,9 +1114,12 @@ export function InitiativeTrackerPage() {
 			const currentCharacter = charactersMap[currentParticipantId];
 
 			if (currentCharacter?.turnState === 'delayed') {
-				logTrackerButton('Next Turn opening return-to-initiative prompt for delaying participant', {
-					participantId: currentParticipantId,
-				});
+				logTrackerButton(
+					'Next Turn opening return-to-initiative prompt for delaying participant',
+					{
+						participantId: currentParticipantId,
+					}
+				);
 				setReturnPrompt({
 					participantId: currentParticipantId,
 					action: 'end-turn',
@@ -1007,9 +1129,12 @@ export function InitiativeTrackerPage() {
 				return;
 			}
 
-			logTrackerButton('Next Turn ignored because current participant has no turn', {
-				participantId: currentParticipantId,
-			});
+			logTrackerButton(
+				'Next Turn ignored because current participant has no turn',
+				{
+					participantId: currentParticipantId,
+				}
+			);
 
 			return;
 		}
@@ -1059,7 +1184,9 @@ export function InitiativeTrackerPage() {
 		}
 
 		container.scrollTop += velocity;
-		reorderAutoScrollFrameRef.current = window.requestAnimationFrame(stepReorderAutoScroll);
+		reorderAutoScrollFrameRef.current = window.requestAnimationFrame(
+			stepReorderAutoScroll
+		);
 	};
 
 	const setReorderAutoScrollVelocity = (velocity: number) => {
@@ -1079,7 +1206,9 @@ export function InitiativeTrackerPage() {
 		}
 
 		if (reorderAutoScrollFrameRef.current === null) {
-			reorderAutoScrollFrameRef.current = window.requestAnimationFrame(stepReorderAutoScroll);
+			reorderAutoScrollFrameRef.current = window.requestAnimationFrame(
+				stepReorderAutoScroll
+			);
 		}
 	};
 
@@ -1114,17 +1243,22 @@ export function InitiativeTrackerPage() {
 	};
 
 	const hasReorderChanges = useMemo(() => {
-		if (reorderDraftParticipants.length !== storeAllInitiativeParticipants.length) {
+		if (
+			reorderDraftParticipants.length !== storeAllInitiativeParticipants.length
+		) {
 			return true;
 		}
 
 		return reorderDraftParticipants.some(
-			(participant, index) => participant.id !== storeAllInitiativeParticipants[index]?.id
+			(participant, index) =>
+				participant.id !== storeAllInitiativeParticipants[index]?.id
 		);
 	}, [reorderDraftParticipants, storeAllInitiativeParticipants]);
 
 	const handleReorderSave = () => {
-		const draftOrderedIds = reorderDraftParticipants.map((participant) => participant.id);
+		const draftOrderedIds = reorderDraftParticipants.map(
+			(participant) => participant.id
+		);
 		const draftIdSet = new Set(draftOrderedIds);
 		let reorderedVisibleIndex = 0;
 
@@ -1139,10 +1273,14 @@ export function InitiativeTrackerPage() {
 			return nextId ?? participantId;
 		});
 
-		const orderDidChange = newOrder.some((participantId, index) => participantId !== charactersOrder[index]);
+		const orderDidChange = newOrder.some(
+			(participantId, index) => participantId !== charactersOrder[index]
+		);
 
 		if (!orderDidChange) {
-			logTrackerButton('Manual reorder save ignored because order is unchanged');
+			logTrackerButton(
+				'Manual reorder save ignored because order is unchanged'
+			);
 			handleReorderOpenChange(false);
 
 			return;
@@ -1188,7 +1326,9 @@ export function InitiativeTrackerPage() {
 		}
 
 		const selectedStillExists = selectedParticipantId
-			? allParticipants.some((participant) => participant.id === selectedParticipantId)
+			? allParticipants.some(
+					(participant) => participant.id === selectedParticipantId
+				)
 			: false;
 
 		if (!selectedStillExists) {
@@ -1349,7 +1489,12 @@ export function InitiativeTrackerPage() {
 	const handleSelectedHeal = selectedParticipantId
 		? (amount: number) => {
 				try {
-					executeCommand(new ChangeHealthCommand({ uuid: selectedParticipantId, delta: amount }));
+					executeCommand(
+						new ChangeHealthCommand({
+							uuid: selectedParticipantId,
+							delta: amount,
+						})
+					);
 				} catch (error) {
 					console.error('Failed to heal', error);
 				}
@@ -1359,7 +1504,12 @@ export function InitiativeTrackerPage() {
 	const handleSelectedDamage = selectedParticipantId
 		? (amount: number) => {
 				try {
-					executeCommand(new ChangeHealthCommand({ uuid: selectedParticipantId, delta: -amount }));
+					executeCommand(
+						new ChangeHealthCommand({
+							uuid: selectedParticipantId,
+							delta: -amount,
+						})
+					);
 				} catch (error) {
 					console.error('Failed to apply damage', error);
 				}
@@ -1369,7 +1519,13 @@ export function InitiativeTrackerPage() {
 	const handleSelectedSetTempHp = selectedParticipantId
 		? (amount: number, description: string) => {
 				try {
-					executeCommand(new SetTempHealthCommand({ uuid: selectedParticipantId, tempHealth: amount, description }));
+					executeCommand(
+						new SetTempHealthCommand({
+							uuid: selectedParticipantId,
+							tempHealth: amount,
+							description,
+						})
+					);
 				} catch (error) {
 					console.error('Failed to set temp HP', error);
 				}
@@ -1405,8 +1561,9 @@ export function InitiativeTrackerPage() {
 				const isTriggered = triggeredReinforcementSlotIds.has(event.id);
 				const canTrigger = event.round <= round && !isTriggered;
 				const participantCount =
-					reinforcementEventsByRound[event.round]?.find((slot) => slot.id === event.id)
-						?.participants?.length ?? 0;
+					reinforcementEventsByRound[event.round]?.find(
+						(slot) => slot.id === event.id
+					)?.participants?.length ?? 0;
 
 				return {
 					id: event.id,
@@ -1416,8 +1573,8 @@ export function InitiativeTrackerPage() {
 						event.detail ||
 						(participantCount > 0
 							? `${participantCount} reinforcement participant${
-								participantCount === 1 ? '' : 's'
-							}`
+									participantCount === 1 ? '' : 's'
+								}`
 							: undefined),
 					actionLabel: isTriggered
 						? 'Triggered'
@@ -1480,7 +1637,9 @@ export function InitiativeTrackerPage() {
 											variant="secondary"
 											size="icon"
 											className="border border-amber-500/50 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25"
-											onClick={() => logTrackerButton('End Encounter button clicked')}
+											onClick={() =>
+												logTrackerButton('End Encounter button clicked')
+											}
 										>
 											<ArrowRight className="h-4 w-4" />
 										</Button>
@@ -1554,13 +1713,20 @@ export function InitiativeTrackerPage() {
 					</div>
 				</Card>
 
-				<div className={['grid h-full min-h-0 min-w-0 gap-4', hasOutOfInitiativePanel ? 'lg:grid-rows-[minmax(0,2fr)_minmax(0,1fr)]' : 'lg:grid-rows-[minmax(0,1fr)]'].join(' ')}>
+				<div
+					className={[
+						'grid h-full min-h-0 min-w-0 gap-4',
+						hasOutOfInitiativePanel
+							? 'lg:grid-rows-[minmax(0,2fr)_minmax(0,1fr)]'
+							: 'lg:grid-rows-[minmax(0,1fr)]',
+					].join(' ')}
+				>
 					<Card className="flex min-h-0 min-w-0 flex-col overflow-hidden gap-0 p-4">
 						<div className="min-h-0 min-w-0 flex-1 overflow-hidden">
 							<Carousel
 								setApi={setInitiativeCarouselApi}
-      							orientation="vertical"
-								opts={{ align: "start", dragFree: true }}
+								orientation="vertical"
+								opts={{ align: 'start', dragFree: true }}
 								className="h-[calc(100%-3rem)] pt-4 mt-4"
 							>
 								<CarouselContent className="-mt-2 h-full pt-3 gap-1">
@@ -1579,19 +1745,24 @@ export function InitiativeTrackerPage() {
 											{item.type === 'marker' ? (
 												<NextRoundMarkerCard nextRound={nextRound} />
 											) : item.participant.state === 'delayed' ? (
-												<DelayedMarkerCard
-													participant={item.participant}
-												/>
+												<DelayedMarkerCard participant={item.participant} />
 											) : (
 												<InitiativeActionCarouselCard
 													participant={item.participant}
-													selected={item.participant.id === selectedParticipantId}
+													selected={
+														item.participant.id === selectedParticipantId
+													}
 													onSelect={setSelectedParticipantId}
-													isCurrent={item.participant.id === currentInitiativeParticipantId}
+													isCurrent={
+														item.participant.id ===
+														currentInitiativeParticipantId
+													}
 													onSwipeAction={handleParticipantSwipeAction}
 													density="desktop"
 													accent={getParticipantAccent(item.participant)}
-													indicatorLabel={getParticipantIndicatorLabel(item.participant)}
+													indicatorLabel={getParticipantIndicatorLabel(
+														item.participant
+													)}
 													logAction={logTrackerButton}
 												/>
 											)}
@@ -1599,112 +1770,151 @@ export function InitiativeTrackerPage() {
 									))}
 								</CarouselContent>
 								<CarouselPrevious />
-								<CarouselNext
-									className="-mb-4"
-								/>
+								<CarouselNext className="-mb-4" />
 							</Carousel>
 						</div>
 					</Card>
 
 					{hasOutOfInitiativePanel && (
-					<Card className="flex min-h-0 min-w-0 flex-col p-4">
-						<Tabs defaultValue={outOfInitiativePanelDefault} className="flex min-h-0 flex-1 flex-col">
-							<TabsList className="w-full h-auto">
-								{hasReinforcements && <TabsTrigger value="reinforcements" className="whitespace-normal">Reinforcements</TabsTrigger>}
-								{hasDelayed && <TabsTrigger value="delaying" className="whitespace-normal">Delaying</TabsTrigger>}
-								{hasHazards && <TabsTrigger value="hazards" className="whitespace-normal">Hazards</TabsTrigger>}
-							</TabsList>
-							{hasReinforcements && (
-								<TabsContent value="reinforcements" className="mt-3 min-h-0 flex-1">
-									<ScrollArea className="h-full pr-3">
-										<div className="space-y-2">
-											{pendingReinforcementParticipants.map((participant) => (
-												<ParticipantRow
-													key={participant.id}
-													participant={participant}
-													onSelect={setSelectedParticipantId}
-													selected={participant.id === selectedParticipantId}
-													actionSlot={
-														participant.eventId ? (
+						<Card className="flex min-h-0 min-w-0 flex-col p-4">
+							<Tabs
+								defaultValue={outOfInitiativePanelDefault}
+								className="flex min-h-0 flex-1 flex-col"
+							>
+								<TabsList className="w-full h-auto">
+									{hasReinforcements && (
+										<TabsTrigger
+											value="reinforcements"
+											className="whitespace-normal"
+										>
+											Reinforcements
+										</TabsTrigger>
+									)}
+									{hasDelayed && (
+										<TabsTrigger value="delaying" className="whitespace-normal">
+											Delaying
+										</TabsTrigger>
+									)}
+									{hasHazards && (
+										<TabsTrigger value="hazards" className="whitespace-normal">
+											Simple Hazards
+										</TabsTrigger>
+									)}
+								</TabsList>
+								{hasReinforcements && (
+									<TabsContent
+										value="reinforcements"
+										className="mt-3 min-h-0 flex-1"
+									>
+										<ScrollArea className="h-full pr-3">
+											<div className="space-y-2">
+												{pendingReinforcementParticipants.map((participant) => (
+													<ParticipantRow
+														key={participant.id}
+														participant={participant}
+														onSelect={setSelectedParticipantId}
+														selected={participant.id === selectedParticipantId}
+														actionSlot={
+															participant.eventId ? (
+																<Button
+																	type="button"
+																	size="sm"
+																	className="h-7 px-2 text-xs"
+																	onClick={(event) => {
+																		event.stopPropagation();
+																		triggerReinforcementEvent(
+																			participant.eventId as string
+																		);
+																	}}
+																>
+																	Trigger
+																</Button>
+															) : undefined
+														}
+													/>
+												))}
+											</div>
+										</ScrollArea>
+									</TabsContent>
+								)}
+								{hasDelayed && (
+									<TabsContent value="delaying" className="mt-3 min-h-0 flex-1">
+										<ScrollArea className="h-full pr-3">
+											<div className="space-y-2">
+												{delayedSectionParticipants.map((participant) => (
+													<ParticipantRow
+														key={participant.id}
+														participant={participant}
+														onSelect={setSelectedParticipantId}
+														selected={participant.id === selectedParticipantId}
+														actionSlot={
 															<Button
-																type="button"
 																size="sm"
-																className="h-7 px-2 text-xs"
-																onClick={(event) => {
-																	event.stopPropagation();
-																	triggerReinforcementEvent(participant.eventId as string);
+																variant="destructive"
+																onClick={(e) => {
+																	e.stopPropagation();
+																	handleParticipantSwipeAction(
+																		participant.id,
+																		'ko'
+																	);
 																}}
 															>
-																Trigger
+																K.O.
 															</Button>
-														) : undefined
-													}
-												/>
-											))}
-										</div>
-									</ScrollArea>
-								</TabsContent>
-							)}
-							{hasDelayed && (
-								<TabsContent value="delaying" className="mt-3 min-h-0 flex-1">
-									<ScrollArea className="h-full pr-3">
-										<div className="space-y-2">
-											{delayedSectionParticipants.map((participant) => (
-												<ParticipantRow
-													key={participant.id}
-													participant={participant}
-													onSelect={setSelectedParticipantId}
-													selected={participant.id === selectedParticipantId}
-													actionSlot={
-														<Button
-															size="sm"
-															variant="destructive"
-															onClick={(e) => {
-																e.stopPropagation();
-																handleParticipantSwipeAction(participant.id, 'ko');
-															}}
-														>
-															K.O.
-														</Button>
-													}
-												/>
-											))}
-										</div>
-									</ScrollArea>
-								</TabsContent>
-							)}
-							{hasHazards && (
-								<TabsContent value="hazards" className="mt-3 min-h-0 flex-1">
-									<ScrollArea className="h-full pr-3">
-										<div className="space-y-2">
-											{outOfInitiative.hazards.map((participant) => (
-												<ParticipantRow
-													key={participant.id}
-													participant={participant}
-													onSelect={setSelectedParticipantId}
-													selected={participant.id === selectedParticipantId}
-												/>
-											))}
-										</div>
-									</ScrollArea>
-								</TabsContent>
-							)}
-						</Tabs>
-					</Card>
-				)}
+														}
+													/>
+												))}
+											</div>
+										</ScrollArea>
+									</TabsContent>
+								)}
+								{hasHazards && (
+									<TabsContent value="hazards" className="mt-3 min-h-0 flex-1">
+										<ScrollArea className="h-full pr-3">
+											<div className="space-y-2">
+												{outOfInitiative.hazards.map((participant) => (
+													<ParticipantRow
+														key={participant.id}
+														participant={participant}
+														onSelect={setSelectedParticipantId}
+														selected={participant.id === selectedParticipantId}
+													/>
+												))}
+											</div>
+										</ScrollArea>
+									</TabsContent>
+								)}
+							</Tabs>
+						</Card>
+					)}
 				</div>
 
 				<div className="grid h-full min-h-0 min-w-0 gap-4 lg:grid-rows-[minmax(0,1fr)_minmax(0,1fr)]">
-
 					<Card className="flex min-h-0 min-w-0 flex-col p-4">
-						<Tabs defaultValue="description" className="flex min-h-0 flex-1 flex-col">
+						<Tabs
+							defaultValue="description"
+							className="flex min-h-0 flex-1 flex-col"
+						>
 							<TabsList className="w-full h-auto">
-								<TabsTrigger value="description" className="whitespace-normal">Description</TabsTrigger>
-								{hasNarrativeEvents && <TabsTrigger value="events" className="whitespace-normal">Narrative Events</TabsTrigger>}
-								<TabsTrigger value="history" className="whitespace-normal">Command History</TabsTrigger>
-								<TabsTrigger value="stats" className="whitespace-normal">Turn Stats</TabsTrigger>
+								<TabsTrigger value="description" className="whitespace-normal">
+									Description
+								</TabsTrigger>
+								{hasNarrativeEvents && (
+									<TabsTrigger value="events" className="whitespace-normal">
+										Narrative Events
+									</TabsTrigger>
+								)}
+								<TabsTrigger value="history" className="whitespace-normal">
+									Command History
+								</TabsTrigger>
+								<TabsTrigger value="stats" className="whitespace-normal">
+									Turn Stats
+								</TabsTrigger>
 							</TabsList>
-							<TabsContent value="description" className="mt-3 min-h-0 flex-1 text-sm">
+							<TabsContent
+								value="description"
+								className="mt-3 min-h-0 flex-1 text-sm"
+							>
 								<ScrollArea className="h-full pr-3">
 									<TrackerDescriptionSections
 										sections={trackerHeader?.descriptionSections ?? []}
@@ -1735,7 +1945,10 @@ export function InitiativeTrackerPage() {
 									</ul>
 								</ScrollArea>
 							</TabsContent>
-							<TabsContent value="stats" className="mt-3 min-h-0 flex-1 text-sm">
+							<TabsContent
+								value="stats"
+								className="mt-3 min-h-0 flex-1 text-sm"
+							>
 								<ScrollArea className="h-full pr-3">
 									<p>Average turn duration data will be connected in MVP.</p>
 								</ScrollArea>
@@ -1763,7 +1976,9 @@ export function InitiativeTrackerPage() {
 							<h2 className="text-base font-semibold break-words">
 								{trackerHeader?.encounterTitle}
 							</h2>
-							<p className="text-sm text-muted-foreground">{trackerHeader?.threatLevel}</p>
+							<p className="text-sm text-muted-foreground">
+								{trackerHeader?.threatLevel}
+							</p>
 						</div>
 						<div className="ml-auto flex flex-col items-end gap-2">
 							<div className="flex items-center gap-2">
@@ -1795,7 +2010,9 @@ export function InitiativeTrackerPage() {
 									variant="secondary"
 									size="icon"
 									className="border border-amber-500/50 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25"
-									onClick={() => logTrackerButton('End Encounter button clicked')}
+									onClick={() =>
+										logTrackerButton('End Encounter button clicked')
+									}
 								>
 									<ArrowRight className="h-4 w-4" />
 								</Button>
@@ -1848,16 +2065,37 @@ export function InitiativeTrackerPage() {
 				<Tabs defaultValue="carousel" className="space-y-3">
 					<TabsList className="grid w-full">
 						<TabsTrigger value="carousel">Horizontal Carousel</TabsTrigger>
-						{hasOutOfInitiativePanel && <TabsTrigger value="inactive">Inactive Participants</TabsTrigger>}
+						{hasOutOfInitiativePanel && (
+							<TabsTrigger value="inactive">Inactive Participants</TabsTrigger>
+						)}
 					</TabsList>
 					{hasOutOfInitiativePanel && (
 						<TabsContent value="inactive" className="mt-0">
 							<Card className="p-4">
-								<Tabs defaultValue={outOfInitiativePanelDefault} className="space-y-3">
+								<Tabs
+									defaultValue={outOfInitiativePanelDefault}
+									className="space-y-3"
+								>
 									<TabsList className="grid w-full h-auto">
-										{hasReinforcements && <TabsTrigger value="reinforcements" className="whitespace-normal">Reinforcements</TabsTrigger>}
-										{hasDelayed && <TabsTrigger value="delaying" className="whitespace-normal">Delaying</TabsTrigger>}
-										{hasHazards && <TabsTrigger value="hazards">Simple Hazards</TabsTrigger>}
+										{hasReinforcements && (
+											<TabsTrigger
+												value="reinforcements"
+												className="whitespace-normal"
+											>
+												Reinforcements
+											</TabsTrigger>
+										)}
+										{hasDelayed && (
+											<TabsTrigger
+												value="delaying"
+												className="whitespace-normal"
+											>
+												Delaying
+											</TabsTrigger>
+										)}
+										{hasHazards && (
+											<TabsTrigger value="hazards">Simple Hazards</TabsTrigger>
+										)}
 									</TabsList>
 									{hasReinforcements && (
 										<TabsContent value="reinforcements" className="mt-0">
@@ -1876,7 +2114,9 @@ export function InitiativeTrackerPage() {
 																	className="h-7 px-2 text-xs"
 																	onClick={(event) => {
 																		event.stopPropagation();
-																		triggerReinforcementEvent(participant.eventId as string);
+																		triggerReinforcementEvent(
+																			participant.eventId as string
+																		);
 																	}}
 																>
 																	Trigger
@@ -1903,7 +2143,10 @@ export function InitiativeTrackerPage() {
 																variant="destructive"
 																onClick={(e) => {
 																	e.stopPropagation();
-																	handleParticipantSwipeAction(participant.id, 'ko');
+																	handleParticipantSwipeAction(
+																		participant.id,
+																		'ko'
+																	);
 																}}
 															>
 																K.O.
@@ -1960,13 +2203,20 @@ export function InitiativeTrackerPage() {
 											) : (
 												<InitiativeActionCarouselCard
 													participant={item.participant}
-													selected={item.participant.id === selectedParticipantId}
+													selected={
+														item.participant.id === selectedParticipantId
+													}
 													onSelect={setSelectedParticipantId}
-													isCurrent={item.participant.id === currentInitiativeParticipantId}
+													isCurrent={
+														item.participant.id ===
+														currentInitiativeParticipantId
+													}
 													onSwipeAction={handleParticipantSwipeAction}
 													density="mobile"
 													accent={getParticipantAccent(item.participant)}
-													indicatorLabel={getParticipantIndicatorLabel(item.participant)}
+													indicatorLabel={getParticipantIndicatorLabel(
+														item.participant
+													)}
 													logAction={logTrackerButton}
 												/>
 											)}
@@ -1987,15 +2237,28 @@ export function InitiativeTrackerPage() {
 						<Card className="p-4">
 							<Tabs defaultValue="description" className="space-y-3">
 								<TabsList className="w-full h-auto">
-									<TabsTrigger value="description" className="whitespace-normal">Description</TabsTrigger>
-									{hasNarrativeEvents && <TabsTrigger value="events" className="whitespace-normal">Narrative Events</TabsTrigger>}
-									<TabsTrigger value="history" className="whitespace-normal">Command History</TabsTrigger>
-									<TabsTrigger value="stats" className="whitespace-normal">Turn Stats</TabsTrigger>
+									<TabsTrigger
+										value="description"
+										className="whitespace-normal"
+									>
+										Description
+									</TabsTrigger>
+									{hasNarrativeEvents && (
+										<TabsTrigger value="events" className="whitespace-normal">
+											Narrative Events
+										</TabsTrigger>
+									)}
+									<TabsTrigger value="history" className="whitespace-normal">
+										Command History
+									</TabsTrigger>
+									<TabsTrigger value="stats" className="whitespace-normal">
+										Turn Stats
+									</TabsTrigger>
 								</TabsList>
 								<TabsContent value="description" className="mt-0 text-sm">
-										<TrackerDescriptionSections
-											sections={trackerHeader?.descriptionSections ?? []}
-										/>
+									<TrackerDescriptionSections
+										sections={trackerHeader?.descriptionSections ?? []}
+									/>
 								</TabsContent>
 								{hasNarrativeEvents && (
 									<TabsContent value="events" className="mt-0">
@@ -2044,7 +2307,8 @@ export function InitiativeTrackerPage() {
 					<DialogHeader>
 						<DialogTitle>Round {nextRoundAnnouncement?.round}</DialogTitle>
 						<DialogDescription>
-							The next round is ready. Review this round's events before continuing.
+							The next round is ready. Review this round's events before
+							continuing.
 						</DialogDescription>
 					</DialogHeader>
 					<div className="space-y-2">
@@ -2068,7 +2332,9 @@ export function InitiativeTrackerPage() {
 										)}
 									</div>
 									{event.detail && (
-										<p className="mt-1 text-xs text-muted-foreground">{event.detail}</p>
+										<p className="mt-1 text-xs text-muted-foreground">
+											{event.detail}
+										</p>
 									)}
 								</div>
 							))
@@ -2082,17 +2348,26 @@ export function InitiativeTrackerPage() {
 				</DialogContent>
 			</Dialog>
 
-			<Dialog open={returnPrompt !== null} onOpenChange={(open) => { if (!open) handleReturnPromptSkip(); }}>
+			<Dialog
+				open={returnPrompt !== null}
+				onOpenChange={(open) => {
+					if (!open) handleReturnPromptSkip();
+				}}
+			>
 				<DialogContent className="sm:max-w-sm">
 					<DialogHeader>
 						<DialogTitle>Return to Initiative?</DialogTitle>
 						<DialogDescription>
-							Before ending this turn, does any delayed participant want to return to initiative?
+							Before ending this turn, does any delayed participant want to
+							return to initiative?
 						</DialogDescription>
 					</DialogHeader>
 					<div className="space-y-2">
 						{delayedSectionParticipants.map((participant) => (
-							<div key={participant.id} className="flex items-center justify-between gap-2 rounded-md border p-3">
+							<div
+								key={participant.id}
+								className="flex items-center justify-between gap-2 rounded-md border p-3"
+							>
 								<p className="text-sm font-semibold">{participant.name}</p>
 								<Button
 									size="sm"
@@ -2127,7 +2402,10 @@ export function InitiativeTrackerPage() {
 							Drag participants to set initiative order, then save to apply it.
 						</DialogDescription>
 					</DialogHeader>
-					<div ref={reorderScrollContainerRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-4 sm:px-0 sm:py-0">
+					<div
+						ref={reorderScrollContainerRef}
+						className="min-h-0 flex-1 overflow-y-auto px-6 py-4 sm:px-0 sm:py-0"
+					>
 						<Reorder.Group
 							axis="y"
 							layoutScroll
@@ -2158,7 +2436,9 @@ export function InitiativeTrackerPage() {
 								>
 									<span>{participant.name}</span>
 									{participant.state === 'pending-reinforcement' && (
-										<span className="ml-2 text-xs text-amber-400/70">(pending reinforcement)</span>
+										<span className="ml-2 text-xs text-amber-400/70">
+											(pending reinforcement)
+										</span>
 									)}
 								</Reorder.Item>
 							))}

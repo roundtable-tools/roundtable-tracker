@@ -62,20 +62,20 @@ function BreadCrumbs() {
 function EncounterHeaderInfo() {
 	const matches = useMatches();
 	const isInitiativeTrackerRoute = matches.some(
-		(match) => match.routeId === '/initiative_tracker',
+		(match) => match.routeId === '/initiative_tracker'
 	);
 	const encounterMatch = matches
 		.filter(
 			(
-				match,
+				match
 			): match is typeof match & {
 				loaderData: { encounterHeader: EncounterHeader };
 			} =>
 				Boolean(
 					match.loaderData &&
 					typeof match.loaderData === 'object' &&
-					'encounterHeader' in match.loaderData,
-				),
+					'encounterHeader' in match.loaderData
+				)
 		)
 		.at(-1);
 
@@ -95,8 +95,12 @@ function EncounterHeaderInfo() {
 						isInitiativeTrackerRoute ? 'hidden md:flex' : '',
 					].join(' ')}
 				>
-					<span className="truncate text-sm font-semibold">{encounterHeader.title}</span>
-					<span className="text-xs text-muted-foreground">{encounterHeader.threatLevel}</span>
+					<span className="truncate text-sm font-semibold">
+						{encounterHeader.title}
+					</span>
+					<span className="text-xs text-muted-foreground">
+						{encounterHeader.threatLevel}
+					</span>
 				</div>
 				<div className="shrink-0 text-right ml-auto md:ml-0">
 					<p className="text-xs text-muted-foreground">

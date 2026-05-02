@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        workspace: [web-roundtable-tracker, native-roundtable-tracker]
+        workspace: [web-roundtable-tracker]
 
     steps:
       - uses: actions/checkout@v4

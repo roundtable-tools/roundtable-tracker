@@ -29,7 +29,9 @@ type SlotSectionKind = 'participants' | 'events';
 function formatCountSummary(summary: Partial<Record<SlotType, number>>) {
 	const parts = Object.entries(summary)
 		.filter(([, count]) => (count ?? 0) > 0)
-		.map(([type, count]) => `${count} ${PARTICIPANT_TYPE_LABELS[type as SlotType]}`);
+		.map(
+			([type, count]) => `${count} ${PARTICIPANT_TYPE_LABELS[type as SlotType]}`
+		);
 
 	return parts.length > 0 ? parts.join(', ') : 'none yet';
 }
@@ -44,7 +46,9 @@ function formatValueSummary(values: number[], label: 'L') {
 	return uniqueValues.map((value) => `${label}${value}`).join(', ');
 }
 
-function formatTierSummary(values: Array<keyof typeof ACCOMPLISHMENT_LABELS | undefined>) {
+function formatTierSummary(
+	values: Array<keyof typeof ACCOMPLISHMENT_LABELS | undefined>
+) {
 	const tiers = [...new Set(values.filter(Boolean))] as Array<
 		keyof typeof ACCOMPLISHMENT_LABELS
 	>;
@@ -78,15 +82,18 @@ export function getSlotSectionIndices(
 }
 
 export function getParticipantSectionSummary(slots: BuilderSlot[]) {
-	const typeCounts = slots.reduce<Partial<Record<SlotType, number>>>((summary, slot) => {
-		if (!isParticipantSlot(slot)) {
+	const typeCounts = slots.reduce<Partial<Record<SlotType, number>>>(
+		(summary, slot) => {
+			if (!isParticipantSlot(slot)) {
+				return summary;
+			}
+
+			summary[slot.type] = (summary[slot.type] ?? 0) + 1;
+
 			return summary;
-		}
-
-		summary[slot.type] = (summary[slot.type] ?? 0) + 1;
-
-		return summary;
-	}, {});
+		},
+		{}
+	);
 	const levels = slots.filter(isParticipantSlot).map((slot) => slot.level);
 
 	return {
@@ -97,23 +104,31 @@ export function getParticipantSectionSummary(slots: BuilderSlot[]) {
 }
 
 export function getEventSectionSummary(slots: BuilderSlot[]) {
-	const typeCounts = slots.reduce<Partial<Record<SlotType, number>>>((summary, slot) => {
-		if (!isEventSlot(slot)) {
+	const typeCounts = slots.reduce<Partial<Record<SlotType, number>>>(
+		(summary, slot) => {
+			if (!isEventSlot(slot)) {
+				return summary;
+			}
+
+			summary[slot.type] = (summary[slot.type] ?? 0) + 1;
+
 			return summary;
-		}
-
-		summary[slot.type] = (summary[slot.type] ?? 0) + 1;
-
-		return summary;
-	}, {});
-	const tiers = slots.filter(isEventSlot).map((slot) => slot.accomplishmentLevel);
+		},
+		{}
+	);
+	const tiers = slots
+		.filter(isEventSlot)
+		.map((slot) => slot.accomplishmentLevel);
 
 	return {
 		count: tiers.length,
-		breakdown: Object.entries(typeCounts)
-			.filter(([, count]) => (count ?? 0) > 0)
-			.map(([type, count]) => `${count} ${EVENT_TYPE_LABELS[type as SlotType]}`)
-			.join(', ') || 'none yet',
+		breakdown:
+			Object.entries(typeCounts)
+				.filter(([, count]) => (count ?? 0) > 0)
+				.map(
+					([type, count]) => `${count} ${EVENT_TYPE_LABELS[type as SlotType]}`
+				)
+				.join(', ') || 'none yet',
 		values: formatTierSummary(tiers),
 	};
 }

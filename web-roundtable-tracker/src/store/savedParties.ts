@@ -45,7 +45,10 @@ export interface SavedPartiesStore {
 	parties: Party[];
 	lastUsedPartyId?: string;
 	addParty: (party: Omit<Party, 'savedAt'>) => void;
-	updateParty: (id: string, partial: Partial<Omit<Party, 'id' | 'savedAt'>>) => void;
+	updateParty: (
+		id: string,
+		partial: Partial<Omit<Party, 'id' | 'savedAt'>>
+	) => void;
 	removeParty: (id: string) => void;
 	setLastUsedPartyId: (id: string | undefined) => void;
 }
@@ -62,7 +65,9 @@ export const createSavedPartiesStore = () =>
 							...party,
 							savedAt: new Date().toISOString(),
 						};
-						const existingIndex = state.parties.findIndex((p) => p.id === party.id);
+						const existingIndex = state.parties.findIndex(
+							(p) => p.id === party.id
+						);
 
 						if (existingIndex === -1) {
 							return { parties: [...state.parties, savedParty] };
@@ -77,7 +82,12 @@ export const createSavedPartiesStore = () =>
 					set((state) => ({
 						parties: state.parties.map((party) =>
 							party.id === id
-								? { ...party, ...partial, id: party.id, savedAt: new Date().toISOString() }
+								? {
+										...party,
+										...partial,
+										id: party.id,
+										savedAt: new Date().toISOString(),
+									}
 								: party
 						),
 					})),

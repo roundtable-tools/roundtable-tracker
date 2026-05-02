@@ -149,7 +149,10 @@ export class ReturnToInitiativeCommand implements Command {
 
 			for (const [id, partial] of Object.entries(original.charactersMap)) {
 				if (restoredMap[id]) {
-					restoredMap[id] = { ...restoredMap[id], turnState: partial.turnState as never };
+					restoredMap[id] = {
+						...restoredMap[id],
+						turnState: partial.turnState as never,
+					};
 				}
 			}
 

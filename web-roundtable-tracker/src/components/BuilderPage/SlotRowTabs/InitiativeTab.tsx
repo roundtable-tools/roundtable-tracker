@@ -20,7 +20,12 @@ interface InitiativeTabProps {
 	onRemove: () => void;
 }
 
-export function InitiativeTab({ index, slot, control, onRemove }: InitiativeTabProps) {
+export function InitiativeTab({
+	index,
+	slot,
+	control,
+	onRemove,
+}: InitiativeTabProps) {
 	return (
 		<TabsContent value="initiative" className="space-y-3 mt-3">
 			<div className="flex items-center justify-between gap-2 mb-3">
@@ -45,7 +50,7 @@ export function InitiativeTab({ index, slot, control, onRemove }: InitiativeTabP
 							<FormControl>
 								<Input
 									type="number"
-									value={field.value ?? ''}
+									value={field.value ?? slot.initiativeBonus ?? ''}
 									onChange={(event) => {
 										const value = event.target.value;
 										field.onChange(value === '' ? undefined : Number(value));

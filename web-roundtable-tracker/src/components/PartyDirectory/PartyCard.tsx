@@ -1,7 +1,20 @@
 import { Party, PARTY_ICONS, PartyIcon } from '@/store/savedParties';
 import { cn } from '@/lib/utils';
 import {
-	User, Users, Shield, Sword, Wand2, Star, Crown, Flame, Zap, Skull, Heart, Axe, Sparkles, Ghost,
+	User,
+	Users,
+	Shield,
+	Sword,
+	Wand2,
+	Star,
+	Crown,
+	Flame,
+	Zap,
+	Skull,
+	Heart,
+	Axe,
+	Sparkles,
+	Ghost,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -41,7 +54,14 @@ type PartyCardProps = {
 	onExportJson: () => void;
 };
 
-export function PartyCard({ party, layout, onEdit, onCopy, onDelete, onExportJson }: PartyCardProps) {
+export function PartyCard({
+	party,
+	layout,
+	onEdit,
+	onCopy,
+	onDelete,
+	onExportJson,
+}: PartyCardProps) {
 	const Icon = PARTY_ICON_MAP[party.icon] ?? User;
 	const levelRange = partyLevelRange(party);
 	const memberCount = party.members.length;
@@ -55,7 +75,8 @@ export function PartyCard({ party, layout, onEdit, onCopy, onDelete, onExportJso
 				<div className="min-w-0 flex-1">
 					<p className="truncate font-semibold">{party.name}</p>
 					<p className="text-xs text-muted-foreground">
-						{memberCount} member{memberCount !== 1 ? 's' : ''} · Levels {levelRange}
+						{memberCount} member{memberCount !== 1 ? 's' : ''} · Levels{' '}
+						{levelRange}
 					</p>
 				</div>
 				<div className="flex items-center gap-2">
@@ -98,7 +119,9 @@ export function PartyCard({ party, layout, onEdit, onCopy, onDelete, onExportJso
 				<div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
 					<Icon className="h-6 w-6" />
 				</div>
-				<p className="w-full truncate text-center text-sm font-semibold">{party.name}</p>
+				<p className="w-full truncate text-center text-sm font-semibold">
+					{party.name}
+				</p>
 				<p className="text-xs text-muted-foreground">
 					{memberCount} · Lv {levelRange}
 				</p>

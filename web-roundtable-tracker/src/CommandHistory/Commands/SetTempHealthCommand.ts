@@ -35,7 +35,8 @@ export class SetTempHealthCommand implements Command {
 				return {
 					...old,
 					tempHealth: this.data.tempHealth,
-					tempHealthDescription: this.data.tempHealth > 0 ? this.data.description : undefined,
+					tempHealthDescription:
+						this.data.tempHealth > 0 ? this.data.description : undefined,
 				};
 			});
 
