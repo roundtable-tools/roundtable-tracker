@@ -7,7 +7,10 @@ import { routeTree } from './routeTree.gen';
 import { CommandHistoryProvider } from './CommandHistory/CommandHistoryProvider';
 
 // Create a new router instance
-const router = createRouter({ routeTree });
+const router = createRouter({
+	routeTree,
+	basepath: '/roundtable-tracker',
+});
 
 // Register the router instance for type safety
 declare module '@tanstack/react-router' {
