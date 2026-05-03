@@ -7,9 +7,9 @@ import { routeTree } from './routeTree.gen';
 import { CommandHistoryProvider } from './CommandHistory/CommandHistoryProvider';
 
 // Create a new router instance
-const router = createRouter({ 
+const router = createRouter({
 	routeTree,
-	basepath: "/roundtable-tracker"
+	basepath: '/roundtable-tracker',
 });
 
 // Register the router instance for type safety
