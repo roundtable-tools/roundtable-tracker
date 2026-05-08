@@ -46,6 +46,7 @@ import {
 	getParticipantSectionSummary,
 	getSlotSectionIndices,
 } from './slotSections';
+import { PartyLevelPicker } from './PartyLevelPicker';
 
 function hasAdditionalBlock(
 	slot: BuilderFormValues['slots'][number],
@@ -376,17 +377,9 @@ export function BuilderPage({
 											<FormItem className="space-y-1">
 												<FormLabel>Party Level</FormLabel>
 												<FormControl>
-													<Input
-														type="number"
-														min={1}
-														max={20}
-														value={field.value ?? ''}
-														onChange={(event) => {
-															const value = event.target.value;
-															field.onChange(
-																value === '' ? undefined : Number(value)
-															);
-														}}
+													<PartyLevelPicker
+														value={field.value}
+														onChange={field.onChange}
 														onBlur={field.onBlur}
 														name={field.name}
 														ref={field.ref}
