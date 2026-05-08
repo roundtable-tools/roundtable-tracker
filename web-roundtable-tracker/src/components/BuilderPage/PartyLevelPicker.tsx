@@ -21,8 +21,9 @@ export function PartyLevelPicker({
 	const safeValue = typeof value === 'number' && Number.isFinite(value) ? Math.min(Math.max(value, MIN), MAX) : MIN;
 
 	const [inputText, setInputText] = useState(String(safeValue));
-	const sliderRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
+	const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+	const draggedRef = useRef(false);
 
 	// Keep inputText in sync when value changes externally
 	useEffect(() => {
@@ -31,6 +32,7 @@ export function PartyLevelPicker({
 
 	// Compute thumb position as percentage
 	const pct = ((safeValue - MIN) / (MAX - MIN)) * 100;
+	const levels = Array.from({ length: MAX - MIN + 1 }, (_, index) => MIN + index);
 
 	const commitText = (text: string) => {
 		const num = parseInt(text, 10);
@@ -43,12 +45,18 @@ export function PartyLevelPicker({
 		}
 	};
 
+	const selectInputText = () => {
+		if (inputRef.current) {
+			inputRef.current.focus();
+			inputRef.current.select();
+		}
+	};
+
 	return (
-		<div className="flex flex-col mx-3" ref={sliderRef}>
-			{/* Floating label above thumb */}
-			<div className="relative h-7 mx-2 w-[calc(100% - var(--spacing-4))]">
+		<div className="mx-3">
+			<div className="relative pt-11">
 				<div
-					className="absolute -translate-x-1/2 top-0"
+					className="pointer-events-none absolute top-1/2 z-12 -translate-x-1/2 -translate-y-1/2"
 					style={{ left: `${pct}%` }}
 				>
 					<input
@@ -57,7 +65,32 @@ export function PartyLevelPicker({
 						inputMode="numeric"
 						name={name}
 						value={inputText}
+						onPointerDown={(e) => {
+							pointerStartRef.current = { x: e.clientX, y: e.clientY };
+							draggedRef.current = false;
+						}}
+						onPointerMove={(e) => {
+							const start = pointerStartRef.current;
+							if (!start || draggedRef.current) {
+								return;
+							}
+
+							const dx = Math.abs(e.clientX - start.x);
+							const dy = Math.abs(e.clientY - start.y);
+							if (dx + dy > 6) {
+								draggedRef.current = true;
+								inputRef.current?.blur();
+							}
+						}}
+						onPointerUp={() => {
+							if (!draggedRef.current) {
+								selectInputText();
+							}
+							pointerStartRef.current = null;
+							draggedRef.current = false;
+						}}
 						onChange={(e) => setInputText(e.target.value)}
+						onFocus={() => inputRef.current?.select()}
 						onBlur={(e) => {
 							commitText(e.target.value);
 							onBlur?.();
@@ -67,21 +100,46 @@ export function PartyLevelPicker({
 								commitText(inputText);
 								inputRef.current?.blur();
 							}
+
+							if (e.key === 'Escape') {
+								setInputText(String(safeValue));
+								inputRef.current?.blur();
+							}
 						}}
-						className="w-8 rounded border border-input bg-background px-1 py-0.5 text-center text-xs font-semibold shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+						className="pointer-events-auto h-8 w-8 rounded-md border border-foreground/45 bg-card px-1 py-0 text-center text-sm font-bold text-foreground shadow-md outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-primary"
 					/>
 				</div>
+				<div className="pointer-events-none absolute inset-x-1 top-1/3 z-11 -translate-y-1/2">
+					{levels.map((level) => {
+						const levelPct = ((level - MIN) / (MAX - MIN)) * 100;
+						const isMajor = level % 5 === 0;
+
+						return (
+							<div
+								key={level}
+								className="absolute -translate-x-1/2"
+								style={{ left: `${levelPct}%` }}
+							>
+								<div
+									className={isMajor
+										? 'h-3 w-1 rounded-full bg-foreground/45'
+										: 'h-3 w-0.5 rounded-full bg-foreground/25'}
+								/>
+							</div>
+						);
+					})}
+				</div>
+				<Slider
+					value={safeValue}
+					min={MIN}
+					max={MAX}
+					onChange={(v) => {
+						onChange(v);
+						setInputText(String(v));
+					}}
+					className="absolute z-10 w-[calc(100%+var(--spacing)*4)] top-1/2 -translate-y-1/2 px-2 -mx-2"
+				/>
 			</div>
-			<Slider
-				value={safeValue}
-				min={MIN}
-				max={MAX}
-				onChange={(v) => {
-					onChange(v);
-					setInputText(String(v));
-				}}
-                className='w-full'
-			/>
 		</div>
 	);
 }

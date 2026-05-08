@@ -40,7 +40,16 @@ import {
 	type BuilderVariantSnapshot,
 } from './builderConvert';
 import { v4 as uuidv4 } from 'uuid';
-import { RotateCcw, Trash2 } from 'lucide-react';
+import {
+	CalendarClock,
+	ChevronRight,
+	Eye,
+	Layers3,
+	RotateCcw,
+	Trash2,
+	Users,
+	Info,
+} from 'lucide-react';
 import {
 	getEventSectionSummary,
 	getParticipantSectionSummary,
@@ -48,6 +57,8 @@ import {
 } from './slotSections';
 import { PartyLevelPicker } from './PartyLevelPicker';
 import { PartySizePicker } from './PartySizePicker';
+import { cn } from '@/lib/utils';
+import { BuilderPreviewTab } from './BuilderPreviewTab';
 
 function hasAdditionalBlock(
 	slot: BuilderFormValues['slots'][number],
@@ -101,7 +112,17 @@ export function BuilderPage({
 	templateLevel,
 	templatePartySize,
 }: BuilderPageProps) {
+	type BuilderStep = 'details' | 'participants' | 'events' | 'variants' | 'preview';
+	const stepOrder: BuilderStep[] = [
+		'details',
+		'participants',
+		'events',
+		'variants',
+		'preview',
+	];
+
 	const navigate = useNavigate();
+	const [activeTab, setActiveTab] = useState<BuilderStep>('details');
 	const [activeEncounterId, setActiveEncounterId] = useState<
 		string | undefined
 	>(encounterId);
@@ -253,6 +274,9 @@ export function BuilderPage({
 	const templateShadowVariants = templateId
 		? (encounterTemplates.find((t) => t.id === templateId)?.variants ?? [])
 		: [];
+	const activeStepIndex = stepOrder.indexOf(activeTab);
+	const isPreviousStep = (step: BuilderStep) =>
+		stepOrder.indexOf(step) < activeStepIndex;
 
 	const onSubmit = (values: BuilderFormValues) => {
 		const encounter = toConcreteEncounter(values, activeEncounterId);
@@ -321,7 +345,11 @@ export function BuilderPage({
 				className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4"
 			>
 
-				<Tabs defaultValue="details" className="w-full space-y-4">
+				<Tabs
+					value={activeTab}
+					onValueChange={(value) => setActiveTab(value as BuilderStep)}
+					className="w-full space-y-4"
+				>
 					<TabsList className="sticky top-0 z-20 h-auto w-full flex-wrap justify-start gap-2 rounded-md bg-muted p-1 row">
 						<section className="w-full rounded-md border bg-background p-3 backdrop-blur supports-[backdrop-filter]:bg-background/85">
 							<h2 className="mb-2 text-xl font-semibold">Encounter Threat</h2>
@@ -336,22 +364,75 @@ export function BuilderPage({
 							/>
 						</section>
 						<div className='h-auto w-full flex flex-wrap justify-start gap-2 '>
-							<TabsTrigger value="details">Details</TabsTrigger>
-							<TabsTrigger value="participants">
+							<TabsTrigger
+								value="details"
+								className={cn(
+									'gap-1.5',
+									isPreviousStep('details') &&
+										'outline outline-1 bg-background/25 -outline-offset-1 text-primary/75'
+								)}
+							>
+								<Info className="h-4 w-4" aria-hidden="true" />
+								<span>Details</span>
+							</TabsTrigger>
+							<ChevronRight
+								className="h-4 w-4 text-muted-foreground self-center"
+								aria-hidden="true"
+							/>
+							<TabsTrigger
+								value="participants"
+								className={cn(
+									'gap-1.5',
+									isPreviousStep('participants') &&
+										'outline outline-1 bg-background/25 -outline-offset-1 text-primary/75'
+								)}
+							>
+								<Users className="h-4 w-4" aria-hidden="true" />
 								Participants ({participantSummary.count})
 							</TabsTrigger>
-							<TabsTrigger value="events">
+							<ChevronRight
+								className="h-4 w-4 text-muted-foreground self-center"
+								aria-hidden="true"
+							/>
+							<TabsTrigger
+								value="events"
+								className={cn(
+									'gap-1.5',
+									isPreviousStep('events') &&
+										'outline outline-1 bg-background/25 -outline-offset-1 text-primary/75'
+								)}
+							>
+								<CalendarClock className="h-4 w-4" aria-hidden="true" />
 								Events ({eventSummary.count})
 							</TabsTrigger>
-							<TabsTrigger value="variants">
+							<ChevronRight
+								className="h-4 w-4 text-muted-foreground self-center"
+								aria-hidden="true"
+							/>
+							<TabsTrigger
+								value="variants"
+								className={cn(
+									'gap-1.5',
+									isPreviousStep('variants') &&
+										'outline outline-1 bg-background/25 -outline-offset-1 text-primary/75'
+								)}
+							>
+								<Layers3 className="h-4 w-4" aria-hidden="true" />
 								Variants ({variants.length})
+							</TabsTrigger>
+							<ChevronRight
+								className="h-4 w-4 self-center text-muted-foreground"
+								aria-hidden="true"
+							/>
+							<TabsTrigger value="preview" className="gap-1.5">
+								<Eye className="h-4 w-4" aria-hidden="true" />
+								<span>Preview</span>
 							</TabsTrigger>
 						</div>
 					</TabsList>
 
 					<TabsContent value="details" className="space-y-3">
 						<section>
-							<h3 className="mb-2 text-sm font-medium">Encounter Details</h3>
 							<div className="space-y-3">
 								<FormField
 									control={form.control}
@@ -486,7 +567,6 @@ export function BuilderPage({
 						<section className="min-w-0 space-y-3">
 							<div className="flex min-w-0 flex-1 flex-col gap-1 pr-2">
 								<div className="flex items-center justify-between gap-3">
-									<h3 className="text-sm font-medium">Participants</h3>
 									<span className="text-xs text-muted-foreground">
 										{participantSummary.count} total
 									</span>
@@ -516,7 +596,6 @@ export function BuilderPage({
 						<section className="min-w-0 space-y-3">
 							<div className="flex min-w-0 flex-1 flex-col gap-1 pr-2">
 								<div className="flex items-center justify-between gap-3">
-									<h3 className="text-sm font-medium">Events</h3>
 									<span className="text-xs text-muted-foreground">
 										{eventSummary.count} total
 									</span>
@@ -551,7 +630,6 @@ export function BuilderPage({
 						<section className="space-y-3">
 							<div className="flex items-center justify-between gap-3">
 								<div>
-									<h3 className="text-sm font-medium">Saved Variants</h3>
 									<p className="text-xs text-muted-foreground">
 										Snapshot the current builder state as a reusable variant.
 									</p>
@@ -782,6 +860,16 @@ export function BuilderPage({
 								</div>
 							</section>
 						)}
+					</TabsContent>
+
+					<TabsContent value="preview" className="space-y-4">
+						<BuilderPreviewTab
+							control={control}
+							templateVariants={templateShadowVariants}
+							attritionRatePercent={attritionRatePercent}
+							maxRounds={maxRounds}
+							basePartyOutputPerRound={basePartyOutputPerRound}
+						/>
 					</TabsContent>
 				</Tabs>
 
