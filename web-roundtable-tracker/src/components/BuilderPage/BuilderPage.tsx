@@ -318,44 +318,33 @@ export function BuilderPage({
 				onSubmit={handleSubmit(onSubmit)}
 				className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4"
 			>
-				<section className="sticky top-0 z-20 space-y-2 rounded-md border bg-background/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-background/85">
-					<h2 className="mb-2 text-xl font-semibold">Encounter Builder</h2>
-					<h3 className="mb-2 text-sm font-medium">Encounter Threat</h3>
-					<ThreatTracker
-						budget={xpUsage.effectiveXp}
-						comparisonBudget={xpUsage.rawXp}
-						primaryBudgetLabel="Effective XP"
-						comparisonBudgetLabel="Raw XP"
-						partySize={safePartySize}
-						waveInteraction={xpUsage.waveInteraction}
-						simulation={xpUsage.simulation}
-					/>
-					<div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-						<span className="rounded border px-2 py-1">
-							Effective: {xpUsage.effectiveXp.valueOf()} XP
-						</span>
-						<span className="rounded border px-2 py-1">
-							Raw: {xpUsage.rawXp.valueOf()} XP
-						</span>
-						<span className="rounded border px-2 py-1">
-							Wave 1 base XP: {xpUsage.effectiveReinforcementXp.valueOf()} /{' '}
-							{xpUsage.rawReinforcementXp.valueOf()} XP
-						</span>
-					</div>
-				</section>
 
 				<Tabs defaultValue="details" className="w-full space-y-4">
-					<TabsList className="h-auto w-full flex-wrap justify-start gap-2 rounded-md bg-muted/50 p-1">
-						<TabsTrigger value="details">Details</TabsTrigger>
-						<TabsTrigger value="participants">
-							Participants ({participantSummary.count})
-						</TabsTrigger>
-						<TabsTrigger value="events">
-							Events ({eventSummary.count})
-						</TabsTrigger>
-						<TabsTrigger value="variants">
-							Variants ({variants.length})
-						</TabsTrigger>
+					<TabsList className="sticky top-0 z-20 h-auto w-full flex-wrap justify-start gap-2 rounded-md bg-muted p-1 row">
+						<section className="w-full rounded-md border bg-background p-3 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+							<h2 className="mb-2 text-xl font-semibold">Encounter Threat</h2>
+							<ThreatTracker
+								budget={xpUsage.effectiveXp}
+								comparisonBudget={xpUsage.rawXp}
+								primaryBudgetLabel="Effective XP"
+								comparisonBudgetLabel="Raw XP"
+								partySize={safePartySize}
+								waveInteraction={xpUsage.waveInteraction}
+								simulation={xpUsage.simulation}
+							/>
+						</section>
+						<div className='h-auto w-full flex flex-wrap justify-start gap-2 '>
+							<TabsTrigger value="details">Details</TabsTrigger>
+							<TabsTrigger value="participants">
+								Participants ({participantSummary.count})
+							</TabsTrigger>
+							<TabsTrigger value="events">
+								Events ({eventSummary.count})
+							</TabsTrigger>
+							<TabsTrigger value="variants">
+								Variants ({variants.length})
+							</TabsTrigger>
+						</div>
 					</TabsList>
 
 					<TabsContent value="details" className="space-y-3">

@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
 
-import { AppHeader } from '@/AppHeader.tsx';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
@@ -47,6 +46,7 @@ import { EncounterDetailsModal } from './EncounterDetails/EncounterDetailsModal.
 import { EncounterImportModal } from './EncounterDetails/EncounterImportModal.tsx';
 import { SavedConcreteEncounter } from '@/store/savedEncounters.ts';
 import { useSavedEncountersStore } from '@/store/savedEncounterInstance.ts';
+import { Card } from '../ui/card.tsx';
 
 type EncounterDirectoryProps = {
 	setView: (view: string) => void;
@@ -501,8 +501,24 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 
 	return (
 		<div className="flex min-h-screen flex-col bg-background">
-			<AppHeader setView={setView}>
-				<div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
+			<main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+				<section className="flex flex-col gap-3 rounded-2xl border bg-card px-5 py-5 shadow-sm sm:flex-row sm:items-end sm:justify-between">
+					<div className="space-y-1">
+						<p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
+							Encounter Directory
+						</p>
+						<h1 className="text-3xl font-semibold tracking-tight">
+							Saved encounters and templates
+						</h1>
+						<p className="text-sm text-muted-foreground">
+							Browse, filter, import, and launch encounters from one view.
+						</p>
+					</div>
+					<div className="text-sm text-muted-foreground">
+						{visibleRowCount} shown of {data.length}
+					</div>
+				</section>
+				<Card className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
 					<div className="flex items-center gap-2">
 						<Button
 							className="bg-white text-slate-900 hover:bg-white/90"
@@ -615,25 +631,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</div>
-				</div>
-			</AppHeader>
-			<main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
-				<section className="flex flex-col gap-3 rounded-2xl border bg-card px-5 py-5 shadow-sm sm:flex-row sm:items-end sm:justify-between">
-					<div className="space-y-1">
-						<p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
-							Encounter Directory
-						</p>
-						<h1 className="text-3xl font-semibold tracking-tight">
-							Saved encounters and templates
-						</h1>
-						<p className="text-sm text-muted-foreground">
-							Browse, filter, import, and launch encounters from one view.
-						</p>
-					</div>
-					<div className="text-sm text-muted-foreground">
-						{visibleRowCount} shown of {data.length}
-					</div>
-				</section>
+				</Card>
 				<div className="flex flex-wrap items-center gap-2">
 					{globalFilter ? (
 						<span className="rounded-full border bg-card px-3 py-1 text-sm text-muted-foreground">

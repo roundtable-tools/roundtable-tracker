@@ -14,7 +14,6 @@ import { generateUUID } from '@/utils/uuid';
 import { PreviewCard } from './PreviewCard';
 import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { useEffect, useMemo, useState } from 'react';
-import { AppHeader } from '@/AppHeader';
 import {
 	buildTrackerMetaMap,
 	participantsToEncounterCharacters,
@@ -446,7 +445,6 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
-			<AppHeader setView={setView} />
 			<div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
 				<header className="flex flex-col gap-3 rounded-2xl border bg-card px-5 py-5 shadow-sm sm:flex-row sm:items-end sm:justify-between">
 					<div className="space-y-1">

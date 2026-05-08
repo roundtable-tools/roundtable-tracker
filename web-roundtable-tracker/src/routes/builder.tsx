@@ -1,4 +1,3 @@
-import { AppHeader } from '@/AppHeader';
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { BuilderPage } from '@/components/BuilderPage/BuilderPage';
@@ -33,16 +32,13 @@ export function BuilderRouteComponent() {
 	} = Route.useSearch();
 
 	return (
-		<>
-			<AppHeader setView={() => {}} />
-			<BuilderPage
-				encounterId={encounterId}
-				importDraftId={importDraftId}
-				templateId={templateId}
-				templateVariantId={templateVariantId}
-				templateLevel={templateLevel}
-				templatePartySize={templatePartySize}
-			/>
-		</>
+		<BuilderPage
+			encounterId={encounterId}
+			importDraftId={importDraftId}
+			templateId={templateId}
+			templateVariantId={templateVariantId}
+			templateLevel={templateLevel}
+			templatePartySize={templatePartySize}
+		/>
 	);
 }
