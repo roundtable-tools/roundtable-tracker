@@ -47,6 +47,7 @@ import {
 	getSlotSectionIndices,
 } from './slotSections';
 import { PartyLevelPicker } from './PartyLevelPicker';
+import { PartySizePicker } from './PartySizePicker';
 
 function hasAdditionalBlock(
 	slot: BuilderFormValues['slots'][number],
@@ -369,12 +370,12 @@ export function BuilderPage({
 										</FormItem>
 									)}
 								/>
-								<div className="grid grid-cols-2 gap-3">
+								<div className="flex flex-wrap items-start gap-3 sm:flex-nowrap">
 									<FormField
 										control={form.control}
 										name="partyLevel"
 										render={({ field }) => (
-											<FormItem className="space-y-1">
+											<FormItem className="min-w-0 flex-1 space-y-1">
 												<FormLabel>Party Level</FormLabel>
 												<FormControl>
 													<PartyLevelPicker
@@ -393,19 +394,12 @@ export function BuilderPage({
 										control={form.control}
 										name="partySize"
 										render={({ field }) => (
-											<FormItem className="space-y-1">
+											<FormItem className="w-fit shrink-0 space-y-1">
 												<FormLabel>Party Size</FormLabel>
 												<FormControl>
-													<Input
-														type="number"
-														min={1}
-														value={field.value ?? ''}
-														onChange={(event) => {
-															const value = event.target.value;
-															field.onChange(
-																value === '' ? undefined : Number(value)
-															);
-														}}
+													<PartySizePicker
+														value={field.value}
+														onChange={field.onChange}
 														onBlur={field.onBlur}
 														name={field.name}
 														ref={field.ref}

@@ -44,12 +44,12 @@ export function PartyLevelPicker({
 	};
 
 	return (
-		<div className="flex flex-col gap-1 px-3" ref={sliderRef}>
+		<div className="flex flex-col mx-3" ref={sliderRef}>
 			{/* Floating label above thumb */}
-			<div className="relative h-7 -mx-6 w-[calc(100%+1rem)]">
+			<div className="relative h-7 mx-2 w-[calc(100% - var(--spacing-4))]">
 				<div
 					className="absolute -translate-x-1/2 top-0"
-					style={{ left: `calc(${pct}% * (1 - 1/${MAX - MIN + 1}) + 50% / ${MAX - MIN + 1} * 2)` }}
+					style={{ left: `${pct}%` }}
 				>
 					<input
 						ref={inputRef}
@@ -68,7 +68,7 @@ export function PartyLevelPicker({
 								inputRef.current?.blur();
 							}
 						}}
-						className="w-10 rounded border border-input bg-background px-1 py-0.5 text-center text-xs font-semibold shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+						className="w-8 rounded border border-input bg-background px-1 py-0.5 text-center text-xs font-semibold shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
 					/>
 				</div>
 			</div>
