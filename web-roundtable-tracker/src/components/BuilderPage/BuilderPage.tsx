@@ -60,6 +60,7 @@ import { PartySizePicker } from './PartySizePicker';
 import { cn } from '@/lib/utils';
 import { BuilderPreviewTab } from './BuilderPreviewTab';
 import { ParagraphFields } from './ParagraphFields.tsx';
+import { BuilderListLayout } from './BuilderListLayout';
 
 function hasAdditionalBlock(
 	slot: BuilderFormValues['slots'][number],
@@ -368,6 +369,40 @@ export function BuilderPage({
 		});
 	};
 
+	const renderNoteEditor = (
+		noteFieldId: string,
+		index: number,
+		layoutMode: 'tabs' | 'all'
+	) => (
+		<div
+			key={noteFieldId}
+			className={cn(
+				'space-y-3 rounded-md border p-3',
+				layoutMode === 'tabs' && 'border-none p-0'
+			)}
+		>
+			<ParagraphFields
+				control={form.control}
+				label="Note Details"
+				fieldNames={[
+					`notes.${index}.header` as const,
+					`notes.${index}.content` as const,
+				]}
+				placeholders={['Note Header', 'Note Content']}
+			/>
+			<div className="flex justify-end">
+				<Button
+					type="button"
+					variant="ghost"
+					size="sm"
+					onClick={() => removeNote(index)}
+				>
+					Remove Note
+				</Button>
+			</div>
+		</div>
+	);
+
 	return (
 		<Form {...form}>
 			<form
@@ -510,85 +545,47 @@ export function BuilderPage({
 									placeholders={['Training Grounds', 'Brief setup description...']} 
 								/>
 								<div className="space-y-2">
-									<div className="flex items-center justify-between gap-3">
-										<FormLabel className="block">Notes</FormLabel>
-										<Button
-											type="button"
-											variant="outline"
-											size="sm"
-											onClick={() => {
-												const nextIndex = notes.length + 1;
-												const nextId = uuidv4();
-												appendNote({
-													id: nextId,
-													header: `Note ${nextIndex}`,
-													content: '',
-												});
-												setActiveNotesTab(nextId);
-											}}
-										>
-											Add Note
-										</Button>
-									</div>
-									<div>
-										{notes.length === 0 ? (
-											<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-												No notes yet. Add a note tab to capture encounter
-												context.
-											</div>
-										) : (
-											<Tabs
-												value={activeNotesTab}
-												onValueChange={setActiveNotesTab}
-												className="w-full space-y-3"
-											>
-												<TabsList className="h-auto w-full flex-wrap justify-start gap-2 rounded-md bg-muted p-1">
-													{noteFields.map((noteField, index) => {
-														const note = notes[index];
-														const tabValue = note?.id ?? noteField.id;
-														const tabLabel = note?.header?.trim().length
-															? note.header
-															: `Note ${index + 1}`;
+									<BuilderListLayout
+										label="Notes"
+										items={noteFields}
+										getItemId={(noteField, index) => notes[index]?.id ?? noteField.id}
+										getItemLabel={(_, index) => {
+											const note = notes[index];
 
-														return (
-															<TabsTrigger
-																key={noteField.id}
-																value={tabValue}
-																className="max-w-52 truncate"
-															>
-																{tabLabel}
-															</TabsTrigger>
-														);
-													})}
-												</TabsList>
-
-												{noteFields.map((noteField, index) => {
-													const note = notes[index];
-													const tabValue = note?.id ?? noteField.id;
-
-													return (
-														<TabsContent
-															key={noteField.id}
-															value={tabValue}
-															className="space-y-3 rounded-md border p-3"
-														>
-															<ParagraphFields control={form.control} label="Note Details" fieldNames={[`notes.${index}.header` as const, `notes.${index}.content` as const]} placeholders={['Note Header', 'Note Content']} />
-															<div className="flex justify-end">
-																<Button
-																	type="button"
-																	variant="ghost"
-																	size="sm"
-																	onClick={() => removeNote(index)}
-																>
-																	Remove Note
-																</Button>
-															</div>
-														</TabsContent>
-													);
-												})}
-											</Tabs>
+											return note?.header?.trim().length
+												? note.header
+												: `Note ${index + 1}`;
+										}}
+										renderItem={(_, index, layout) => (
+											renderNoteEditor(noteFields[index].id, index, layout.mode)
 										)}
-									</div>
+										emptyState={
+											<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+												No notes yet. Add a note tab to capture encounter context.
+											</div>
+										}
+										activeItemId={activeNotesTab}
+										onActiveItemIdChange={setActiveNotesTab}
+										toolbarActions={
+											<Button
+												type="button"
+												variant="outline"
+												size="sm"
+												onClick={() => {
+													const nextIndex = notes.length + 1;
+													const nextId = uuidv4();
+													appendNote({
+														id: nextId,
+														header: `Note ${nextIndex}`,
+														content: '',
+													});
+													setActiveNotesTab(nextId);
+												}}
+											>
+												Add Note
+											</Button>
+										}
+									/>
 								</div>
 							</div>
 						</section>
