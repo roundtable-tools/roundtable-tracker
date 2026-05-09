@@ -13,7 +13,7 @@ import type { BuilderFormValues } from './builderConvert';
 interface ParagraphFieldsProps {
 	control: Control<BuilderFormValues>;
 	fieldNames: [BuilderStringFieldName, BuilderStringFieldName];
-	label: string;
+	label: JSX.Element | string;
 	placeholders: [string, string];
 }
 

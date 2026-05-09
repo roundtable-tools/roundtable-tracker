@@ -6,6 +6,7 @@ import { defaultSlot } from '../builderConvert';
 import type { AdditionalDataBlockKey } from '../SlotRow';
 import type { BuilderFormValues } from '../builderConvert';
 import type { UseFormReturn, UseFieldArrayRemove, UseFieldArrayUpdate } from 'react-hook-form';
+import { cn } from '@/lib/utils';
 
 const EVENT_ICONS: Record<string, typeof ScrollText> = {
 	narrative: ScrollText,
@@ -83,28 +84,29 @@ export function EventListSection({
 			activeItemId={activeItemId}
 			onActiveItemIdChange={onActiveItemIdChange}
 			toolbarActions={
-				<>
+				<div className="flex items-center gap-1 rounded-lg border bg-background p-1">
+					<span className="text-sm font-medium mx-1">Add event</span>
 					<Button
 						type="button"
-						variant="outline"
+						variant="default"
+						title="Add reinforcement event"
 						size="sm"
-						className="gap-1.5"
-						onClick={() => append({ ...defaultSlot(), type: 'narrative' })}
-					>
-						<ScrollText className="h-3.5 w-3.5" aria-hidden="true" />
-						Narrative
-					</Button>
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						className="gap-1.5"
+						className={'flex h-7 w-7 items-center justify-center rounded bg-primary text-primary-foreground'}
 						onClick={() => append({ ...defaultSlot(), type: 'reinforcement' })}
 					>
 						<ShieldPlus className="h-3.5 w-3.5" aria-hidden="true" />
-						Reinforcement
 					</Button>
-				</>
+					<Button
+						type="button"
+						variant="default"
+						title="Add narrative event"
+						size="sm"
+						className={'flex h-7 w-7 items-center justify-center rounded bg-primary text-primary-foreground'}
+						onClick={() => append({ ...defaultSlot(), type: 'narrative' })}
+					>
+						<ScrollText className="h-3.5 w-3.5" aria-hidden="true" />
+					</Button>
+				</div>
 			}
 		/>
 	);

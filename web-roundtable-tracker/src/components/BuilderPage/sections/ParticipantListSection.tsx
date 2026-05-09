@@ -83,28 +83,29 @@ export function ParticipantListSection({
 			activeItemId={activeItemId}
 			onActiveItemIdChange={onActiveItemIdChange}
 			toolbarActions={
-				<>
+				<div className="flex items-center gap-1 rounded-lg border bg-background p-1">
+					<span className="text-sm font-medium mx-1">Add participant</span>
 					<Button
 						type="button"
-						variant="outline"
+						variant="default"
+						title="Add creature participant"
 						size="sm"
-						className="gap-1.5"
+						className="flex h-7 w-7 items-center justify-center rounded bg-primary text-primary-foreground"
 						onClick={() => append(defaultSlot())}
 					>
 						<Skull className="h-3.5 w-3.5" aria-hidden="true" />
-						Creature
 					</Button>
 					<Button
 						type="button"
-						variant="outline"
+						variant="default"
+						title="Add hazard participant"
 						size="sm"
-						className="gap-1.5"
+						className="flex h-7 w-7 items-center justify-center rounded bg-primary text-primary-foreground"
 						onClick={() => append({ ...defaultSlot(), type: 'hazard' })}
 					>
 						<TriangleAlert className="h-3.5 w-3.5" aria-hidden="true" />
-						Hazard
 					</Button>
-				</>
+				</div>
 			}
 		/>
 	);

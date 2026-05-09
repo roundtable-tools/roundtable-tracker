@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { BuilderListLayout } from '../BuilderListLayout';
 import type { BuilderFormValues, BuilderVariantSnapshot } from '../builderConvert';
 import type { UseFormReturn } from 'react-hook-form';
+import { Card } from '@/components/ui/card';
 
 interface VariantListSectionProps {
 	form: UseFormReturn<BuilderFormValues>;
@@ -35,10 +36,10 @@ export function VariantListSection({
 					: `Variant ${index + 1}`
 			}
 			renderItem={(snapshot, idx) => (
-				<div className="space-y-2">
-					<div className="flex items-center gap-2">
+				<Card className="p-4">
+					<div className="flex items-center mr-5">
 						<Input
-							className="h-7 text-sm"
+							className="h-8 text-sm rounded-r-none"
 							value={snapshot.description}
 							onChange={(e) => {
 								const updated = variants.map((v, i) =>
@@ -50,9 +51,10 @@ export function VariantListSection({
 						/>
 						<Button
 							type="button"
-							variant="ghost"
-							size="icon"
+							variant="secondary"
+							size="sm"
 							title="Restore this snapshot"
+							className="h-8 rounded-l-none border-l-0"
 							onClick={() => {
 								const confirmed = window.confirm(
 									`Restore "${snapshot.description}"? This will overwrite the current party size, party level, and participants.`
@@ -72,7 +74,7 @@ export function VariantListSection({
 								);
 							}}
 						>
-							<RotateCcw className="h-4 w-4" />
+							<>Restore <RotateCcw className="h-4 w-4" /></>
 						</Button>
 					</div>
 					<div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
@@ -83,7 +85,7 @@ export function VariantListSection({
 							{snapshot.slots.filter((s) => s.type === 'creature' || s.type === 'hazard').length}
 						</span>
 					</div>
-				</div>
+				</Card>
 			)}
 			onRemoveItem={(_, idx) => {
 				const updated = variants.filter((_, i) => i !== idx);
@@ -122,7 +124,7 @@ export function VariantListSection({
 						onActiveVariantItemIdChange(snapshot.id);
 					}}
 				>
-					Create Variant
+					Save current state as variant
 				</Button>
 			}
 		/>

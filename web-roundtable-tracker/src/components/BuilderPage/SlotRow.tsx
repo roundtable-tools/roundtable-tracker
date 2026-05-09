@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Toggle } from '@/components/ui/toggle';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DcsTab } from './SlotRowTabs/DcsTab';
@@ -57,6 +56,7 @@ import { normalizeSideType } from './builderXp';
 import type { LevelAdjustment } from '@/models/utility/level/Level';
 import type { AccomplishmentLevel } from '@/models/encounters/encounter.types';
 import { Card } from '../ui/card';
+import { ParagraphFields } from './ParagraphFields';
 
 const SLOT_TYPES: { value: SlotType; label: string; Icon: LucideIcon }[] = [
 	{ value: 'creature', label: 'Creature', Icon: Skull },
@@ -826,63 +826,23 @@ export function SlotRow({
 
 	return (
 		<div className="border rounded-md bg-card p-3 space-y-3">
-			<div className="flex items-start gap-2">
-				<div className="flex flex-wrap gap-2">
-					{availableSlotTypes.map(({ value, label, Icon }) => (
-						<Toggle
-							key={value}
-							type="button"
-							size="sm"
-							variant="outline"
-							pressed={slotType === value}
-							onPressedChange={(pressed) => {
-								if (pressed) {
-									handleTypeChange(value);
-								}
-							}}
-							aria-label={`Set slot type to ${label}`}
-							className="gap-1.5"
-						>
-							<Icon className="size-4" />
-							<span className="hidden sm:inline">{label}</span>
-						</Toggle>
-					))}
-				</div>
-
-				<div className="ml-auto">
-					<Button
-						type="button"
-						variant="destructive"
-						size="sm"
-						onClick={handleRemove}
-					>
-						Remove
-					</Button>
-				</div>
+			<div className="w-full gap-2">
+				{(() => {
+					const slotTypeData = SLOT_TYPES.find(({ value }) => value == slotType);
+					return slotTypeData && (
+						<ParagraphFields
+							control={control} 
+							label={<div className="flex items-center gap-1">
+								<slotTypeData.Icon size={16} />
+								<span className='px-1'>{slotTypeData.label} Name and Description</span>
+							</div>} 
+							fieldNames={[`slots.${index}.name` as const, `slots.${index}.description` as const]} 
+							placeholders={['Training Grounds', 'Brief setup description...']} 
+						/>
+					);
+				})()}
 			</div>
-
 			<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
-				<FormField
-					control={control}
-					name={`slots.${index}.name` as const}
-					render={({ field }) => (
-						<FormItem className="space-y-1 sm:col-span-2 lg:col-span-2">
-							<FormLabel>Name</FormLabel>
-							<FormControl>
-								<Input
-									placeholder={
-										slotType === 'creature'
-											? `Training Dummy ${index + 1}`
-											: 'Goblin'
-									}
-									{...field}
-								/>
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-
 				{isCombatSlot && (
 					<>
 						<FormField
@@ -1906,23 +1866,6 @@ export function SlotRow({
 			)}
 
 			<div className="space-y-4">
-				<FormField
-					control={control}
-					name={`slots.${index}.description` as const}
-					render={({ field }) => (
-						<FormItem className="space-y-1">
-							<FormLabel>Slot Notes</FormLabel>
-							<FormControl>
-								<Textarea
-									placeholder="Optional notes for this slot"
-									{...field}
-								/>
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-
 				{/* Tabs for combat slots */}
 				{isCombatSlot && (
 					<Tabs

@@ -46,7 +46,8 @@ const LAYOUT_OPTIONS: Record<BuilderListLayoutKey, LayoutOption> = {
 			presentation: 'tabs',
 			density: 'compact',
 		},
-		triggerGridClass: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6',
+		triggerGridClass:
+			'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6',
 	},
 	'wide-tabs': {
 		key: 'wide-tabs',
@@ -182,7 +183,11 @@ export function BuilderListLayout<TItem>({
 		wrapperClassName?: string
 	) => {
 		if (!onRemoveItem) {
-			return wrapperClassName ? <div className={wrapperClassName}>{content}</div> : content;
+			return wrapperClassName ? (
+				<div className={wrapperClassName}>{content}</div>
+			) : (
+				content
+			);
 		}
 
 		return (
@@ -228,7 +233,9 @@ export function BuilderListLayout<TItem>({
 	const toolbar = (
 		<div className="flex items-center justify-between gap-3 flex-wrap">
 			<div className="flex items-center gap-2 flex-wrap">
-				{label ? <span className="block text-sm font-medium">{label}</span> : null}
+				{label ? (
+					<span className="block text-sm font-medium">{label}</span>
+				) : null}
 				{toolbarActions}
 			</div>
 			{layoutSwitcher}
@@ -289,7 +296,12 @@ export function BuilderListLayout<TItem>({
 					))}
 				</div>
 			) : layout.presentation === 'compact-list' ? (
-				<div className={cn('flex flex-col sm:flex-row gap-0 rounded-md border bg-card overflow-hidden', getContentClassName?.(layout))}>
+				<div
+					className={cn(
+						'flex flex-col sm:flex-row gap-0 rounded-md border bg-card overflow-hidden',
+						getContentClassName?.(layout)
+					)}
+				>
 					{/* Nav list */}
 					<div className="flex-none w-full sm:w-48 border-b sm:border-b-0 sm:border-r bg-muted/30 divide-y">
 						{items.map((item, index) => {
@@ -321,7 +333,13 @@ export function BuilderListLayout<TItem>({
 							if (itemId !== activeItemId) return null;
 
 							return (
-								<div key={itemId} className={cn('min-w-0', getItemClassName?.(layout, item, index))}>
+								<div
+									key={itemId}
+									className={cn(
+										'min-w-0',
+										getItemClassName?.(layout, item, index)
+									)}
+								>
 									{wrapWithRemove(item, index, renderItem(item, index, layout))}
 								</div>
 							);
@@ -337,6 +355,7 @@ export function BuilderListLayout<TItem>({
 					<TabsList
 						className={cn(
 							'h-auto w-full rounded-md bg-muted p-1 grid gap-2',
+							items.length <= 1 ? 'hidden' : '',
 							activeLayoutOption.triggerGridClass
 						)}
 					>
@@ -348,12 +367,20 @@ export function BuilderListLayout<TItem>({
 							const meta = isWide ? getItemMeta?.(item, index) : undefined;
 
 							return (
-								<TabsTrigger key={itemId} value={itemId} className="w-full truncate">
+								<TabsTrigger
+									key={itemId}
+									value={itemId}
+									className="w-full truncate"
+								>
 									{isWide && icon ? (
 										<span className="flex items-center gap-1.5 w-full min-w-0">
 											<span className="flex-none">{icon}</span>
 											<span className="truncate">{itemLabel}</span>
-											{meta ? <span className="ml-auto flex-none text-xs text-muted-foreground font-normal">{meta}</span> : null}
+											{meta ? (
+												<span className="ml-auto flex-none text-xs text-muted-foreground font-normal">
+													{meta}
+												</span>
+											) : null}
 										</span>
 									) : (
 										itemLabel
