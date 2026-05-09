@@ -2,6 +2,7 @@ import {
 	Character,
 	Encounter,
 	NarrativeSlot,
+	ALIGNMENT,
 	DIFFICULTY,
 	difficultyToString,
 	LEVEL_REPRESENTATION,
@@ -24,6 +25,13 @@ export type TrackerHeader = {
 		label: string;
 		content: string;
 	}>;
+	participantNoteSectionsBySideTheme: Record<
+		'pc' | 'opponent' | 'ally' | 'other',
+		Array<{
+			label: string;
+			content: string;
+		}>
+	>;
 	narrativeDetails: string[];
 };
 
@@ -370,12 +378,62 @@ export function encounterToTrackerHeader(
 		.filter((slot) => slot.description)
 		.map((slot) => `Round ${slot.trigger.round}: ${slot.description}`);
 
-	const descriptionSections = [
-		{ label: 'Description', content: encounterData.description },
-		...normalizeEncounterNotes(encounterData.notes).map((note) => ({
+	const participantNoteSectionsBySideTheme: TrackerHeader['participantNoteSectionsBySideTheme'] = {
+		pc: [],
+		opponent: [],
+		ally: [],
+		other: [],
+	};
+
+	const noteSections = normalizeEncounterNotes(encounterData.notes)
+		.map((note) => ({
 			label: note.header,
 			content: note.content,
-		})),
+			visibility: note.visibility,
+		}))
+		.filter((section) => section.content.trim().length > 0);
+
+	for (const section of noteSections) {
+		if (section.visibility === 'all') {
+			continue;
+		}
+
+		if (section.visibility === ALIGNMENT.PCs) {
+			participantNoteSectionsBySideTheme.pc.push({
+				label: section.label,
+				content: section.content,
+			});
+			participantNoteSectionsBySideTheme.ally.push({
+				label: section.label,
+				content: section.content,
+			});
+
+			continue;
+		}
+
+		if (section.visibility === ALIGNMENT.Neutral) {
+			participantNoteSectionsBySideTheme.other.push({
+				label: section.label,
+				content: section.content,
+			});
+
+			continue;
+		}
+
+		participantNoteSectionsBySideTheme.opponent.push({
+			label: section.label,
+			content: section.content,
+		});
+	}
+
+	const descriptionSections = [
+		{ label: 'Description', content: encounterData.description },
+		...noteSections
+			.filter((section) => section.visibility === 'all')
+			.map((note) => ({
+			label: note.label,
+			content: note.content,
+			})),
 	].filter((section) => section.content.trim().length > 0);
 
 	return {
@@ -383,6 +441,7 @@ export function encounterToTrackerHeader(
 		threatLevel: `${difficultyLabel} ${encounterLevel}`,
 		currentRound: round,
 		descriptionSections,
+		participantNoteSectionsBySideTheme,
 		narrativeDetails,
 	};
 }

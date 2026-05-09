@@ -5,6 +5,7 @@ import {
 	ConcreteEncounterVariant,
 	DIFFICULTY,
 	LEVEL_REPRESENTATION,
+	type Alignment,
 	normalizeEncounterNotes,
 	type NarrativeSlot,
 	type Participant,
@@ -31,6 +32,7 @@ export interface BuilderNote {
 	id: string;
 	header: string;
 	content: string;
+	visibility: 'all' | Alignment;
 }
 
 export interface BuilderFormValues {
@@ -43,14 +45,15 @@ export interface BuilderFormValues {
 	slots: BuilderSlot[];
 }
 
-const DEFAULT_NOTE_HEADERS = ['GM Notes', 'Monster Notes', 'Player Notes'];
-
 export function defaultBuilderNotes(): BuilderNote[] {
-	return DEFAULT_NOTE_HEADERS.map((header) => ({
-		id: uuidv4(),
-		header,
-		content: '',
-	}));
+	return [
+		{
+			id: uuidv4(),
+			header: 'General Notes',
+			content: '',
+			visibility: 'all',
+		},
+	];
 }
 
 export function defaultSlot(): BuilderSlot {
@@ -475,6 +478,7 @@ export function toConcreteEncounter(
 			id: note.id,
 			header: note.header.trim(),
 			content: note.content,
+			visibility: note.visibility,
 		}))
 		.filter((note) => note.header.length > 0 || note.content.trim().length > 0);
 
@@ -629,6 +633,7 @@ export function fromConcreteEncounter(
 						id: note.id || uuidv4(),
 						header: note.header,
 						content: note.content,
+						visibility: note.visibility,
 					}))
 				: defaultBuilderNotes(),
 		slots,

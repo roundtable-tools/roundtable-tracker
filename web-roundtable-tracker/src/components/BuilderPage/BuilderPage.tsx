@@ -10,10 +10,17 @@ import {
 	FormControl,
 	FormMessage,
 } from '@/components/ui/form';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getSavedEncountersStore } from '@/store/savedEncounterInstance';
 import { useSavedEncountersStore } from '@/store/savedEncounterInstance';
-import type { ConcreteEncounter } from '@/store/data';
+import { ALIGNMENT, type ConcreteEncounter, type Alignment } from '@/store/data';
 import encounterTemplates from '@/store/Encounters/migratedEncounterTemplates';
 import { ThreatTracker } from './ThreatTracker';
 import {
@@ -61,6 +68,16 @@ import { cn } from '@/lib/utils';
 import { BuilderPreviewTab } from './BuilderPreviewTab';
 import { ParagraphFields } from './ParagraphFields.tsx';
 import { BuilderListLayout } from './BuilderListLayout';
+
+const NOTE_VISIBILITY_OPTIONS: Array<{
+	value: 'all' | Alignment;
+	label: string;
+}> = [
+	{ value: 'all', label: 'General (Visible to all)' },
+	{ value: ALIGNMENT.Opponents, label: 'Opponents' },
+	{ value: ALIGNMENT.PCs, label: 'Allies' },
+	{ value: ALIGNMENT.Neutral, label: 'Other' },
+];
 
 function hasAdditionalBlock(
 	slot: BuilderFormValues['slots'][number],
@@ -131,6 +148,12 @@ export function BuilderPage({
 	const navigate = useNavigate();
 	const [activeTab, setActiveTab] = useState<BuilderStep>('details');
 	const [activeNotesTab, setActiveNotesTab] = useState<string>('');
+	const [activeParticipantItemId, setActiveParticipantItemId] =
+		useState<string>('');
+	const [activeEventItemId, setActiveEventItemId] = useState<string>('');
+	const [activeVariantItemId, setActiveVariantItemId] = useState<string>('');
+	const [activeTemplateVariantItemId, setActiveTemplateVariantItemId] =
+		useState<string>('');
 	const [activeEncounterId, setActiveEncounterId] = useState<
 		string | undefined
 	>(encounterId);
@@ -289,6 +312,34 @@ export function BuilderPage({
 	const participantSummary = getParticipantSectionSummary(resolvedSlots);
 	const eventSummary = getEventSectionSummary(resolvedSlots);
 	const variants = useWatch({ control, name: 'variants' }) ?? [];
+	const participantItems = participantIndices
+		.map((slotIndex) => {
+			const field = fields[slotIndex];
+
+			if (!field) {
+				return null;
+			}
+
+			return {
+				id: field.id,
+				slotIndex,
+			};
+		})
+		.filter((item): item is { id: string; slotIndex: number } => item !== null);
+	const eventItems = eventIndices
+		.map((slotIndex) => {
+			const field = fields[slotIndex];
+
+			if (!field) {
+				return null;
+			}
+
+			return {
+				id: field.id,
+				slotIndex,
+			};
+		})
+		.filter((item): item is { id: string; slotIndex: number } => item !== null);
 	const usedAdditionalDataBlocks = useMemo(() => {
 		const keys: AdditionalDataBlockKey[] = [
 			'hp',
@@ -305,6 +356,71 @@ export function BuilderPage({
 	const templateShadowVariants = templateId
 		? (encounterTemplates.find((t) => t.id === templateId)?.variants ?? [])
 		: [];
+
+	useEffect(() => {
+		if (participantItems.length === 0) {
+			setActiveParticipantItemId('');
+
+			return;
+		}
+
+		const hasActiveItem = participantItems.some(
+			(item) => item.id === activeParticipantItemId
+		);
+
+		if (!hasActiveItem) {
+			setActiveParticipantItemId(participantItems[0].id);
+		}
+	}, [participantItems, activeParticipantItemId]);
+
+	useEffect(() => {
+		if (eventItems.length === 0) {
+			setActiveEventItemId('');
+
+			return;
+		}
+
+		const hasActiveItem = eventItems.some(
+			(item) => item.id === activeEventItemId
+		);
+
+		if (!hasActiveItem) {
+			setActiveEventItemId(eventItems[0].id);
+		}
+	}, [eventItems, activeEventItemId]);
+
+	useEffect(() => {
+		if (variants.length === 0) {
+			setActiveVariantItemId('');
+
+			return;
+		}
+
+		const hasActiveItem = variants.some(
+			(variant) => variant.id === activeVariantItemId
+		);
+
+		if (!hasActiveItem) {
+			setActiveVariantItemId(variants[0].id);
+		}
+	}, [variants, activeVariantItemId]);
+
+	useEffect(() => {
+		if (templateShadowVariants.length === 0) {
+			setActiveTemplateVariantItemId('');
+
+			return;
+		}
+
+		const hasActiveItem = templateShadowVariants.some(
+			(variant) => variant.id === activeTemplateVariantItemId
+		);
+
+		if (!hasActiveItem) {
+			setActiveTemplateVariantItemId(templateShadowVariants[0].id);
+		}
+	}, [templateShadowVariants, activeTemplateVariantItemId]);
+
 	const activeStepIndex = stepOrder.indexOf(activeTab);
 	const isPreviousStep = (step: BuilderStep) =>
 		stepOrder.indexOf(step) < activeStepIndex;
@@ -339,46 +455,17 @@ export function BuilderPage({
 		navigate({ to: '/encounters' });
 	};
 
-	const renderSlotRows = (indices: number[], allowedTypes: SlotType[]) => {
-		if (indices.length === 0) {
-			return (
-				<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground flex">
-					No entries in this section yet.
-				</div>
-			);
-		}
-
-		return indices.map((slotIndex) => {
-			const field = fields[slotIndex];
-
-			if (!field) {
-				return null;
-			}
-
-			return (
-				<SlotRow
-					key={field.id}
-					index={slotIndex}
-					form={form}
-					remove={remove}
-					update={update}
-					allowedTypes={allowedTypes}
-					usedAdditionalDataBlocks={usedAdditionalDataBlocks}
-				/>
-			);
-		});
-	};
-
 	const renderNoteEditor = (
 		noteFieldId: string,
 		index: number,
-		layoutMode: 'tabs' | 'all'
+		presentation: 'tabs' | 'grid' | 'list'
 	) => (
 		<div
 			key={noteFieldId}
 			className={cn(
 				'space-y-3 rounded-md border p-3',
-				layoutMode === 'tabs' && 'border-none p-0'
+				presentation === 'tabs' && 'border-none p-0',
+				presentation === 'list' && 'rounded-none border-none p-0'
 			)}
 		>
 			<ParagraphFields
@@ -389,6 +476,43 @@ export function BuilderPage({
 					`notes.${index}.content` as const,
 				]}
 				placeholders={['Note Header', 'Note Content']}
+			/>
+			<FormField
+				control={form.control}
+				name={`notes.${index}.visibility` as const}
+				render={({ field }) => (
+					<FormItem className="space-y-1">
+						<FormLabel>Visibility</FormLabel>
+						<FormControl>
+							<Select
+								value={String(field.value ?? 'all')}
+								onValueChange={(value) => {
+									if (value === 'all') {
+										field.onChange('all');
+
+										return;
+									}
+
+									field.onChange(Number(value) as Alignment);
+								}}
+							>
+								<SelectTrigger>
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{NOTE_VISIBILITY_OPTIONS.map((option) => (
+										<SelectItem
+											key={String(option.value)}
+											value={String(option.value)}
+										>
+											{option.label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</FormControl>
+					</FormItem>
+				)}
 			/>
 			<div className="flex justify-end">
 				<Button
@@ -496,8 +620,8 @@ export function BuilderPage({
 					</TabsList>
 
 					<TabsContent value="details" className="space-y-3">
-						<section>
-							<div className="space-y-3">
+						<section className="space-y-3">
+							<div className="space-y-2">
 								<div className="flex flex-wrap items-start gap-3 sm:flex-nowrap">
 									<FormField
 										control={form.control}
@@ -544,9 +668,11 @@ export function BuilderPage({
 									fieldNames={['name', 'description']} 
 									placeholders={['Training Grounds', 'Brief setup description...']} 
 								/>
+								</div>
 								<div className="space-y-2">
 									<BuilderListLayout
 										label="Notes"
+										allowedLayouts={['compact-tabs', 'list', 'wide-grid']}
 										items={noteFields}
 										getItemId={(noteField, index) => notes[index]?.id ?? noteField.id}
 										getItemLabel={(_, index) => {
@@ -557,7 +683,11 @@ export function BuilderPage({
 												: `Note ${index + 1}`;
 										}}
 										renderItem={(_, index, layout) => (
-											renderNoteEditor(noteFields[index].id, index, layout.mode)
+											renderNoteEditor(
+												noteFields[index].id,
+												index,
+												layout.presentation
+											)
 										)}
 										emptyState={
 											<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
@@ -566,6 +696,14 @@ export function BuilderPage({
 										}
 										activeItemId={activeNotesTab}
 										onActiveItemIdChange={setActiveNotesTab}
+										getContentClassName={(layout) =>
+											layout.presentation === 'list'
+												? 'overflow-hidden rounded-md border bg-card divide-y'
+												: undefined
+										}
+										getItemClassName={(layout) =>
+											layout.presentation === 'list' ? 'p-3' : undefined
+										}
 										toolbarActions={
 											<Button
 												type="button"
@@ -578,6 +716,7 @@ export function BuilderPage({
 														id: nextId,
 														header: `Note ${nextIndex}`,
 														content: '',
+														visibility: 'all',
 													});
 													setActiveNotesTab(nextId);
 												}}
@@ -587,198 +726,245 @@ export function BuilderPage({
 										}
 									/>
 								</div>
-							</div>
 						</section>
 					</TabsContent>
 
 					<TabsContent value="participants" className="space-y-3">
-						<section className="min-w-0 space-y-3">
-							<div className="flex min-w-0 flex-1 flex-col gap-1 pr-2">
-								<div className="flex items-center justify-between gap-3">
-									<span className="text-xs text-muted-foreground">
-										{participantSummary.count} total
-									</span>
-								</div>
-								<div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-									<span>{participantSummary.breakdown}</span>
-									<span>Levels: {participantSummary.values}</span>
-								</div>
-							</div>
-							<div className="mb-3 flex justify-end">
-								<Button
-									type="button"
-									variant="outline"
-									size="sm"
-									onClick={() => append(defaultSlot())}
-								>
-									Add Participant
-								</Button>
-							</div>
-							<div className="w-full space-y-2">
-								{renderSlotRows(participantIndices, PARTICIPANT_SLOT_TYPES)}
-							</div>
+						<section className="space-y-3">
+							<BuilderListLayout
+								label="Participants"
+								allowedLayouts={[
+									'compact-tabs',
+									'wide-tabs',
+									'list',
+								]}
+								items={participantItems}
+								getItemId={(item) => item.id}
+								getItemLabel={(item, index) => {
+									const slot = resolvedSlots[item.slotIndex];
+
+									return slot?.name?.trim().length
+										? slot.name
+										: `Participant ${index + 1}`;
+								}}
+								renderItem={(item) => (
+									<SlotRow
+										index={item.slotIndex}
+										form={form}
+										remove={remove}
+										update={update}
+										allowedTypes={PARTICIPANT_SLOT_TYPES}
+										usedAdditionalDataBlocks={usedAdditionalDataBlocks}
+									/>
+								)}
+								emptyState={
+									<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground flex">
+										No entries in this section yet.
+									</div>
+								}
+								activeItemId={activeParticipantItemId}
+								onActiveItemIdChange={setActiveParticipantItemId}
+								toolbarActions={
+									<Button
+										type="button"
+										variant="outline"
+										size="sm"
+										onClick={() => append(defaultSlot())}
+									>
+										Add Participant
+									</Button>
+								}
+							/>
 						</section>
 					</TabsContent>
 
 					<TabsContent value="events" className="space-y-3">
-						<section className="min-w-0 space-y-3">
-							<div className="flex min-w-0 flex-1 flex-col gap-1 pr-2">
-								<div className="flex items-center justify-between gap-3">
-									<span className="text-xs text-muted-foreground">
-										{eventSummary.count} total
-									</span>
-								</div>
-								<div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-									<span>{eventSummary.breakdown}</span>
-									<span>Accomplishment tiers: {eventSummary.values}</span>
-								</div>
-							</div>
-							<div className="mb-3 flex justify-end">
-								<Button
-									type="button"
-									variant="outline"
-									size="sm"
-									onClick={() =>
-										append({
-											...defaultSlot(),
-											type: 'narrative',
-										})
-									}
-								>
-									Add Event
-								</Button>
-							</div>
-							<div className="w-full space-y-2">
-								{renderSlotRows(eventIndices, EVENT_SLOT_TYPES)}
-							</div>
+						<section className="space-y-3">
+							<BuilderListLayout
+								label="Events"
+								allowedLayouts={[
+									'compact-tabs',
+									'wide-tabs',
+									'list',
+								]}
+								items={eventItems}
+								getItemId={(item) => item.id}
+								getItemLabel={(item, index) => {
+									const slot = resolvedSlots[item.slotIndex];
+
+									return slot?.name?.trim().length
+										? slot.name
+										: `Event ${index + 1}`;
+								}}
+								renderItem={(item) => (
+									<SlotRow
+										index={item.slotIndex}
+										form={form}
+										remove={remove}
+										update={update}
+										allowedTypes={EVENT_SLOT_TYPES}
+										usedAdditionalDataBlocks={usedAdditionalDataBlocks}
+									/>
+								)}
+								emptyState={
+									<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground flex">
+										No entries in this section yet.
+									</div>
+								}
+								activeItemId={activeEventItemId}
+								onActiveItemIdChange={setActiveEventItemId}
+								toolbarActions={
+									<Button
+										type="button"
+										variant="outline"
+										size="sm"
+										onClick={() =>
+											append({
+												...defaultSlot(),
+												type: 'narrative',
+											})
+										}
+									>
+										Add Event
+									</Button>
+								}
+							/>
 						</section>
 					</TabsContent>
 
 					<TabsContent value="variants" className="space-y-4">
 						<section className="space-y-3">
-							<div className="flex items-center justify-between gap-3">
-								<div>
-									<p className="text-xs text-muted-foreground">
-										Snapshot the current builder state as a reusable variant.
-									</p>
-								</div>
-								<Button
-									type="button"
-									variant="outline"
-									size="sm"
-									onClick={() => {
-										const label =
-											window.prompt(
-												'Variant description:',
-												`Variant ${variants.length + 1} (${safePartySize} players, level ${safePartyLevel})`
-											) ?? `Variant ${variants.length + 1}`;
-										const snapshot: BuilderVariantSnapshot = {
-											id: uuidv4(),
-											description: label,
-											partyLevel: safePartyLevel,
-											partySize: safePartySize,
-											slots: form.getValues('slots').map((s) => ({ ...s })),
-										};
-										form.setValue('variants', [...variants, snapshot], {
-											shouldDirty: true,
-										});
-									}}
-								>
-									Create Variant
-								</Button>
-							</div>
+							<p className="text-xs text-muted-foreground">
+								Snapshot the current builder state as a reusable variant.
+							</p>
+							<BuilderListLayout
+								label="Saved variants"
+								allowedLayouts={[
+									'compact-tabs',
+									'wide-tabs',
+									'compact-grid',
+									'wide-grid',
+									'list',
+								]}
+								items={variants}
+								getItemId={(snapshot) => snapshot.id}
+								getItemLabel={(snapshot, index) =>
+									snapshot.description?.trim().length
+										? snapshot.description
+										: `Variant ${index + 1}`
+								}
+								renderItem={(snapshot, idx) => (
+									<div className="rounded-md border p-3 space-y-2">
+										<div className="flex items-center gap-2">
+											<Input
+												className="h-7 text-sm"
+												value={snapshot.description}
+												onChange={(e) => {
+													const updated = variants.map((v, i) =>
+														i === idx
+															? { ...v, description: e.target.value }
+															: v
+													);
+													form.setValue('variants', updated, {
+														shouldDirty: true,
+													});
+												}}
+											/>
+											<Button
+												type="button"
+												variant="ghost"
+												size="icon"
+												title="Restore this snapshot"
+												onClick={() => {
+													const confirmed = window.confirm(
+														`Restore "${snapshot.description}"? This will overwrite the current party size, party level, and participants.`
+													);
 
-							{variants.length === 0 ? (
-								<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-									No variants saved yet. Create one to store a reusable
-									snapshot.
-								</div>
-							) : (
-								<div className="space-y-2">
-									{variants.map((snapshot, idx) => (
-										<div
-											key={snapshot.id}
-											className="rounded-md border p-3 space-y-2"
-										>
-											<div className="flex items-center gap-2">
-												<Input
-													className="h-7 text-sm"
-													value={snapshot.description}
-													onChange={(e) => {
-														const updated = variants.map((v, i) =>
-															i === idx
-																? { ...v, description: e.target.value }
-																: v
-														);
-														form.setValue('variants', updated, {
-															shouldDirty: true,
-														});
-													}}
-												/>
-												<Button
-													type="button"
-													variant="ghost"
-													size="icon"
-													title="Restore this snapshot"
-													onClick={() => {
-														const confirmed = window.confirm(
-															`Restore "${snapshot.description}"? This will overwrite the current party size, party level, and participants.`
-														);
-
-														if (!confirmed) return;
-														form.setValue('partyLevel', snapshot.partyLevel, {
-															shouldDirty: true,
-														});
-														form.setValue('partySize', snapshot.partySize, {
-															shouldDirty: true,
-														});
-														form.setValue(
-															'slots',
-															snapshot.slots.map((s) => ({ ...s })),
-															{ shouldDirty: true }
-														);
-													}}
-												>
-													<RotateCcw className="h-4 w-4" />
-												</Button>
-												<Button
-													type="button"
-													variant="ghost"
-													size="icon"
-													title="Remove variant"
-													onClick={() => {
-														const updated = variants.filter(
-															(_, i) => i !== idx
-														);
-														form.setValue('variants', updated, {
-															shouldDirty: true,
-														});
-													}}
-												>
-													<Trash2 className="h-4 w-4 text-destructive" />
-												</Button>
-											</div>
-											<div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-												<span className="rounded border px-2 py-1">
-													Party size: {snapshot.partySize}
-												</span>
-												<span className="rounded border px-2 py-1">
-													Party level: {snapshot.partyLevel}
-												</span>
-												<span className="rounded border px-2 py-1">
-													Participants:{' '}
-													{
-														snapshot.slots.filter(
-															(s) =>
-																s.type === 'creature' || s.type === 'hazard'
-														).length
-													}
-												</span>
-											</div>
+													if (!confirmed) return;
+													form.setValue('partyLevel', snapshot.partyLevel, {
+														shouldDirty: true,
+													});
+													form.setValue('partySize', snapshot.partySize, {
+														shouldDirty: true,
+													});
+													form.setValue(
+														'slots',
+														snapshot.slots.map((s) => ({ ...s })),
+														{ shouldDirty: true }
+													);
+												}}
+											>
+												<RotateCcw className="h-4 w-4" />
+											</Button>
+											<Button
+												type="button"
+												variant="ghost"
+												size="icon"
+												title="Remove variant"
+												onClick={() => {
+													const updated = variants.filter((_, i) => i !== idx);
+													form.setValue('variants', updated, {
+														shouldDirty: true,
+													});
+												}}
+											>
+												<Trash2 className="h-4 w-4 text-destructive" />
+											</Button>
 										</div>
-									))}
-								</div>
-							)}
+										<div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+											<span className="rounded border px-2 py-1">
+												Party size: {snapshot.partySize}
+											</span>
+											<span className="rounded border px-2 py-1">
+												Party level: {snapshot.partyLevel}
+											</span>
+											<span className="rounded border px-2 py-1">
+												Participants:{' '}
+												{
+													snapshot.slots.filter(
+														(s) => s.type === 'creature' || s.type === 'hazard'
+													).length
+												}
+											</span>
+										</div>
+									</div>
+								)}
+								emptyState={
+									<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+										No variants saved yet. Create one to store a reusable
+										snapshot.
+									</div>
+								}
+								activeItemId={activeVariantItemId}
+								onActiveItemIdChange={setActiveVariantItemId}
+								toolbarActions={
+									<Button
+										type="button"
+										variant="outline"
+										size="sm"
+										onClick={() => {
+											const label =
+												window.prompt(
+													'Variant description:',
+													`Variant ${variants.length + 1} (${safePartySize} players, level ${safePartyLevel})`
+												) ?? `Variant ${variants.length + 1}`;
+											const snapshot: BuilderVariantSnapshot = {
+												id: uuidv4(),
+												description: label,
+												partyLevel: safePartyLevel,
+												partySize: safePartySize,
+												slots: form.getValues('slots').map((s) => ({ ...s })),
+											};
+											form.setValue('variants', [...variants, snapshot], {
+												shouldDirty: true,
+											});
+											setActiveVariantItemId(snapshot.id);
+										}}
+									>
+										Create Variant
+									</Button>
+								}
+							/>
 						</section>
 
 						{templateShadowVariants.length > 0 && (
@@ -793,15 +979,21 @@ export function BuilderPage({
 										concrete variant snapshot.
 									</p>
 								</div>
-								<div className="space-y-2">
-									{templateShadowVariants.map((tv) => {
+								<BuilderListLayout
+									label="Template variants"
+									allowedLayouts={['compact-tabs', 'wide-tabs', 'wide-grid', 'list']}
+									items={templateShadowVariants}
+									getItemId={(variant) => variant.id}
+									getItemLabel={(variant, index) =>
+										variant.description?.trim().length
+											? variant.description
+											: `Template Variant ${index + 1}`
+									}
+									renderItem={(tv) => {
 										const isCurrentVariant = tv.id === templateVariantId;
 
 										return (
-											<div
-												key={tv.id}
-												className="rounded-md border border-dashed bg-muted/30 p-3 space-y-2"
-											>
+											<div className="rounded-md border border-dashed bg-muted/30 p-3 space-y-2">
 												<div className="flex items-center justify-between gap-2">
 													<span className="text-sm text-muted-foreground italic">
 														{tv.description ?? `Party of ${tv.partySize}`}
@@ -863,6 +1055,7 @@ export function BuilderPage({
 																	[...form.getValues('variants'), snapshot],
 																	{ shouldDirty: true }
 																);
+																setActiveVariantItemId(snapshot.id);
 															}}
 														>
 															Load &amp; Save
@@ -884,8 +1077,15 @@ export function BuilderPage({
 												</div>
 											</div>
 										);
-									})}
-								</div>
+									}}
+									emptyState={
+										<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+											No template variants available.
+										</div>
+									}
+									activeItemId={activeTemplateVariantItemId}
+									onActiveItemIdChange={setActiveTemplateVariantItemId}
+								/>
 							</section>
 						)}
 					</TabsContent>

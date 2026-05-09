@@ -191,7 +191,7 @@ export const INITIATIVE_STATE = {
 
 type ValueOf<T> = T[keyof T];
 type Difficulty = ValueOf<typeof DIFFICULTY>;
-type Alignment = ValueOf<typeof ALIGNMENT>;
+export type Alignment = ValueOf<typeof ALIGNMENT>;
 type Priority = ValueOf<typeof PRIORITY>;
 type LevelRepresentation = ValueOf<typeof LEVEL_REPRESENTATION>;
 type RelativeNumber = `+${number}` | `-${number}`;
@@ -308,13 +308,11 @@ export type EncounterNoteEntry = {
 	id: string;
 	header: string;
 	content: string;
+	visibility: 'all' | Alignment;
 };
 
 export type EncounterNotes = {
 	entries?: EncounterNoteEntry[];
-	gm?: string;
-	monster?: string;
-	player?: string;
 };
 
 export function normalizeEncounterNotes(
@@ -327,17 +325,15 @@ export function normalizeEncounterNotes(
 				id: entry.id,
 				header: entry.header,
 				content: entry.content ?? '',
+				visibility:
+					entry.visibility === ALIGNMENT.PCs ||
+					entry.visibility === ALIGNMENT.Opponents ||
+					entry.visibility === ALIGNMENT.Neutral
+						? entry.visibility
+						: 'all',
 			})) ?? [];
 
-	if (explicitEntries.length > 0) {
-		return explicitEntries;
-	}
-
-	return [
-		{ id: 'gm', header: 'GM Notes', content: notes?.gm ?? '' },
-		{ id: 'monster', header: 'Monster Notes', content: notes?.monster ?? '' },
-		{ id: 'player', header: 'Player Notes', content: notes?.player ?? '' },
-	].filter((entry) => entry.content.trim().length > 0);
+	return explicitEntries;
 }
 
 export type ConcreteEncounter = {
@@ -431,12 +427,10 @@ const encounterNotesSchema = z.object({
 				id: z.string(),
 				header: z.string(),
 				content: z.string(),
+				visibility: z.union([z.literal('all'), z.nativeEnum(ALIGNMENT)]),
 			})
 		)
 		.optional(),
-	gm: z.string().optional(),
-	monster: z.string().optional(),
-	player: z.string().optional(),
 });
 
 const concreteEncounterVariantSchema = z.object({

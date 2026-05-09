@@ -391,6 +391,7 @@ function ParticipantRow({
 
 type ParticipantDetailsProps = {
 	participant: TrackerParticipant | null;
+	alignmentNotes?: Array<{ label: string; content: string }>;
 	onHeal?: (amount: number) => void;
 	onDamage?: (amount: number) => void;
 	onSetTempHp?: (amount: number, description: string) => void;
@@ -398,6 +399,7 @@ type ParticipantDetailsProps = {
 
 function ParticipantDetails({
 	participant,
+	alignmentNotes = [],
 	onHeal,
 	onDamage,
 	onSetTempHp,
@@ -608,6 +610,22 @@ function ParticipantDetails({
 				</div>
 			)}
 			<p className="text-sm">{participant.notes}</p>
+			{alignmentNotes.length > 0 && (
+				<div className="space-y-2 rounded-md border p-3">
+					<h4 className="text-sm font-medium">Alignment Notes</h4>
+					{alignmentNotes.map((note, index) => (
+						<div
+							key={`${note.label}-${index}`}
+							className="space-y-1 rounded-md border p-2"
+						>
+							<p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+								{note.label}
+							</p>
+							<p className="whitespace-pre-wrap text-sm">{note.content}</p>
+						</div>
+					))}
+				</div>
+			)}
 		</div>
 	);
 }
@@ -1486,6 +1504,12 @@ export function InitiativeTrackerPage() {
 	const selectedParticipant =
 		allParticipants.find((p) => p.id === selectedParticipantId) ?? null;
 
+	const selectedParticipantAlignmentNotes = selectedParticipant
+		? trackerHeader?.participantNoteSectionsBySideTheme[
+					resolveParticipantSideTheme(selectedParticipant)
+				] ?? []
+		: [];
+
 	const handleSelectedHeal = selectedParticipantId
 		? (amount: number) => {
 				try {
@@ -1960,6 +1984,7 @@ export function InitiativeTrackerPage() {
 						<ScrollArea className="h-full pr-3">
 							<ParticipantDetails
 								participant={selectedParticipant}
+								alignmentNotes={selectedParticipantAlignmentNotes}
 								onHeal={handleSelectedHeal}
 								onDamage={handleSelectedDamage}
 								onSetTempHp={handleSelectedSetTempHp}
@@ -2290,6 +2315,7 @@ export function InitiativeTrackerPage() {
 						<Card className="p-4">
 							<ParticipantDetails
 								participant={selectedParticipant}
+								alignmentNotes={selectedParticipantAlignmentNotes}
 								onHeal={handleSelectedHeal}
 								onDamage={handleSelectedDamage}
 								onSetTempHp={handleSelectedSetTempHp}
