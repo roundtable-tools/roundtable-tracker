@@ -304,11 +304,41 @@ export type EncounterTemplate = {
 
 export type AbstractEncounter = EncounterTemplate;
 
+export type EncounterNoteEntry = {
+	id: string;
+	header: string;
+	content: string;
+};
+
 export type EncounterNotes = {
+	entries?: EncounterNoteEntry[];
 	gm?: string;
 	monster?: string;
 	player?: string;
 };
+
+export function normalizeEncounterNotes(
+	notes?: EncounterNotes
+): EncounterNoteEntry[] {
+	const explicitEntries =
+		notes?.entries
+			?.filter((entry) => typeof entry.header === 'string')
+			.map((entry) => ({
+				id: entry.id,
+				header: entry.header,
+				content: entry.content ?? '',
+			})) ?? [];
+
+	if (explicitEntries.length > 0) {
+		return explicitEntries;
+	}
+
+	return [
+		{ id: 'gm', header: 'GM Notes', content: notes?.gm ?? '' },
+		{ id: 'monster', header: 'Monster Notes', content: notes?.monster ?? '' },
+		{ id: 'player', header: 'Player Notes', content: notes?.player ?? '' },
+	].filter((entry) => entry.content.trim().length > 0);
+}
 
 export type ConcreteEncounter = {
 	id: string; // Unique identifier for the encounter
@@ -395,6 +425,15 @@ const auraSchema = z.object({
 });
 
 const encounterNotesSchema = z.object({
+	entries: z
+		.array(
+			z.object({
+				id: z.string(),
+				header: z.string(),
+				content: z.string(),
+			})
+		)
+		.optional(),
 	gm: z.string().optional(),
 	monster: z.string().optional(),
 	player: z.string().optional(),

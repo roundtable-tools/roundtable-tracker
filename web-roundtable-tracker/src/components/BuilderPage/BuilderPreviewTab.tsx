@@ -86,7 +86,9 @@ function summarizeBuilderSlot(slot: BuilderFormValues['slots'][number]) {
 		}
 
 		if (typeof slot.initiativeBonus === 'number') {
-			chips.push(`Init ${slot.initiativeBonus >= 0 ? '+' : ''}${slot.initiativeBonus}`);
+			chips.push(
+				`Init ${slot.initiativeBonus >= 0 ? '+' : ''}${slot.initiativeBonus}`
+			);
 		}
 
 		if (slot.type === 'creature' && slot.adjustment !== 'none') {
@@ -158,7 +160,6 @@ function PreviewSlotCard({
 	);
 }
 
-
 function PreviewSection({
 	title,
 	description,
@@ -197,7 +198,8 @@ export function BuilderPreviewTab({
 	maxRounds,
 	basePartyOutputPerRound,
 }: BuilderPreviewTabProps) {
-	const values = (useWatch({ control }) as BuilderFormValues | undefined) ??
+	const values =
+		(useWatch({ control }) as BuilderFormValues | undefined) ??
 		defaultFormValues();
 	const [activeVariantKey, setActiveVariantKey] = useState('base');
 
@@ -206,7 +208,8 @@ export function BuilderPreviewTab({
 			? values.partyLevel
 			: 1;
 	const safePartySize =
-		typeof values.partySize === 'number' && Number.isFinite(values.partySize) &&
+		typeof values.partySize === 'number' &&
+		Number.isFinite(values.partySize) &&
 		values.partySize > 0
 			? values.partySize
 			: 4;
@@ -222,18 +225,20 @@ export function BuilderPreviewTab({
 			slots: values.slots,
 		};
 
-		const savedVariants = values.variants.map((snapshot: BuilderVariantSnapshot, index) => ({
-			key: `saved:${snapshot.id}`,
-			label:
-				snapshot.description?.trim().length > 0
-					? snapshot.description
-					: `Variant ${index + 1}`,
-			source: 'saved' as const,
-			partyLevel: snapshot.partyLevel,
-			partySize: snapshot.partySize,
-			description: snapshot.description,
-			slots: snapshot.slots,
-		}));
+		const savedVariants = values.variants.map(
+			(snapshot: BuilderVariantSnapshot, index) => ({
+				key: `saved:${snapshot.id}`,
+				label:
+					snapshot.description?.trim().length > 0
+						? snapshot.description
+						: `Variant ${index + 1}`,
+				source: 'saved' as const,
+				partyLevel: snapshot.partyLevel,
+				partySize: snapshot.partySize,
+				description: snapshot.description,
+				slots: snapshot.slots,
+			})
+		);
 
 		const templateBasedVariants = templateVariants.map((variant, index) => {
 			const templatePartial = templateVariantToFormPartial(
@@ -258,7 +263,14 @@ export function BuilderPreviewTab({
 		});
 
 		return [baseVariant, ...savedVariants, ...templateBasedVariants];
-	}, [safePartyLevel, safePartySize, templateVariants, values.description, values.slots, values.variants]);
+	}, [
+		safePartyLevel,
+		safePartySize,
+		templateVariants,
+		values.description,
+		values.slots,
+		values.variants,
+	]);
 
 	useEffect(() => {
 		if (!previewVariants.some((variant) => variant.key === activeVariantKey)) {
@@ -270,7 +282,10 @@ export function BuilderPreviewTab({
 		previewVariants.find((variant) => variant.key === activeVariantKey) ??
 		previewVariants[0];
 	const activeSlots = activePreviewVariant?.slots ?? [];
-	const activeParticipantIndices = getSlotSectionIndices(activeSlots, 'participants');
+	const activeParticipantIndices = getSlotSectionIndices(
+		activeSlots,
+		'participants'
+	);
 	const activeEventIndices = getSlotSectionIndices(activeSlots, 'events');
 	const activeParticipantSummary = getParticipantSectionSummary(activeSlots);
 	const activeEventSummary = getEventSectionSummary(activeSlots);
@@ -309,7 +324,9 @@ export function BuilderPreviewTab({
 								</Badge>
 							</div>
 							<CardTitle className="text-2xl">
-								{values.name?.trim().length ? values.name : 'Untitled encounter'}
+								{values.name?.trim().length
+									? values.name
+									: 'Untitled encounter'}
 							</CardTitle>
 							<CardDescription className="max-w-3xl leading-6">
 								{values.description?.trim().length
@@ -418,7 +435,9 @@ export function BuilderPreviewTab({
 									<p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
 										Encounter name
 									</p>
-									<p className="mt-1 text-sm font-medium">{values.name || 'Untitled'}</p>
+									<p className="mt-1 text-sm font-medium">
+										{values.name || 'Untitled'}
+									</p>
 								</div>
 								<div className="rounded-lg border bg-background px-3 py-2">
 									<p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
@@ -443,38 +462,43 @@ export function BuilderPreviewTab({
 
 						<PreviewSection
 							title="Notes"
-							description="GM, monster, and player notes from the details tab."
+							description="All notes configured in the details tab."
 						>
-							<div className="space-y-3 text-sm">
-								<div className="rounded-lg border bg-background px-3 py-2">
-									<p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-										GM notes
-									</p>
-									<p className="mt-1 whitespace-pre-wrap leading-6 text-foreground">
-										{values.gmNotes?.trim().length ? values.gmNotes : 'No GM notes.'}
-									</p>
+							{(values.notes ?? []).filter(
+								(note) =>
+									note.header?.trim().length > 0 ||
+									note.content?.trim().length > 0
+							).length === 0 ? (
+								<p className="text-sm text-muted-foreground">
+									No notes configured.
+								</p>
+							) : (
+								<div className="space-y-3 text-sm">
+									{(values.notes ?? [])
+										.filter(
+											(note) =>
+												note.header?.trim().length > 0 ||
+												note.content?.trim().length > 0
+										)
+										.map((note, index) => (
+											<div
+												key={note.id || `${note.header}-${index}`}
+												className="rounded-lg border bg-background px-3 py-2"
+											>
+												<p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+													{note.header?.trim().length
+														? note.header
+														: `Note ${index + 1}`}
+												</p>
+												<p className="mt-1 whitespace-pre-wrap leading-6 text-foreground">
+													{note.content?.trim().length
+														? note.content
+														: 'No note content.'}
+												</p>
+											</div>
+										))}
 								</div>
-								<div className="rounded-lg border bg-background px-3 py-2">
-									<p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-										Monster notes
-									</p>
-									<p className="mt-1 whitespace-pre-wrap leading-6 text-foreground">
-										{values.monsterNotes?.trim().length
-											? values.monsterNotes
-											: 'No monster notes.'}
-									</p>
-								</div>
-								<div className="rounded-lg border bg-background px-3 py-2">
-									<p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-										Player notes
-									</p>
-									<p className="mt-1 whitespace-pre-wrap leading-6 text-foreground">
-										{values.playerNotes?.trim().length
-											? values.playerNotes
-											: 'No player notes.'}
-									</p>
-								</div>
-							</div>
+							)}
 						</PreviewSection>
 					</div>
 
@@ -505,7 +529,9 @@ export function BuilderPreviewTab({
 								})}
 							</div>
 						) : (
-							<p className="text-sm text-muted-foreground">No participants configured.</p>
+							<p className="text-sm text-muted-foreground">
+								No participants configured.
+							</p>
 						)}
 					</PreviewSection>
 
@@ -541,7 +567,9 @@ export function BuilderPreviewTab({
 								})}
 							</div>
 						) : (
-							<p className="text-sm text-muted-foreground">No events configured.</p>
+							<p className="text-sm text-muted-foreground">
+								No events configured.
+							</p>
 						)}
 					</PreviewSection>
 				</CardContent>

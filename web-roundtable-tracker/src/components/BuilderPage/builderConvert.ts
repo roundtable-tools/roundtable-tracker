@@ -5,6 +5,7 @@ import {
 	ConcreteEncounterVariant,
 	DIFFICULTY,
 	LEVEL_REPRESENTATION,
+	normalizeEncounterNotes,
 	type NarrativeSlot,
 	type Participant,
 } from '@/store/data';
@@ -26,16 +27,30 @@ export interface BuilderVariantSnapshot {
 	slots: BuilderSlot[];
 }
 
+export interface BuilderNote {
+	id: string;
+	header: string;
+	content: string;
+}
+
 export interface BuilderFormValues {
 	name: string;
 	description: string;
 	partyLevel: number;
 	partySize: number;
 	variants: BuilderVariantSnapshot[];
-	gmNotes: string;
-	monsterNotes: string;
-	playerNotes: string;
+	notes: BuilderNote[];
 	slots: BuilderSlot[];
+}
+
+const DEFAULT_NOTE_HEADERS = ['GM Notes', 'Monster Notes', 'Player Notes'];
+
+export function defaultBuilderNotes(): BuilderNote[] {
+	return DEFAULT_NOTE_HEADERS.map((header) => ({
+		id: uuidv4(),
+		header,
+		content: '',
+	}));
 }
 
 export function defaultSlot(): BuilderSlot {
@@ -104,9 +119,7 @@ export function defaultFormValues(): BuilderFormValues {
 		partyLevel: 1,
 		partySize: 4,
 		variants: [],
-		gmNotes: '',
-		monsterNotes: '',
-		playerNotes: '',
+		notes: defaultBuilderNotes(),
 		slots: [],
 	};
 }
@@ -128,9 +141,7 @@ export function fromEncounterTemplate(
 		partyLevel,
 		partySize,
 		variants: [],
-		gmNotes: '',
-		monsterNotes: '',
-		playerNotes: '',
+		notes: defaultBuilderNotes(),
 		slots: variant.participants.map((participant) => ({
 			id: participant.id,
 			type: participant.type === 'creature' ? 'creature' : 'hazard',
@@ -459,6 +470,13 @@ export function toConcreteEncounter(
 					};
 				})
 			: undefined;
+	const normalizedNoteEntries = values.notes
+		.map((note) => ({
+			id: note.id,
+			header: note.header.trim(),
+			content: note.content,
+		}))
+		.filter((note) => note.header.length > 0 || note.content.trim().length > 0);
 
 	return {
 		id,
@@ -471,11 +489,12 @@ export function toConcreteEncounter(
 		participants,
 		variants,
 		narrativeSlots: narrativeSlots.length > 0 ? narrativeSlots : undefined,
-		notes: {
-			gm: values.gmNotes || undefined,
-			monster: values.monsterNotes || undefined,
-			player: values.playerNotes || undefined,
-		},
+		notes:
+			normalizedNoteEntries.length > 0
+				? {
+						entries: normalizedNoteEntries,
+					}
+				: undefined,
 	};
 }
 
@@ -589,6 +608,8 @@ export function fromConcreteEncounter(
 		});
 	}
 
+	const normalizedNotes = normalizeEncounterNotes(encounter.notes);
+
 	return {
 		name: encounter.name,
 		description: encounter.description,
@@ -602,9 +623,14 @@ export function fromConcreteEncounter(
 				partySize: v.partySize ?? encounter.partySize,
 				slots: participantsToBuilderSlots(v.participants),
 			})) ?? [],
-		gmNotes: encounter.notes?.gm ?? '',
-		monsterNotes: encounter.notes?.monster ?? '',
-		playerNotes: encounter.notes?.player ?? '',
+		notes:
+			normalizedNotes.length > 0
+				? normalizedNotes.map((note) => ({
+						id: note.id || uuidv4(),
+						header: note.header,
+						content: note.content,
+					}))
+				: defaultBuilderNotes(),
 		slots,
 	};
 }

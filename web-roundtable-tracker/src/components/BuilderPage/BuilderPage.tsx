@@ -59,6 +59,7 @@ import { PartyLevelPicker } from './PartyLevelPicker';
 import { PartySizePicker } from './PartySizePicker';
 import { cn } from '@/lib/utils';
 import { BuilderPreviewTab } from './BuilderPreviewTab';
+import { ParagraphFields } from './ParagraphFields.tsx';
 
 function hasAdditionalBlock(
 	slot: BuilderFormValues['slots'][number],
@@ -112,7 +113,12 @@ export function BuilderPage({
 	templateLevel,
 	templatePartySize,
 }: BuilderPageProps) {
-	type BuilderStep = 'details' | 'participants' | 'events' | 'variants' | 'preview';
+	type BuilderStep =
+		| 'details'
+		| 'participants'
+		| 'events'
+		| 'variants'
+		| 'preview';
 	const stepOrder: BuilderStep[] = [
 		'details',
 		'participants',
@@ -123,6 +129,7 @@ export function BuilderPage({
 
 	const navigate = useNavigate();
 	const [activeTab, setActiveTab] = useState<BuilderStep>('details');
+	const [activeNotesTab, setActiveNotesTab] = useState<string>('');
 	const [activeEncounterId, setActiveEncounterId] = useState<
 		string | undefined
 	>(encounterId);
@@ -146,10 +153,33 @@ export function BuilderPage({
 		control,
 		name: 'slots',
 	});
+	const {
+		fields: noteFields,
+		append: appendNote,
+		remove: removeNote,
+	} = useFieldArray({
+		control,
+		name: 'notes',
+	});
 
 	const slots = useWatch({ control, name: 'slots' });
+	const notes = useWatch({ control, name: 'notes' }) ?? [];
 	const partyLevel = useWatch({ control, name: 'partyLevel' });
 	const partySize = useWatch({ control, name: 'partySize' });
+
+	useEffect(() => {
+		if (notes.length === 0) {
+			setActiveNotesTab('');
+
+			return;
+		}
+
+		const hasActiveTab = notes.some((note) => note.id === activeNotesTab);
+
+		if (!hasActiveTab) {
+			setActiveNotesTab(notes[0].id);
+		}
+	}, [notes, activeNotesTab]);
 
 	useEffect(() => {
 		setActiveEncounterId(encounterId);
@@ -344,7 +374,6 @@ export function BuilderPage({
 				onSubmit={handleSubmit(onSubmit)}
 				className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4"
 			>
-
 				<Tabs
 					value={activeTab}
 					onValueChange={(value) => setActiveTab(value as BuilderStep)}
@@ -363,7 +392,7 @@ export function BuilderPage({
 								simulation={xpUsage.simulation}
 							/>
 						</section>
-						<div className='h-auto w-full flex flex-wrap justify-start gap-2 '>
+						<div className="h-auto w-full flex flex-wrap justify-start gap-2 ">
 							<TabsTrigger
 								value="details"
 								className={cn(
@@ -434,23 +463,6 @@ export function BuilderPage({
 					<TabsContent value="details" className="space-y-3">
 						<section>
 							<div className="space-y-3">
-								<FormField
-									control={form.control}
-									name="name"
-									render={({ field }) => (
-										<FormItem className="space-y-1">
-											<FormLabel>Encounter Name</FormLabel>
-											<FormControl>
-												<Input
-													placeholder="Training Grounds"
-													type="text"
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
 								<div className="flex flex-wrap items-start gap-3 sm:flex-nowrap">
 									<FormField
 										control={form.control}
@@ -491,74 +503,93 @@ export function BuilderPage({
 										)}
 									/>
 								</div>
-								<FormField
-									control={form.control}
-									name="description"
-									render={({ field }) => (
-										<FormItem className="space-y-1">
-											<FormLabel>Description</FormLabel>
-											<FormControl>
-												<textarea
-													className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-													placeholder="Brief setup description..."
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
+								<ParagraphFields 
+									control={form.control} 
+									label="Encounter Name and Description" 
+									fieldNames={['name', 'description']} 
+									placeholders={['Training Grounds', 'Brief setup description...']} 
 								/>
-								<FormField
-									control={form.control}
-									name="gmNotes"
-									render={({ field }) => (
-										<FormItem className="space-y-1">
-											<FormLabel>GM Notes</FormLabel>
-											<FormControl>
-												<textarea
-													className="flex min-h-[70px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-													placeholder="Private GM information..."
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="monsterNotes"
-									render={({ field }) => (
-										<FormItem className="space-y-1">
-											<FormLabel>Monster Notes</FormLabel>
-											<FormControl>
-												<textarea
-													className="flex min-h-[70px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-													placeholder="Information for monster side..."
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="playerNotes"
-									render={({ field }) => (
-										<FormItem className="space-y-1">
-											<FormLabel>Player Notes</FormLabel>
-											<FormControl>
-												<textarea
-													className="flex min-h-[70px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-													placeholder="Information for players..."
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+								<div className="space-y-2">
+									<div className="flex items-center justify-between gap-3">
+										<FormLabel className="block">Notes</FormLabel>
+										<Button
+											type="button"
+											variant="outline"
+											size="sm"
+											onClick={() => {
+												const nextIndex = notes.length + 1;
+												const nextId = uuidv4();
+												appendNote({
+													id: nextId,
+													header: `Note ${nextIndex}`,
+													content: '',
+												});
+												setActiveNotesTab(nextId);
+											}}
+										>
+											Add Note
+										</Button>
+									</div>
+									<div>
+										{notes.length === 0 ? (
+											<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+												No notes yet. Add a note tab to capture encounter
+												context.
+											</div>
+										) : (
+											<Tabs
+												value={activeNotesTab}
+												onValueChange={setActiveNotesTab}
+												className="w-full space-y-3"
+											>
+												<TabsList className="h-auto w-full flex-wrap justify-start gap-2 rounded-md bg-muted p-1">
+													{noteFields.map((noteField, index) => {
+														const note = notes[index];
+														const tabValue = note?.id ?? noteField.id;
+														const tabLabel = note?.header?.trim().length
+															? note.header
+															: `Note ${index + 1}`;
+
+														return (
+															<TabsTrigger
+																key={noteField.id}
+																value={tabValue}
+																className="max-w-52 truncate"
+															>
+																{tabLabel}
+															</TabsTrigger>
+														);
+													})}
+												</TabsList>
+
+												{noteFields.map((noteField, index) => {
+													const note = notes[index];
+													const tabValue = note?.id ?? noteField.id;
+
+													return (
+														<TabsContent
+															key={noteField.id}
+															value={tabValue}
+															className="space-y-3 rounded-md border p-3"
+														>
+															<ParagraphFields control={form.control} label="Note Details" fieldNames={[`notes.${index}.header` as const, `notes.${index}.content` as const]} placeholders={['Note Header', 'Note Content']} />
+															<div className="flex justify-end">
+																<Button
+																	type="button"
+																	variant="ghost"
+																	size="sm"
+																	onClick={() => removeNote(index)}
+																>
+																	Remove Note
+																</Button>
+															</div>
+														</TabsContent>
+													);
+												})}
+											</Tabs>
+										)}
+									</div>
+								</div>
 							</div>
 						</section>
 					</TabsContent>

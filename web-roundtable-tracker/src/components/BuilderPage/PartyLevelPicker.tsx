@@ -18,7 +18,10 @@ export function PartyLevelPicker({
 }: PartyLevelPickerProps) {
 	const MIN = 1;
 	const MAX = 20;
-	const safeValue = typeof value === 'number' && Number.isFinite(value) ? Math.min(Math.max(value, MIN), MAX) : MIN;
+	const safeValue =
+		typeof value === 'number' && Number.isFinite(value)
+			? Math.min(Math.max(value, MIN), MAX)
+			: MIN;
 
 	const [inputText, setInputText] = useState(String(safeValue));
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -32,7 +35,10 @@ export function PartyLevelPicker({
 
 	// Compute thumb position as percentage
 	const pct = ((safeValue - MIN) / (MAX - MIN)) * 100;
-	const levels = Array.from({ length: MAX - MIN + 1 }, (_, index) => MIN + index);
+	const levels = Array.from(
+		{ length: MAX - MIN + 1 },
+		(_, index) => MIN + index
+	);
 
 	const commitText = (text: string) => {
 		const num = parseInt(text, 10);
@@ -53,7 +59,7 @@ export function PartyLevelPicker({
 	};
 
 	return (
-		<div className="mx-3">
+		<div className="mx-4">
 			<div className="relative pt-11">
 				<div
 					className="pointer-events-none absolute top-1/2 z-12 -translate-x-1/2 -translate-y-1/2"
@@ -121,9 +127,11 @@ export function PartyLevelPicker({
 								style={{ left: `${levelPct}%` }}
 							>
 								<div
-									className={isMajor
-										? 'h-3 w-1 rounded-full bg-foreground/45'
-										: 'h-3 w-0.5 rounded-full bg-foreground/25'}
+									className={
+										isMajor
+											? 'h-3 w-1 rounded-full bg-foreground/45'
+											: 'h-3 w-0.5 rounded-full bg-foreground/25'
+									}
 								/>
 							</div>
 						);

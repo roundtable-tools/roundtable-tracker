@@ -5,6 +5,7 @@ import {
 	DIFFICULTY,
 	difficultyToString,
 	LEVEL_REPRESENTATION,
+	normalizeEncounterNotes,
 } from './data';
 import type {
 	EncounterStore,
@@ -371,9 +372,10 @@ export function encounterToTrackerHeader(
 
 	const descriptionSections = [
 		{ label: 'Description', content: encounterData.description },
-		{ label: 'GM Notes', content: encounterData.notes?.gm ?? '' },
-		{ label: 'Monster Notes', content: encounterData.notes?.monster ?? '' },
-		{ label: 'Player Notes', content: encounterData.notes?.player ?? '' },
+		...normalizeEncounterNotes(encounterData.notes).map((note) => ({
+			label: note.header,
+			content: note.content,
+		})),
 	].filter((section) => section.content.trim().length > 0);
 
 	return {
