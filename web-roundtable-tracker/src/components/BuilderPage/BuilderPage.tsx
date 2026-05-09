@@ -1,36 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-	Form,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormControl,
-	FormMessage,
-} from '@/components/ui/form';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getSavedEncountersStore } from '@/store/savedEncounterInstance';
 import { useSavedEncountersStore } from '@/store/savedEncounterInstance';
-import { ALIGNMENT, type ConcreteEncounter, type Alignment } from '@/store/data';
+import { type ConcreteEncounter } from '@/store/data';
 import encounterTemplates from '@/store/Encounters/migratedEncounterTemplates';
 import { ThreatTracker } from './ThreatTracker';
-import {
-	EVENT_SLOT_TYPES,
-	PARTICIPANT_SLOT_TYPES,
-	SlotRow,
-} from './SlotRow.tsx';
 import type { AdditionalDataBlockKey } from './SlotRow.tsx';
 import { SaveSuccessModal } from './SaveSuccessModal';
-import { computeEncounterXpUsage, type SlotType } from './builderXp';
+import { computeEncounterXpUsage } from './builderXp';
 import { useNavigate } from '@tanstack/react-router';
 import {
 	deleteImportedEncounterDraft,
@@ -38,22 +18,16 @@ import {
 } from '@/store/importedEncounterDraft';
 import {
 	defaultFormValues,
-	defaultSlot,
 	fromEncounterTemplate,
 	fromConcreteEncounter,
 	toConcreteEncounter,
-	templateVariantToFormPartial,
 	type BuilderFormValues,
-	type BuilderVariantSnapshot,
 } from './builderConvert';
-import { v4 as uuidv4 } from 'uuid';
 import {
 	CalendarClock,
 	ChevronRight,
 	Eye,
 	Layers3,
-	RotateCcw,
-	Trash2,
 	Users,
 	Info,
 } from 'lucide-react';
@@ -67,17 +41,11 @@ import { PartySizePicker } from './PartySizePicker';
 import { cn } from '@/lib/utils';
 import { BuilderPreviewTab } from './BuilderPreviewTab';
 import { ParagraphFields } from './ParagraphFields.tsx';
-import { BuilderListLayout } from './BuilderListLayout';
-
-const NOTE_VISIBILITY_OPTIONS: Array<{
-	value: 'all' | Alignment;
-	label: string;
-}> = [
-	{ value: 'all', label: 'General (Visible to all)' },
-	{ value: ALIGNMENT.Opponents, label: 'Opponents' },
-	{ value: ALIGNMENT.PCs, label: 'Allies' },
-	{ value: ALIGNMENT.Neutral, label: 'Other' },
-];
+import { ParticipantListSection } from './sections/ParticipantListSection';
+import { EventListSection } from './sections/EventListSection';
+import { NoteListSection } from './sections/NoteListSection';
+import { VariantListSection } from './sections/VariantListSection';
+import { TemplateVariantListSection } from './sections/TemplateVariantListSection';
 
 function hasAdditionalBlock(
 	slot: BuilderFormValues['slots'][number],
@@ -455,78 +423,6 @@ export function BuilderPage({
 		navigate({ to: '/encounters' });
 	};
 
-	const renderNoteEditor = (
-		noteFieldId: string,
-		index: number,
-		presentation: 'tabs' | 'grid' | 'list'
-	) => (
-		<div
-			key={noteFieldId}
-			className={cn(
-				'space-y-3 rounded-md border p-3',
-				presentation === 'tabs' && 'border-none p-0',
-				presentation === 'list' && 'rounded-none border-none p-0'
-			)}
-		>
-			<ParagraphFields
-				control={form.control}
-				label="Note Details"
-				fieldNames={[
-					`notes.${index}.header` as const,
-					`notes.${index}.content` as const,
-				]}
-				placeholders={['Note Header', 'Note Content']}
-			/>
-			<FormField
-				control={form.control}
-				name={`notes.${index}.visibility` as const}
-				render={({ field }) => (
-					<FormItem className="space-y-1">
-						<FormLabel>Visibility</FormLabel>
-						<FormControl>
-							<Select
-								value={String(field.value ?? 'all')}
-								onValueChange={(value) => {
-									if (value === 'all') {
-										field.onChange('all');
-
-										return;
-									}
-
-									field.onChange(Number(value) as Alignment);
-								}}
-							>
-								<SelectTrigger>
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{NOTE_VISIBILITY_OPTIONS.map((option) => (
-										<SelectItem
-											key={String(option.value)}
-											value={String(option.value)}
-										>
-											{option.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</FormControl>
-					</FormItem>
-				)}
-			/>
-			<div className="flex justify-end">
-				<Button
-					type="button"
-					variant="ghost"
-					size="sm"
-					onClick={() => removeNote(index)}
-				>
-					Remove Note
-				</Button>
-			</div>
-		</div>
-	);
-
 	return (
 		<Form {...form}>
 			<form
@@ -670,60 +566,14 @@ export function BuilderPage({
 								/>
 								</div>
 								<div className="space-y-2">
-									<BuilderListLayout
-										label="Notes"
-										allowedLayouts={['compact-tabs', 'list', 'wide-grid']}
-										items={noteFields}
-										getItemId={(noteField, index) => notes[index]?.id ?? noteField.id}
-										getItemLabel={(_, index) => {
-											const note = notes[index];
-
-											return note?.header?.trim().length
-												? note.header
-												: `Note ${index + 1}`;
-										}}
-										renderItem={(_, index, layout) => (
-											renderNoteEditor(
-												noteFields[index].id,
-												index,
-												layout.presentation
-											)
-										)}
-										emptyState={
-											<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-												No notes yet. Add a note tab to capture encounter context.
-											</div>
-										}
-										activeItemId={activeNotesTab}
-										onActiveItemIdChange={setActiveNotesTab}
-										getContentClassName={(layout) =>
-											layout.presentation === 'list'
-												? 'overflow-hidden rounded-md border bg-card divide-y'
-												: undefined
-										}
-										getItemClassName={(layout) =>
-											layout.presentation === 'list' ? 'p-3' : undefined
-										}
-										toolbarActions={
-											<Button
-												type="button"
-												variant="outline"
-												size="sm"
-												onClick={() => {
-													const nextIndex = notes.length + 1;
-													const nextId = uuidv4();
-													appendNote({
-														id: nextId,
-														header: `Note ${nextIndex}`,
-														content: '',
-														visibility: 'all',
-													});
-													setActiveNotesTab(nextId);
-												}}
-											>
-												Add Note
-											</Button>
-										}
+									<NoteListSection
+										form={form}
+										noteFields={noteFields}
+										notes={notes}
+										appendNote={appendNote}
+										removeNote={removeNote}
+										activeNotesTab={activeNotesTab}
+										onActiveNotesTabChange={setActiveNotesTab}
 									/>
 								</div>
 						</section>
@@ -731,360 +581,61 @@ export function BuilderPage({
 
 					<TabsContent value="participants" className="space-y-3">
 						<section className="space-y-3">
-							<BuilderListLayout
-								label="Participants"
-								allowedLayouts={[
-									'compact-tabs',
-									'wide-tabs',
-									'list',
-								]}
-								items={participantItems}
-								getItemId={(item) => item.id}
-								getItemLabel={(item, index) => {
-									const slot = resolvedSlots[item.slotIndex];
-
-									return slot?.name?.trim().length
-										? slot.name
-										: `Participant ${index + 1}`;
-								}}
-								renderItem={(item) => (
-									<SlotRow
-										index={item.slotIndex}
-										form={form}
-										remove={remove}
-										update={update}
-										allowedTypes={PARTICIPANT_SLOT_TYPES}
-										usedAdditionalDataBlocks={usedAdditionalDataBlocks}
-									/>
-								)}
-								emptyState={
-									<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground flex">
-										No entries in this section yet.
-									</div>
-								}
-								activeItemId={activeParticipantItemId}
-								onActiveItemIdChange={setActiveParticipantItemId}
-								toolbarActions={
-									<Button
-										type="button"
-										variant="outline"
-										size="sm"
-										onClick={() => append(defaultSlot())}
-									>
-										Add Participant
-									</Button>
-								}
-							/>
-						</section>
-					</TabsContent>
+						<ParticipantListSection
+							form={form}
+							items={participantItems}
+							resolvedSlots={resolvedSlots}
+							remove={remove}
+							update={update}
+							usedAdditionalDataBlocks={usedAdditionalDataBlocks}
+							activeItemId={activeParticipantItemId}
+							onActiveItemIdChange={setActiveParticipantItemId}
+							append={append}
+						/>
+					</section>
+				</TabsContent>
 
 					<TabsContent value="events" className="space-y-3">
 						<section className="space-y-3">
-							<BuilderListLayout
-								label="Events"
-								allowedLayouts={[
-									'compact-tabs',
-									'wide-tabs',
-									'list',
-								]}
-								items={eventItems}
-								getItemId={(item) => item.id}
-								getItemLabel={(item, index) => {
-									const slot = resolvedSlots[item.slotIndex];
-
-									return slot?.name?.trim().length
-										? slot.name
-										: `Event ${index + 1}`;
-								}}
-								renderItem={(item) => (
-									<SlotRow
-										index={item.slotIndex}
-										form={form}
-										remove={remove}
-										update={update}
-										allowedTypes={EVENT_SLOT_TYPES}
-										usedAdditionalDataBlocks={usedAdditionalDataBlocks}
-									/>
-								)}
-								emptyState={
-									<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground flex">
-										No entries in this section yet.
-									</div>
-								}
-								activeItemId={activeEventItemId}
-								onActiveItemIdChange={setActiveEventItemId}
-								toolbarActions={
-									<Button
-										type="button"
-										variant="outline"
-										size="sm"
-										onClick={() =>
-											append({
-												...defaultSlot(),
-												type: 'narrative',
-											})
-										}
-									>
-										Add Event
-									</Button>
-								}
-							/>
-						</section>
-					</TabsContent>
+						<EventListSection
+							form={form}
+							items={eventItems}
+							resolvedSlots={resolvedSlots}
+							remove={remove}
+							update={update}
+							usedAdditionalDataBlocks={usedAdditionalDataBlocks}
+							activeItemId={activeEventItemId}
+							onActiveItemIdChange={setActiveEventItemId}
+							append={append}
+						/>
+					</section>
+				</TabsContent>
 
 					<TabsContent value="variants" className="space-y-4">
 						<section className="space-y-3">
 							<p className="text-xs text-muted-foreground">
 								Snapshot the current builder state as a reusable variant.
 							</p>
-							<BuilderListLayout
-								label="Saved variants"
-								allowedLayouts={[
-									'compact-tabs',
-									'wide-tabs',
-									'compact-grid',
-									'wide-grid',
-									'list',
-								]}
-								items={variants}
-								getItemId={(snapshot) => snapshot.id}
-								getItemLabel={(snapshot, index) =>
-									snapshot.description?.trim().length
-										? snapshot.description
-										: `Variant ${index + 1}`
-								}
-								renderItem={(snapshot, idx) => (
-									<div className="rounded-md border p-3 space-y-2">
-										<div className="flex items-center gap-2">
-											<Input
-												className="h-7 text-sm"
-												value={snapshot.description}
-												onChange={(e) => {
-													const updated = variants.map((v, i) =>
-														i === idx
-															? { ...v, description: e.target.value }
-															: v
-													);
-													form.setValue('variants', updated, {
-														shouldDirty: true,
-													});
-												}}
-											/>
-											<Button
-												type="button"
-												variant="ghost"
-												size="icon"
-												title="Restore this snapshot"
-												onClick={() => {
-													const confirmed = window.confirm(
-														`Restore "${snapshot.description}"? This will overwrite the current party size, party level, and participants.`
-													);
-
-													if (!confirmed) return;
-													form.setValue('partyLevel', snapshot.partyLevel, {
-														shouldDirty: true,
-													});
-													form.setValue('partySize', snapshot.partySize, {
-														shouldDirty: true,
-													});
-													form.setValue(
-														'slots',
-														snapshot.slots.map((s) => ({ ...s })),
-														{ shouldDirty: true }
-													);
-												}}
-											>
-												<RotateCcw className="h-4 w-4" />
-											</Button>
-											<Button
-												type="button"
-												variant="ghost"
-												size="icon"
-												title="Remove variant"
-												onClick={() => {
-													const updated = variants.filter((_, i) => i !== idx);
-													form.setValue('variants', updated, {
-														shouldDirty: true,
-													});
-												}}
-											>
-												<Trash2 className="h-4 w-4 text-destructive" />
-											</Button>
-										</div>
-										<div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-											<span className="rounded border px-2 py-1">
-												Party size: {snapshot.partySize}
-											</span>
-											<span className="rounded border px-2 py-1">
-												Party level: {snapshot.partyLevel}
-											</span>
-											<span className="rounded border px-2 py-1">
-												Participants:{' '}
-												{
-													snapshot.slots.filter(
-														(s) => s.type === 'creature' || s.type === 'hazard'
-													).length
-												}
-											</span>
-										</div>
-									</div>
-								)}
-								emptyState={
-									<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-										No variants saved yet. Create one to store a reusable
-										snapshot.
-									</div>
-								}
-								activeItemId={activeVariantItemId}
-								onActiveItemIdChange={setActiveVariantItemId}
-								toolbarActions={
-									<Button
-										type="button"
-										variant="outline"
-										size="sm"
-										onClick={() => {
-											const label =
-												window.prompt(
-													'Variant description:',
-													`Variant ${variants.length + 1} (${safePartySize} players, level ${safePartyLevel})`
-												) ?? `Variant ${variants.length + 1}`;
-											const snapshot: BuilderVariantSnapshot = {
-												id: uuidv4(),
-												description: label,
-												partyLevel: safePartyLevel,
-												partySize: safePartySize,
-												slots: form.getValues('slots').map((s) => ({ ...s })),
-											};
-											form.setValue('variants', [...variants, snapshot], {
-												shouldDirty: true,
-											});
-											setActiveVariantItemId(snapshot.id);
-										}}
-									>
-										Create Variant
-									</Button>
-								}
+							<VariantListSection
+								form={form}
+								variants={variants}
+								safePartyLevel={safePartyLevel}
+								safePartySize={safePartySize}
+								activeVariantItemId={activeVariantItemId}
+								onActiveVariantItemIdChange={setActiveVariantItemId}
 							/>
 						</section>
 
 						{templateShadowVariants.length > 0 && (
 							<section className="space-y-3">
-								<div>
-									<h3 className="text-sm font-medium text-muted-foreground">
-										From template
-									</h3>
-									<p className="text-xs text-muted-foreground">
-										These are the original template variants. Load one to apply
-										it to the current form, or load and save to create a
-										concrete variant snapshot.
-									</p>
-								</div>
-								<BuilderListLayout
-									label="Template variants"
-									allowedLayouts={['compact-tabs', 'wide-tabs', 'wide-grid', 'list']}
-									items={templateShadowVariants}
-									getItemId={(variant) => variant.id}
-									getItemLabel={(variant, index) =>
-										variant.description?.trim().length
-											? variant.description
-											: `Template Variant ${index + 1}`
-									}
-									renderItem={(tv) => {
-										const isCurrentVariant = tv.id === templateVariantId;
-
-										return (
-											<div className="rounded-md border border-dashed bg-muted/30 p-3 space-y-2">
-												<div className="flex items-center justify-between gap-2">
-													<span className="text-sm text-muted-foreground italic">
-														{tv.description ?? `Party of ${tv.partySize}`}
-														{isCurrentVariant ? ' (current)' : ''}
-													</span>
-													<div className="flex gap-1">
-														<Button
-															type="button"
-															variant="outline"
-															size="sm"
-															className="text-xs"
-															onClick={() => {
-																const partial = templateVariantToFormPartial(
-																	tv,
-																	safePartyLevel
-																);
-																form.setValue('partySize', partial.partySize, {
-																	shouldDirty: true,
-																});
-																form.setValue('slots', partial.slots, {
-																	shouldDirty: true,
-																});
-															}}
-														>
-															Load
-														</Button>
-														<Button
-															type="button"
-															variant="outline"
-															size="sm"
-															className="text-xs"
-															onClick={() => {
-																const partial = templateVariantToFormPartial(
-																	tv,
-																	safePartyLevel
-																);
-																form.setValue('partySize', partial.partySize, {
-																	shouldDirty: true,
-																});
-																form.setValue('slots', partial.slots, {
-																	shouldDirty: true,
-																});
-																const label =
-																	window.prompt(
-																		'Variant description:',
-																		tv.description ?? `Party of ${tv.partySize}`
-																	) ??
-																	tv.description ??
-																	`Party of ${tv.partySize}`;
-																const snapshot: BuilderVariantSnapshot = {
-																	id: uuidv4(),
-																	description: label,
-																	partyLevel: safePartyLevel,
-																	partySize: partial.partySize,
-																	slots: partial.slots.map((s) => ({ ...s })),
-																};
-																form.setValue(
-																	'variants',
-																	[...form.getValues('variants'), snapshot],
-																	{ shouldDirty: true }
-																);
-																setActiveVariantItemId(snapshot.id);
-															}}
-														>
-															Load &amp; Save
-														</Button>
-													</div>
-												</div>
-												<div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-													<span className="rounded border border-dashed px-2 py-1">
-														Party size: {tv.partySize}
-													</span>
-													{tv.partyLevel && (
-														<span className="rounded border border-dashed px-2 py-1">
-															Party level: {tv.partyLevel}
-														</span>
-													)}
-													<span className="rounded border border-dashed px-2 py-1">
-														Participants: {tv.participants.length}
-													</span>
-												</div>
-											</div>
-										);
-									}}
-									emptyState={
-										<div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-											No template variants available.
-										</div>
-									}
+								<TemplateVariantListSection
+									templateShadowVariants={templateShadowVariants}
+									templateVariantId={templateVariantId}
+									form={form}
+									safePartyLevel={safePartyLevel}
 									activeItemId={activeTemplateVariantItemId}
 									onActiveItemIdChange={setActiveTemplateVariantItemId}
+									onVariantSaved={setActiveVariantItemId}
 								/>
 							</section>
 						)}
