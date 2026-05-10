@@ -543,7 +543,7 @@ export function BuilderPage({
 										name="partySize"
 										render={({ field }) => (
 											<FormItem className="w-fit shrink-0 space-y-1">
-												<FormLabel>Party Size</FormLabel>
+												<FormLabel className='-mb-5'>Party Size</FormLabel>
 												<FormControl>
 													<PartySizePicker
 														value={field.value}

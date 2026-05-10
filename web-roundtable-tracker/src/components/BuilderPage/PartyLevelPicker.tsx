@@ -7,6 +7,8 @@ interface PartyLevelPickerProps {
 	onBlur?: () => void;
 	name?: string;
 	ref?: React.Ref<HTMLInputElement>;
+	min?: number;
+	max?: number;
 }
 
 export function PartyLevelPicker({
@@ -14,14 +16,13 @@ export function PartyLevelPicker({
 	onChange,
 	onBlur,
 	name,
-	ref: _ref,
+	min = 1,
+	max = 20,
 }: PartyLevelPickerProps) {
-	const MIN = 1;
-	const MAX = 20;
 	const safeValue =
 		typeof value === 'number' && Number.isFinite(value)
-			? Math.min(Math.max(value, MIN), MAX)
-			: MIN;
+			? Math.min(Math.max(value, min), max)
+			: min;
 
 	const [inputText, setInputText] = useState(String(safeValue));
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -34,16 +35,17 @@ export function PartyLevelPicker({
 	}, [safeValue]);
 
 	// Compute thumb position as percentage
-	const pct = ((safeValue - MIN) / (MAX - MIN)) * 100;
+	const pct = ((safeValue - min) / (max - min)) * 100;
 	const levels = Array.from(
-		{ length: MAX - MIN + 1 },
-		(_, index) => MIN + index
+		{ length: max - min + 1 },
+		(_, index) => min + index
 	);
 
 	const commitText = (text: string) => {
 		const num = parseInt(text, 10);
+
 		if (!isNaN(num)) {
-			const clamped = Math.min(Math.max(num, MIN), MAX);
+			const clamped = Math.min(Math.max(num, min), max);
 			onChange(clamped);
 			setInputText(String(clamped));
 		} else {
@@ -77,12 +79,14 @@ export function PartyLevelPicker({
 						}}
 						onPointerMove={(e) => {
 							const start = pointerStartRef.current;
+
 							if (!start || draggedRef.current) {
 								return;
 							}
 
 							const dx = Math.abs(e.clientX - start.x);
 							const dy = Math.abs(e.clientY - start.y);
+
 							if (dx + dy > 6) {
 								draggedRef.current = true;
 								inputRef.current?.blur();
@@ -117,7 +121,7 @@ export function PartyLevelPicker({
 				</div>
 				<div className="pointer-events-none absolute inset-x-1 top-1/3 z-11 -translate-y-1/2">
 					{levels.map((level) => {
-						const levelPct = ((level - MIN) / (MAX - MIN)) * 100;
+						const levelPct = ((level - min) / (max - min)) * 100;
 						const isMajor = level % 5 === 0;
 
 						return (
@@ -139,8 +143,8 @@ export function PartyLevelPicker({
 				</div>
 				<Slider
 					value={safeValue}
-					min={MIN}
-					max={MAX}
+					min={min}
+					max={max}
 					onChange={(v) => {
 						onChange(v);
 						setInputText(String(v));

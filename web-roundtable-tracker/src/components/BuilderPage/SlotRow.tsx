@@ -57,6 +57,8 @@ import type { LevelAdjustment } from '@/models/utility/level/Level';
 import type { AccomplishmentLevel } from '@/models/encounters/encounter.types';
 import { Card } from '../ui/card';
 import { ParagraphFields } from './ParagraphFields';
+import { PartyLevelPicker } from './PartyLevelPicker';
+import { PartySizePicker } from './PartySizePicker';
 
 const SLOT_TYPES: { value: SlotType; label: string; Icon: LucideIcon }[] = [
 	{ value: 'creature', label: 'Creature', Icon: Skull },
@@ -338,7 +340,8 @@ export function SlotRow({
 	form,
 	remove,
 	update,
-	allowedTypes,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	allowedTypes: _allowedTypes,
 	usedAdditionalDataBlocks = [],
 }: SlotRowProps) {
 	const { control, watch, setValue } = form;
@@ -364,9 +367,6 @@ export function SlotRow({
 		activeReinforcementParticipantId,
 		setActiveReinforcementParticipantId,
 	] = useState<string | null>(null);
-	const availableSlotTypes = SLOT_TYPES.filter(({ value }) =>
-		allowedTypes.includes(value)
-	);
 	const reinforcementParticipants = slot.reinforcementParticipants ?? [];
 	const availableCombatTabs = useMemo(
 		() =>
@@ -563,6 +563,7 @@ export function SlotRow({
 		}
 	};
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const handleTypeChange = (newType: SlotType) => {
 		const current = form.getValues(`slots.${index}`);
 		const reset = defaultSlot();
@@ -570,6 +571,7 @@ export function SlotRow({
 		update(index, { ...reset, id: current.id, type: newType });
 	};
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const handleRemove = () => {
 		remove(index);
 	};
@@ -829,6 +831,7 @@ export function SlotRow({
 			<div className="w-full gap-2">
 				{(() => {
 					const slotTypeData = SLOT_TYPES.find(({ value }) => value == slotType);
+
 					return slotTypeData && (
 						<ParagraphFields
 							control={control} 
@@ -842,59 +845,27 @@ export function SlotRow({
 					);
 				})()}
 			</div>
-			<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
-				{isCombatSlot && (
-					<>
-						<FormField
-							control={control}
-							name={`slots.${index}.side` as const}
-							render={({ field }) => (
-								<FormItem className="space-y-1">
-									<FormLabel>Side</FormLabel>
-									<FormControl>
-										<Select
-											value={normalizeSideType(field.value as SideType)}
-											onValueChange={(value) =>
-												field.onChange(value as SideType)
-											}
-										>
-											<SelectTrigger className="w-full">
-												<SelectValue />
-											</SelectTrigger>
-											<SelectContent>
-												{SIDE_OPTIONS.map((o) => (
-													<SelectItem key={o.value} value={o.value}>
-														{o.label}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
 
+			<div className="space-y-3">
+				{/* Row 1: Level + Count for combat slots */}
+				{isCombatSlot && (
+					<div className="flex flex-wrap items-start gap-3 sm:flex-nowrap -mb-3">
+						{/* Level Picker */}
 						<FormField
 							control={control}
 							name={`slots.${index}.level` as const}
 							render={({ field }) => (
-								<FormItem className="space-y-1">
+								<FormItem className="min-w-0 flex-1 space-y-1">
 									<FormLabel>Level</FormLabel>
 									<FormControl>
-										<Input
-											type="number"
-											min={-1}
-											value={field.value ?? ''}
-											onChange={(event) => {
-												const value = event.target.value;
-												field.onChange(
-													value === '' ? undefined : Number(value)
-												);
-											}}
+										<PartyLevelPicker
+											value={field.value}
+											onChange={field.onChange}
 											onBlur={field.onBlur}
 											name={field.name}
 											ref={field.ref}
+											min={-1}
+											max={25}
 										/>
 									</FormControl>
 									<FormMessage />
@@ -902,128 +873,136 @@ export function SlotRow({
 							)}
 						/>
 
+						{/* Count Picker */}
 						<FormField
 							control={control}
 							name={`slots.${index}.count` as const}
 							render={({ field }) => (
-								<FormItem className="space-y-1">
-									<FormLabel>Count</FormLabel>
+								<FormItem className="w-fit shrink-0 space-y-1">
+									<FormLabel className='-mb-5'>Count</FormLabel>
 									<FormControl>
-										<Input
-											type="number"
-											min={0}
-											value={field.value ?? ''}
-											onChange={(event) => {
-												const value = event.target.value;
-												field.onChange(
-													value === '' ? undefined : Number(value)
-												);
-											}}
+										<PartySizePicker
+											value={field.value}
+											onChange={field.onChange}
 											onBlur={field.onBlur}
 											name={field.name}
 											ref={field.ref}
+											min={1}
+											max={12}
+											rows={2}
+											buttonSize="sm"
+											icon={slotType === 'hazard' ? TriangleAlert : Skull}
 										/>
 									</FormControl>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
-
-						{slotType === 'hazard' && (
-							<>
-								<FormField
-									control={control}
-									name={`slots.${index}.isSimpleHazard` as const}
-									render={({ field }) => (
-										<FormItem className="mt-5 flex items-center gap-2 space-y-0 sm:col-span-2">
-											<FormControl>
-												<input
-													type="checkbox"
-													id={`simple-hazard-${index}`}
-													className="h-4 w-4"
-													checked={Boolean(field.value)}
-													onChange={(event) =>
-														field.onChange(event.target.checked)
-													}
-													onBlur={field.onBlur}
-													name={field.name}
-													ref={field.ref}
-												/>
-											</FormControl>
-											<FormLabel htmlFor={`simple-hazard-${index}`}>
-												Simple Hazard
-											</FormLabel>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-
-								<FormField
-									control={control}
-									name={`slots.${index}.successesToDisable` as const}
-									render={({ field }) => (
-										<FormItem className="space-y-1">
-											<FormLabel>Successes</FormLabel>
-											<FormControl>
-												<Input
-													type="number"
-													min={1}
-													value={field.value ?? ''}
-													onChange={(event) => {
-														const value = event.target.value;
-														field.onChange(
-															value === '' ? undefined : Number(value)
-														);
-													}}
-													onBlur={field.onBlur}
-													name={field.name}
-													ref={field.ref}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-							</>
-						)}
-					</>
+					</div>
 				)}
 
-				{slotType === 'reinforcement' && (
-					<FormField
-						control={control}
-						name={`slots.${index}.reinforcementRound` as const}
-						render={({ field }) => (
-							<FormItem className="space-y-1">
-								<FormLabel>Reinforcement Round</FormLabel>
-								<FormControl>
-									<Input
-										type="number"
-										min={1}
-										value={field.value ?? ''}
-										onChange={(event) => {
-											const value = event.target.value;
-											field.onChange(value === '' ? undefined : Number(value));
-										}}
-										onBlur={field.onBlur}
-										name={field.name}
-										ref={field.ref}
+				{/* Row 2: Side + Hazard-specific fields */}
+				<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
+					{isCombatSlot && (
+						<>
+							<FormField
+								control={control}
+								name={`slots.${index}.side` as const}
+								render={({ field }) => (
+									<FormItem className="space-y-1">
+										<FormLabel>Side</FormLabel>
+										<FormControl>
+											<Select
+												value={normalizeSideType(field.value as SideType)}
+												onValueChange={(value) =>
+													field.onChange(value as SideType)
+												}
+											>
+												<SelectTrigger className="w-full">
+													<SelectValue />
+												</SelectTrigger>
+												<SelectContent>
+													{SIDE_OPTIONS.map((o) => (
+														<SelectItem key={o.value} value={o.value}>
+															{o.label}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							{slotType === 'hazard' && (
+								<>
+									
+
+									<FormField
+										control={control}
+										name={`slots.${index}.successesToDisable` as const}
+										render={({ field }) => (
+											<FormItem className="space-y-1">
+												<FormLabel>Successes</FormLabel>
+												<FormControl>
+													<Input
+														type="number"
+														min={1}
+														value={field.value ?? ''}
+														onChange={(event) => {
+															const value = event.target.value;
+															field.onChange(
+																value === '' ? undefined : Number(value)
+															);
+														}}
+														onBlur={field.onBlur}
+														name={field.name}
+														ref={field.ref}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
 									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-				)}
+									<FormField
+										control={control}
+										name={`slots.${index}.isSimpleHazard` as const}
+										render={({ field }) => (
+											<FormItem className="mt-5 flex items-center gap-2 space-y-0 sm:col-span-2">
+												<FormControl>
+													<input
+														type="checkbox"
+														id={`simple-hazard-${index}`}
+														className="h-4 w-4"
+														checked={Boolean(field.value)}
+														onChange={(event) =>
+															field.onChange(event.target.checked)
+														}
+														onBlur={field.onBlur}
+														name={field.name}
+														ref={field.ref}
+													/>
+												</FormControl>
+												<FormLabel htmlFor={`simple-hazard-${index}`}>
+													Simple Hazard
+												</FormLabel>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</>
+							)}
+						</>
+					)}
 
-				{slotType === 'narrative' && (
-					<>
+					{slotType === 'reinforcement' && (
 						<FormField
 							control={control}
-							name={`slots.${index}.eventRound` as const}
+							name={`slots.${index}.reinforcementRound` as const}
 							render={({ field }) => (
 								<FormItem className="space-y-1">
-									<FormLabel>Start Round</FormLabel>
+									<FormLabel>Reinforcement Round</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -1031,9 +1010,7 @@ export function SlotRow({
 											value={field.value ?? ''}
 											onChange={(event) => {
 												const value = event.target.value;
-												field.onChange(
-													value === '' ? undefined : Number(value)
-												);
+												field.onChange(value === '' ? undefined : Number(value));
 											}}
 											onBlur={field.onBlur}
 											name={field.name}
@@ -1044,66 +1021,97 @@ export function SlotRow({
 								</FormItem>
 							)}
 						/>
+					)}
 
-						<FormField
-							control={control}
-							name={`slots.${index}.repeatInterval` as const}
-							render={({ field }) => (
-								<FormItem className="space-y-1">
-									<FormLabel>Repeat Every (Optional)</FormLabel>
-									<FormControl>
-										<Input
-											type="number"
-											min={1}
-											value={field.value ?? ''}
-											onChange={(event) => {
-												const value = event.target.value;
-												field.onChange(
-													value === '' ? undefined : Number(value)
-												);
-											}}
-											onBlur={field.onBlur}
-											name={field.name}
-											ref={field.ref}
-											placeholder="Leave blank for one-time"
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
+					{slotType === 'narrative' && (
+						<>
+							<FormField
+								control={control}
+								name={`slots.${index}.eventRound` as const}
+								render={({ field }) => (
+									<FormItem className="space-y-1">
+										<FormLabel>Start Round</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												min={1}
+												value={field.value ?? ''}
+												onChange={(event) => {
+													const value = event.target.value;
+													field.onChange(
+														value === '' ? undefined : Number(value)
+													);
+												}}
+												onBlur={field.onBlur}
+												name={field.name}
+												ref={field.ref}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 
-						<FormField
-							control={control}
-							name={`slots.${index}.accomplishmentLevel` as const}
-							render={({ field }) => (
-								<FormItem className="space-y-1">
-									<FormLabel>Accomplishment Tier</FormLabel>
-									<FormControl>
-										<Select
-											value={field.value ?? 'story'}
-											onValueChange={(value) =>
-												field.onChange(value as AccomplishmentLevel)
-											}
-										>
-											<SelectTrigger className="w-full">
-												<SelectValue placeholder="Select tier" />
-											</SelectTrigger>
-											<SelectContent>
-												{ACCOMPLISHMENT_OPTIONS.map((option) => (
-													<SelectItem key={option.value} value={option.value}>
-														{option.label}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-					</>
-				)}
+							<FormField
+								control={control}
+								name={`slots.${index}.repeatInterval` as const}
+								render={({ field }) => (
+									<FormItem className="space-y-1">
+										<FormLabel>Repeat Every (Optional)</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												min={1}
+												value={field.value ?? ''}
+												onChange={(event) => {
+													const value = event.target.value;
+													field.onChange(
+														value === '' ? undefined : Number(value)
+													);
+												}}
+												onBlur={field.onBlur}
+												name={field.name}
+												ref={field.ref}
+												placeholder="Leave blank for one-time"
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={control}
+								name={`slots.${index}.accomplishmentLevel` as const}
+								render={({ field }) => (
+									<FormItem className="space-y-1">
+										<FormLabel>Accomplishment Tier</FormLabel>
+										<FormControl>
+											<Select
+												value={field.value ?? 'story'}
+												onValueChange={(value) =>
+													field.onChange(value as AccomplishmentLevel)
+												}
+											>
+												<SelectTrigger className="w-full">
+													<SelectValue placeholder="Select tier" />
+												</SelectTrigger>
+												<SelectContent>
+													{ACCOMPLISHMENT_OPTIONS.map((option) => (
+														<SelectItem key={option.value} value={option.value}>
+															{option.label}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</>
+					)}
+				</div>
 			</div>
 
 			{slotType === 'reinforcement' && (

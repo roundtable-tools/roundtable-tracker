@@ -29,6 +29,7 @@ export function ParagraphFields({
 }: ParagraphFieldsProps) {
 	const [nameField, descriptionField] = fieldNames;
 	const [namePlaceholder, descriptionPlaceholder] = placeholders;
+
 	return (
 		<div>
 			<FormField
