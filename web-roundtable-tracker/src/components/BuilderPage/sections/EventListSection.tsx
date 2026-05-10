@@ -1,12 +1,11 @@
 import { ScrollText, ShieldPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BuilderListLayout } from '../BuilderListLayout';
+import { BuilderListLayout, type BuilderListLayoutKey } from '../BuilderListLayout';
 import { SlotRow, EVENT_SLOT_TYPES } from '../SlotRow';
 import { defaultSlot } from '../builderConvert';
 import type { AdditionalDataBlockKey } from '../SlotRow';
 import type { BuilderFormValues } from '../builderConvert';
 import type { UseFormReturn, UseFieldArrayRemove, UseFieldArrayUpdate } from 'react-hook-form';
-import { cn } from '@/lib/utils';
 
 const EVENT_ICONS: Record<string, typeof ScrollText> = {
 	narrative: ScrollText,
@@ -28,6 +27,8 @@ interface EventListSectionProps {
 	activeItemId: string;
 	onActiveItemIdChange: (id: string) => void;
 	append: (slot: BuilderFormValues['slots'][number]) => void;
+	layoutKey?: BuilderListLayoutKey;
+	onLayoutKeyChange?: (key: BuilderListLayoutKey) => void;
 }
 
 export function EventListSection({
@@ -40,10 +41,14 @@ export function EventListSection({
 	activeItemId,
 	onActiveItemIdChange,
 	append,
+	layoutKey,
+	onLayoutKeyChange,
 }: EventListSectionProps) {
 	return (
 		<BuilderListLayout
 			label="Events"
+			layoutKey={layoutKey}
+			onLayoutKeyChange={onLayoutKeyChange}
 			allowedLayouts={['compact-tabs', 'wide-tabs', 'compact-list', 'list']}
 			items={items}
 			getItemId={(item) => item.id}

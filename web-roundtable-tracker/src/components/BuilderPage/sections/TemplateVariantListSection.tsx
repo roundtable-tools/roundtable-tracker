@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@/components/ui/button';
-import { BuilderListLayout } from '../BuilderListLayout';
+import { BuilderListLayout, type BuilderListLayoutKey } from '../BuilderListLayout';
 import { templateVariantToFormPartial } from '../builderConvert';
 import type { BuilderFormValues, BuilderVariantSnapshot } from '../builderConvert';
 import type { UseFormReturn } from 'react-hook-form';
@@ -14,6 +14,8 @@ interface TemplateVariantListSectionProps {
 	activeItemId: string;
 	onActiveItemIdChange: (id: string) => void;
 	onVariantSaved: (snapshotId: string) => void;
+	layoutKey?: BuilderListLayoutKey;
+	onLayoutKeyChange?: (key: BuilderListLayoutKey) => void;
 }
 
 export function TemplateVariantListSection({
@@ -24,6 +26,8 @@ export function TemplateVariantListSection({
 	activeItemId,
 	onActiveItemIdChange,
 	onVariantSaved,
+	layoutKey,
+	onLayoutKeyChange,
 }: TemplateVariantListSectionProps) {
 	const applyVariant = (tv: EncounterVariant) => {
 		const partial = templateVariantToFormPartial(tv, safePartyLevel);
@@ -45,6 +49,8 @@ export function TemplateVariantListSection({
 			</div>
 			<BuilderListLayout
 				label="Template variants"
+				layoutKey={layoutKey}
+				onLayoutKeyChange={onLayoutKeyChange}
 				allowedLayouts={['compact-tabs', 'wide-tabs', 'wide-grid', 'list']}
 				items={templateShadowVariants}
 				getItemId={(variant) => variant.id}

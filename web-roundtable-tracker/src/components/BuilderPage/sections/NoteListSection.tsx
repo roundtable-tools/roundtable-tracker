@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@/components/ui/button';
-import { BuilderListLayout } from '../BuilderListLayout';
+import { BuilderListLayout, type BuilderListLayoutKey } from '../BuilderListLayout';
 import { ParagraphFields } from '../ParagraphFields';
 import { FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
@@ -26,6 +26,8 @@ interface NoteListSectionProps {
 	removeNote: UseFieldArrayRemove;
 	activeNotesTab: string;
 	onActiveNotesTabChange: (id: string) => void;
+	layoutKey?: BuilderListLayoutKey;
+	onLayoutKeyChange?: (key: BuilderListLayoutKey) => void;
 }
 
 function NoteEditor({
@@ -96,10 +98,14 @@ export function NoteListSection({
 	removeNote,
 	activeNotesTab,
 	onActiveNotesTabChange,
+	layoutKey,
+	onLayoutKeyChange,
 }: NoteListSectionProps) {
 	return (
 		<BuilderListLayout
 			label="Notes"
+			layoutKey={layoutKey}
+			onLayoutKeyChange={onLayoutKeyChange}
 			allowedLayouts={['compact-tabs', 'list', 'wide-grid']}
 			items={noteFields}
 			getItemId={(noteField, index) => notes[index]?.id ?? noteField.id}

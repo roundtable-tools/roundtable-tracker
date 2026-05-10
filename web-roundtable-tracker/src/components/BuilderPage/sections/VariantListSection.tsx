@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { BuilderListLayout } from '../BuilderListLayout';
+import { BuilderListLayout, type BuilderListLayoutKey } from '../BuilderListLayout';
 import type { BuilderFormValues, BuilderVariantSnapshot } from '../builderConvert';
 import type { UseFormReturn } from 'react-hook-form';
 import { Card } from '@/components/ui/card';
@@ -14,6 +14,8 @@ interface VariantListSectionProps {
 	safePartySize: number;
 	activeVariantItemId: string;
 	onActiveVariantItemIdChange: (id: string) => void;
+	layoutKey?: BuilderListLayoutKey;
+	onLayoutKeyChange?: (key: BuilderListLayoutKey) => void;
 }
 
 export function VariantListSection({
@@ -23,10 +25,14 @@ export function VariantListSection({
 	safePartySize,
 	activeVariantItemId,
 	onActiveVariantItemIdChange,
+	layoutKey,
+	onLayoutKeyChange,
 }: VariantListSectionProps) {
 	return (
 		<BuilderListLayout
 			label="Saved variants"
+			layoutKey={layoutKey}
+			onLayoutKeyChange={onLayoutKeyChange}
 			allowedLayouts={['compact-tabs', 'wide-tabs', 'compact-grid', 'wide-grid', 'list']}
 			items={variants}
 			getItemId={(snapshot) => snapshot.id}

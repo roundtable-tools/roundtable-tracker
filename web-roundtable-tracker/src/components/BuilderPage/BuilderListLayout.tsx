@@ -128,6 +128,8 @@ interface BuilderListLayoutProps<TItem> {
 	onRemoveItem?: (item: TItem, index: number) => void;
 	allowedLayouts?: BuilderListLayoutKey[];
 	defaultLayout?: BuilderListLayoutKey;
+	layoutKey?: BuilderListLayoutKey;
+	onLayoutKeyChange?: (key: BuilderListLayoutKey) => void;
 	label?: string;
 	/** Actions rendered on the left side of the toolbar */
 	toolbarActions?: ReactNode;
@@ -154,6 +156,8 @@ export function BuilderListLayout<TItem>({
 	onRemoveItem,
 	allowedLayouts = ['compact-tabs', 'wide-tabs', 'list'],
 	defaultLayout,
+	layoutKey,
+	onLayoutKeyChange,
 	label,
 	toolbarActions,
 	getContentClassName,
@@ -164,13 +168,25 @@ export function BuilderListLayout<TItem>({
 		[allowedLayouts]
 	);
 	const fallbackLayout = availableLayouts[0]?.key ?? 'compact-tabs';
-	const [layoutKey, setLayoutKey] = useState<BuilderListLayoutKey>(
-		defaultLayout && allowedLayouts.includes(defaultLayout)
-			? defaultLayout
-			: fallbackLayout
-	);
+	const [uncontrolledLayoutKey, setUncontrolledLayoutKey] =
+		useState<BuilderListLayoutKey>(
+			defaultLayout && allowedLayouts.includes(defaultLayout)
+				? defaultLayout
+				: fallbackLayout
+		);
+	const resolvedLayoutKey =
+		layoutKey && allowedLayouts.includes(layoutKey)
+			? layoutKey
+			: uncontrolledLayoutKey;
+	const setLayoutKey = (key: BuilderListLayoutKey) => {
+		onLayoutKeyChange?.(key);
+
+		if (layoutKey === undefined) {
+			setUncontrolledLayoutKey(key);
+		}
+	};
 	const activeLayoutOption =
-		availableLayouts.find((layoutOption) => layoutOption.key === layoutKey) ??
+		availableLayouts.find((layoutOption) => layoutOption.key === resolvedLayoutKey) ??
 		availableLayouts[0] ??
 		LAYOUT_OPTIONS['compact-tabs'];
 	const layout = activeLayoutOption.selection;
@@ -218,7 +234,7 @@ export function BuilderListLayout<TItem>({
 						onClick={() => setLayoutKey(layoutOption.key)}
 						className={cn(
 							'flex h-7 w-7 items-center justify-center rounded',
-							layoutKey === layoutOption.key
+							resolvedLayoutKey === layoutOption.key
 								? 'bg-primary text-primary-foreground'
 								: 'text-muted-foreground hover:bg-accent hover:text-foreground'
 						)}

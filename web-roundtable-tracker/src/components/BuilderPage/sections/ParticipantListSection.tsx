@@ -1,6 +1,6 @@
 import { Skull, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BuilderListLayout } from '../BuilderListLayout';
+import { BuilderListLayout, type BuilderListLayoutKey } from '../BuilderListLayout';
 import { SlotRow, PARTICIPANT_SLOT_TYPES } from '../SlotRow';
 import { defaultSlot } from '../builderConvert';
 import type { AdditionalDataBlockKey } from '../SlotRow';
@@ -27,6 +27,8 @@ interface ParticipantListSectionProps {
 	activeItemId: string;
 	onActiveItemIdChange: (id: string) => void;
 	append: (slot: BuilderFormValues['slots'][number]) => void;
+	layoutKey?: BuilderListLayoutKey;
+	onLayoutKeyChange?: (key: BuilderListLayoutKey) => void;
 }
 
 export function ParticipantListSection({
@@ -39,10 +41,14 @@ export function ParticipantListSection({
 	activeItemId,
 	onActiveItemIdChange,
 	append,
+	layoutKey,
+	onLayoutKeyChange,
 }: ParticipantListSectionProps) {
 	return (
 		<BuilderListLayout
 			label="Participants"
+			layoutKey={layoutKey}
+			onLayoutKeyChange={onLayoutKeyChange}
 			allowedLayouts={['compact-tabs', 'wide-tabs', 'compact-list', 'list']}
 			items={items}
 			getItemId={(item) => item.id}

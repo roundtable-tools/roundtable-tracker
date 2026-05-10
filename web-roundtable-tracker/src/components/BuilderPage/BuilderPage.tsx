@@ -46,6 +46,7 @@ import { EventListSection } from './sections/EventListSection';
 import { NoteListSection } from './sections/NoteListSection';
 import { VariantListSection } from './sections/VariantListSection';
 import { TemplateVariantListSection } from './sections/TemplateVariantListSection';
+import type { BuilderListLayoutKey } from './BuilderListLayout';
 
 function hasAdditionalBlock(
 	slot: BuilderFormValues['slots'][number],
@@ -122,6 +123,29 @@ export function BuilderPage({
 	const [activeVariantItemId, setActiveVariantItemId] = useState<string>('');
 	const [activeTemplateVariantItemId, setActiveTemplateVariantItemId] =
 		useState<string>('');
+	const [sectionLayoutKeys, setSectionLayoutKeys] = useState<
+		Partial<
+			Record<
+				'notes' | 'participants' | 'events' | 'variants' | 'templateVariants',
+				BuilderListLayoutKey
+			>
+		>
+	>({});
+	const setSectionLayoutKey = (
+		section: 'notes' | 'participants' | 'events' | 'variants' | 'templateVariants',
+		key: BuilderListLayoutKey
+	) => {
+		setSectionLayoutKeys((current) => {
+			if (current[section] === key) {
+				return current;
+			}
+
+			return {
+				...current,
+				[section]: key,
+			};
+		});
+	};
 	const previousNoteIdsRef = useRef<string[]>([]);
 	const previousParticipantItemIdsRef = useRef<string[]>([]);
 	const previousEventItemIdsRef = useRef<string[]>([]);
@@ -628,6 +652,8 @@ export function BuilderPage({
 										removeNote={removeNote}
 										activeNotesTab={activeNotesTab}
 										onActiveNotesTabChange={setActiveNotesTab}
+										layoutKey={sectionLayoutKeys.notes}
+										onLayoutKeyChange={(key) => setSectionLayoutKey('notes', key)}
 									/>
 								</div>
 						</section>
@@ -645,6 +671,8 @@ export function BuilderPage({
 							activeItemId={activeParticipantItemId}
 							onActiveItemIdChange={setActiveParticipantItemId}
 							append={append}
+							layoutKey={sectionLayoutKeys.participants}
+							onLayoutKeyChange={(key) => setSectionLayoutKey('participants', key)}
 						/>
 					</section>
 				</TabsContent>
@@ -661,6 +689,8 @@ export function BuilderPage({
 							activeItemId={activeEventItemId}
 							onActiveItemIdChange={setActiveEventItemId}
 							append={append}
+							layoutKey={sectionLayoutKeys.events}
+							onLayoutKeyChange={(key) => setSectionLayoutKey('events', key)}
 						/>
 					</section>
 				</TabsContent>
@@ -677,6 +707,8 @@ export function BuilderPage({
 								safePartySize={safePartySize}
 								activeVariantItemId={activeVariantItemId}
 								onActiveVariantItemIdChange={setActiveVariantItemId}
+								layoutKey={sectionLayoutKeys.variants}
+								onLayoutKeyChange={(key) => setSectionLayoutKey('variants', key)}
 							/>
 						</section>
 
@@ -690,6 +722,10 @@ export function BuilderPage({
 									activeItemId={activeTemplateVariantItemId}
 									onActiveItemIdChange={setActiveTemplateVariantItemId}
 									onVariantSaved={setActiveVariantItemId}
+									layoutKey={sectionLayoutKeys.templateVariants}
+									onLayoutKeyChange={(key) =>
+										setSectionLayoutKey('templateVariants', key)
+									}
 								/>
 							</section>
 						)}
