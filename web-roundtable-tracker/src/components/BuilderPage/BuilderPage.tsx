@@ -525,70 +525,92 @@ export function BuilderPage({
 								simulation={xpUsage.simulation}
 							/>
 						</section>
-						<div className="h-auto w-full flex flex-wrap justify-start gap-2 ">
+						<div className="flex h-auto w-full flex-wrap items-center justify-start gap-1.5 sm:gap-2">
 							<TabsTrigger
 								value="details"
 								className={cn(
-									'gap-1.5',
+									'group h-9 gap-1.5 px-2 sm:px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm',
 									isPreviousStep('details') &&
 										'outline outline-1 bg-background/25 -outline-offset-1 text-primary/75'
 								)}
 							>
 								<Info className="h-4 w-4" aria-hidden="true" />
-								<span>Details</span>
+								<span className="hidden text-xs font-medium group-data-[state=active]:inline lg:inline">
+									Details
+								</span>
 							</TabsTrigger>
 							<ChevronRight
-								className="h-4 w-4 text-muted-foreground self-center"
+								className="hidden h-4 w-4 self-center text-muted-foreground lg:block"
 								aria-hidden="true"
 							/>
 							<TabsTrigger
 								value="participants"
 								className={cn(
-									'gap-1.5',
+									'group h-9 gap-1.5 px-2 sm:px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm',
 									isPreviousStep('participants') &&
 										'outline outline-1 bg-background/25 -outline-offset-1 text-primary/75'
 								)}
 							>
 								<Users className="h-4 w-4" aria-hidden="true" />
-								Participants ({participantSummary.count})
+								<span className="hidden text-xs font-medium group-data-[state=active]:inline lg:inline">
+									Participants
+								</span>
+								<span className="inline-flex min-w-5 items-center justify-center rounded-full border border-border/70 bg-background/70 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums text-muted-foreground transition-colors group-data-[state=active]:border-primary/40 group-data-[state=active]:bg-primary/15 group-data-[state=active]:text-primary">
+									{participantSummary.count}
+								</span>
 							</TabsTrigger>
 							<ChevronRight
-								className="h-4 w-4 text-muted-foreground self-center"
+								className="hidden h-4 w-4 self-center text-muted-foreground lg:block"
 								aria-hidden="true"
 							/>
 							<TabsTrigger
 								value="events"
 								className={cn(
-									'gap-1.5',
+									'group h-9 gap-1.5 px-2 sm:px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm',
 									isPreviousStep('events') &&
 										'outline outline-1 bg-background/25 -outline-offset-1 text-primary/75'
 								)}
 							>
 								<CalendarClock className="h-4 w-4" aria-hidden="true" />
-								Events ({eventSummary.count})
+								<span className="hidden text-xs font-medium group-data-[state=active]:inline lg:inline">
+									Events
+								</span>
+								<span className="inline-flex min-w-5 items-center justify-center rounded-full border border-border/70 bg-background/70 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums text-muted-foreground transition-colors group-data-[state=active]:border-primary/40 group-data-[state=active]:bg-primary/15 group-data-[state=active]:text-primary">
+									{eventSummary.count}
+								</span>
 							</TabsTrigger>
 							<ChevronRight
-								className="h-4 w-4 text-muted-foreground self-center"
+								className="hidden h-4 w-4 self-center text-muted-foreground lg:block"
 								aria-hidden="true"
 							/>
 							<TabsTrigger
 								value="variants"
 								className={cn(
-									'gap-1.5',
+									'group h-9 gap-1.5 px-2 sm:px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm',
 									isPreviousStep('variants') &&
 										'outline outline-1 bg-background/25 -outline-offset-1 text-primary/75'
 								)}
 							>
 								<Layers3 className="h-4 w-4" aria-hidden="true" />
-								Variants ({variants.length})
+								<span className="hidden text-xs font-medium group-data-[state=active]:inline lg:inline">
+									Variants
+								</span>
+								<span className="inline-flex min-w-5 items-center justify-center rounded-full border border-border/70 bg-background/70 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums text-muted-foreground transition-colors group-data-[state=active]:border-primary/40 group-data-[state=active]:bg-primary/15 group-data-[state=active]:text-primary">
+									{variants.length}
+								</span>
 							</TabsTrigger>
 							<ChevronRight
-								className="h-4 w-4 self-center text-muted-foreground"
+								className="hidden h-4 w-4 self-center text-muted-foreground lg:block"
 								aria-hidden="true"
 							/>
-							<TabsTrigger value="preview" className="gap-1.5">
+							<TabsTrigger
+								value="preview"
+								className="group h-9 gap-1.5 px-2 sm:px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+							>
 								<Eye className="h-4 w-4" aria-hidden="true" />
-								<span>Preview</span>
+								<span className="hidden text-xs font-medium group-data-[state=active]:inline lg:inline">
+									Preview
+								</span>
 							</TabsTrigger>
 						</div>
 					</TabsList>
