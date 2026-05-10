@@ -1,6 +1,15 @@
 import { UUID } from '@/utils/uuid';
 import { z } from 'zod';
 
+export const PARTY_SETUP_MODE = {
+	Simple: 'simple',
+	Specific: 'specific',
+	ChallengePoints: 'challenge-points',
+} as const;
+
+export type PartySetupMode =
+	(typeof PARTY_SETUP_MODE)[keyof typeof PARTY_SETUP_MODE];
+
 export const STATE = [
 	'normal',
 	'active',
@@ -350,6 +359,13 @@ export type ConcreteEncounter = {
 	narrativeSlots?: NarrativeSlot[];
 	variants?: ConcreteEncounterVariant[];
 	notes?: EncounterNotes;
+	partySetup?: {
+		mode: PartySetupMode;
+		specificPartyId?: string;
+		specificPartyLevels?: number[];
+		challengePointTierStart?: number;
+		challengePointBudget?: number;
+	};
 };
 
 const dcsSchema = z.array(
@@ -441,6 +457,18 @@ const concreteEncounterVariantSchema = z.object({
 	participants: z.array(participantSchema),
 });
 
+const concreteEncounterPartySetupSchema = z.object({
+	mode: z.enum([
+		PARTY_SETUP_MODE.Simple,
+		PARTY_SETUP_MODE.Specific,
+		PARTY_SETUP_MODE.ChallengePoints,
+	]),
+	specificPartyId: z.string().optional(),
+	specificPartyLevels: z.array(z.number()).optional(),
+	challengePointTierStart: z.number().optional(),
+	challengePointBudget: z.number().optional(),
+});
+
 export const ConcreteEncounterSchema = z.object({
 	id: z.string(),
 	name: z.string(),
@@ -454,6 +482,7 @@ export const ConcreteEncounterSchema = z.object({
 	auras: z.array(auraSchema).optional(),
 	narrativeSlots: z.array(narrativeSlotSchema).optional(),
 	notes: encounterNotesSchema.optional(),
+	partySetup: concreteEncounterPartySetupSchema.optional(),
 });
 
 export type Encounter = EncounterTemplate | ConcreteEncounter;

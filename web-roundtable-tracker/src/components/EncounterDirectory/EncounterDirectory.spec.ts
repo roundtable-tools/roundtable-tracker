@@ -122,4 +122,42 @@ describe('EncounterDirectory data helpers', () => {
 		expect('directoryId' in encounter).toBe(false);
 		expect('source' in encounter).toBe(false);
 	});
+
+	it('derives ChP metadata for legacy saved encounters from simple level/size', () => {
+		const [entry] = createDirectoryEntries([], [savedEncounter], false, true);
+
+		expect(entry.challengePointBudget).toBe(8);
+		expect(entry.challengePointTier).toBe('3-6');
+	});
+
+	it('uses saved specific-party setup metadata when present', () => {
+		const specificEncounter: SavedConcreteEncounter = {
+			...savedEncounter,
+			id: 'saved-specific',
+			partySetup: {
+				mode: 'specific',
+				specificPartyLevels: [5, 5, 6, 8],
+			},
+		};
+		const [entry] = createDirectoryEntries([], [specificEncounter], false, true);
+
+		expect(entry.challengePointBudget).toBe(13);
+		expect(entry.challengePointTier).toBe('5-8');
+	});
+
+	it('uses saved challenge-points setup metadata when present', () => {
+		const challengeEncounter: SavedConcreteEncounter = {
+			...savedEncounter,
+			id: 'saved-challenge',
+			partySetup: {
+				mode: 'challenge-points',
+				challengePointTierStart: 9,
+				challengePointBudget: 15,
+			},
+		};
+		const [entry] = createDirectoryEntries([], [challengeEncounter], false, true);
+
+		expect(entry.challengePointBudget).toBe(15);
+		expect(entry.challengePointTier).toBe('9-12');
+	});
 });

@@ -5,7 +5,9 @@ import {
 	computeThreat,
 	type BuilderSlot,
 } from '@/components/BuilderPage/builderXp';
+import { normalizePartySetup } from '@/models/utility/challengePoints/challengePoints';
 import { ExperienceBudget } from '@/models/utility/experienceBudget/ExperienceBudget';
+import { resolveXpBasisLevel } from '@/components/BuilderPage/xpBasis';
 
 function creature(overrides: Partial<BuilderSlot> = {}): BuilderSlot {
 	return {
@@ -153,6 +155,99 @@ describe('computeThreat', () => {
 });
 
 describe('computeEncounterXpUsage', () => {
+	it('keeps XP invariant for translated party+enemy levels with identical deltas', () => {
+		const lowBasisUsage = computeEncounterXpUsage(
+			[creature({ level: 3, count: 2 })],
+			1,
+			4
+		);
+		const highBasisUsage = computeEncounterXpUsage(
+			[creature({ level: 6, count: 2 })],
+			4,
+			4
+		);
+
+		expect(lowBasisUsage.immediateXp.valueOf()).toBe(highBasisUsage.immediateXp.valueOf());
+		expect(lowBasisUsage.effectiveXp.valueOf()).toBe(highBasisUsage.effectiveXp.valueOf());
+		expect(lowBasisUsage.waveInteraction.effectiveThreat.toLabel()).toBe(
+			highBasisUsage.waveInteraction.effectiveThreat.toLabel()
+		);
+	});
+
+	it('keeps XP basis independent from challenge-point tier selection in challenge-points setup', () => {
+		const simplePartyLevel = 8;
+		const lowTier = normalizePartySetup({
+			mode: 'challenge-points',
+			simplePartyLevel,
+			simplePartySize: 4,
+			challengePointTierStart: 5,
+			challengePointBudget: 13,
+		});
+		const highTier = normalizePartySetup({
+			mode: 'challenge-points',
+			simplePartyLevel,
+			simplePartySize: 4,
+			challengePointTierStart: 9,
+			challengePointBudget: 13,
+		});
+
+		const lowTierUsage = computeEncounterXpUsage(
+			[creature({ level: simplePartyLevel + 1 })],
+			simplePartyLevel,
+			lowTier.effectivePartySize
+		);
+		const highTierUsage = computeEncounterXpUsage(
+			[creature({ level: simplePartyLevel + 1 })],
+			simplePartyLevel,
+			highTier.effectivePartySize
+		);
+
+		expect(lowTier.challengePointBasisLevel).toBe(5);
+		expect(highTier.challengePointBasisLevel).toBe(9);
+		expect(lowTierUsage.immediateXp.valueOf()).toBe(highTierUsage.immediateXp.valueOf());
+		expect(lowTierUsage.effectiveXp.valueOf()).toBe(highTierUsage.effectiveXp.valueOf());
+	});
+
+	it('uses the lowest party level as XP basis for specific and equivalent challenge-point parties', () => {
+		const partyLevelControl = 1;
+		const specificParty = normalizePartySetup({
+			mode: 'specific',
+			simplePartyLevel: partyLevelControl,
+			simplePartySize: 6,
+			specificPartyLevels: [4, 4, 5, 5, 5, 5],
+		});
+		const slots = [creature({ level: 5, count: 2 })];
+
+		// XP basis should be the lowest level in the specific party (4), not the simple partyLevel control (1)
+		const specificBasis = specificParty.effectivePartyLevel;
+		const lowestLevelUsage = computeEncounterXpUsage(
+			slots,
+			specificParty.effectivePartyLevel,
+			specificParty.effectivePartySize
+		);
+		const specificUsage = computeEncounterXpUsage(
+			slots,
+			specificBasis,
+			specificParty.effectivePartySize
+		);
+		const simplePartyLevelUsage = computeEncounterXpUsage(
+			slots,
+			partyLevelControl,
+			specificParty.effectivePartySize
+		);
+
+		expect(specificBasis).toBe(specificParty.effectivePartyLevel);
+		expect(specificBasis).toBe(4);
+		// Using the lowest level as basis matches lowestLevelUsage exactly
+		expect(specificUsage.immediateXp.valueOf()).toBe(
+			lowestLevelUsage.immediateXp.valueOf()
+		);
+		// Differs from XP computed at the unrelated simple party level
+		expect(specificUsage.immediateXp.valueOf()).not.toBe(
+			simplePartyLevelUsage.immediateXp.valueOf()
+		);
+	});
+
 	it('uses immediate threat mapping when there is no reinforcement wave', () => {
 		const usage = computeEncounterXpUsage(
 			[creature({ level: 5, count: 2 })],

@@ -47,6 +47,11 @@ import { EncounterImportModal } from './EncounterDetails/EncounterImportModal.ts
 import { SavedConcreteEncounter } from '@/store/savedEncounters.ts';
 import { useSavedEncountersStore } from '@/store/savedEncounterInstance.ts';
 import { Card } from '../ui/card.tsx';
+import {
+	CHALLENGE_POINT_TIER_STARTS,
+	challengePointTierLabel,
+	normalizePartySetup,
+} from '@/models/utility/challengePoints/challengePoints';
 
 type EncounterDirectoryProps = {
 	setView: (view: string) => void;
@@ -56,6 +61,8 @@ type EncounterDirectoryEntry = Encounter & {
 	directoryId: string;
 	source: 'template' | 'saved';
 	difficultyLabel: string;
+	challengePointBudget?: number;
+	challengePointTier?: string;
 	templateId?: string;
 	templateVariantId?: string;
 	templateVariantLabel?: string;
@@ -64,6 +71,33 @@ type EncounterDirectoryEntry = Encounter & {
 };
 
 const PARTY_SIZE_OPTIONS = [3, 4, 5, 6] as const;
+const CHALLENGE_POINT_RANGE_OPTIONS = [
+	{ value: 'all', label: 'All' },
+	{ value: '0-7', label: '0-7 ChP' },
+	{ value: '8-11', label: '8-11 ChP' },
+	{ value: '12-15', label: '12-15 ChP' },
+	{ value: '16+', label: '16+ ChP' },
+] as const;
+
+function getChallengePointRange(value?: number): string {
+	if (typeof value !== 'number' || Number.isNaN(value)) {
+		return '0-7';
+	}
+
+	if (value <= 7) {
+		return '0-7';
+	}
+
+	if (value <= 11) {
+		return '8-11';
+	}
+
+	if (value <= 15) {
+		return '12-15';
+	}
+
+	return '16+';
+}
 
 const formatLevel = (level: EncounterDirectoryEntry['level']) => {
 	if (level === undefined) {
@@ -123,6 +157,8 @@ const directoryGlobalFilter: FilterFn<EncounterDirectoryEntry> = (
 		encounter.name,
 		encounter.description,
 		encounter.difficultyLabel,
+		encounter.challengePointBudget,
+		encounter.challengePointTier,
 		summarizeVariantInfo(encounter),
 		formatLevel(encounter.level),
 		`${encounter.partySize ?? 4}`,
@@ -144,6 +180,30 @@ const partySizeFilter: FilterFn<EncounterDirectoryEntry> = (
 	}
 
 	return row.getValue<number>(columnId) === filterValue;
+};
+
+const challengePointRangeFilter: FilterFn<EncounterDirectoryEntry> = (
+	row,
+	columnId,
+	filterValue
+) => {
+	if (!filterValue || filterValue === 'all') {
+		return true;
+	}
+
+	return row.getValue<string>(columnId) === filterValue;
+};
+
+const challengePointTierFilter: FilterFn<EncounterDirectoryEntry> = (
+	row,
+	columnId,
+	filterValue
+) => {
+	if (!filterValue || filterValue === 'all') {
+		return true;
+	}
+
+	return row.getValue<string>(columnId) === filterValue;
 };
 
 const toRelativeLevel = (level: LevelDifference): `+${number}` | `-${number}` =>
@@ -206,6 +266,13 @@ const toTemplateEntries = (
 
 		if (!groupByVariant) {
 			const participants = toDirectoryParticipants(defaultVariant.participants);
+			const levelRange = participantsToLevelRange(participants);
+			const simpleLevel = Array.isArray(levelRange) ? levelRange[0] : 1;
+			const normalizedParty = normalizePartySetup({
+				mode: 'simple',
+				simplePartyLevel: simpleLevel,
+				simplePartySize: defaultVariant.partySize ?? 4,
+			});
 
 			return [
 				{
@@ -218,7 +285,11 @@ const toTemplateEntries = (
 					templateGroupId: template.id,
 					name: template.name,
 					difficultyLabel: difficultyToString(difficulty),
-					level: participantsToLevelRange(participants),
+					level: levelRange,
+					challengePointBudget: normalizedParty.challengePointBudget,
+					challengePointTier: challengePointTierLabel(
+						normalizedParty.challengePointBasisLevel
+					),
 					description: defaultVariant.description ?? template.description,
 					difficulty,
 					partySize: defaultVariant.partySize,
@@ -237,6 +308,13 @@ const toTemplateEntries = (
 			const variantLabel = indexToLetter(index).toUpperCase();
 			const id = `${template.id}-${variantLabel.toLowerCase()}`;
 			const participants = toDirectoryParticipants(variant.participants);
+			const levelRange = participantsToLevelRange(participants);
+			const simpleLevel = Array.isArray(levelRange) ? levelRange[0] : 1;
+			const normalizedParty = normalizePartySetup({
+				mode: 'simple',
+				simplePartyLevel: simpleLevel,
+				simplePartySize: variant.partySize ?? 4,
+			});
 
 			return {
 				id,
@@ -249,7 +327,11 @@ const toTemplateEntries = (
 				templateGroupId: template.id,
 				name: template.name,
 				difficultyLabel: difficultyToString(difficulty),
-				level: participantsToLevelRange(participants),
+				level: levelRange,
+				challengePointBudget: normalizedParty.challengePointBudget,
+				challengePointTier: challengePointTierLabel(
+					normalizedParty.challengePointBasisLevel
+				),
 				description: variant.description ?? template.description,
 				difficulty,
 				partySize: variant.partySize,
@@ -263,12 +345,27 @@ const toTemplateEntries = (
 const toSavedEntries = (
 	savedEncounters: SavedConcreteEncounter[]
 ): EncounterDirectoryEntry[] => {
-	return savedEncounters.map((encounter) => ({
-		...encounter,
-		directoryId: `saved:${encounter.id}`,
-		source: 'saved',
-		difficultyLabel: difficultyToString(encounter.difficulty ?? DIFFICULTY.Low),
-	}));
+	return savedEncounters.map((encounter) => {
+		const normalizedParty = normalizePartySetup({
+			mode: encounter.partySetup?.mode ?? 'simple',
+			simplePartyLevel: encounter.level,
+			simplePartySize: encounter.partySize,
+			specificPartyLevels: encounter.partySetup?.specificPartyLevels,
+			challengePointTierStart: encounter.partySetup?.challengePointTierStart,
+			challengePointBudget: encounter.partySetup?.challengePointBudget,
+		});
+
+		return {
+			...encounter,
+			directoryId: `saved:${encounter.id}`,
+			source: 'saved',
+			difficultyLabel: difficultyToString(encounter.difficulty ?? DIFFICULTY.Low),
+			challengePointBudget: normalizedParty.challengePointBudget,
+			challengePointTier: challengePointTierLabel(
+				normalizedParty.challengePointBasisLevel
+			),
+		};
+	});
 };
 
 export const getDefaultShowTemplates = (savedCount: number) => savedCount === 0;
@@ -402,6 +499,26 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 					);
 				},
 			}),
+			columnHelper.accessor((row) => row.challengePointBudget ?? 0, {
+				id: 'challengePointBudget',
+				header: 'ChP',
+				cell: ({ getValue }) => <span>{getValue()} ChP</span>,
+			}),
+			columnHelper.accessor(
+				(row) => getChallengePointRange(row.challengePointBudget),
+				{
+					id: 'challengePointRange',
+					header: 'ChP Range',
+					filterFn: challengePointRangeFilter,
+					cell: ({ getValue }) => <span>{getValue()}</span>,
+				}
+			),
+			columnHelper.accessor((row) => row.challengePointTier ?? '1-2', {
+				id: 'challengePointTier',
+				header: 'Level Tier',
+				filterFn: challengePointTierFilter,
+				cell: ({ getValue }) => <span>{getValue()}</span>,
+			}),
 			columnHelper.accessor((row) => summarizeParticipants(row.participants), {
 				id: 'participants',
 				header: 'Participants',
@@ -483,11 +600,21 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 	const partySizeFilterValue = table
 		.getColumn('partySize')
 		?.getFilterValue() as number | undefined;
+	const challengePointRangeFilterValue = table
+		.getColumn('challengePointRange')
+		?.getFilterValue() as string | undefined;
+	const challengePointTierFilterValue = table
+		.getColumn('challengePointTier')
+		?.getFilterValue() as string | undefined;
 	const visibleRowCount = table.getRowModel().rows.length;
 	const hasActiveFilters = Boolean(
 		globalFilter ||
 		difficultyFilterValue !== undefined ||
-		partySizeFilterValue !== undefined
+		partySizeFilterValue !== undefined ||
+		(challengePointRangeFilterValue !== undefined &&
+			challengePointRangeFilterValue !== 'all') ||
+		(challengePointTierFilterValue !== undefined &&
+			challengePointTierFilterValue !== 'all')
 	);
 
 	const deleteSelectedEncounter = () => {
@@ -619,6 +746,42 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 									))}
 								</DropdownMenuRadioGroup>
 								<DropdownMenuSeparator />
+								<DropdownMenuLabel>Challenge Points</DropdownMenuLabel>
+								<DropdownMenuRadioGroup
+									value={challengePointRangeFilterValue ?? 'all'}
+									onValueChange={(value) => {
+										table
+											.getColumn('challengePointRange')
+											?.setFilterValue(value === 'all' ? undefined : value);
+									}}
+								>
+									{CHALLENGE_POINT_RANGE_OPTIONS.map((option) => (
+										<DropdownMenuRadioItem key={option.value} value={option.value}>
+											{option.label}
+										</DropdownMenuRadioItem>
+									))}
+								</DropdownMenuRadioGroup>
+								<DropdownMenuSeparator />
+								<DropdownMenuLabel>Level Tier</DropdownMenuLabel>
+								<DropdownMenuRadioGroup
+									value={challengePointTierFilterValue ?? 'all'}
+									onValueChange={(value) => {
+										table
+											.getColumn('challengePointTier')
+											?.setFilterValue(value === 'all' ? undefined : value);
+									}}
+								>
+									<DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
+									{CHALLENGE_POINT_TIER_STARTS.map((tierStart) => (
+										<DropdownMenuRadioItem
+											key={tierStart}
+											value={challengePointTierLabel(tierStart)}
+										>
+											{challengePointTierLabel(tierStart)}
+										</DropdownMenuRadioItem>
+									))}
+								</DropdownMenuRadioGroup>
+								<DropdownMenuSeparator />
 								<DropdownMenuItem
 									onClick={() => {
 										setGlobalFilter('');
@@ -646,6 +809,16 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 					{partySizeFilterValue ? (
 						<span className="rounded-full border bg-card px-3 py-1 text-sm text-muted-foreground">
 							Party Size: {partySizeFilterValue}
+						</span>
+					) : null}
+					{challengePointRangeFilterValue ? (
+						<span className="rounded-full border bg-card px-3 py-1 text-sm text-muted-foreground">
+							ChP Range: {challengePointRangeFilterValue}
+						</span>
+					) : null}
+					{challengePointTierFilterValue ? (
+						<span className="rounded-full border bg-card px-3 py-1 text-sm text-muted-foreground">
+							Level Tier: {challengePointTierFilterValue}
 						</span>
 					) : null}
 					{hasActiveFilters ? (

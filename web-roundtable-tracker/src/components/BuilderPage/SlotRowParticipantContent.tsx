@@ -176,7 +176,9 @@ export function SlotRowParticipantContent({
 									<FormControl>
 										<PartySizePicker
 											value={field.value}
-											onChange={field.onChange}
+											onChange={(value) => {
+												field.onChange(value == field.value ? 0 :value);
+											}}
 											onBlur={field.onBlur}
 											name={field.name}
 											ref={field.ref}

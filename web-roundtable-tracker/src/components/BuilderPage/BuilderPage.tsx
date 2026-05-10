@@ -47,6 +47,21 @@ import { NoteListSection } from './sections/NoteListSection';
 import { VariantListSection } from './sections/VariantListSection';
 import { TemplateVariantListSection } from './sections/TemplateVariantListSection';
 import type { BuilderListLayoutKey } from './BuilderListLayout';
+import { useSavedPartiesStore } from '@/store/savedPartiesInstance';
+import {
+	CHALLENGE_POINT_TIER_STARTS,
+	challengePointsFromLevelDelta,
+	challengePointTierLabel,
+	normalizePartySetup,
+} from '@/models/utility/challengePoints/challengePoints';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 
 function hasAdditionalBlock(
 	slot: BuilderFormValues['slots'][number],
@@ -166,7 +181,7 @@ export function BuilderPage({
 		defaultValues: defaultFormValues(),
 	});
 
-	const { control, handleSubmit, reset, formState } = form;
+	const { control, handleSubmit, reset, formState, setValue } = form;
 
 	const { fields, append, remove, update } = useFieldArray({
 		control,
@@ -185,6 +200,44 @@ export function BuilderPage({
 	const notes = useWatch({ control, name: 'notes' }) ?? [];
 	const partyLevel = useWatch({ control, name: 'partyLevel' });
 	const partySize = useWatch({ control, name: 'partySize' });
+	const partySetupMode = useWatch({ control, name: 'partySetupMode' }) ?? 'simple';
+	const specificPartyId = useWatch({ control, name: 'specificPartyId' });
+	const specificPartyLevels =
+		useWatch({ control, name: 'specificPartyLevels' }) ?? [];
+	const challengePointTierStart =
+		useWatch({ control, name: 'challengePointTierStart' }) ?? 1;
+	const challengePointBudget =
+		useWatch({ control, name: 'challengePointBudget' }) ?? 0;
+	const savedParties = useSavedPartiesStore((state) => state.parties);
+	const selectedSavedParty = useMemo(
+		() =>
+			typeof specificPartyId === 'string' && specificPartyId.length > 0
+				? savedParties.find((party) => party.id === specificPartyId)
+				: undefined,
+		[specificPartyId, savedParties]
+	);
+	const resolvedSpecificPartyLevels = selectedSavedParty
+		? selectedSavedParty.members.map((member) => member.level)
+		: specificPartyLevels;
+	const normalizedPartySetup = useMemo(
+		() =>
+			normalizePartySetup({
+				mode: partySetupMode,
+				simplePartyLevel: partyLevel ?? 1,
+				simplePartySize: partySize ?? 4,
+				specificPartyLevels: resolvedSpecificPartyLevels,
+				challengePointTierStart,
+				challengePointBudget,
+			}),
+		[
+			partySetupMode,
+			partyLevel,
+			partySize,
+			resolvedSpecificPartyLevels,
+			challengePointTierStart,
+			challengePointBudget,
+		]
+	);
 
 	useEffect(() => {
 		if (notes.length === 0) {
@@ -296,17 +349,28 @@ export function BuilderPage({
 		reset,
 	]);
 
-	const safePartyLevel =
-		typeof partyLevel === 'number' && Number.isFinite(partyLevel)
-			? partyLevel
+	const safePartyLevel = normalizedPartySetup.effectivePartyLevel;
+	const safePartySize = normalizedPartySetup.effectivePartySize;
+	const partyLevels = normalizedPartySetup.partyLevels;
+	const partyRelativeLevels = partyLevels.map(
+		(level) => level - safePartyLevel
+	);
+	const xpBasisLevel = safePartyLevel;
+	const trackerPartySize = safePartySize;
+	const rebasedChallengePointPerCharacter = partyRelativeLevels.map((relative) =>
+		challengePointsFromLevelDelta(relative)
+	);
+	const rebasedChpDisplayMultiplier =
+		rebasedChallengePointPerCharacter.length > 0
+			? rebasedChallengePointPerCharacter.reduce(
+					(sum, value) => sum + value,
+					0
+				) /
+				(rebasedChallengePointPerCharacter.length * 2)
 			: 1;
-	const safePartySize =
-		typeof partySize === 'number' && Number.isFinite(partySize) && partySize > 0
-			? partySize
-			: 4;
 	const xpUsage = computeEncounterXpUsage(
 		slots ?? [],
-		safePartyLevel,
+		xpBasisLevel,
 		safePartySize,
 		{
 			attritionRate: Math.max(0, attritionRatePercent) / 100,
@@ -472,7 +536,17 @@ export function BuilderPage({
 		stepOrder.indexOf(step) < activeStepIndex;
 
 	const onSubmit = (values: BuilderFormValues) => {
-		const encounter = toConcreteEncounter(values, activeEncounterId);
+		const encounter = toConcreteEncounter(
+			{
+				...values,
+				specificPartyLevels: resolvedSpecificPartyLevels,
+				challengePointTierStart: normalizedPartySetup.challengePointBasisLevel,
+				challengePointBudget: normalizedPartySetup.challengePointBudget,
+				partyLevel: normalizedPartySetup.effectivePartyLevel,
+				partySize: normalizedPartySetup.effectivePartySize,
+			},
+			activeEncounterId
+		);
 
 		if (activeEncounterId) {
 			updateEncounter(activeEncounterId, encounter);
@@ -517,10 +591,27 @@ export function BuilderPage({
 							<h2 className="mb-2 text-xl font-semibold">Encounter Threat</h2>
 							<ThreatTracker
 								budget={xpUsage.effectiveXp}
+								rawXpBudget={xpUsage.rawXp}
 								comparisonBudget={xpUsage.rawXp}
 								primaryBudgetLabel="Effective XP"
 								comparisonBudgetLabel="Raw XP"
-								partySize={safePartySize}
+								partySize={trackerPartySize}
+								partyLevels={partyLevels}
+								partyRelativeLevels={partyRelativeLevels}
+								xpBasisLevel={xpBasisLevel}
+								challengePointBasisLevel={
+									normalizedPartySetup.challengePointBasisLevel
+								}
+								challengePointTierLabel={
+									normalizedPartySetup.challengePointTierLabel
+								}
+								challengePointPerCharacter={
+									rebasedChallengePointPerCharacter
+								}
+								inferredChallengePointPartySize={
+									normalizedPartySetup.inferredChallengePointPartySize
+								}
+								chpDisplayMultiplier={rebasedChpDisplayMultiplier}
 								waveInteraction={xpUsage.waveInteraction}
 								simulation={xpUsage.simulation}
 							/>
@@ -618,45 +709,200 @@ export function BuilderPage({
 					<TabsContent value="details" className="space-y-3">
 						<section className="space-y-3">
 							<div className="space-y-2">
-								<div className="flex flex-wrap items-start gap-3 sm:flex-nowrap">
-									<FormField
-										control={form.control}
-										name="partyLevel"
-										render={({ field }) => (
-											<FormItem className="min-w-0 flex-1 space-y-1">
-												<FormLabel>Party Level</FormLabel>
-												<FormControl>
-													<PartyLevelPicker
-														value={field.value}
-														onChange={field.onChange}
-														onBlur={field.onBlur}
-														name={field.name}
-														ref={field.ref}
-													/>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={form.control}
-										name="partySize"
-										render={({ field }) => (
-											<FormItem className="w-fit shrink-0 space-y-1">
-												<FormLabel className='-mb-5'>Party Size</FormLabel>
-												<FormControl>
-													<PartySizePicker
-														value={field.value}
-														onChange={field.onChange}
-														onBlur={field.onBlur}
-														name={field.name}
-														ref={field.ref}
-													/>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
+								<div className="space-y-3 rounded-md border p-3">
+									<div className="space-y-2">
+										<FormLabel>Party Setup</FormLabel>
+										<div className="flex flex-wrap gap-2">
+											{[
+												{ key: 'simple', label: 'Simple' },
+												{ key: 'specific', label: 'Specific' },
+												{ key: 'challenge-points', label: 'Challenge Points' },
+											].map((mode) => (
+												<Button
+													key={mode.key}
+													type="button"
+													variant={
+														partySetupMode === mode.key ? 'default' : 'outline'
+													}
+													onClick={() =>
+														setValue('partySetupMode', mode.key as BuilderFormValues['partySetupMode'])
+													}
+												>
+													{mode.label}
+												</Button>
+											))}
+										</div>
+									</div>
+
+									{partySetupMode === 'simple' ? (
+										<div className="flex flex-wrap items-start gap-3 sm:flex-nowrap">
+											<FormField
+												control={form.control}
+												name="partyLevel"
+												render={({ field }) => (
+													<FormItem className="min-w-0 flex-1 space-y-1">
+														<FormLabel>Party Level</FormLabel>
+														<FormControl>
+															<PartyLevelPicker
+																value={field.value}
+																onChange={field.onChange}
+																onBlur={field.onBlur}
+																name={field.name}
+																ref={field.ref}
+															/>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+											<FormField
+												control={form.control}
+												name="partySize"
+												render={({ field }) => (
+													<FormItem className="w-fit shrink-0 space-y-1">
+														<FormLabel className="-mb-5">Party Size</FormLabel>
+														<FormControl>
+															<PartySizePicker
+																value={field.value}
+																onChange={field.onChange}
+																onBlur={field.onBlur}
+																name={field.name}
+																ref={field.ref}
+															/>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+										</div>
+									) : null}
+
+									{partySetupMode === 'specific' ? (
+										<div className="space-y-3">
+											<div className="space-y-1">
+												<FormLabel>Saved Party</FormLabel>
+												<Select
+													value={specificPartyId || 'custom'}
+													onValueChange={(value) =>
+														setValue('specificPartyId', value === 'custom' ? undefined : value)
+													}
+												>
+													<SelectTrigger className="w-full">
+														<SelectValue placeholder="Use custom level list" />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value="custom">Custom level list</SelectItem>
+														{savedParties.map((party) => (
+															<SelectItem key={party.id} value={party.id}>
+																{party.name} ({party.members.length})
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+											</div>
+											{selectedSavedParty ? (
+												<p className="text-xs text-muted-foreground">
+													Using saved party levels: {resolvedSpecificPartyLevels.join(', ')}
+												</p>
+											) : (
+												<div className="space-y-2">
+													<FormLabel>Custom Party Levels</FormLabel>
+													<div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+														{specificPartyLevels.map((level, index) => (
+															<div key={`custom-level-${index}`} className="flex gap-1">
+																<Input
+																	type="number"
+																	min={1}
+																	max={20}
+																	value={level}
+																	onChange={(event) => {
+																		const nextLevels = [...specificPartyLevels];
+																		nextLevels[index] = Number(event.target.value);
+																		setValue('specificPartyLevels', nextLevels);
+																	}}
+																/>
+																<Button
+																	type="button"
+																	variant="outline"
+																	onClick={() => {
+																		const nextLevels = specificPartyLevels.filter((_, i) => i !== index);
+																		setValue('specificPartyLevels', nextLevels);
+																	}}
+																>
+																	X
+																</Button>
+															</div>
+														))}
+													</div>
+													<Button
+														type="button"
+														variant="outline"
+														onClick={() =>
+															setValue('specificPartyLevels', [...specificPartyLevels, 1])
+														}
+													>
+														Add Member Level
+													</Button>
+												</div>
+											)}
+										</div>
+									) : null}
+
+									{partySetupMode === 'challenge-points' ? (
+										<div className="grid gap-3 sm:grid-cols-2">
+											<div className="space-y-1">
+												<FormLabel>Level Tier</FormLabel>
+												<Select
+													value={`${challengePointTierStart}`}
+													onValueChange={(value) =>
+														setValue('challengePointTierStart', Number(value))
+													}
+												>
+													<SelectTrigger className="w-full">
+														<SelectValue />
+													</SelectTrigger>
+													<SelectContent>
+														{CHALLENGE_POINT_TIER_STARTS.map((tierStart) => (
+															<SelectItem key={tierStart} value={`${tierStart}`}>
+																{challengePointTierLabel(tierStart)}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+											</div>
+											<div className="space-y-1">
+												<FormLabel>Challenge Points Budget</FormLabel>
+												<Input
+													type="number"
+													value={challengePointBudget}
+													onChange={(event) =>
+														setValue(
+															'challengePointBudget',
+															Math.min(48,Number(event.target.value) || 0)
+														)
+													}
+													onBlur={() =>
+														setValue(
+															'challengePointBudget',
+															Math.max(2, challengePointBudget || 0)
+														)
+													}
+												/>
+											</div>
+											<p className="text-xs text-muted-foreground sm:col-span-2">
+												{normalizedPartySetup.challengePointBudget} ChP equals{' '}
+												{normalizedPartySetup.xpBudgetEquivalent} XP at tier{' '}
+												{normalizedPartySetup.challengePointTierLabel} (basis level{' '}
+												{normalizedPartySetup.challengePointBasisLevel}). Assumed party size for
+												threat display: {normalizedPartySetup.inferredChallengePointPartySize}.
+											</p>
+										</div>
+									) : null}
+
+									<p className="text-xs text-muted-foreground">
+										Effective calculation context: level {safePartyLevel}, size{' '}
+										{safePartySize}, {normalizedPartySetup.challengePointBudget} ChP.
+									</p>
 								</div>
 								<ParagraphFields 
 									control={form.control} 

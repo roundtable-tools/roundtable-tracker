@@ -13,13 +13,22 @@ import type {
 import { useEffect, useRef, useState } from 'react';
 
 interface ThreatTrackerProps {
-	budget?: ExperienceBudget;
-	comparisonBudget?: ExperienceBudget;
+	budget?: ExperienceBudget | number;
+	rawXpBudget?: ExperienceBudget | number;
+	comparisonBudget?: ExperienceBudget | number;
 	primaryBudgetLabel?: string;
 	comparisonBudgetLabel?: string;
 	partySize?: number;
+	partyLevels?: number[];
+	partyRelativeLevels?: number[];
 	waveInteraction?: EncounterWaveInteraction;
 	simulation?: EncounterThreatSimulation | null;
+	xpBasisLevel?: number;
+	challengePointBasisLevel?: number;
+	challengePointTierLabel?: string;
+	challengePointPerCharacter?: number[];
+	inferredChallengePointPartySize?: number;
+	chpDisplayMultiplier?: number;
 }
 
 const ADDITIONAL_IMPOSSIBLE_UNITS = 3;
@@ -33,8 +42,62 @@ type ThresholdGroup = {
 	color: string;
 };
 
+type ThreatDisplayMode = 'xp' | 'chp';
+
+function normalizeChpDisplayMultiplier(value: number): number {
+	return Number.isFinite(value) && value > 0 ? value : 1;
+}
+
+function toChallengePointsFromRelativeLevel(relativeLevel: number): number {
+	const normalizedDelta = Math.max(0, Math.trunc(relativeLevel));
+
+	if (normalizedDelta === 0) {
+		return 2;
+	}
+
+	if (normalizedDelta === 1) {
+		return 3;
+	}
+
+	if (normalizedDelta === 2) {
+		return 4;
+	}
+
+	return 6;
+}
+
+export function toChpDisplayMultiplierFromRelativeLevels(
+	relativeLevels: number[]
+): number {
+	if (relativeLevels.length === 0) {
+		return 1;
+	}
+
+	const totalChallengePoints = relativeLevels.reduce(
+		(sum, relativeLevel) =>
+			sum + toChallengePointsFromRelativeLevel(relativeLevel),
+		0
+	);
+
+	return totalChallengePoints / (relativeLevels.length * 2);
+}
+
+export function toModeScaledThresholdXp(
+	xpValue: number,
+	displayMode: ThreatDisplayMode,
+	chpDisplayMultiplier: number
+): number {
+	if (displayMode === 'xp') {
+		return xpValue;
+	}
+
+	const normalizedMultiplier = normalizeChpDisplayMultiplier(chpDisplayMultiplier);
+
+	return Math.round(xpValue * normalizedMultiplier * 10) / 10;
+}
+
 const CHARACTER_ADJUSTMENT_BY_THREAT: Record<string, number> = {
-	Trivial: 10,
+	Trivial: 15,
 	Low: 20,
 	Moderate: 20,
 	Severe: 30,
@@ -57,8 +120,22 @@ function getAdjustedXpForThreat(
 ): number {
 	const baseXp = getBaseXpFromThreatKey(threatKey);
 	const adjustment = getCharacterAdjustmentForThreat(baseLabel);
+	const adjustedValue = adjustment * (partySize - 4);
+	const roundedAdjustment = Math.floor(adjustedValue / 10) * 10;
 
-	return Math.max(0, baseXp + adjustment * (partySize - 4));
+	return Math.max(0, baseXp + roundedAdjustment);
+}
+
+function toRoundedChp(xpValue: number): number {
+	return Math.ceil(xpValue / 5) / 4;
+}
+
+function resolveBudgetValue(budget?: ExperienceBudget | number): number {
+	if (typeof budget === 'number') {
+		return Number.isFinite(budget) ? budget : 0;
+	}
+
+	return budget?.valueOf() ?? 0;
 }
 
 export function getMergedThresholds(
@@ -131,18 +208,48 @@ export function getMergedThresholds(
 
 export function ThreatTracker({
 	budget = ExperienceBudget.Moderate,
+	rawXpBudget,
 	comparisonBudget,
 	primaryBudgetLabel = 'Effective XP',
 	comparisonBudgetLabel = 'Raw XP',
 	partySize = 4,
+	partyLevels = [],
+	partyRelativeLevels = [],
 	waveInteraction,
 	simulation,
+	xpBasisLevel,
+	challengePointBasisLevel,
+	challengePointTierLabel,
+	challengePointPerCharacter = [],
+	inferredChallengePointPartySize,
+	chpDisplayMultiplier = 1,
 }: ThreatTrackerProps) {
+	const resolvedChpDisplayMultiplier =
+		partyRelativeLevels.length > 0
+			? toChpDisplayMultiplierFromRelativeLevels(partyRelativeLevels)
+			: chpDisplayMultiplier;
+	const [displayMode, setDisplayMode] = useState<ThreatDisplayMode>('xp');
 	const stripThreatSuffix = (label: string): string =>
 		label.replace(/(\+|-)+$/g, '').trim();
+	const toModeThresholdXp = (xpValue: number): number =>
+		toModeScaledThresholdXp(xpValue, displayMode, resolvedChpDisplayMultiplier);
+	const toDisplayChp = (xpValue: number): number => toRoundedChp(xpValue);
+	const formatThresholdTick = (value: number): string => {
+		if (displayMode === 'xp') {
+			return `${Math.round(value)}`;
+		}
 
-	const getDisplayLabelForBudget = (targetBudget: ExperienceBudget): string => {
-		const targetBudgetXp = targetBudget.valueOf() ?? 0;
+		return Number.isInteger(value) ? `${value}` : value.toFixed(1);
+	};
+	const formatDisplayBudget = (xpValue: number) =>
+		displayMode === 'xp' ? `${xpValue} XP` : `${toDisplayChp(xpValue)} ChP`;
+
+	const getDisplayLabelForBudget = (
+		targetBudget: ExperienceBudget | number
+	): string => {
+		const rawBudget = resolveBudgetValue(targetBudget);
+		const targetBudgetXp =
+			displayMode === 'xp' ? rawBudget : toDisplayChp(rawBudget);
 		const thresholdIdx = Math.max(
 			0,
 			merged.findIndex((group, index) => {
@@ -160,9 +267,20 @@ export function ThreatTracker({
 		const exactLabel = threatEntries
 			.map(([key, label]) => ({
 				label,
-				xp: new Threat({ threat: key as keyof typeof THREAT_TYPE })
-					.toExpBudget(partySize)
-					.valueOf(),
+				xp:
+					displayMode === 'xp'
+						? toModeThresholdXp(
+								new Threat({ threat: key as keyof typeof THREAT_TYPE })
+									.toExpBudget(partySize)
+									.valueOf()
+							)
+						: toDisplayChp(
+								toModeThresholdXp(
+									new Threat({ threat: key as keyof typeof THREAT_TYPE })
+										.toExpBudget(partySize)
+										.valueOf()
+								)
+							),
 			}))
 			.sort((a, b) => a.xp - b.xp)
 			.reduce<string>((activeLabel, threat) => {
@@ -182,7 +300,33 @@ export function ThreatTracker({
 		parseInt(key),
 		label,
 	]) as [number, string][];
-	const merged = getMergedThresholds(threatEntries, partySize);
+	const mergedXpThresholds = getMergedThresholds(threatEntries, partySize).map(
+		(threshold) => ({
+			...threshold,
+			minXp: toModeThresholdXp(threshold.minXp),
+			maxXp: toModeThresholdXp(threshold.maxXp),
+		})
+	);
+	const merged =
+		displayMode === 'xp'
+			? mergedXpThresholds
+			: mergedXpThresholds.map((threshold, index) => {
+				const challengeColors = [
+					'bg-sky-300',
+					'bg-sky-400',
+					'bg-indigo-400',
+					'bg-violet-500',
+					'bg-fuchsia-600',
+					'bg-purple-800',
+				];
+
+				return {
+					...threshold,
+					minXp: toDisplayChp(threshold.minXp),
+					maxXp: toDisplayChp(threshold.maxXp),
+					color: challengeColors[index % challengeColors.length],
+				};
+			});
 
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [isSmall, setIsSmall] = useState(false);
@@ -200,7 +344,11 @@ export function ThreatTracker({
 		return () => window.removeEventListener('resize', handleResize);
 	}, []);
 
-	const currentBudgetXp = budget.valueOf() ?? 0;
+	const currentBudgetXpRaw = resolveBudgetValue(budget);
+	const currentBudgetXp =
+		displayMode === 'xp'
+			? currentBudgetXpRaw
+			: toDisplayChp(currentBudgetXpRaw);
 	const currentThresholdIdx = Math.max(
 		0,
 		merged.findIndex((group, index) => {
@@ -219,9 +367,20 @@ export function ThreatTracker({
 	const exactThreatLabel = threatEntries
 		.map(([key, label]) => ({
 			label,
-			xp: new Threat({ threat: key as keyof typeof THREAT_TYPE })
-				.toExpBudget(partySize)
-				.valueOf(),
+			xp:
+				displayMode === 'xp'
+					? toModeThresholdXp(
+							new Threat({ threat: key as keyof typeof THREAT_TYPE })
+								.toExpBudget(partySize)
+								.valueOf()
+						)
+					: toDisplayChp(
+							toModeThresholdXp(
+								new Threat({ threat: key as keyof typeof THREAT_TYPE })
+									.toExpBudget(partySize)
+									.valueOf()
+							)
+						),
 		}))
 		.sort((a, b) => a.xp - b.xp)
 		.reduce<string>((activeLabel, threat) => {
@@ -240,6 +399,10 @@ export function ThreatTracker({
 	const comparisonDisplayLabel = comparisonBudget
 		? getDisplayLabelForBudget(comparisonBudget)
 		: undefined;
+	const currentBudgetChp = toDisplayChp(currentBudgetXpRaw);
+	const rawBudgetXp = resolveBudgetValue(rawXpBudget ?? comparisonBudget);
+	const comparisonBudgetRawXp = resolveBudgetValue(comparisonBudget);
+	const comparisonBudgetChp = toDisplayChp(comparisonBudgetRawXp);
 
 	const distance = isSmall ? 1 : 3;
 	const start = Math.max(0, currentThresholdIdx - distance);
@@ -285,7 +448,11 @@ export function ThreatTracker({
 		((currentBudgetXp - visibleMin) / (visibleMax - visibleMin)) * 100;
 	const simulationMaxStack = Math.max(
 		1,
-		...(simulation?.history.map((point) => point.totalDisplay) ?? [0])
+		...(simulation?.history.map((point) =>
+			displayMode === 'xp'
+				? point.totalDisplay
+				: toDisplayChp(point.totalDisplay)
+		) ?? [0])
 	);
 
 	return (
@@ -295,6 +462,22 @@ export function ThreatTracker({
 					ref={containerRef}
 					className="relative h-10 w-full overflow-visible"
 				>
+					<div className="absolute -top-9 right-0 z-10 flex items-center gap-1 rounded-md border bg-background p-1">
+						<button
+							type="button"
+							onClick={() => setDisplayMode('xp')}
+							className={`rounded px-2 py-1 text-[11px] font-medium ${displayMode === 'xp' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+						>
+							XP
+						</button>
+						<button
+							type="button"
+							onClick={() => setDisplayMode('chp')}
+							className={`rounded px-2 py-1 text-[11px] font-medium ${displayMode === 'chp' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+						>
+							ChP
+						</button>
+					</div>
 					<div className="absolute left-0 w-full pointer-events-none h-4">
 						{visibleThresholds.map((t, i) => {
 							const left =
@@ -316,7 +499,7 @@ export function ThreatTracker({
 										whiteSpace: 'nowrap',
 									}}
 								>
-									{Math.round(t.minXp)}
+										{formatThresholdTick(t.minXp)}
 								</div>
 							);
 						})}
@@ -385,12 +568,40 @@ export function ThreatTracker({
 				<div className="space-y-2 text-xs">
 					<div>
 						<span className="font-semibold">{primaryBudgetLabel}:</span>{' '}
-						{currentDisplayLabel} - {budget.valueOf()} XP
+						{currentDisplayLabel} - {formatDisplayBudget(currentBudgetXpRaw)}
+					</div>
+					<div>
+						<span className="font-semibold">Converted:</span> {rawBudgetXp} XP /{' '}
+						{currentBudgetChp} ChP
 					</div>
 					{comparisonBudget && comparisonDisplayLabel ? (
 						<div>
 							<span className="font-semibold">{comparisonBudgetLabel}:</span>{' '}
-							{comparisonDisplayLabel} - {comparisonBudget.valueOf()} XP
+							{comparisonDisplayLabel} -{' '}
+							{displayMode === 'xp'
+								? `${comparisonBudgetRawXp} XP`
+								: `${comparisonBudgetChp} ChP`}
+						</div>
+					) : null}
+					<div className="text-muted-foreground">
+						XP basis: level {xpBasisLevel ?? 'n/a'} • ChP tier:{' '}
+						{challengePointTierLabel ?? 'n/a'} (basis level{' '}
+						{challengePointBasisLevel ?? 'n/a'})
+					</div>
+					{partyLevels.length > 0 ? (
+						<div className="text-muted-foreground">
+							Party levels: {partyLevels.join(', ')}
+							{partyRelativeLevels.length > 0
+								? ` • relative: ${partyRelativeLevels.map((relativeLevel) => `${relativeLevel >= 0 ? '+' : ''}${relativeLevel}`).join(', ')}`
+								: ''}
+						</div>
+					) : null}
+					{challengePointPerCharacter.length > 0 ? (
+						<div className="text-muted-foreground">
+							Assumed ChP per character: {challengePointPerCharacter.join(', ')}
+							{typeof inferredChallengePointPartySize === 'number'
+								? ` • inferred party size: ${inferredChallengePointPartySize}`
+								: ''}
 						</div>
 					) : null}
 					{simulation && simulation.history.length > 0 ? (
@@ -399,12 +610,24 @@ export function ThreatTracker({
 							<div className="w-[min(78vw,28rem)]">
 								<div className="flex h-28 items-end rounded border bg-muted/25 p-2">
 									{simulation.history.map((point) => {
+										const wave0Display =
+											displayMode === 'xp'
+												? point.wave0
+												: toDisplayChp(point.wave0);
+										const wave1Display =
+											displayMode === 'xp'
+												? point.wave1
+												: toDisplayChp(point.wave1);
+										const attritionDisplay =
+											displayMode === 'xp'
+												? point.attrition
+												: toDisplayChp(point.attrition);
 										const wave0Height =
-											(point.wave0 / simulationMaxStack) * 100;
+											(wave0Display / simulationMaxStack) * 100;
 										const wave1Height =
-											(point.wave1 / simulationMaxStack) * 100;
+											(wave1Display / simulationMaxStack) * 100;
 										const attritionHeight =
-											(point.attrition / simulationMaxStack) * 100;
+											(attritionDisplay / simulationMaxStack) * 100;
 
 										return (
 											<div
@@ -427,7 +650,9 @@ export function ThreatTracker({
 														/>
 													</div>
 													<span className="absolute -top-5 text-[10px] text-muted-foreground">
-														{point.totalDisplay}
+														{displayMode === 'xp'
+															? point.totalDisplay
+															: toDisplayChp(point.totalDisplay)}
 													</span>
 												</div>
 												<span className="mt-1 text-[10px] text-muted-foreground">

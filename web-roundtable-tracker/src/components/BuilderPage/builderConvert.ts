@@ -19,6 +19,7 @@ import {
 import { Threat } from '@/models/utility/threat/Threat.class';
 import type { LevelAdjustment } from '@/models/utility/level/Level';
 import type { EncounterTemplateData } from '@/models/encounters/encounter.types';
+import type { PartySetupMode } from '@/models/utility/challengePoints/challengePoints';
 
 export interface BuilderVariantSnapshot {
 	id: string;
@@ -38,8 +39,13 @@ export interface BuilderNote {
 export interface BuilderFormValues {
 	name: string;
 	description: string;
+	partySetupMode: PartySetupMode;
 	partyLevel: number;
 	partySize: number;
+	specificPartyId?: string;
+	specificPartyLevels: number[];
+	challengePointTierStart: number;
+	challengePointBudget: number;
 	variants: BuilderVariantSnapshot[];
 	notes: BuilderNote[];
 	slots: BuilderSlot[];
@@ -119,8 +125,13 @@ export function defaultFormValues(): BuilderFormValues {
 	return {
 		name: '',
 		description: '',
+		partySetupMode: 'simple',
 		partyLevel: 1,
 		partySize: 4,
+		specificPartyId: undefined,
+		specificPartyLevels: [],
+		challengePointTierStart: 1,
+		challengePointBudget: 8,
 		variants: [],
 		notes: defaultBuilderNotes(),
 		slots: [],
@@ -141,8 +152,13 @@ export function fromEncounterTemplate(
 	return {
 		name: template.name,
 		description: template.description,
+		partySetupMode: 'simple',
 		partyLevel,
 		partySize,
+		specificPartyId: undefined,
+		specificPartyLevels: [],
+		challengePointTierStart: 1,
+		challengePointBudget: 8,
 		variants: [],
 		notes: defaultBuilderNotes(),
 		slots: variant.participants.map((participant) => ({
@@ -493,6 +509,16 @@ export function toConcreteEncounter(
 		participants,
 		variants,
 		narrativeSlots: narrativeSlots.length > 0 ? narrativeSlots : undefined,
+		partySetup: {
+			mode: values.partySetupMode,
+			specificPartyId: values.specificPartyId,
+			specificPartyLevels:
+				values.specificPartyLevels.length > 0
+					? values.specificPartyLevels
+					: undefined,
+			challengePointTierStart: values.challengePointTierStart,
+			challengePointBudget: values.challengePointBudget,
+		},
 		notes:
 			normalizedNoteEntries.length > 0
 				? {
@@ -617,8 +643,13 @@ export function fromConcreteEncounter(
 	return {
 		name: encounter.name,
 		description: encounter.description,
+		partySetupMode: encounter.partySetup?.mode ?? 'simple',
 		partyLevel: encounter.level,
 		partySize: encounter.partySize,
+		specificPartyId: encounter.partySetup?.specificPartyId,
+		specificPartyLevels: encounter.partySetup?.specificPartyLevels ?? [],
+		challengePointTierStart: encounter.partySetup?.challengePointTierStart ?? 1,
+		challengePointBudget: encounter.partySetup?.challengePointBudget ?? 8,
 		variants:
 			encounter.variants?.map((v) => ({
 				id: uuidv4(),
