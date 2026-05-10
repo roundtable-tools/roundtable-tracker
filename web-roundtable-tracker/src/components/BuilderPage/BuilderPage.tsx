@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
@@ -122,6 +122,9 @@ export function BuilderPage({
 	const [activeVariantItemId, setActiveVariantItemId] = useState<string>('');
 	const [activeTemplateVariantItemId, setActiveTemplateVariantItemId] =
 		useState<string>('');
+	const previousNoteIdsRef = useRef<string[]>([]);
+	const previousParticipantItemIdsRef = useRef<string[]>([]);
+	const previousEventItemIdsRef = useRef<string[]>([]);
 	const [activeEncounterId, setActiveEncounterId] = useState<
 		string | undefined
 	>(encounterId);
@@ -162,6 +165,20 @@ export function BuilderPage({
 	useEffect(() => {
 		if (notes.length === 0) {
 			setActiveNotesTab('');
+			previousNoteIdsRef.current = [];
+
+			return;
+		}
+
+		const currentNoteIds = notes.map((note) => note.id);
+		const previousNoteIds = previousNoteIdsRef.current;
+		const addedNoteId = currentNoteIds.find(
+			(noteId) => !previousNoteIds.includes(noteId)
+		);
+
+		if (addedNoteId && activeNotesTab !== addedNoteId) {
+			setActiveNotesTab(addedNoteId);
+			previousNoteIdsRef.current = currentNoteIds;
 
 			return;
 		}
@@ -171,6 +188,8 @@ export function BuilderPage({
 		if (!hasActiveTab) {
 			setActiveNotesTab(notes[0].id);
 		}
+
+		previousNoteIdsRef.current = currentNoteIds;
 	}, [notes, activeNotesTab]);
 
 	useEffect(() => {
@@ -328,6 +347,23 @@ export function BuilderPage({
 	useEffect(() => {
 		if (participantItems.length === 0) {
 			setActiveParticipantItemId('');
+			previousParticipantItemIdsRef.current = [];
+
+			return;
+		}
+
+		const currentParticipantItemIds = participantItems.map((item) => item.id);
+		const previousParticipantItemIds = previousParticipantItemIdsRef.current;
+		const addedParticipantItemId = currentParticipantItemIds.find(
+			(itemId) => !previousParticipantItemIds.includes(itemId)
+		);
+
+		if (
+			addedParticipantItemId &&
+			activeParticipantItemId !== addedParticipantItemId
+		) {
+			setActiveParticipantItemId(addedParticipantItemId);
+			previousParticipantItemIdsRef.current = currentParticipantItemIds;
 
 			return;
 		}
@@ -339,11 +375,27 @@ export function BuilderPage({
 		if (!hasActiveItem) {
 			setActiveParticipantItemId(participantItems[0].id);
 		}
+
+		previousParticipantItemIdsRef.current = currentParticipantItemIds;
 	}, [participantItems, activeParticipantItemId]);
 
 	useEffect(() => {
 		if (eventItems.length === 0) {
 			setActiveEventItemId('');
+			previousEventItemIdsRef.current = [];
+
+			return;
+		}
+
+		const currentEventItemIds = eventItems.map((item) => item.id);
+		const previousEventItemIds = previousEventItemIdsRef.current;
+		const addedEventItemId = currentEventItemIds.find(
+			(itemId) => !previousEventItemIds.includes(itemId)
+		);
+
+		if (addedEventItemId && activeEventItemId !== addedEventItemId) {
+			setActiveEventItemId(addedEventItemId);
+			previousEventItemIdsRef.current = currentEventItemIds;
 
 			return;
 		}
@@ -355,6 +407,8 @@ export function BuilderPage({
 		if (!hasActiveItem) {
 			setActiveEventItemId(eventItems[0].id);
 		}
+
+		previousEventItemIdsRef.current = currentEventItemIds;
 	}, [eventItems, activeEventItemId]);
 
 	useEffect(() => {

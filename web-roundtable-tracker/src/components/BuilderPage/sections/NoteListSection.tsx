@@ -132,7 +132,6 @@ export function NoteListSection({
 							content: '',
 							visibility: 'all',
 						});
-						onActiveNotesTabChange(nextId);
 					}}
 				>
 					Add Note
