@@ -7,7 +7,6 @@ import {
 } from '@/components/BuilderPage/builderXp';
 import { normalizePartySetup } from '@/models/utility/challengePoints/challengePoints';
 import { ExperienceBudget } from '@/models/utility/experienceBudget/ExperienceBudget';
-import { resolveXpBasisLevel } from '@/components/BuilderPage/xpBasis';
 
 function creature(overrides: Partial<BuilderSlot> = {}): BuilderSlot {
 	return {

@@ -124,6 +124,7 @@ function getDefaultParticipantName(participant: Participant<0 | 1>): string {
 	}
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const generateParticipants = (
 	encounterData: Encounter | undefined,
 	partyLevel: number

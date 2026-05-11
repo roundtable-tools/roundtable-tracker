@@ -58,23 +58,19 @@ export function toChallengePointTierStart(
 	const max =
 		CHALLENGE_POINT_TIER_STARTS[CHALLENGE_POINT_TIER_STARTS.length - 1];
 	const min = CHALLENGE_POINT_TIER_STARTS[0];
+	const truncated = Math.trunc(value);
+	const oddFloor = truncated % 2 === 0 ? truncated - 1 : truncated;
+
 	switch (true) {
 		case value <= min:
 			return min;
 		case value >= max:
 			return max;
+		case CHALLENGE_POINT_TIER_STARTS.includes(
+			oddFloor as ChallengePointTierStart
+		):
+			return oddFloor as ChallengePointTierStart;
 		default:
-			const truncated = Math.trunc(value);
-			const oddFloor = truncated % 2 === 0 ? truncated - 1 : truncated;
-
-			if (
-				CHALLENGE_POINT_TIER_STARTS.includes(
-					oddFloor as ChallengePointTierStart
-				)
-			) {
-				return oddFloor as ChallengePointTierStart;
-			}
-
 			return 1;
 	}
 }

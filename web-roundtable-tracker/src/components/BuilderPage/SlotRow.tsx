@@ -37,8 +37,10 @@ const SLOT_TYPES: { value: SlotType; label: string; Icon: LucideIcon }[] = [
 	{ value: 'narrative', label: 'Narrative Event', Icon: ScrollText },
 ];
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const PARTICIPANT_SLOT_TYPES: SlotType[] = ['creature', 'hazard'];
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const EVENT_SLOT_TYPES: SlotType[] = ['narrative', 'reinforcement'];
 
 export type AdditionalDataBlockKey =
@@ -314,7 +316,10 @@ export function SlotRow({
 		activeReinforcementParticipantId,
 		setActiveReinforcementParticipantId,
 	] = useState<string | null>(null);
-	const reinforcementParticipants = slot.reinforcementParticipants ?? [];
+	const reinforcementParticipants = useMemo(
+		() => slot.reinforcementParticipants ?? [],
+		[slot.reinforcementParticipants]
+	);
 
 	const availableCombatTabs = useMemo(
 		() =>
@@ -348,7 +353,7 @@ export function SlotRow({
 
 	useEffect(() => {
 		setActiveTabs(inferEnabledTabsFromSlot(slot));
-	}, [slot.id]);
+	}, [slot]);
 
 	useEffect(() => {
 		const ids = new Set(

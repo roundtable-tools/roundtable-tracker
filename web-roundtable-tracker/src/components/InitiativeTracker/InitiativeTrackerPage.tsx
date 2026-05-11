@@ -1,4 +1,11 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { type TrackerParticipant } from './mockData';
 import Timeline from '@/components/InitiativeList/Timeline';
 import { Button } from '@/components/ui/button';
@@ -70,6 +77,7 @@ import { type SwipeAction } from './InitiativeActionCarouselCard';
 function logTrackerButton(action: string, details?: Record<string, unknown>) {
 	if (details) {
 		console.log('[InitiativeTrackerPage]', action, details);
+
 		return;
 	}
 
@@ -975,7 +983,7 @@ export function InitiativeTrackerPage() {
 		setReorderDraftParticipants(storeAllInitiativeParticipants);
 	}, [storeAllInitiativeParticipants, reorderOpen]);
 
-	const focusCurrentParticipant = () => {
+	const focusCurrentParticipant = useCallback(() => {
 		if (!initiativeCarouselApi) {
 			logTrackerButton('Focus Current attempted before carousel API ready');
 
@@ -984,9 +992,9 @@ export function InitiativeTrackerPage() {
 
 		initiativeCarouselApi.scrollTo(0);
 		logTrackerButton('Focus Current scrolled to top initiative element');
-	};
+	}, [initiativeCarouselApi]);
 
-	const queueFocusCurrentParticipant = () => {
+	const queueFocusCurrentParticipant = useCallback(() => {
 		if (nextTurnTimeoutRef.current !== null) {
 			window.clearTimeout(nextTurnTimeoutRef.current);
 		}
@@ -995,7 +1003,7 @@ export function InitiativeTrackerPage() {
 			focusCurrentParticipant();
 			nextTurnTimeoutRef.current = null;
 		}, 20);
-	};
+	}, [focusCurrentParticipant]);
 
 	const handleNextRoundAnnouncementChange = (open: boolean) => {
 		if (open || nextRoundAnnouncement === null) {
@@ -1448,15 +1456,18 @@ export function InitiativeTrackerPage() {
 		});
 	};
 
-	const triggerReinforcementEvent = (slotId: string) => {
-		try {
-			executeCommand(new TriggerReinforcementEventCommand({ slotId }));
-			queueFocusCurrentParticipant();
-			logTrackerButton('Reinforcement event triggered', { slotId });
-		} catch (error) {
-			console.error('Failed to trigger reinforcement event', error);
-		}
-	};
+	const triggerReinforcementEvent = useCallback(
+		(slotId: string) => {
+			try {
+				executeCommand(new TriggerReinforcementEventCommand({ slotId }));
+				queueFocusCurrentParticipant();
+				logTrackerButton('Reinforcement event triggered', { slotId });
+			} catch (error) {
+				console.error('Failed to trigger reinforcement event', error);
+			}
+		},
+		[executeCommand, queueFocusCurrentParticipant]
+	);
 
 	const reinforcementEventsByRound = useMemo(
 		() =>
@@ -1610,7 +1621,13 @@ export function InitiativeTrackerPage() {
 						: undefined,
 				};
 			}),
-		[timeline, triggeredReinforcementSlotIds, round, reinforcementEventsByRound]
+		[
+			timeline,
+			triggerReinforcementEvent,
+			triggeredReinforcementSlotIds,
+			round,
+			reinforcementEventsByRound,
+		]
 	);
 
 	return (

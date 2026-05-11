@@ -209,7 +209,8 @@ export function BuilderPage({
 	});
 
 	const slots = useWatch({ control, name: 'slots' });
-	const notes = useWatch({ control, name: 'notes' }) ?? [];
+	const notesRaw = useWatch({ control, name: 'notes' });
+	const notes = useMemo(() => notesRaw ?? [], [notesRaw]);
 	const partyLevel = useWatch({ control, name: 'partyLevel' });
 	const partySize = useWatch({ control, name: 'partySize' });
 	const partySetupMode =
@@ -391,7 +392,7 @@ export function BuilderPage({
 			basePartyOutputPerRound: Math.max(0, basePartyOutputPerRound),
 		}
 	);
-	const resolvedSlots = slots ?? [];
+	const resolvedSlots = useMemo(() => slots ?? [], [slots]);
 	const participantIndices = getSlotSectionIndices(
 		resolvedSlots,
 		'participants'
@@ -399,7 +400,8 @@ export function BuilderPage({
 	const eventIndices = getSlotSectionIndices(resolvedSlots, 'events');
 	const participantSummary = getParticipantSectionSummary(resolvedSlots);
 	const eventSummary = getEventSectionSummary(resolvedSlots);
-	const variants = useWatch({ control, name: 'variants' }) ?? [];
+	const variantsRaw = useWatch({ control, name: 'variants' });
+	const variants = useMemo(() => variantsRaw ?? [], [variantsRaw]);
 	const participantItems = participantIndices
 		.map((slotIndex) => {
 			const field = fields[slotIndex];
@@ -441,9 +443,13 @@ export function BuilderPage({
 		);
 	}, [resolvedSlots]);
 
-	const templateShadowVariants = templateId
-		? (encounterTemplates.find((t) => t.id === templateId)?.variants ?? [])
-		: [];
+	const templateShadowVariants = useMemo(
+		() =>
+			templateId
+				? (encounterTemplates.find((t) => t.id === templateId)?.variants ?? [])
+				: [],
+		[templateId]
+	);
 
 	useEffect(() => {
 		if (participantItems.length === 0) {

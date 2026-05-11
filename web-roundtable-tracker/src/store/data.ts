@@ -334,12 +334,13 @@ export function normalizeEncounterNotes(
 				id: entry.id,
 				header: entry.header,
 				content: entry.content ?? '',
-				visibility:
+				visibility: (
 					entry.visibility === ALIGNMENT.PCs ||
 					entry.visibility === ALIGNMENT.Opponents ||
 					entry.visibility === ALIGNMENT.Neutral
 						? entry.visibility
-						: 'all',
+						: 'all'
+				) as 'all' | Alignment,
 			})) ?? [];
 
 	return explicitEntries;

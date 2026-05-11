@@ -66,6 +66,7 @@ function toChallengePointsFromRelativeLevel(relativeLevel: number): number {
 	return 6;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function toChpDisplayMultiplierFromRelativeLevels(
 	relativeLevels: number[]
 ): number {
@@ -82,6 +83,7 @@ export function toChpDisplayMultiplierFromRelativeLevels(
 	return totalChallengePoints / (relativeLevels.length * 2);
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function toModeScaledThresholdXp(
 	xpValue: number,
 	displayMode: ThreatDisplayMode,
@@ -139,6 +141,7 @@ function resolveBudgetValue(budget?: ExperienceBudget | number): number {
 	return budget?.valueOf() ?? 0;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function getMergedThresholds(
 	threatEntries: [number, string][],
 	partySize: number

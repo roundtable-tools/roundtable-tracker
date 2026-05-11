@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { BuilderPage } from '@/components/BuilderPage/BuilderPage';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const builderSearchSchema = z.object({
 	templateId: z.string().optional(),
 	templateVariantId: z.string().optional(),
@@ -13,6 +14,7 @@ export const builderSearchSchema = z.object({
 
 export type BuilderSearch = z.infer<typeof builderSearchSchema>;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const validateBuilderSearch = (search: unknown): BuilderSearch =>
 	builderSearchSchema.parse(search);
 
