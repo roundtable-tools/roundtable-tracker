@@ -1,7 +1,14 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+	Form,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormControl,
+	FormMessage,
+} from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getSavedEncountersStore } from '@/store/savedEncounterInstance';
 import { useSavedEncountersStore } from '@/store/savedEncounterInstance';
@@ -147,7 +154,12 @@ export function BuilderPage({
 		>
 	>({});
 	const setSectionLayoutKey = (
-		section: 'notes' | 'participants' | 'events' | 'variants' | 'templateVariants',
+		section:
+			| 'notes'
+			| 'participants'
+			| 'events'
+			| 'variants'
+			| 'templateVariants',
 		key: BuilderListLayoutKey
 	) => {
 		setSectionLayoutKeys((current) => {
@@ -200,7 +212,8 @@ export function BuilderPage({
 	const notes = useWatch({ control, name: 'notes' }) ?? [];
 	const partyLevel = useWatch({ control, name: 'partyLevel' });
 	const partySize = useWatch({ control, name: 'partySize' });
-	const partySetupMode = useWatch({ control, name: 'partySetupMode' }) ?? 'simple';
+	const partySetupMode =
+		useWatch({ control, name: 'partySetupMode' }) ?? 'simple';
 	const specificPartyId = useWatch({ control, name: 'specificPartyId' });
 	const specificPartyLevels =
 		useWatch({ control, name: 'specificPartyLevels' }) ?? [];
@@ -357,8 +370,8 @@ export function BuilderPage({
 	);
 	const xpBasisLevel = safePartyLevel;
 	const trackerPartySize = safePartySize;
-	const rebasedChallengePointPerCharacter = partyRelativeLevels.map((relative) =>
-		challengePointsFromLevelDelta(relative)
+	const rebasedChallengePointPerCharacter = partyRelativeLevels.map(
+		(relative) => challengePointsFromLevelDelta(relative)
 	);
 	const rebasedChpDisplayMultiplier =
 		rebasedChallengePointPerCharacter.length > 0
@@ -605,9 +618,7 @@ export function BuilderPage({
 								challengePointTierLabel={
 									normalizedPartySetup.challengePointTierLabel
 								}
-								challengePointPerCharacter={
-									rebasedChallengePointPerCharacter
-								}
+								challengePointPerCharacter={rebasedChallengePointPerCharacter}
 								inferredChallengePointPartySize={
 									normalizedPartySetup.inferredChallengePointPartySize
 								}
@@ -725,7 +736,10 @@ export function BuilderPage({
 														partySetupMode === mode.key ? 'default' : 'outline'
 													}
 													onClick={() =>
-														setValue('partySetupMode', mode.key as BuilderFormValues['partySetupMode'])
+														setValue(
+															'partySetupMode',
+															mode.key as BuilderFormValues['partySetupMode']
+														)
 													}
 												>
 													{mode.label}
@@ -784,14 +798,19 @@ export function BuilderPage({
 												<Select
 													value={specificPartyId || 'custom'}
 													onValueChange={(value) =>
-														setValue('specificPartyId', value === 'custom' ? undefined : value)
+														setValue(
+															'specificPartyId',
+															value === 'custom' ? undefined : value
+														)
 													}
 												>
 													<SelectTrigger className="w-full">
 														<SelectValue placeholder="Use custom level list" />
 													</SelectTrigger>
 													<SelectContent>
-														<SelectItem value="custom">Custom level list</SelectItem>
+														<SelectItem value="custom">
+															Custom level list
+														</SelectItem>
 														{savedParties.map((party) => (
 															<SelectItem key={party.id} value={party.id}>
 																{party.name} ({party.members.length})
@@ -802,14 +821,18 @@ export function BuilderPage({
 											</div>
 											{selectedSavedParty ? (
 												<p className="text-xs text-muted-foreground">
-													Using saved party levels: {resolvedSpecificPartyLevels.join(', ')}
+													Using saved party levels:{' '}
+													{resolvedSpecificPartyLevels.join(', ')}
 												</p>
 											) : (
 												<div className="space-y-2">
 													<FormLabel>Custom Party Levels</FormLabel>
 													<div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
 														{specificPartyLevels.map((level, index) => (
-															<div key={`custom-level-${index}`} className="flex gap-1">
+															<div
+																key={`custom-level-${index}`}
+																className="flex gap-1"
+															>
 																<Input
 																	type="number"
 																	min={1}
@@ -817,7 +840,9 @@ export function BuilderPage({
 																	value={level}
 																	onChange={(event) => {
 																		const nextLevels = [...specificPartyLevels];
-																		nextLevels[index] = Number(event.target.value);
+																		nextLevels[index] = Number(
+																			event.target.value
+																		);
 																		setValue('specificPartyLevels', nextLevels);
 																	}}
 																/>
@@ -825,7 +850,10 @@ export function BuilderPage({
 																	type="button"
 																	variant="outline"
 																	onClick={() => {
-																		const nextLevels = specificPartyLevels.filter((_, i) => i !== index);
+																		const nextLevels =
+																			specificPartyLevels.filter(
+																				(_, i) => i !== index
+																			);
 																		setValue('specificPartyLevels', nextLevels);
 																	}}
 																>
@@ -838,7 +866,10 @@ export function BuilderPage({
 														type="button"
 														variant="outline"
 														onClick={() =>
-															setValue('specificPartyLevels', [...specificPartyLevels, 1])
+															setValue('specificPartyLevels', [
+																...specificPartyLevels,
+																1,
+															])
 														}
 													>
 														Add Member Level
@@ -863,7 +894,10 @@ export function BuilderPage({
 													</SelectTrigger>
 													<SelectContent>
 														{CHALLENGE_POINT_TIER_STARTS.map((tierStart) => (
-															<SelectItem key={tierStart} value={`${tierStart}`}>
+															<SelectItem
+																key={tierStart}
+																value={`${tierStart}`}
+															>
 																{challengePointTierLabel(tierStart)}
 															</SelectItem>
 														))}
@@ -878,7 +912,7 @@ export function BuilderPage({
 													onChange={(event) =>
 														setValue(
 															'challengePointBudget',
-															Math.min(48,Number(event.target.value) || 0)
+															Math.min(48, Number(event.target.value) || 0)
 														)
 													}
 													onBlur={() =>
@@ -892,76 +926,83 @@ export function BuilderPage({
 											<p className="text-xs text-muted-foreground sm:col-span-2">
 												{normalizedPartySetup.challengePointBudget} ChP equals{' '}
 												{normalizedPartySetup.xpBudgetEquivalent} XP at tier{' '}
-												{normalizedPartySetup.challengePointTierLabel} (basis level{' '}
-												{normalizedPartySetup.challengePointBasisLevel}). Assumed party size for
-												threat display: {normalizedPartySetup.inferredChallengePointPartySize}.
+												{normalizedPartySetup.challengePointTierLabel} (basis
+												level {normalizedPartySetup.challengePointBasisLevel}).
+												Assumed party size for threat display:{' '}
+												{normalizedPartySetup.inferredChallengePointPartySize}.
 											</p>
 										</div>
 									) : null}
 
 									<p className="text-xs text-muted-foreground">
 										Effective calculation context: level {safePartyLevel}, size{' '}
-										{safePartySize}, {normalizedPartySetup.challengePointBudget} ChP.
+										{safePartySize}, {normalizedPartySetup.challengePointBudget}{' '}
+										ChP.
 									</p>
 								</div>
-								<ParagraphFields 
-									control={form.control} 
-									label="Encounter Name and Description" 
-									fieldNames={['name', 'description']} 
-									placeholders={['Training Grounds', 'Brief setup description...']} 
+								<ParagraphFields
+									control={form.control}
+									label="Encounter Name and Description"
+									fieldNames={['name', 'description']}
+									placeholders={[
+										'Training Grounds',
+										'Brief setup description...',
+									]}
 								/>
-								</div>
-								<div className="space-y-2">
-									<NoteListSection
-										form={form}
-										noteFields={noteFields}
-										notes={notes}
-										appendNote={appendNote}
-										removeNote={removeNote}
-										activeNotesTab={activeNotesTab}
-										onActiveNotesTabChange={setActiveNotesTab}
-										layoutKey={sectionLayoutKeys.notes}
-										onLayoutKeyChange={(key) => setSectionLayoutKey('notes', key)}
-									/>
-								</div>
+							</div>
+							<div className="space-y-2">
+								<NoteListSection
+									form={form}
+									noteFields={noteFields}
+									notes={notes}
+									appendNote={appendNote}
+									removeNote={removeNote}
+									activeNotesTab={activeNotesTab}
+									onActiveNotesTabChange={setActiveNotesTab}
+									layoutKey={sectionLayoutKeys.notes}
+									onLayoutKeyChange={(key) => setSectionLayoutKey('notes', key)}
+								/>
+							</div>
 						</section>
 					</TabsContent>
 
 					<TabsContent value="participants" className="space-y-3">
 						<section className="space-y-3">
-						<ParticipantListSection
-							form={form}
-							items={participantItems}
-							resolvedSlots={resolvedSlots}
-							remove={remove}
-							update={update}
-							usedAdditionalDataBlocks={usedAdditionalDataBlocks}
-							activeItemId={activeParticipantItemId}
-							onActiveItemIdChange={setActiveParticipantItemId}
-							append={append}
-							layoutKey={sectionLayoutKeys.participants}
-							onLayoutKeyChange={(key) => setSectionLayoutKey('participants', key)}
-						/>
-					</section>
-				</TabsContent>
+							<ParticipantListSection
+								form={form}
+								items={participantItems}
+								resolvedSlots={resolvedSlots}
+								remove={remove}
+								update={update}
+								usedAdditionalDataBlocks={usedAdditionalDataBlocks}
+								activeItemId={activeParticipantItemId}
+								onActiveItemIdChange={setActiveParticipantItemId}
+								append={append}
+								layoutKey={sectionLayoutKeys.participants}
+								onLayoutKeyChange={(key) =>
+									setSectionLayoutKey('participants', key)
+								}
+							/>
+						</section>
+					</TabsContent>
 
 					<TabsContent value="events" className="space-y-3">
 						<section className="space-y-3">
-						<EventListSection
-							form={form}
-							items={eventItems}
-							resolvedSlots={resolvedSlots}
-							remove={remove}
-							update={update}
-							usedAdditionalDataBlocks={usedAdditionalDataBlocks}
-							activeItemId={activeEventItemId}
-							onActiveItemIdChange={setActiveEventItemId}
-							append={append}
-							layoutKey={sectionLayoutKeys.events}
-							onLayoutKeyChange={(key) => setSectionLayoutKey('events', key)}
-						/>
-					</section>
-				</TabsContent>
+							<EventListSection
+								form={form}
+								items={eventItems}
+								resolvedSlots={resolvedSlots}
+								remove={remove}
+								update={update}
+								usedAdditionalDataBlocks={usedAdditionalDataBlocks}
+								activeItemId={activeEventItemId}
+								onActiveItemIdChange={setActiveEventItemId}
+								append={append}
+								layoutKey={sectionLayoutKeys.events}
+								onLayoutKeyChange={(key) => setSectionLayoutKey('events', key)}
+							/>
+						</section>
+					</TabsContent>
 
 					<TabsContent value="variants" className="space-y-4">
 						<section className="space-y-3">
@@ -976,7 +1017,9 @@ export function BuilderPage({
 								activeVariantItemId={activeVariantItemId}
 								onActiveVariantItemIdChange={setActiveVariantItemId}
 								layoutKey={sectionLayoutKeys.variants}
-								onLayoutKeyChange={(key) => setSectionLayoutKey('variants', key)}
+								onLayoutKeyChange={(key) =>
+									setSectionLayoutKey('variants', key)
+								}
 							/>
 						</section>
 

@@ -378,12 +378,13 @@ export function encounterToTrackerHeader(
 		.filter((slot) => slot.description)
 		.map((slot) => `Round ${slot.trigger.round}: ${slot.description}`);
 
-	const participantNoteSectionsBySideTheme: TrackerHeader['participantNoteSectionsBySideTheme'] = {
-		pc: [],
-		opponent: [],
-		ally: [],
-		other: [],
-	};
+	const participantNoteSectionsBySideTheme: TrackerHeader['participantNoteSectionsBySideTheme'] =
+		{
+			pc: [],
+			opponent: [],
+			ally: [],
+			other: [],
+		};
 
 	const noteSections = normalizeEncounterNotes(encounterData.notes)
 		.map((note) => ({
@@ -431,8 +432,8 @@ export function encounterToTrackerHeader(
 		...noteSections
 			.filter((section) => section.visibility === 'all')
 			.map((note) => ({
-			label: note.label,
-			content: note.content,
+				label: note.label,
+				content: note.content,
 			})),
 	].filter((section) => section.content.trim().length > 0);
 

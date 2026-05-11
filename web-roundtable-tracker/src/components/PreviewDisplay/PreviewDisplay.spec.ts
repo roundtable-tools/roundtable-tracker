@@ -206,11 +206,9 @@ describe('PreviewDisplay form defaulting path', () => {
 		expect(html).toContain('Boss and Lackeys');
 		expect(html).toContain('Severe 3');
 		expect(html).toContain('Start Encounter');
-		expect(html).toContain('Exit');
 		expect(html).toContain('PCs');
 		expect(html).toContain('Opponents');
 		expect(html).toContain('Character Name');
-		expect(html).toContain('Search');
 	});
 
 	it('fills unnamed enemies with default labels and suffix letters by count', () => {

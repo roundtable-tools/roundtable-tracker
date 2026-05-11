@@ -167,8 +167,12 @@ describe('computeEncounterXpUsage', () => {
 			4
 		);
 
-		expect(lowBasisUsage.immediateXp.valueOf()).toBe(highBasisUsage.immediateXp.valueOf());
-		expect(lowBasisUsage.effectiveXp.valueOf()).toBe(highBasisUsage.effectiveXp.valueOf());
+		expect(lowBasisUsage.immediateXp.valueOf()).toBe(
+			highBasisUsage.immediateXp.valueOf()
+		);
+		expect(lowBasisUsage.effectiveXp.valueOf()).toBe(
+			highBasisUsage.effectiveXp.valueOf()
+		);
 		expect(lowBasisUsage.waveInteraction.effectiveThreat.toLabel()).toBe(
 			highBasisUsage.waveInteraction.effectiveThreat.toLabel()
 		);
@@ -204,8 +208,12 @@ describe('computeEncounterXpUsage', () => {
 
 		expect(lowTier.challengePointBasisLevel).toBe(5);
 		expect(highTier.challengePointBasisLevel).toBe(9);
-		expect(lowTierUsage.immediateXp.valueOf()).toBe(highTierUsage.immediateXp.valueOf());
-		expect(lowTierUsage.effectiveXp.valueOf()).toBe(highTierUsage.effectiveXp.valueOf());
+		expect(lowTierUsage.immediateXp.valueOf()).toBe(
+			highTierUsage.immediateXp.valueOf()
+		);
+		expect(lowTierUsage.effectiveXp.valueOf()).toBe(
+			highTierUsage.effectiveXp.valueOf()
+		);
 	});
 
 	it('uses the lowest party level as XP basis for specific and equivalent challenge-point parties', () => {

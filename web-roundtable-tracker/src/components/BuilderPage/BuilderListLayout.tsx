@@ -186,7 +186,9 @@ export function BuilderListLayout<TItem>({
 		}
 	};
 	const activeLayoutOption =
-		availableLayouts.find((layoutOption) => layoutOption.key === resolvedLayoutKey) ??
+		availableLayouts.find(
+			(layoutOption) => layoutOption.key === resolvedLayoutKey
+		) ??
 		availableLayouts[0] ??
 		LAYOUT_OPTIONS['compact-tabs'];
 	const layout = activeLayoutOption.selection;

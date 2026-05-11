@@ -1,11 +1,18 @@
 import { Skull, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BuilderListLayout, type BuilderListLayoutKey } from '../BuilderListLayout';
+import {
+	BuilderListLayout,
+	type BuilderListLayoutKey,
+} from '../BuilderListLayout';
 import { SlotRow, PARTICIPANT_SLOT_TYPES } from '../SlotRow';
 import { defaultSlot } from '../builderConvert';
 import type { AdditionalDataBlockKey } from '../SlotRow';
 import type { BuilderFormValues } from '../builderConvert';
-import type { UseFormReturn, UseFieldArrayRemove, UseFieldArrayUpdate } from 'react-hook-form';
+import type {
+	UseFormReturn,
+	UseFieldArrayRemove,
+	UseFieldArrayUpdate,
+} from 'react-hook-form';
 
 const SLOT_ICONS: Record<string, typeof Skull> = {
 	creature: Skull,
@@ -55,7 +62,9 @@ export function ParticipantListSection({
 			getItemLabel={(item, index) => {
 				const slot = resolvedSlots[item.slotIndex];
 
-				return slot?.name?.trim().length ? slot.name : `Participant ${index + 1}`;
+				return slot?.name?.trim().length
+					? slot.name
+					: `Participant ${index + 1}`;
 			}}
 			getItemIcon={(item) => {
 				const slot = resolvedSlots[item.slotIndex];

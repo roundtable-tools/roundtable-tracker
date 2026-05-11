@@ -359,7 +359,9 @@ const toSavedEntries = (
 			...encounter,
 			directoryId: `saved:${encounter.id}`,
 			source: 'saved',
-			difficultyLabel: difficultyToString(encounter.difficulty ?? DIFFICULTY.Low),
+			difficultyLabel: difficultyToString(
+				encounter.difficulty ?? DIFFICULTY.Low
+			),
 			challengePointBudget: normalizedParty.challengePointBudget,
 			challengePointTier: challengePointTierLabel(
 				normalizedParty.challengePointBasisLevel
@@ -756,7 +758,10 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 									}}
 								>
 									{CHALLENGE_POINT_RANGE_OPTIONS.map((option) => (
-										<DropdownMenuRadioItem key={option.value} value={option.value}>
+										<DropdownMenuRadioItem
+											key={option.value}
+											value={option.value}
+										>
 											{option.label}
 										</DropdownMenuRadioItem>
 									))}

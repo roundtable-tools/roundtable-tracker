@@ -1,11 +1,18 @@
 import { ScrollText, ShieldPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BuilderListLayout, type BuilderListLayoutKey } from '../BuilderListLayout';
+import {
+	BuilderListLayout,
+	type BuilderListLayoutKey,
+} from '../BuilderListLayout';
 import { SlotRow, EVENT_SLOT_TYPES } from '../SlotRow';
 import { defaultSlot } from '../builderConvert';
 import type { AdditionalDataBlockKey } from '../SlotRow';
 import type { BuilderFormValues } from '../builderConvert';
-import type { UseFormReturn, UseFieldArrayRemove, UseFieldArrayUpdate } from 'react-hook-form';
+import type {
+	UseFormReturn,
+	UseFieldArrayRemove,
+	UseFieldArrayUpdate,
+} from 'react-hook-form';
 
 const EVENT_ICONS: Record<string, typeof ScrollText> = {
 	narrative: ScrollText,
@@ -59,7 +66,9 @@ export function EventListSection({
 			}}
 			getItemIcon={(item) => {
 				const slot = resolvedSlots[item.slotIndex];
-				const Icon = slot?.type ? (EVENT_ICONS[slot.type] ?? ScrollText) : ScrollText;
+				const Icon = slot?.type
+					? (EVENT_ICONS[slot.type] ?? ScrollText)
+					: ScrollText;
 
 				return <Icon className="h-3.5 w-3.5" aria-hidden="true" />;
 			}}
@@ -96,7 +105,9 @@ export function EventListSection({
 						variant="default"
 						title="Add reinforcement event"
 						size="sm"
-						className={'flex h-7 w-7 items-center justify-center rounded bg-primary text-primary-foreground'}
+						className={
+							'flex h-7 w-7 items-center justify-center rounded bg-primary text-primary-foreground'
+						}
 						onClick={() => append({ ...defaultSlot(), type: 'reinforcement' })}
 					>
 						<ShieldPlus className="h-3.5 w-3.5" aria-hidden="true" />
@@ -106,7 +117,9 @@ export function EventListSection({
 						variant="default"
 						title="Add narrative event"
 						size="sm"
-						className={'flex h-7 w-7 items-center justify-center rounded bg-primary text-primary-foreground'}
+						className={
+							'flex h-7 w-7 items-center justify-center rounded bg-primary text-primary-foreground'
+						}
 						onClick={() => append({ ...defaultSlot(), type: 'narrative' })}
 					>
 						<ScrollText className="h-3.5 w-3.5" aria-hidden="true" />

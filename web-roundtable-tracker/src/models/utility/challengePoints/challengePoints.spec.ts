@@ -91,7 +91,9 @@ describe('normalizePartySetup', () => {
 		expect(normalized.effectivePartyLevel).toBe(8);
 		expect(normalized.effectivePartySize).toBe(4);
 		expect(normalized.challengePointBasisLevel).toBe(7);
-		expect(normalized.challengePointBasisLevel).toBeLessThanOrEqual(lowestLevel);
+		expect(normalized.challengePointBasisLevel).toBeLessThanOrEqual(
+			lowestLevel
+		);
 		expect(normalized.challengePointBudget).toBe(13);
 		expect(normalized.challengePointPerCharacter).toEqual([3, 4, 3, 3]);
 		expect(normalized.xpBudgetEquivalent).toBe(260);
@@ -181,7 +183,9 @@ describe('normalizePartySetup', () => {
 		expect(higherTier.challengePointBasisLevel).toBe(9);
 		expect(lowerTier.challengePointTierLabel).toBe('5-8');
 		expect(higherTier.challengePointTierLabel).toBe('9-12');
-		expect(lowerTier.challengePointBudget).toBe(higherTier.challengePointBudget);
+		expect(lowerTier.challengePointBudget).toBe(
+			higherTier.challengePointBudget
+		);
 		expect(lowerTier.xpBudgetEquivalent).toBe(higherTier.xpBudgetEquivalent);
 	});
 });

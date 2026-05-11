@@ -89,9 +89,7 @@ export function SlotRowEventFields({
 										value={field.value ?? ''}
 										onChange={(event) => {
 											const value = event.target.value;
-											field.onChange(
-												value === '' ? undefined : Number(value)
-											);
+											field.onChange(value === '' ? undefined : Number(value));
 										}}
 										onBlur={field.onBlur}
 										name={field.name}
@@ -116,9 +114,7 @@ export function SlotRowEventFields({
 										value={field.value ?? ''}
 										onChange={(event) => {
 											const value = event.target.value;
-											field.onChange(
-												value === '' ? undefined : Number(value)
-											);
+											field.onChange(value === '' ? undefined : Number(value));
 										}}
 										onBlur={field.onBlur}
 										name={field.name}

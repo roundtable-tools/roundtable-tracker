@@ -3,16 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-	appHeaderSpy: vi.fn(),
 	builderPageSpy: vi.fn(),
-}));
-
-vi.mock('@/AppHeader', () => ({
-	AppHeader: (props: { setView: (view: string) => void }) => {
-		mocks.appHeaderSpy(props);
-
-		return createElement('div', { 'data-testid': 'app-header' });
-	},
 }));
 
 vi.mock('@/components/BuilderPage/BuilderPage', () => ({
@@ -28,7 +19,6 @@ import { BuilderRouteComponent, Route } from '@/routes/builder';
 
 describe('builder route search params', () => {
 	beforeEach(() => {
-		mocks.appHeaderSpy.mockClear();
 		mocks.builderPageSpy.mockClear();
 		vi.spyOn(Route, 'useSearch').mockReturnValue({});
 	});
@@ -75,25 +65,18 @@ describe('builder route search params', () => {
 			createElement(BuilderRouteComponent as ComponentType)
 		);
 
-		expect(html).toContain('data-testid="app-header"');
 		expect(html).toContain('data-testid="builder-page"');
-		expect(mocks.appHeaderSpy).toHaveBeenCalledTimes(1);
 		expect(mocks.builderPageSpy).toHaveBeenCalledTimes(1);
 	});
 
-	it('passes route-specific props to AppHeader and BuilderPage', () => {
+	it('passes route-specific props to BuilderPage', () => {
 		renderToStaticMarkup(createElement(BuilderRouteComponent as ComponentType));
 
-		const appHeaderProps = mocks.appHeaderSpy.mock.calls[0]?.[0] as {
-			setView: (view: string) => void;
-		};
 		const builderPageProps = mocks.builderPageSpy.mock.calls[0]?.[0] as {
 			encounterId?: string;
 			importDraftId?: string;
 		};
 
-		expect(typeof appHeaderProps?.setView).toBe('function');
-		expect(() => appHeaderProps.setView('any-view')).not.toThrow();
 		expect(builderPageProps?.encounterId).toBeUndefined();
 		expect(builderPageProps?.importDraftId).toBeUndefined();
 	});

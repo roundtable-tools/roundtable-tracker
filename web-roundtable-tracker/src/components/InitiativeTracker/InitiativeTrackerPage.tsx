@@ -70,7 +70,6 @@ import { type SwipeAction } from './InitiativeActionCarouselCard';
 function logTrackerButton(action: string, details?: Record<string, unknown>) {
 	if (details) {
 		console.log('[InitiativeTrackerPage]', action, details);
-
 		return;
 	}
 
@@ -1505,9 +1504,9 @@ export function InitiativeTrackerPage() {
 		allParticipants.find((p) => p.id === selectedParticipantId) ?? null;
 
 	const selectedParticipantAlignmentNotes = selectedParticipant
-		? trackerHeader?.participantNoteSectionsBySideTheme[
-					resolveParticipantSideTheme(selectedParticipant)
-				] ?? []
+		? (trackerHeader?.participantNoteSectionsBySideTheme[
+				resolveParticipantSideTheme(selectedParticipant)
+			] ?? [])
 		: [];
 
 	const handleSelectedHeal = selectedParticipantId

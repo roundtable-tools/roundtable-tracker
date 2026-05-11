@@ -91,7 +91,8 @@ export function toModeScaledThresholdXp(
 		return xpValue;
 	}
 
-	const normalizedMultiplier = normalizeChpDisplayMultiplier(chpDisplayMultiplier);
+	const normalizedMultiplier =
+		normalizeChpDisplayMultiplier(chpDisplayMultiplier);
 
 	return Math.round(xpValue * normalizedMultiplier * 10) / 10;
 }
@@ -311,22 +312,22 @@ export function ThreatTracker({
 		displayMode === 'xp'
 			? mergedXpThresholds
 			: mergedXpThresholds.map((threshold, index) => {
-				const challengeColors = [
-					'bg-sky-300',
-					'bg-sky-400',
-					'bg-indigo-400',
-					'bg-violet-500',
-					'bg-fuchsia-600',
-					'bg-purple-800',
-				];
+					const challengeColors = [
+						'bg-sky-300',
+						'bg-sky-400',
+						'bg-indigo-400',
+						'bg-violet-500',
+						'bg-fuchsia-600',
+						'bg-purple-800',
+					];
 
-				return {
-					...threshold,
-					minXp: toDisplayChp(threshold.minXp),
-					maxXp: toDisplayChp(threshold.maxXp),
-					color: challengeColors[index % challengeColors.length],
-				};
-			});
+					return {
+						...threshold,
+						minXp: toDisplayChp(threshold.minXp),
+						maxXp: toDisplayChp(threshold.maxXp),
+						color: challengeColors[index % challengeColors.length],
+					};
+				});
 
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [isSmall, setIsSmall] = useState(false);
@@ -499,7 +500,7 @@ export function ThreatTracker({
 										whiteSpace: 'nowrap',
 									}}
 								>
-										{formatThresholdTick(t.minXp)}
+									{formatThresholdTick(t.minXp)}
 								</div>
 							);
 						})}

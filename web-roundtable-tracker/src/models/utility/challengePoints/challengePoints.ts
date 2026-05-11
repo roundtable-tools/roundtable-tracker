@@ -46,9 +46,7 @@ function sanitizeChallengePointBudgetForInput(value: number): number {
 	return Math.max(2, budget);
 }
 
-export function challengePointTierLabel(
-	tierStart: number
-): string {
+export function challengePointTierLabel(tierStart: number): string {
 	const normalizedStart = sanitizePartyLevel(tierStart);
 
 	return `${normalizedStart}-${normalizedStart + 3}`;
@@ -300,9 +298,10 @@ function buildAssumptionFromCounts(
 	};
 }
 
-function assumptionMetaFromCounts(
-	counts: ChallengePointAssumptionCounts
-): { lowestLevelDelta: number; partySize: number } {
+function assumptionMetaFromCounts(counts: ChallengePointAssumptionCounts): {
+	lowestLevelDelta: number;
+	partySize: number;
+} {
 	const firstNonZeroIndex = counts.findIndex((count) => count > 0);
 	const lowestValue =
 		firstNonZeroIndex >= 0
@@ -320,7 +319,8 @@ export function inferPartyFromChallengePointBudget(
 ): ChallengePointPartyAssumption {
 	const targetBudget =
 		sanitizeChallengePointBudgetForInput(challengePointBudget);
-	const presetCounts = CHALLENGE_POINT_ASSUMPTION_COUNTS_BY_BUDGET[targetBudget];
+	const presetCounts =
+		CHALLENGE_POINT_ASSUMPTION_COUNTS_BY_BUDGET[targetBudget];
 
 	if (presetCounts) {
 		return buildAssumptionFromCounts(...presetCounts);
@@ -335,11 +335,7 @@ export function inferPartyFromChallengePointBudget(
 	};
 
 	for (let countNine = 0; countNine <= searchLimit; countNine++) {
-		for (
-			let countSix = 0;
-			countSix <= searchLimit - countNine;
-			countSix++
-		) {
+		for (let countSix = 0; countSix <= searchLimit - countNine; countSix++) {
 			for (
 				let countFour = 0;
 				countFour <= searchLimit - countNine - countSix;
@@ -353,11 +349,7 @@ export function inferPartyFromChallengePointBudget(
 					for (
 						let countTwo = 0;
 						countTwo <=
-							searchLimit -
-							countNine -
-							countSix -
-							countFour -
-							countThree;
+						searchLimit - countNine - countSix - countFour - countThree;
 						countTwo++
 					) {
 						const assumption = buildAssumptionFromCounts(

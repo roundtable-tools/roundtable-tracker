@@ -139,7 +139,12 @@ describe('EncounterDirectory data helpers', () => {
 				specificPartyLevels: [5, 5, 6, 8],
 			},
 		};
-		const [entry] = createDirectoryEntries([], [specificEncounter], false, true);
+		const [entry] = createDirectoryEntries(
+			[],
+			[specificEncounter],
+			false,
+			true
+		);
 
 		expect(entry.challengePointBudget).toBe(13);
 		expect(entry.challengePointTier).toBe('5-8');
@@ -155,7 +160,12 @@ describe('EncounterDirectory data helpers', () => {
 				challengePointBudget: 15,
 			},
 		};
-		const [entry] = createDirectoryEntries([], [challengeEncounter], false, true);
+		const [entry] = createDirectoryEntries(
+			[],
+			[challengeEncounter],
+			false,
+			true
+		);
 
 		expect(entry.challengePointBudget).toBe(15);
 		expect(entry.challengePointTier).toBe('9-12');

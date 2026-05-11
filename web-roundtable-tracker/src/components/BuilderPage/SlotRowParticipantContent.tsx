@@ -177,7 +177,7 @@ export function SlotRowParticipantContent({
 										<PartySizePicker
 											value={field.value}
 											onChange={(value) => {
-												field.onChange(value == field.value ? 0 :value);
+												field.onChange(value == field.value ? 0 : value);
 											}}
 											onBlur={field.onBlur}
 											name={field.name}
@@ -441,11 +441,14 @@ export function SlotRowParticipantContent({
 														min={1}
 														value={participant.successesToDisable ?? ''}
 														onChange={(event) =>
-															onReinforcementParticipantChange(participantIndex, {
-																successesToDisable: Number(
-																	event.target.value || 1
-																),
-															})
+															onReinforcementParticipantChange(
+																participantIndex,
+																{
+																	successesToDisable: Number(
+																		event.target.value || 1
+																	),
+																}
+															)
 														}
 													/>
 												</div>
@@ -454,9 +457,12 @@ export function SlotRowParticipantContent({
 														type="checkbox"
 														checked={participant.isSimpleHazard}
 														onChange={(event) =>
-															onReinforcementParticipantChange(participantIndex, {
-																isSimpleHazard: event.target.checked,
-															})
+															onReinforcementParticipantChange(
+																participantIndex,
+																{
+																	isSimpleHazard: event.target.checked,
+																}
+															)
 														}
 													/>
 													Simple Hazard
@@ -467,7 +473,9 @@ export function SlotRowParticipantContent({
 
 									<Tabs
 										value={resolvedParticipantActiveTab}
-										onValueChange={(tab) => onSetReinforcementTab(participant, tab)}
+										onValueChange={(tab) =>
+											onSetReinforcementTab(participant, tab)
+										}
 										className="w-full"
 									>
 										<TabsList className="flex flex-wrap w-full gap-2 h-auto p-1 bg-muted justify-start items-center">
@@ -534,7 +542,9 @@ export function SlotRowParticipantContent({
 														: 'hover:bg-gray-200',
 												].join(' ')}
 												onClick={() =>
-													onOpenAddReinforcementParticipantDataDialog(participant.id)
+													onOpenAddReinforcementParticipantDataDialog(
+														participant.id
+													)
 												}
 												disabled={
 													participantAvailableTabs.length ===
@@ -561,9 +571,12 @@ export function SlotRowParticipantContent({
 																			...(participant.dcs ?? []),
 																			{ name: '', value: 10 },
 																		];
-																		onReinforcementParticipantChange(participantIndex, {
-																			dcs: nextDcs,
-																		});
+																		onReinforcementParticipantChange(
+																			participantIndex,
+																			{
+																				dcs: nextDcs,
+																			}
+																		);
 																	}}
 																>
 																	Add DC
@@ -573,7 +586,10 @@ export function SlotRowParticipantContent({
 																	variant="destructive"
 																	size="sm"
 																	onClick={() =>
-																		onRemoveReinforcementTab(participantIndex, 'dcs')
+																		onRemoveReinforcementTab(
+																			participantIndex,
+																			'dcs'
+																		)
 																	}
 																>
 																	<Trash2 className="h-4 w-4" />
@@ -589,14 +605,19 @@ export function SlotRowParticipantContent({
 																	placeholder="Name"
 																	value={dc.name ?? dc.inline ?? ''}
 																	onChange={(event) => {
-																		const nextDcs = [...(participant.dcs ?? [])];
+																		const nextDcs = [
+																			...(participant.dcs ?? []),
+																		];
 																		nextDcs[dcIndex] = {
 																			...nextDcs[dcIndex],
 																			name: event.target.value,
 																		};
-																		onReinforcementParticipantChange(participantIndex, {
-																			dcs: nextDcs,
-																		});
+																		onReinforcementParticipantChange(
+																			participantIndex,
+																			{
+																				dcs: nextDcs,
+																			}
+																		);
 																	}}
 																/>
 																<Input
@@ -604,28 +625,38 @@ export function SlotRowParticipantContent({
 																	placeholder="Value"
 																	value={dc.value ?? ''}
 																	onChange={(event) => {
-																		const nextDcs = [...(participant.dcs ?? [])];
+																		const nextDcs = [
+																			...(participant.dcs ?? []),
+																		];
 																		nextDcs[dcIndex] = {
 																			...nextDcs[dcIndex],
 																			value: Number(event.target.value || 0),
 																		};
-																		onReinforcementParticipantChange(participantIndex, {
-																			dcs: nextDcs,
-																		});
+																		onReinforcementParticipantChange(
+																			participantIndex,
+																			{
+																				dcs: nextDcs,
+																			}
+																		);
 																	}}
 																/>
 																<Input
 																	placeholder="Icon key"
 																	value={dc.icon ?? ''}
 																	onChange={(event) => {
-																		const nextDcs = [...(participant.dcs ?? [])];
+																		const nextDcs = [
+																			...(participant.dcs ?? []),
+																		];
 																		nextDcs[dcIndex] = {
 																			...nextDcs[dcIndex],
 																			icon: event.target.value || undefined,
 																		};
-																		onReinforcementParticipantChange(participantIndex, {
-																			dcs: nextDcs,
-																		});
+																		onReinforcementParticipantChange(
+																			participantIndex,
+																			{
+																				dcs: nextDcs,
+																			}
+																		);
 																	}}
 																/>
 																{participant.type === 'hazard' ? (
@@ -635,7 +666,9 @@ export function SlotRowParticipantContent({
 																		placeholder="Disable Successes"
 																		value={dc.disableSuccesses ?? ''}
 																		onChange={(event) => {
-																			const nextDcs = [...(participant.dcs ?? [])];
+																			const nextDcs = [
+																				...(participant.dcs ?? []),
+																			];
 																			nextDcs[dcIndex] = {
 																				...nextDcs[dcIndex],
 																				disableSuccesses:
@@ -643,9 +676,12 @@ export function SlotRowParticipantContent({
 																						? undefined
 																						: Number(event.target.value),
 																			};
-																			onReinforcementParticipantChange(participantIndex, {
-																				dcs: nextDcs,
-																			});
+																			onReinforcementParticipantChange(
+																				participantIndex,
+																				{
+																					dcs: nextDcs,
+																				}
+																			);
 																		}}
 																	/>
 																) : (
@@ -656,12 +692,15 @@ export function SlotRowParticipantContent({
 																	variant="ghost"
 																	size="sm"
 																	onClick={() => {
-																		const nextDcs = (participant.dcs ?? []).filter(
-																			(_, idx) => idx !== dcIndex
+																		const nextDcs = (
+																			participant.dcs ?? []
+																		).filter((_, idx) => idx !== dcIndex);
+																		onReinforcementParticipantChange(
+																			participantIndex,
+																			{
+																				dcs: nextDcs,
+																			}
 																		);
-																		onReinforcementParticipantChange(participantIndex, {
-																			dcs: nextDcs,
-																		});
 																	}}
 																>
 																	Remove
@@ -680,7 +719,10 @@ export function SlotRowParticipantContent({
 																variant="destructive"
 																size="sm"
 																onClick={() =>
-																	onRemoveReinforcementTab(participantIndex, 'initiative')
+																	onRemoveReinforcementTab(
+																		participantIndex,
+																		'initiative'
+																	)
 																}
 															>
 																<Trash2 className="h-4 w-4" />
@@ -693,19 +735,27 @@ export function SlotRowParticipantContent({
 																value={participant.initiativeBonus ?? ''}
 																onChange={(event) => {
 																	const value = event.target.value;
-																	onReinforcementParticipantChange(participantIndex, {
-																		initiativeBonus:
-																			value === '' ? undefined : Number(value),
-																	});
+																	onReinforcementParticipantChange(
+																		participantIndex,
+																		{
+																			initiativeBonus:
+																				value === ''
+																					? undefined
+																					: Number(value),
+																		}
+																	);
 																}}
 															/>
 															<Input
 																placeholder="Initiative description"
 																value={participant.initiativeDescription ?? ''}
 																onChange={(event) =>
-																	onReinforcementParticipantChange(participantIndex, {
-																		initiativeDescription: event.target.value,
-																	})
+																	onReinforcementParticipantChange(
+																		participantIndex,
+																		{
+																			initiativeDescription: event.target.value,
+																		}
+																	)
 																}
 															/>
 														</div>
@@ -715,12 +765,19 @@ export function SlotRowParticipantContent({
 												resolvedParticipantActiveTab === 'hp' && (
 													<div className="space-y-2">
 														<div className="flex items-center justify-between gap-2">
-															<p className="text-sm font-medium">HP / Hardness</p>
+															<p className="text-sm font-medium">
+																HP / Hardness
+															</p>
 															<Button
 																type="button"
 																variant="destructive"
 																size="sm"
-																onClick={() => onRemoveReinforcementTab(participantIndex, 'hp')}
+																onClick={() =>
+																	onRemoveReinforcementTab(
+																		participantIndex,
+																		'hp'
+																	)
+																}
 															>
 																<Trash2 className="h-4 w-4" />
 															</Button>
@@ -733,9 +790,15 @@ export function SlotRowParticipantContent({
 																value={participant.maxHealth ?? ''}
 																onChange={(event) => {
 																	const value = event.target.value;
-																	onReinforcementParticipantChange(participantIndex, {
-																		maxHealth: value === '' ? undefined : Number(value),
-																	});
+																	onReinforcementParticipantChange(
+																		participantIndex,
+																		{
+																			maxHealth:
+																				value === ''
+																					? undefined
+																					: Number(value),
+																		}
+																	);
 																}}
 															/>
 															{participant.type === 'hazard' ? (
@@ -746,10 +809,15 @@ export function SlotRowParticipantContent({
 																	value={participant.hardness ?? ''}
 																	onChange={(event) => {
 																		const value = event.target.value;
-																		onReinforcementParticipantChange(participantIndex, {
-																			hardness:
-																			value === '' ? undefined : Number(value),
-																		});
+																		onReinforcementParticipantChange(
+																			participantIndex,
+																			{
+																				hardness:
+																					value === ''
+																						? undefined
+																						: Number(value),
+																			}
+																		);
 																	}}
 																/>
 															) : null}
@@ -767,7 +835,10 @@ export function SlotRowParticipantContent({
 																variant="destructive"
 																size="sm"
 																onClick={() =>
-																	onRemoveReinforcementTab(participantIndex, 'adjustment')
+																	onRemoveReinforcementTab(
+																		participantIndex,
+																		'adjustment'
+																	)
 																}
 															>
 																<Trash2 className="h-4 w-4" />
@@ -777,9 +848,14 @@ export function SlotRowParticipantContent({
 															<Select
 																value={participant.adjustment}
 																onValueChange={(value) =>
-																	onReinforcementParticipantChange(participantIndex, {
-																		adjustment: value as LevelAdjustment | 'none',
-																	})
+																	onReinforcementParticipantChange(
+																		participantIndex,
+																		{
+																			adjustment: value as
+																				| LevelAdjustment
+																				| 'none',
+																		}
+																	)
 																}
 															>
 																<SelectTrigger className="w-full">
@@ -787,7 +863,10 @@ export function SlotRowParticipantContent({
 																</SelectTrigger>
 																<SelectContent>
 																	{ADJUSTMENT_OPTIONS.map((option) => (
-																		<SelectItem key={option.value} value={option.value}>
+																		<SelectItem
+																			key={option.value}
+																			value={option.value}
+																		>
 																			{option.label}
 																		</SelectItem>
 																	))}
@@ -797,22 +876,32 @@ export function SlotRowParticipantContent({
 																placeholder="Custom adjustment description"
 																value={participant.adjustmentDescription ?? ''}
 																onChange={(event) =>
-																	onReinforcementParticipantChange(participantIndex, {
-																		adjustmentDescription: event.target.value,
-																	})
+																	onReinforcementParticipantChange(
+																		participantIndex,
+																		{
+																			adjustmentDescription: event.target.value,
+																		}
+																	)
 																}
 															/>
 															<Input
 																type="number"
 																step="0.1"
 																placeholder="Custom level modifier"
-																value={participant.adjustmentLevelModifier ?? ''}
+																value={
+																	participant.adjustmentLevelModifier ?? ''
+																}
 																onChange={(event) => {
 																	const value = event.target.value;
-																	onReinforcementParticipantChange(participantIndex, {
-																		adjustmentLevelModifier:
-																			value === '' ? undefined : Number(value),
-																	});
+																	onReinforcementParticipantChange(
+																		participantIndex,
+																		{
+																			adjustmentLevelModifier:
+																				value === ''
+																					? undefined
+																					: Number(value),
+																		}
+																	);
 																}}
 															/>
 														</div>
@@ -827,7 +916,12 @@ export function SlotRowParticipantContent({
 																type="button"
 																variant="destructive"
 																size="sm"
-																onClick={() => onRemoveReinforcementTab(participantIndex, 'traits')}
+																onClick={() =>
+																	onRemoveReinforcementTab(
+																		participantIndex,
+																		'traits'
+																	)
+																}
 															>
 																<Trash2 className="h-4 w-4" />
 															</Button>
@@ -844,31 +938,39 @@ export function SlotRowParticipantContent({
 																			...(participant.traits ?? []),
 																			event.currentTarget.value.trim(),
 																		];
-																		onReinforcementParticipantChange(participantIndex, {
-																			traits: nextTraits,
-																		});
+																		onReinforcementParticipantChange(
+																			participantIndex,
+																			{
+																				traits: nextTraits,
+																			}
+																		);
 																		event.currentTarget.value = '';
 																	}
 																}}
 															/>
 														</div>
 														<div className="flex flex-wrap gap-2">
-															{(participant.traits ?? []).map((trait, traitIndex) => (
-																<span
-																	key={`r-trait-${participant.id}-${traitIndex}`}
-																	className="rounded border px-2 py-1 text-xs cursor-pointer"
-																	onClick={() => {
-																		const nextTraits = (participant.traits ?? []).filter(
-																			(_, idx) => idx !== traitIndex
-																		);
-																		onReinforcementParticipantChange(participantIndex, {
-																			traits: nextTraits,
-																		});
-																	}}
-																>
-																	{trait} x
-																</span>
-															))}
+															{(participant.traits ?? []).map(
+																(trait, traitIndex) => (
+																	<span
+																		key={`r-trait-${participant.id}-${traitIndex}`}
+																		className="rounded border px-2 py-1 text-xs cursor-pointer"
+																		onClick={() => {
+																			const nextTraits = (
+																				participant.traits ?? []
+																			).filter((_, idx) => idx !== traitIndex);
+																			onReinforcementParticipantChange(
+																				participantIndex,
+																				{
+																					traits: nextTraits,
+																				}
+																			);
+																		}}
+																	>
+																		{trait} x
+																	</span>
+																)
+															)}
 														</div>
 													</div>
 												)}
@@ -876,16 +978,18 @@ export function SlotRowParticipantContent({
 												resolvedParticipantActiveTab === 'combat-ready' && (
 													<div className="space-y-2">
 														<div className="flex items-center justify-between gap-2">
-															<p className="text-sm font-medium">Combat Ready</p>
+															<p className="text-sm font-medium">
+																Combat Ready
+															</p>
 															<Button
 																type="button"
 																variant="destructive"
 																size="sm"
 																onClick={() =>
 																	onRemoveReinforcementTab(
-																	participantIndex,
-																	'combat-ready'
-																)
+																		participantIndex,
+																		'combat-ready'
+																	)
 																}
 															>
 																<Trash2 className="h-4 w-4" />
@@ -895,10 +999,13 @@ export function SlotRowParticipantContent({
 															<Select
 																value={participant.combatReadyState ?? 'active'}
 																onValueChange={(value) =>
-																	onReinforcementParticipantChange(participantIndex, {
-																		combatReadyState:
-																			value as BuilderReinforcementParticipant['combatReadyState'],
-																	})
+																	onReinforcementParticipantChange(
+																		participantIndex,
+																		{
+																			combatReadyState:
+																				value as BuilderReinforcementParticipant['combatReadyState'],
+																		}
+																	)
 																}
 															>
 																<SelectTrigger>
@@ -906,20 +1013,29 @@ export function SlotRowParticipantContent({
 																</SelectTrigger>
 																<SelectContent>
 																	<SelectItem value="active">Active</SelectItem>
-																	<SelectItem value="delayed">Delayed</SelectItem>
-																	<SelectItem value="knocked-out">Defeated</SelectItem>
+																	<SelectItem value="delayed">
+																		Delayed
+																	</SelectItem>
+																	<SelectItem value="knocked-out">
+																		Defeated
+																	</SelectItem>
 																</SelectContent>
 															</Select>
 															<Toggle
 																pressed={participant.hiddenFromPlayers ?? false}
 																onPressedChange={(pressed) =>
-																	onReinforcementParticipantChange(participantIndex, {
-																		hiddenFromPlayers: pressed,
-																	})
+																	onReinforcementParticipantChange(
+																		participantIndex,
+																		{
+																			hiddenFromPlayers: pressed,
+																		}
+																	)
 																}
 																className="w-fit"
 															>
-																{participant.hiddenFromPlayers ? 'Hidden' : 'Visible'}
+																{participant.hiddenFromPlayers
+																	? 'Hidden'
+																	: 'Visible'}
 															</Toggle>
 														</div>
 													</div>
@@ -935,7 +1051,11 @@ export function SlotRowParticipantContent({
 
 			<div className="space-y-4">
 				{isCombatSlot && (
-					<Tabs value={activeTab} onValueChange={onSetActiveTab} className="w-full">
+					<Tabs
+						value={activeTab}
+						onValueChange={onSetActiveTab}
+						className="w-full"
+					>
 						<TabsList className="flex flex-wrap w-full gap-2 h-auto p-1 bg-muted justify-start items-center">
 							{visibleTabs.map((tab) => (
 								<TabsTrigger
@@ -1030,15 +1150,16 @@ export function SlotRowParticipantContent({
 								/>
 							)}
 
-							{slotType === 'creature' && visibleTabs.includes('adjustment') && (
-								<AdjustmentTab
-									index={index}
-									slot={slot}
-									setValue={setValue}
-									control={control}
-									onRemove={onRemoveAdjustmentTab}
-								/>
-							)}
+							{slotType === 'creature' &&
+								visibleTabs.includes('adjustment') && (
+									<AdjustmentTab
+										index={index}
+										slot={slot}
+										setValue={setValue}
+										control={control}
+										onRemove={onRemoveAdjustmentTab}
+									/>
+								)}
 
 							{visibleTabs.includes('traits') && (
 								<TraitsTab

@@ -1,12 +1,24 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@/components/ui/button';
-import { BuilderListLayout, type BuilderListLayoutKey } from '../BuilderListLayout';
+import {
+	BuilderListLayout,
+	type BuilderListLayoutKey,
+} from '../BuilderListLayout';
 import { ParagraphFields } from '../ParagraphFields';
-import { FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
+import {
+	FormField,
+	FormItem,
+	FormLabel,
+	FormControl,
+} from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 import { ALIGNMENT, type Alignment } from '@/store/data';
 import type { BuilderFormValues, BuilderNote } from '../builderConvert';
-import type { UseFormReturn, UseFieldArrayAppend, UseFieldArrayRemove } from 'react-hook-form';
+import type {
+	UseFormReturn,
+	UseFieldArrayAppend,
+	UseFieldArrayRemove,
+} from 'react-hook-form';
 import type { FieldArrayWithId } from 'react-hook-form';
 
 type NoteVisibility = 'all' | Alignment;
@@ -48,7 +60,8 @@ function NoteEditor({
 						<FormControl>
 							<div className="flex flex-wrap gap-1">
 								{VISIBILITY_OPTIONS.map((option) => {
-									const isActive = String(field.value ?? 'all') === String(option.value);
+									const isActive =
+										String(field.value ?? 'all') === String(option.value);
 
 									return (
 										<button

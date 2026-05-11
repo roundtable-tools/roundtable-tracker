@@ -1,8 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@/components/ui/button';
-import { BuilderListLayout, type BuilderListLayoutKey } from '../BuilderListLayout';
+import {
+	BuilderListLayout,
+	type BuilderListLayoutKey,
+} from '../BuilderListLayout';
 import { templateVariantToFormPartial } from '../builderConvert';
-import type { BuilderFormValues, BuilderVariantSnapshot } from '../builderConvert';
+import type {
+	BuilderFormValues,
+	BuilderVariantSnapshot,
+} from '../builderConvert';
 import type { UseFormReturn } from 'react-hook-form';
 import type { EncounterVariant } from '@/models/encounters/encounter.types';
 
@@ -41,10 +47,12 @@ export function TemplateVariantListSection({
 	return (
 		<>
 			<div>
-				<h3 className="text-sm font-medium text-muted-foreground">From template</h3>
+				<h3 className="text-sm font-medium text-muted-foreground">
+					From template
+				</h3>
 				<p className="text-xs text-muted-foreground">
-					These are the original template variants. Load one to apply it to the current form,
-					or load and save to create a concrete variant snapshot.
+					These are the original template variants. Load one to apply it to the
+					current form, or load and save to create a concrete variant snapshot.
 				</p>
 			</div>
 			<BuilderListLayout
