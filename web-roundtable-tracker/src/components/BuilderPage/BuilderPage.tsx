@@ -1,15 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import {
-	Form,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormControl,
-	FormMessage,
-} from '@/components/ui/form';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Form } from '@/components/ui/form';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getSavedEncountersStore } from '@/store/savedEncounterInstance';
 import { useSavedEncountersStore } from '@/store/savedEncounterInstance';
 import { type ConcreteEncounter } from '@/store/data';
@@ -43,32 +36,18 @@ import {
 	getParticipantSectionSummary,
 	getSlotSectionIndices,
 } from './slotSections';
-import { PartyLevelPicker } from './PartyLevelPicker';
-import { PartySizePicker } from './PartySizePicker';
 import { cn } from '@/lib/utils';
-import { BuilderPreviewTab } from './BuilderPreviewTab';
-import { ParagraphFields } from './ParagraphFields.tsx';
-import { ParticipantListSection } from './sections/ParticipantListSection';
-import { EventListSection } from './sections/EventListSection';
-import { NoteListSection } from './sections/NoteListSection';
-import { VariantListSection } from './sections/VariantListSection';
-import { TemplateVariantListSection } from './sections/TemplateVariantListSection';
 import type { BuilderListLayoutKey } from './BuilderListLayout';
 import { useSavedPartiesStore } from '@/store/savedPartiesInstance';
 import {
-	CHALLENGE_POINT_TIER_STARTS,
 	challengePointsFromLevelDelta,
-	challengePointTierLabel,
 	normalizePartySetup,
 } from '@/models/utility/challengePoints/challengePoints';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
+import { BuilderDetailsStep } from './steps/BuilderDetailsStep';
+import { BuilderParticipantsStep } from './steps/BuilderParticipantsStep';
+import { BuilderEventsStep } from './steps/BuilderEventsStep';
+import { BuilderVariantsStep } from './steps/BuilderVariantsStep';
+import { BuilderPreviewStep } from './steps/BuilderPreviewStep';
 
 function hasAdditionalBlock(
 	slot: BuilderFormValues['slots'][number],
@@ -193,7 +172,7 @@ export function BuilderPage({
 		defaultValues: defaultFormValues(),
 	});
 
-	const { control, handleSubmit, reset, formState, setValue } = form;
+	const { control, handleSubmit, reset, formState } = form;
 
 	const { fields, append, remove, update } = useFieldArray({
 		control,
@@ -723,340 +702,88 @@ export function BuilderPage({
 						</div>
 					</TabsList>
 
-					<TabsContent value="details" className="space-y-3">
-						<section className="space-y-3">
-							<div className="space-y-2">
-								<div className="space-y-3 rounded-md border p-3">
-									<div className="space-y-2">
-										<FormLabel>Party Setup</FormLabel>
-										<div className="flex flex-wrap gap-2">
-											{[
-												{ key: 'simple', label: 'Simple' },
-												{ key: 'specific', label: 'Specific' },
-												{ key: 'challenge-points', label: 'Challenge Points' },
-											].map((mode) => (
-												<Button
-													key={mode.key}
-													type="button"
-													variant={
-														partySetupMode === mode.key ? 'default' : 'outline'
-													}
-													onClick={() =>
-														setValue(
-															'partySetupMode',
-															mode.key as BuilderFormValues['partySetupMode']
-														)
-													}
-												>
-													{mode.label}
-												</Button>
-											))}
-										</div>
-									</div>
+					<BuilderDetailsStep
+						form={form}
+						partySetupMode={partySetupMode}
+						specificPartyId={specificPartyId}
+						specificPartyLevels={specificPartyLevels}
+						challengePointTierStart={challengePointTierStart}
+						challengePointBudget={challengePointBudget}
+						savedParties={savedParties}
+						selectedSavedParty={selectedSavedParty}
+						resolvedSpecificPartyLevels={resolvedSpecificPartyLevels}
+						normalizedPartySetup={normalizedPartySetup}
+						safePartyLevel={safePartyLevel}
+						safePartySize={safePartySize}
+						noteFields={noteFields}
+						notes={notes}
+						appendNote={appendNote}
+						removeNote={removeNote}
+						activeNotesTab={activeNotesTab}
+						onActiveNotesTabChange={setActiveNotesTab}
+						layoutKey={sectionLayoutKeys.notes}
+						onLayoutKeyChange={(key) => setSectionLayoutKey('notes', key)}
+					/>
 
-									{partySetupMode === 'simple' ? (
-										<div className="flex flex-wrap items-start gap-3 sm:flex-nowrap">
-											<FormField
-												control={form.control}
-												name="partyLevel"
-												render={({ field }) => (
-													<FormItem className="min-w-0 flex-1 space-y-1">
-														<FormLabel>Party Level</FormLabel>
-														<FormControl>
-															<PartyLevelPicker
-																value={field.value}
-																onChange={field.onChange}
-																onBlur={field.onBlur}
-																name={field.name}
-																ref={field.ref}
-															/>
-														</FormControl>
-														<FormMessage />
-													</FormItem>
-												)}
-											/>
-											<FormField
-												control={form.control}
-												name="partySize"
-												render={({ field }) => (
-													<FormItem className="w-fit shrink-0 space-y-1">
-														<FormLabel className="-mb-5">Party Size</FormLabel>
-														<FormControl>
-															<PartySizePicker
-																value={field.value}
-																onChange={field.onChange}
-																onBlur={field.onBlur}
-																name={field.name}
-																ref={field.ref}
-															/>
-														</FormControl>
-														<FormMessage />
-													</FormItem>
-												)}
-											/>
-										</div>
-									) : null}
+					<BuilderParticipantsStep
+						form={form}
+						items={participantItems}
+						resolvedSlots={resolvedSlots}
+						remove={remove}
+						update={update}
+						usedAdditionalDataBlocks={usedAdditionalDataBlocks}
+						activeItemId={activeParticipantItemId}
+						onActiveItemIdChange={setActiveParticipantItemId}
+						append={append}
+						layoutKey={sectionLayoutKeys.participants}
+						onLayoutKeyChange={(key) =>
+							setSectionLayoutKey('participants', key)
+						}
+					/>
 
-									{partySetupMode === 'specific' ? (
-										<div className="space-y-3">
-											<div className="space-y-1">
-												<FormLabel>Saved Party</FormLabel>
-												<Select
-													value={specificPartyId || 'custom'}
-													onValueChange={(value) =>
-														setValue(
-															'specificPartyId',
-															value === 'custom' ? undefined : value
-														)
-													}
-												>
-													<SelectTrigger className="w-full">
-														<SelectValue placeholder="Use custom level list" />
-													</SelectTrigger>
-													<SelectContent>
-														<SelectItem value="custom">
-															Custom level list
-														</SelectItem>
-														{savedParties.map((party) => (
-															<SelectItem key={party.id} value={party.id}>
-																{party.name} ({party.members.length})
-															</SelectItem>
-														))}
-													</SelectContent>
-												</Select>
-											</div>
-											{selectedSavedParty ? (
-												<p className="text-xs text-muted-foreground">
-													Using saved party levels:{' '}
-													{resolvedSpecificPartyLevels.join(', ')}
-												</p>
-											) : (
-												<div className="space-y-2">
-													<FormLabel>Custom Party Levels</FormLabel>
-													<div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-														{specificPartyLevels.map((level, index) => (
-															<div
-																key={`custom-level-${index}`}
-																className="flex gap-1"
-															>
-																<Input
-																	type="number"
-																	min={1}
-																	max={20}
-																	value={level}
-																	onChange={(event) => {
-																		const nextLevels = [...specificPartyLevels];
-																		nextLevels[index] = Number(
-																			event.target.value
-																		);
-																		setValue('specificPartyLevels', nextLevels);
-																	}}
-																/>
-																<Button
-																	type="button"
-																	variant="outline"
-																	onClick={() => {
-																		const nextLevels =
-																			specificPartyLevels.filter(
-																				(_, i) => i !== index
-																			);
-																		setValue('specificPartyLevels', nextLevels);
-																	}}
-																>
-																	X
-																</Button>
-															</div>
-														))}
-													</div>
-													<Button
-														type="button"
-														variant="outline"
-														onClick={() =>
-															setValue('specificPartyLevels', [
-																...specificPartyLevels,
-																1,
-															])
-														}
-													>
-														Add Member Level
-													</Button>
-												</div>
-											)}
-										</div>
-									) : null}
+					<BuilderEventsStep
+						form={form}
+						items={eventItems}
+						resolvedSlots={resolvedSlots}
+						remove={remove}
+						update={update}
+						usedAdditionalDataBlocks={usedAdditionalDataBlocks}
+						activeItemId={activeEventItemId}
+						onActiveItemIdChange={setActiveEventItemId}
+						append={append}
+						layoutKey={sectionLayoutKeys.events}
+						onLayoutKeyChange={(key) => setSectionLayoutKey('events', key)}
+					/>
 
-									{partySetupMode === 'challenge-points' ? (
-										<div className="grid gap-3 sm:grid-cols-2">
-											<div className="space-y-1">
-												<FormLabel>Level Tier</FormLabel>
-												<Select
-													value={`${challengePointTierStart}`}
-													onValueChange={(value) =>
-														setValue('challengePointTierStart', Number(value))
-													}
-												>
-													<SelectTrigger className="w-full">
-														<SelectValue />
-													</SelectTrigger>
-													<SelectContent>
-														{CHALLENGE_POINT_TIER_STARTS.map((tierStart) => (
-															<SelectItem
-																key={tierStart}
-																value={`${tierStart}`}
-															>
-																{challengePointTierLabel(tierStart)}
-															</SelectItem>
-														))}
-													</SelectContent>
-												</Select>
-											</div>
-											<div className="space-y-1">
-												<FormLabel>Challenge Points Budget</FormLabel>
-												<Input
-													type="number"
-													value={challengePointBudget}
-													onChange={(event) =>
-														setValue(
-															'challengePointBudget',
-															Math.min(48, Number(event.target.value) || 0)
-														)
-													}
-													onBlur={() =>
-														setValue(
-															'challengePointBudget',
-															Math.max(2, challengePointBudget || 0)
-														)
-													}
-												/>
-											</div>
-											<p className="text-xs text-muted-foreground sm:col-span-2">
-												{normalizedPartySetup.challengePointBudget} ChP equals{' '}
-												{normalizedPartySetup.xpBudgetEquivalent} XP at tier{' '}
-												{normalizedPartySetup.challengePointTierLabel} (basis
-												level {normalizedPartySetup.challengePointBasisLevel}).
-												Assumed party size for threat display:{' '}
-												{normalizedPartySetup.inferredChallengePointPartySize}.
-											</p>
-										</div>
-									) : null}
+					<BuilderVariantsStep
+						form={form}
+						variants={variants}
+						safePartyLevel={safePartyLevel}
+						safePartySize={safePartySize}
+						activeVariantItemId={activeVariantItemId}
+						onActiveVariantItemIdChange={setActiveVariantItemId}
+						templateShadowVariants={templateShadowVariants}
+						templateVariantId={templateVariantId}
+						activeTemplateVariantItemId={activeTemplateVariantItemId}
+						onActiveTemplateVariantItemIdChange={setActiveTemplateVariantItemId}
+						onVariantSaved={setActiveVariantItemId}
+						variantsLayoutKey={sectionLayoutKeys.variants}
+						onVariantsLayoutKeyChange={(key) =>
+							setSectionLayoutKey('variants', key)
+						}
+						templateVariantsLayoutKey={sectionLayoutKeys.templateVariants}
+						onTemplateVariantsLayoutKeyChange={(key) =>
+							setSectionLayoutKey('templateVariants', key)
+						}
+					/>
 
-									<p className="text-xs text-muted-foreground">
-										Effective calculation context: level {safePartyLevel}, size{' '}
-										{safePartySize}, {normalizedPartySetup.challengePointBudget}{' '}
-										ChP.
-									</p>
-								</div>
-								<ParagraphFields
-									control={form.control}
-									label="Encounter Name and Description"
-									fieldNames={['name', 'description']}
-									placeholders={[
-										'Training Grounds',
-										'Brief setup description...',
-									]}
-								/>
-							</div>
-							<div className="space-y-2">
-								<NoteListSection
-									form={form}
-									noteFields={noteFields}
-									notes={notes}
-									appendNote={appendNote}
-									removeNote={removeNote}
-									activeNotesTab={activeNotesTab}
-									onActiveNotesTabChange={setActiveNotesTab}
-									layoutKey={sectionLayoutKeys.notes}
-									onLayoutKeyChange={(key) => setSectionLayoutKey('notes', key)}
-								/>
-							</div>
-						</section>
-					</TabsContent>
-
-					<TabsContent value="participants" className="space-y-3">
-						<section className="space-y-3">
-							<ParticipantListSection
-								form={form}
-								items={participantItems}
-								resolvedSlots={resolvedSlots}
-								remove={remove}
-								update={update}
-								usedAdditionalDataBlocks={usedAdditionalDataBlocks}
-								activeItemId={activeParticipantItemId}
-								onActiveItemIdChange={setActiveParticipantItemId}
-								append={append}
-								layoutKey={sectionLayoutKeys.participants}
-								onLayoutKeyChange={(key) =>
-									setSectionLayoutKey('participants', key)
-								}
-							/>
-						</section>
-					</TabsContent>
-
-					<TabsContent value="events" className="space-y-3">
-						<section className="space-y-3">
-							<EventListSection
-								form={form}
-								items={eventItems}
-								resolvedSlots={resolvedSlots}
-								remove={remove}
-								update={update}
-								usedAdditionalDataBlocks={usedAdditionalDataBlocks}
-								activeItemId={activeEventItemId}
-								onActiveItemIdChange={setActiveEventItemId}
-								append={append}
-								layoutKey={sectionLayoutKeys.events}
-								onLayoutKeyChange={(key) => setSectionLayoutKey('events', key)}
-							/>
-						</section>
-					</TabsContent>
-
-					<TabsContent value="variants" className="space-y-4">
-						<section className="space-y-3">
-							<p className="text-xs text-muted-foreground">
-								Snapshot the current builder state as a reusable variant.
-							</p>
-							<VariantListSection
-								form={form}
-								variants={variants}
-								safePartyLevel={safePartyLevel}
-								safePartySize={safePartySize}
-								activeVariantItemId={activeVariantItemId}
-								onActiveVariantItemIdChange={setActiveVariantItemId}
-								layoutKey={sectionLayoutKeys.variants}
-								onLayoutKeyChange={(key) =>
-									setSectionLayoutKey('variants', key)
-								}
-							/>
-						</section>
-
-						{templateShadowVariants.length > 0 && (
-							<section className="space-y-3">
-								<TemplateVariantListSection
-									templateShadowVariants={templateShadowVariants}
-									templateVariantId={templateVariantId}
-									form={form}
-									safePartyLevel={safePartyLevel}
-									activeItemId={activeTemplateVariantItemId}
-									onActiveItemIdChange={setActiveTemplateVariantItemId}
-									onVariantSaved={setActiveVariantItemId}
-									layoutKey={sectionLayoutKeys.templateVariants}
-									onLayoutKeyChange={(key) =>
-										setSectionLayoutKey('templateVariants', key)
-									}
-								/>
-							</section>
-						)}
-					</TabsContent>
-
-					<TabsContent value="preview" className="space-y-4">
-						<BuilderPreviewTab
-							control={control}
-							templateVariants={templateShadowVariants}
-							attritionRatePercent={attritionRatePercent}
-							maxRounds={maxRounds}
-							basePartyOutputPerRound={basePartyOutputPerRound}
-						/>
-					</TabsContent>
+					<BuilderPreviewStep
+						control={control}
+						templateVariants={templateShadowVariants}
+						attritionRatePercent={attritionRatePercent}
+						maxRounds={maxRounds}
+						basePartyOutputPerRound={basePartyOutputPerRound}
+					/>
 				</Tabs>
 
 				<div className="sticky bottom-0 z-20 -mx-4 border-t bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/85">

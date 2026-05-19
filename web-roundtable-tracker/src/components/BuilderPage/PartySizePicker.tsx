@@ -14,7 +14,7 @@ interface PartySizePickerProps {
 	options?: readonly number[];
 	icon?: LucideIcon;
 	rows?: number;
-	buttonSize?: 'sm' | 'md';
+	buttonSize?: 'sm' | 'md' | 'xl';
 	showReadout?: boolean;
 }
 
@@ -48,8 +48,11 @@ export function PartySizePicker({
 		computedOptions.slice(rowIdx * optionsPerRow, (rowIdx + 1) * optionsPerRow)
 	);
 
-	const buttonSizeClass = buttonSize === 'sm' ? 'size-6' : 'size-8';
-	const iconSizeClass = buttonSize === 'sm' ? 'size-3' : 'size-4';
+	const buttonSizeClass =
+		buttonSize === 'sm' ? 'size-6' : buttonSize === 'xl' ? 'size-12' : 'size-8';
+	const iconSizeClass =
+		buttonSize === 'sm' ? 'size-3' : buttonSize === 'xl' ? 'size-6' : 'size-4';
+	const wrapperClass = buttonSize === 'xl' ? 'px-3 py-2' : 'px-2 py-1.5';
 
 	const renderButtonRows = () => {
 		return rowsArray.map((rowOptions, rowIdx) => (
@@ -101,7 +104,12 @@ export function PartySizePicker({
 					{safeValue} / {max}
 				</div>
 			)}
-			<div className="inline-flex flex-col gap-1 rounded-md border bg-background px-2 py-1.5 shadow-xs">
+			<div
+				className={cn(
+					'inline-flex flex-col gap-1 rounded-md border bg-background shadow-xs',
+					wrapperClass
+				)}
+			>
 				{renderButtonRows()}
 			</div>
 		</div>

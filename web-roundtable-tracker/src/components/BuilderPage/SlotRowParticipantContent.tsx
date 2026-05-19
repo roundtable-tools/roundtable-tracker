@@ -144,12 +144,13 @@ export function SlotRowParticipantContent({
 		<>
 			<div className="space-y-3">
 				{isCombatSlot && (
-					<div className="flex flex-wrap items-start gap-3 sm:flex-nowrap -mb-3">
+				<div className="grid grid-cols-[1fr_auto] gap-3 items-start">
+					<div className="space-y-3">
 						<FormField
 							control={control}
 							name={`slots.${index}.level` as const}
 							render={({ field }) => (
-								<FormItem className="min-w-0 flex-1 space-y-1">
+								<FormItem className="space-y-1">
 									<FormLabel>Level</FormLabel>
 									<FormControl>
 										<PartyLevelPicker
@@ -167,126 +168,125 @@ export function SlotRowParticipantContent({
 							)}
 						/>
 
-						<FormField
-							control={control}
-							name={`slots.${index}.count` as const}
-							render={({ field }) => (
-								<FormItem className="w-fit shrink-0 space-y-1">
-									<FormLabel className="-mb-5">Count</FormLabel>
-									<FormControl>
-										<PartySizePicker
-											value={field.value}
-											onChange={(value) => {
-												field.onChange(value == field.value ? 0 : value);
-											}}
-											onBlur={field.onBlur}
-											name={field.name}
-											ref={field.ref}
-											min={1}
-											max={12}
-											rows={2}
-											buttonSize="sm"
-											icon={slotType === 'hazard' ? TriangleAlert : Skull}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
+						<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+							<FormField
+								control={control}
+								name={`slots.${index}.side` as const}
+								render={({ field }) => (
+									<FormItem className="space-y-1">
+										<FormLabel>Side</FormLabel>
+										<FormControl>
+											<Select
+												value={normalizeSideType(field.value as SideType)}
+												onValueChange={(value) =>
+													field.onChange(value as SideType)
+												}
+											>
+												<SelectTrigger className="w-full">
+													<SelectValue />
+												</SelectTrigger>
+												<SelectContent>
+													{SIDE_OPTIONS.map((option) => (
+														<SelectItem key={option.value} value={option.value}>
+															{option.label}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							{slotType === 'hazard' && (
+								<>
+									<FormField
+										control={control}
+										name={`slots.${index}.successesToDisable` as const}
+										render={({ field }) => (
+											<FormItem className="space-y-1">
+												<FormLabel>Successes</FormLabel>
+												<FormControl>
+													<Input
+														type="number"
+														min={1}
+														value={field.value ?? ''}
+														onChange={(event) => {
+															const value = event.target.value;
+															field.onChange(
+																value === '' ? undefined : Number(value)
+															);
+														}}
+														onBlur={field.onBlur}
+														name={field.name}
+														ref={field.ref}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={control}
+										name={`slots.${index}.isSimpleHazard` as const}
+										render={({ field }) => (
+											<FormItem className="mt-5 flex items-center gap-2 space-y-0 sm:col-span-2">
+												<FormControl>
+													<input
+														type="checkbox"
+														id={`simple-hazard-${index}`}
+														className="h-4 w-4"
+														checked={Boolean(field.value)}
+														onChange={(event) =>
+															field.onChange(event.target.checked)
+														}
+														onBlur={field.onBlur}
+														name={field.name}
+														ref={field.ref}
+													/>
+												</FormControl>
+												<FormLabel htmlFor={`simple-hazard-${index}`}>
+													Simple Hazard
+												</FormLabel>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</>
 							)}
-						/>
+						</div>
 					</div>
-				)}
 
-				{isCombatSlot && (
-					<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
-						<FormField
-							control={control}
-							name={`slots.${index}.side` as const}
-							render={({ field }) => (
-								<FormItem className="space-y-1">
-									<FormLabel>Side</FormLabel>
-									<FormControl>
-										<Select
-											value={normalizeSideType(field.value as SideType)}
-											onValueChange={(value) =>
-												field.onChange(value as SideType)
-											}
-										>
-											<SelectTrigger className="w-full">
-												<SelectValue />
-											</SelectTrigger>
-											<SelectContent>
-												{SIDE_OPTIONS.map((option) => (
-													<SelectItem key={option.value} value={option.value}>
-														{option.label}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						{slotType === 'hazard' && (
-							<>
-								<FormField
-									control={control}
-									name={`slots.${index}.successesToDisable` as const}
-									render={({ field }) => (
-										<FormItem className="space-y-1">
-											<FormLabel>Successes</FormLabel>
-											<FormControl>
-												<Input
-													type="number"
-													min={1}
-													value={field.value ?? ''}
-													onChange={(event) => {
-														const value = event.target.value;
-														field.onChange(
-															value === '' ? undefined : Number(value)
-														);
-													}}
-													onBlur={field.onBlur}
-													name={field.name}
-													ref={field.ref}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={control}
-									name={`slots.${index}.isSimpleHazard` as const}
-									render={({ field }) => (
-										<FormItem className="mt-5 flex items-center gap-2 space-y-0 sm:col-span-2">
-											<FormControl>
-												<input
-													type="checkbox"
-													id={`simple-hazard-${index}`}
-													className="h-4 w-4"
-													checked={Boolean(field.value)}
-													onChange={(event) =>
-														field.onChange(event.target.checked)
-													}
-													onBlur={field.onBlur}
-													name={field.name}
-													ref={field.ref}
-												/>
-											</FormControl>
-											<FormLabel htmlFor={`simple-hazard-${index}`}>
-												Simple Hazard
-											</FormLabel>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-							</>
+					<FormField
+						control={control}
+						name={`slots.${index}.count` as const}
+						render={({ field }) => (
+							<FormItem className="space-y-1">
+								<FormLabel className='-mb-5'>Count</FormLabel>
+								<FormControl>
+									<PartySizePicker
+										value={field.value}
+										onChange={(value) => {
+											field.onChange(value == field.value ? 0 : value);
+										}}
+										onBlur={field.onBlur}
+										name={field.name}
+										ref={field.ref}
+										min={1}
+										max={12}
+										rows={3}
+										buttonSize="md"
+										icon={slotType === 'hazard' ? TriangleAlert : Skull}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
 						)}
-					</div>
-				)}
-			</div>
+					/>
+				</div>
+			)}
+		</div>
 
 			{slotType === 'reinforcement' && (
 				<section className="space-y-3 rounded-md border p-3">
