@@ -4,6 +4,7 @@
  */
 
 import { LevelDifference } from '../utility/level/LevelDifference';
+import type { EncounterFaction } from './factions';
 
 // ============================================================================
 // Role Literals
@@ -48,6 +49,7 @@ export interface BaseParticipant {
 	count: number;
 	relativeLevel: LevelDifference; // e.g., -4, +2
 	side: ParticipantSide; // Matches ALIGNMENT values during transition
+	factionId?: string;
 	tag?: string; // Semantic label for cross-variant queries
 }
 
@@ -145,6 +147,7 @@ export interface EncounterTemplateData {
 	description: string; // Campaign/module context
 	defaultVariantId: string; // Refs a variantId (validated by schema)
 	variants: EncounterVariant[]; // At least one
+	factions?: EncounterFaction[];
 	tags?: string[]; // "desert", "kobolds", "level-3" for discovery
 	createdAt?: Date;
 	updatedAt?: Date;

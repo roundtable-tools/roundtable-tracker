@@ -12,7 +12,7 @@ import {
 	FormControl,
 } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
-import { ALIGNMENT, type Alignment } from '@/store/data';
+import { factionAlignmentToAlignment } from '@/store/data';
 import type { BuilderFormValues, BuilderNote } from '../builderConvert';
 import type {
 	UseFormReturn,
@@ -20,15 +20,25 @@ import type {
 	UseFieldArrayRemove,
 } from 'react-hook-form';
 import type { FieldArrayWithId } from 'react-hook-form';
+import { useWatch } from 'react-hook-form';
+import { type EncounterFaction } from '@/models/encounters/factions';
 
-type NoteVisibility = 'all' | Alignment;
+type NoteVisibilityOption =
+	| { value: 'all'; label: string }
+	| { value: string; label: string; faction: EncounterFaction };
 
-const VISIBILITY_OPTIONS: Array<{ value: NoteVisibility; label: string }> = [
-	{ value: 'all', label: 'All' },
-	{ value: ALIGNMENT.Opponents, label: 'Opponents' },
-	{ value: ALIGNMENT.PCs, label: 'Allies' },
-	{ value: ALIGNMENT.Neutral, label: 'Other' },
-];
+function resolveNoteVisibilityOptions(
+	factions: EncounterFaction[]
+): NoteVisibilityOption[] {
+	return [
+		{ value: 'all', label: 'All' },
+		...factions.map((faction) => ({
+			value: faction.id,
+			label: faction.name,
+			faction,
+		})),
+	];
+}
 
 interface NoteListSectionProps {
 	form: UseFormReturn<BuilderFormValues>;
@@ -49,6 +59,12 @@ function NoteEditor({
 	form: UseFormReturn<BuilderFormValues>;
 	index: number;
 }) {
+	const factions = useWatch({ control: form.control, name: 'factions' }) ?? [];
+	const noteFactionId =
+		useWatch({ control: form.control, name: `notes.${index}.factionId` as const }) ??
+		undefined;
+	const visibilityOptions = resolveNoteVisibilityOptions(factions);
+
 	return (
 		<div className="space-y-3">
 			<FormField
@@ -59,9 +75,11 @@ function NoteEditor({
 						<FormLabel>Visibility</FormLabel>
 						<FormControl>
 							<div className="flex flex-wrap gap-1">
-								{VISIBILITY_OPTIONS.map((option) => {
-									const isActive =
-										String(field.value ?? 'all') === String(option.value);
+									{visibilityOptions.map((option) => {
+										const isActive =
+											option.value === 'all'
+												? (field.value ?? 'all') === 'all' && !noteFactionId
+												: noteFactionId === option.value;
 
 									return (
 										<button
@@ -70,8 +88,18 @@ function NoteEditor({
 											onClick={() => {
 												if (option.value === 'all') {
 													field.onChange('all');
+														form.setValue(
+															`notes.${index}.factionId` as const,
+															undefined
+														);
 												} else {
-													field.onChange(Number(option.value) as Alignment);
+														field.onChange(
+															factionAlignmentToAlignment(option.faction.alignment)
+														);
+														form.setValue(
+															`notes.${index}.factionId` as const,
+															option.value
+														);
 												}
 											}}
 											className={cn(
@@ -150,6 +178,7 @@ export function NoteListSection({
 							header: `Note ${nextIndex}`,
 							content: '',
 							visibility: 'all',
+							factionId: undefined,
 						});
 					}}
 				>

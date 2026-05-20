@@ -1,6 +1,10 @@
 import { createStore } from 'zustand/vanilla';
 import { Character, type ParticipantDcEntry } from './data';
 import { UUID } from '@/utils/uuid';
+import type {
+	EncounterFactionColorKey,
+	EncounterFactionIconKey,
+} from '@/models/encounters/factions';
 
 export type TrackerParticipantRole =
 	| 'pc'
@@ -15,6 +19,10 @@ export type TrackerParticipantSideTheme = 'pc' | 'opponent' | 'ally' | 'other';
 export type TrackerParticipantMeta = {
 	role: TrackerParticipantRole;
 	sideTheme: TrackerParticipantSideTheme;
+	factionId?: string;
+	factionName?: string;
+	factionIcon?: EncounterFactionIconKey;
+	factionColor?: EncounterFactionColorKey;
 	hasHealthData?: boolean;
 	isSimpleHazard: boolean;
 	disableChecksRequired: number;

@@ -3,6 +3,10 @@ export type TrackerParticipant = {
 	name: string;
 	role: 'pc' | 'opponent' | 'neutral' | 'ally' | 'hazard' | 'reinforcement';
 	sideTheme?: 'pc' | 'opponent' | 'ally' | 'other' | 'neutral';
+	factionId?: string;
+	factionName?: string;
+	factionIcon?: string;
+	factionColor?: string;
 	state:
 		| 'active'
 		| 'delayed'

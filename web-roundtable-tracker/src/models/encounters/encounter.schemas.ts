@@ -6,6 +6,11 @@ import type {
 	EncounterTemplateData,
 } from './encounter.types';
 import { LevelDifference } from '../utility/level/LevelDifference';
+import {
+	ENCOUNTER_FACTION_COLOR_KEYS,
+	ENCOUNTER_FACTION_ICON_KEYS,
+	FACTION_ALIGNMENT,
+} from './factions';
 
 // ============================================================================
 // Role Schemas
@@ -55,7 +60,21 @@ const BaseParticipantSchema = z.object({
 	count: z.number().int().positive(),
 	relativeLevel: LevelDifferenceSchema,
 	side: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+	factionId: z.string().optional(),
 	tag: z.string().optional(),
+});
+
+const EncounterFactionSchema = z.object({
+	id: z.string().min(1),
+	name: z.string().min(1),
+	alignment: z.enum([
+		FACTION_ALIGNMENT.Opponent,
+		FACTION_ALIGNMENT.Ally,
+		FACTION_ALIGNMENT.Other,
+	]),
+	icon: z.enum(ENCOUNTER_FACTION_ICON_KEYS),
+	color: z.enum(ENCOUNTER_FACTION_COLOR_KEYS),
+	isBuiltIn: z.boolean().optional(),
 });
 
 export const CreatureParticipantSchema = BaseParticipantSchema.extend({
@@ -135,6 +154,7 @@ export const EncounterTemplateDataSchema = z
 		description: z.string(),
 		defaultVariantId: z.string().uuid(),
 		variants: z.array(EncounterVariantSchema).nonempty(),
+		factions: z.array(EncounterFactionSchema).optional(),
 		tags: z.array(z.string()).optional(),
 		createdAt: z.date().optional(),
 		updatedAt: z.date().optional(),

@@ -29,6 +29,7 @@ export interface BuilderReinforcementParticipant {
 	type: 'creature' | 'hazard';
 	name: string;
 	side: SideType;
+	factionId?: string;
 	level: number;
 	count: number;
 	maxHealth?: number;
@@ -53,6 +54,7 @@ export interface BuilderSlot {
 	name: string;
 	description: string;
 	side: SideType;
+	factionId?: string;
 	level: number;
 	count: number;
 	maxHealth?: number;

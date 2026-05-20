@@ -5,10 +5,13 @@ import {
 	ConcreteEncounterVariant,
 	DIFFICULTY,
 	LEVEL_REPRESENTATION,
-	type Alignment,
+	factionAlignmentToAlignment,
+	getBuiltinFactionIdForAlignment,
+	getEncounterFactionsWithFallback,
 	normalizeEncounterNotes,
 	type NarrativeSlot,
 	type Participant,
+	type EncounterFaction,
 } from '@/store/data';
 import {
 	computeBuilderXP,
@@ -20,6 +23,7 @@ import { Threat } from '@/models/utility/threat/Threat.class';
 import type { LevelAdjustment } from '@/models/utility/level/Level';
 import type { EncounterTemplateData } from '@/models/encounters/encounter.types';
 import type { PartySetupMode } from '@/models/utility/challengePoints/challengePoints';
+import { FACTION_ALIGNMENT } from '@/models/encounters/factions';
 
 export interface BuilderVariantSnapshot {
 	id: string;
@@ -33,12 +37,14 @@ export interface BuilderNote {
 	id: string;
 	header: string;
 	content: string;
-	visibility: 'all' | Alignment;
+	visibility: 'all' | number;
+	factionId?: string;
 }
 
 export interface BuilderFormValues {
 	name: string;
 	description: string;
+	factions: EncounterFaction[];
 	partySetupMode: PartySetupMode;
 	partyLevel: number;
 	partySize: number;
@@ -58,8 +64,77 @@ export function defaultBuilderNotes(): BuilderNote[] {
 			header: 'General Notes',
 			content: '',
 			visibility: 'all',
+			factionId: undefined,
 		},
 	];
+}
+
+function resolveAlignmentFromFactionId(
+	factionId: string | undefined,
+	factions: EncounterFaction[]
+): number | null {
+	if (!factionId) {
+		return null;
+	}
+
+	const faction = factions.find((entry) => entry.id === factionId);
+
+	if (!faction) {
+		return null;
+	}
+
+	return factionAlignmentToAlignment(faction.alignment);
+}
+
+export function resolveBuilderSideForFactionId(
+	factionId: string | undefined,
+	factions: EncounterFaction[]
+): SideType | null {
+	const faction = factionId
+		? factions.find((entry) => entry.id === factionId)
+		: undefined;
+
+	if (!faction) {
+		return null;
+	}
+
+	if (faction.alignment === FACTION_ALIGNMENT.Ally) {
+		return 'ally';
+	}
+
+	if (faction.alignment === FACTION_ALIGNMENT.Other) {
+		return 'other';
+	}
+
+	return 'opponent';
+}
+
+export function resolveFactionIdForBuilderSide(
+	side: SideType,
+	factions: EncounterFaction[]
+): string {
+	const normalized = normalizeSideType(side);
+	const expectedAlignment =
+		normalized === 'ally'
+			? FACTION_ALIGNMENT.Ally
+			: normalized === 'other'
+				? FACTION_ALIGNMENT.Other
+				: FACTION_ALIGNMENT.Opponent;
+	const faction = factions.find((entry) => entry.alignment === expectedAlignment);
+
+	if (faction) {
+		return faction.id;
+	}
+
+	if (expectedAlignment === FACTION_ALIGNMENT.Ally) {
+		return getBuiltinFactionIdForAlignment(ALIGNMENT.PCs);
+	}
+
+	if (expectedAlignment === FACTION_ALIGNMENT.Other) {
+		return getBuiltinFactionIdForAlignment(ALIGNMENT.Neutral);
+	}
+
+	return getBuiltinFactionIdForAlignment(ALIGNMENT.Opponents);
 }
 
 export function defaultSlot(): BuilderSlot {
@@ -69,6 +144,7 @@ export function defaultSlot(): BuilderSlot {
 		name: '',
 		description: '',
 		side: 'opponent',
+		factionId: getBuiltinFactionIdForAlignment(ALIGNMENT.Opponents),
 		level: 1,
 		count: 1,
 		maxHealth: undefined,
@@ -125,6 +201,7 @@ export function defaultFormValues(): BuilderFormValues {
 	return {
 		name: '',
 		description: '',
+		factions: getEncounterFactionsWithFallback(),
 		partySetupMode: 'simple',
 		partyLevel: 1,
 		partySize: 4,
@@ -148,10 +225,12 @@ export function fromEncounterTemplate(
 ): BuilderFormValues {
 	const partyLevel = options?.partyLevel ?? variant.partyLevel ?? 1;
 	const partySize = options?.partySize ?? variant.partySize ?? 4;
+	const factions = getEncounterFactionsWithFallback(template.factions);
 
 	return {
 		name: template.name,
 		description: template.description,
+		factions,
 		partySetupMode: 'simple',
 		partyLevel,
 		partySize,
@@ -161,41 +240,50 @@ export function fromEncounterTemplate(
 		challengePointBudget: 8,
 		variants: [],
 		notes: defaultBuilderNotes(),
-		slots: variant.participants.map((participant) => ({
-			id: participant.id,
-			type: participant.type === 'creature' ? 'creature' : 'hazard',
-			name:
-				participant.type === 'creature'
-					? `${participant.role || 'creature'} (${participant.count})`
-					: participant.id,
-			description: '',
-			side: alignmentToBuilderSide(participant.side),
-			level: participant.relativeLevel.toLevel(partyLevel).valueOf(),
-			count: participant.count,
-			maxHealth:
-				participant.type === 'creature'
-					? participant.maxHealthOverride
-					: undefined,
-			hardness:
-				participant.type === 'hazard' ? participant.hardnessValue : undefined,
-			initiativeBonus:
-				participant.type === 'creature'
-					? participant.initiativeModifierOverride
-					: undefined,
-			dcs: [],
-			successesToDisable:
-				participant.type === 'hazard' ? participant.successesToDisable : 1,
-			adjustment: 'none',
-			adjustmentDescription: undefined,
-			adjustmentLevelModifier: undefined,
-			isSimpleHazard:
-				participant.type === 'hazard' && participant.role === 'simple',
-			reinforcementRound: 1,
-			reinforcementParticipants: [],
-			eventRound: 1,
-			repeatInterval: undefined,
-			accomplishmentLevel: undefined,
-		})),
+		slots: variant.participants.map((participant) => {
+			const factionId =
+				participant.factionId ?? getBuiltinFactionIdForAlignment(participant.side);
+			const side =
+				resolveBuilderSideForFactionId(factionId, factions) ??
+				alignmentToBuilderSide(participant.side);
+
+			return {
+				id: participant.id,
+				type: participant.type === 'creature' ? 'creature' : 'hazard',
+				name:
+					participant.type === 'creature'
+						? `${participant.role || 'creature'} (${participant.count})`
+						: participant.id,
+				description: '',
+				side,
+				factionId,
+				level: participant.relativeLevel.toLevel(partyLevel).valueOf(),
+				count: participant.count,
+				maxHealth:
+					participant.type === 'creature'
+						? participant.maxHealthOverride
+						: undefined,
+				hardness:
+					participant.type === 'hazard' ? participant.hardnessValue : undefined,
+				initiativeBonus:
+					participant.type === 'creature'
+						? participant.initiativeModifierOverride
+						: undefined,
+				dcs: [],
+				successesToDisable:
+					participant.type === 'hazard' ? participant.successesToDisable : 1,
+				adjustment: 'none',
+				adjustmentDescription: undefined,
+				adjustmentLevelModifier: undefined,
+				isSimpleHazard:
+					participant.type === 'hazard' && participant.role === 'simple',
+				reinforcementRound: 1,
+				reinforcementParticipants: [],
+				eventRound: 1,
+				repeatInterval: undefined,
+				accomplishmentLevel: undefined,
+			};
+		}),
 	};
 }
 
@@ -241,6 +329,7 @@ export function toConcreteEncounter(
 	existingId?: string
 ): ConcreteEncounter {
 	const id = existingId ?? uuidv4();
+	const factions = getEncounterFactionsWithFallback(values.factions);
 	const xp = computeBuilderXP(values.slots, values.partyLevel);
 	const threat = Threat.fromExperienceBudget(xp, values.partySize);
 	const difficulty = threatToDifficulty(threat.threat);
@@ -249,7 +338,9 @@ export function toConcreteEncounter(
 		values.slots
 			.filter((s) => s.type === 'creature' || s.type === 'hazard')
 			.map((s) => {
-				const side = builderSideToAlignment(s.side);
+				const side =
+					resolveAlignmentFromFactionId(s.factionId, factions) ??
+					builderSideToAlignment(s.side);
 
 				if (s.type === 'hazard') {
 					return {
@@ -257,6 +348,7 @@ export function toConcreteEncounter(
 						name: s.name,
 						level: s.level,
 						side,
+						factionId: s.factionId,
 						count: s.count,
 						maxHealth: s.maxHealth || undefined,
 						hardness: s.hardness || undefined,
@@ -289,6 +381,7 @@ export function toConcreteEncounter(
 					name: s.name,
 					level: s.level,
 					side,
+					factionId: s.factionId,
 					count: s.count,
 					maxHealth: s.maxHealth || undefined,
 					hardness: s.hardness || undefined,
@@ -341,7 +434,9 @@ export function toConcreteEncounter(
 			participants:
 				s.type === 'reinforcement'
 					? s.reinforcementParticipants?.map((participant) => {
-							const side = builderSideToAlignment(participant.side);
+							const side =
+								resolveAlignmentFromFactionId(participant.factionId, factions) ??
+								builderSideToAlignment(participant.side);
 
 							if (participant.type === 'hazard') {
 								return {
@@ -352,6 +447,7 @@ export function toConcreteEncounter(
 										values.partyLevel
 									),
 									side,
+									factionId: participant.factionId,
 									count: participant.count,
 									maxHealth: participant.maxHealth || undefined,
 									hardness: participant.hardness || undefined,
@@ -388,6 +484,7 @@ export function toConcreteEncounter(
 									values.partyLevel
 								),
 								side,
+								factionId: participant.factionId,
 								count: participant.count,
 								maxHealth: participant.maxHealth || undefined,
 								hardness: participant.hardness || undefined,
@@ -431,7 +528,9 @@ export function toConcreteEncounter(
 					>[] = snapshot.slots
 						.filter((s) => s.type === 'creature' || s.type === 'hazard')
 						.map((s) => {
-							const side = builderSideToAlignment(s.side);
+							const side =
+								resolveAlignmentFromFactionId(s.factionId, factions) ??
+								builderSideToAlignment(s.side);
 
 							if (s.type === 'hazard') {
 								return {
@@ -439,6 +538,7 @@ export function toConcreteEncounter(
 									name: s.name,
 									level: s.level,
 									side,
+									factionId: s.factionId,
 									count: s.count,
 									maxHealth: s.maxHealth || undefined,
 									hardness: s.hardness || undefined,
@@ -461,6 +561,7 @@ export function toConcreteEncounter(
 								name: s.name,
 								level: s.level,
 								side,
+								factionId: s.factionId,
 								count: s.count,
 								maxHealth: s.maxHealth || undefined,
 								hardness: s.hardness || undefined,
@@ -494,13 +595,19 @@ export function toConcreteEncounter(
 			id: note.id,
 			header: note.header.trim(),
 			content: note.content,
-			visibility: note.visibility,
+			visibility:
+				note.visibility === 'all'
+					? 'all'
+					: (resolveAlignmentFromFactionId(note.factionId, factions) ??
+						note.visibility),
+			factionId: note.factionId,
 		}))
 		.filter((note) => note.header.length > 0 || note.content.trim().length > 0);
 
 	return {
 		id,
 		name: values.name,
+		factions,
 		levelRepresentation: LEVEL_REPRESENTATION.Exact,
 		level: values.partyLevel,
 		partySize: values.partySize,
@@ -532,15 +639,22 @@ export function fromConcreteEncounter(
 	encounter: ConcreteEncounter
 ): BuilderFormValues {
 	const slots: BuilderSlot[] = [];
+	const factions = getEncounterFactionsWithFallback(encounter.factions);
 
 	for (const p of encounter.participants) {
+		const factionId = p.factionId ?? getBuiltinFactionIdForAlignment(p.side);
+		const side =
+			resolveBuilderSideForFactionId(factionId, factions) ??
+			alignmentToBuilderSide(p.side);
+
 		if (p.type === 'creature') {
 			slots.push({
 				id: uuidv4(),
 				type: 'creature',
 				name: p.name,
 				description: p.description ?? '',
-				side: alignmentToBuilderSide(p.side),
+				side,
+				factionId,
 				level: p.level,
 				count: p.count ?? 1,
 				maxHealth: p.maxHealth,
@@ -566,7 +680,8 @@ export function fromConcreteEncounter(
 			type: 'hazard',
 			name: p.name,
 			description: p.description ?? '',
-			side: alignmentToBuilderSide(p.side),
+			side,
+			factionId,
 			level: p.level,
 			count: p.count ?? 1,
 			maxHealth: p.maxHealth,
@@ -604,10 +719,18 @@ export function fromConcreteEncounter(
 			reinforcementRound: ns.trigger.round,
 			reinforcementParticipants: isReinforcement
 				? (ns.participants ?? []).map((participant) => ({
+						factionId:
+							participant.factionId ??
+							getBuiltinFactionIdForAlignment(participant.side),
 						id: uuidv4(),
 						type: participant.type,
 						name: participant.name,
-						side: alignmentToBuilderSide(participant.side),
+						side:
+							resolveBuilderSideForFactionId(
+								participant.factionId ??
+									getBuiltinFactionIdForAlignment(participant.side),
+								factions
+							) ?? alignmentToBuilderSide(participant.side),
 						level: fromRelativeLevelString(participant.level, encounter.level),
 						count: participant.count ?? 1,
 						maxHealth: participant.maxHealth,
@@ -643,6 +766,7 @@ export function fromConcreteEncounter(
 	return {
 		name: encounter.name,
 		description: encounter.description,
+		factions,
 		partySetupMode: encounter.partySetup?.mode ?? 'simple',
 		partyLevel: encounter.level,
 		partySize: encounter.partySize,
@@ -665,6 +789,7 @@ export function fromConcreteEncounter(
 						header: note.header,
 						content: note.content,
 						visibility: note.visibility,
+						factionId: note.factionId,
 					}))
 				: defaultBuilderNotes(),
 		slots,
@@ -675,13 +800,17 @@ function participantsToBuilderSlots(
 	participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[]
 ): BuilderSlot[] {
 	return participants.map((p) => {
+		const factionId = p.factionId ?? getBuiltinFactionIdForAlignment(p.side);
+		const side = alignmentToBuilderSide(p.side);
+
 		if (p.type === 'creature') {
 			return {
 				id: uuidv4(),
 				type: 'creature' as const,
 				name: p.name,
 				description: p.description ?? '',
-				side: alignmentToBuilderSide(p.side),
+				side,
+				factionId,
 				level: p.level,
 				count: p.count ?? 1,
 				maxHealth: p.maxHealth,
@@ -706,7 +835,8 @@ function participantsToBuilderSlots(
 			type: 'hazard' as const,
 			name: p.name,
 			description: p.description ?? '',
-			side: alignmentToBuilderSide(p.side),
+			side,
+			factionId,
 			level: p.level,
 			count: p.count ?? 1,
 			maxHealth: p.maxHealth,
@@ -738,6 +868,9 @@ export function templateVariantToFormPartial(
 	return {
 		partySize: variant.partySize,
 		slots: variant.participants.map((participant) => ({
+				factionId:
+					participant.factionId ??
+					getBuiltinFactionIdForAlignment(participant.side),
 			id: participant.id,
 			type:
 				participant.type === 'creature'

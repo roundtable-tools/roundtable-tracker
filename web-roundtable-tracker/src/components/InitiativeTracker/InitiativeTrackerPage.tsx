@@ -182,6 +182,14 @@ function getParticipantIndicatorLabel(participant: TrackerParticipant) {
 }
 
 function getParticipantRoleLabel(participant: TrackerParticipant) {
+	if (
+		participant.factionName &&
+		participant.role !== 'pc' &&
+		participant.role !== 'hazard'
+	) {
+		return participant.factionName;
+	}
+
 	if (participant.role === 'neutral') {
 		return 'Other';
 	}
@@ -214,6 +222,7 @@ function getDcName(dc: NonNullable<TrackerParticipant['dcs']>[number]) {
 }
 
 type SideTheme = 'pc' | 'opponent' | 'ally' | 'other';
+type FactionColor = 'crimson' | 'amber' | 'emerald' | 'sky' | 'indigo' | 'slate';
 
 function resolveParticipantSideTheme(
 	participant: TrackerParticipant
@@ -250,6 +259,23 @@ function resolveParticipantSideTheme(
 	}
 
 	return 'opponent';
+}
+
+function normalizeFactionColor(
+	color: string | undefined
+): FactionColor | undefined {
+	if (
+		color === 'crimson' ||
+		color === 'amber' ||
+		color === 'emerald' ||
+		color === 'sky' ||
+		color === 'indigo' ||
+		color === 'slate'
+	) {
+		return color;
+	}
+
+	return undefined;
 }
 
 function getSideAccent(sideTheme: SideTheme) {
@@ -305,24 +331,102 @@ function getSideAccent(sideTheme: SideTheme) {
 	}
 }
 
+function getFactionAccent(color: FactionColor) {
+	switch (color) {
+		case 'crimson':
+			return getSideAccent('opponent');
+
+		case 'amber':
+			return {
+				badge: 'bg-amber-500/15 text-amber-200 ring-1 ring-amber-400/40',
+				inactiveCard:
+					'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-amber-500/60 hover:bg-slate-900/95',
+				inactiveMarker: 'border-l-4 border-l-amber-400',
+				name: 'text-amber-200',
+				activeCard:
+					'border-amber-300 bg-amber-600 text-amber-50 shadow-lg shadow-amber-950/30',
+				delayedCard: 'border-amber-500/50 bg-amber-500/10 text-amber-200',
+			};
+
+		case 'emerald':
+			return getSideAccent('ally');
+
+		case 'sky':
+			return {
+				badge: 'bg-sky-500/15 text-sky-200 ring-1 ring-sky-400/40',
+				inactiveCard:
+					'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-sky-500/60 hover:bg-slate-900/95',
+				inactiveMarker: 'border-l-4 border-l-sky-400',
+				name: 'text-sky-200',
+				activeCard:
+					'border-sky-300 bg-sky-600 text-sky-50 shadow-lg shadow-sky-950/30',
+				delayedCard: 'border-sky-500/50 bg-sky-500/10 text-sky-200',
+			};
+
+		case 'indigo':
+			return {
+				badge: 'bg-indigo-500/15 text-indigo-200 ring-1 ring-indigo-400/40',
+				inactiveCard:
+					'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-indigo-500/60 hover:bg-slate-900/95',
+				inactiveMarker: 'border-l-4 border-l-indigo-400',
+				name: 'text-indigo-200',
+				activeCard:
+					'border-indigo-300 bg-indigo-600 text-indigo-50 shadow-lg shadow-indigo-950/30',
+				delayedCard: 'border-indigo-500/50 bg-indigo-500/10 text-indigo-200',
+			};
+
+		case 'slate':
+			return {
+				badge: 'bg-slate-500/15 text-slate-200 ring-1 ring-slate-400/40',
+				inactiveCard:
+					'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-slate-500/60 hover:bg-slate-900/95',
+				inactiveMarker: 'border-l-4 border-l-slate-400',
+				name: 'text-slate-200',
+				activeCard:
+					'border-slate-300 bg-slate-700 text-slate-50 shadow-lg shadow-slate-950/30',
+				delayedCard: 'border-slate-500/50 bg-slate-500/10 text-slate-200',
+			};
+
+		default:
+			return getSideAccent('opponent');
+	}
+}
+
 function getParticipantAccent(participant: TrackerParticipant) {
 	const sideTheme = resolveParticipantSideTheme(participant);
-	const baseAccent = getSideAccent(sideTheme);
+	const factionColor = normalizeFactionColor(participant.factionColor);
+	const baseAccent =
+		participant.role === 'pc'
+			? getSideAccent('pc')
+			: factionColor
+				? getFactionAccent(factionColor)
+				: getSideAccent(sideTheme);
 
 	if (participant.role !== 'hazard') {
 		return baseAccent;
 	}
 
-	const hazardStripeBySide: Record<SideTheme, string> = {
+	const hazardStripeByColor: Record<FactionColor | SideTheme, string> = {
 		pc: 'bg-[repeating-linear-gradient(135deg,rgba(56,189,248,0.14)_0_6px,rgba(56,189,248,0)_6px_12px)]',
 		opponent:
 			'bg-[repeating-linear-gradient(135deg,rgba(251,113,133,0.14)_0_6px,rgba(251,113,133,0)_6px_12px)]',
 		ally: 'bg-[repeating-linear-gradient(135deg,rgba(52,211,153,0.14)_0_6px,rgba(52,211,153,0)_6px_12px)]',
 		other:
 			'bg-[repeating-linear-gradient(135deg,rgba(167,139,250,0.14)_0_6px,rgba(167,139,250,0)_6px_12px)]',
+		crimson:
+			'bg-[repeating-linear-gradient(135deg,rgba(251,113,133,0.14)_0_6px,rgba(251,113,133,0)_6px_12px)]',
+		amber:
+			'bg-[repeating-linear-gradient(135deg,rgba(251,191,36,0.14)_0_6px,rgba(251,191,36,0)_6px_12px)]',
+		emerald:
+			'bg-[repeating-linear-gradient(135deg,rgba(52,211,153,0.14)_0_6px,rgba(52,211,153,0)_6px_12px)]',
+		sky: 'bg-[repeating-linear-gradient(135deg,rgba(56,189,248,0.14)_0_6px,rgba(56,189,248,0)_6px_12px)]',
+		indigo:
+			'bg-[repeating-linear-gradient(135deg,rgba(129,140,248,0.14)_0_6px,rgba(129,140,248,0)_6px_12px)]',
+		slate:
+			'bg-[repeating-linear-gradient(135deg,rgba(148,163,184,0.14)_0_6px,rgba(148,163,184,0)_6px_12px)]',
 	};
 
-	const hazardStripe = hazardStripeBySide[sideTheme];
+	const hazardStripe = hazardStripeByColor[factionColor ?? sideTheme];
 
 	return {
 		...baseAccent,
@@ -696,7 +800,8 @@ function DelayedMarkerCard({
 	compact?: boolean;
 }) {
 	const sideTheme = resolveParticipantSideTheme(participant);
-	const theme = {
+	const factionColor = normalizeFactionColor(participant.factionColor);
+	const themeByKey = {
 		pc: {
 			line: 'border-sky-400/70',
 			label: 'text-sky-200',
@@ -713,7 +818,32 @@ function DelayedMarkerCard({
 			line: 'border-violet-400/70',
 			label: 'text-violet-200',
 		},
-	}[sideTheme];
+		crimson: {
+			line: 'border-rose-400/70',
+			label: 'text-rose-200',
+		},
+		amber: {
+			line: 'border-amber-400/70',
+			label: 'text-amber-200',
+		},
+		emerald: {
+			line: 'border-emerald-400/70',
+			label: 'text-emerald-200',
+		},
+		sky: {
+			line: 'border-sky-400/70',
+			label: 'text-sky-200',
+		},
+		indigo: {
+			line: 'border-indigo-400/70',
+			label: 'text-indigo-200',
+		},
+		slate: {
+			line: 'border-slate-400/70',
+			label: 'text-slate-200',
+		},
+	};
+	const theme = themeByKey[factionColor ?? sideTheme] ?? themeByKey.other;
 
 	return (
 		<div

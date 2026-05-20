@@ -5,6 +5,8 @@ import {
 	ALIGNMENT,
 	DIFFICULTY,
 	difficultyToString,
+	getBuiltinFactionIdForAlignment,
+	getEncounterFactionsWithFallback,
 	LEVEL_REPRESENTATION,
 	normalizeEncounterNotes,
 } from './data';
@@ -45,6 +47,10 @@ export type PlayerTrackerParticipant = {
 const DEFAULT_META: TrackerParticipantMeta = {
 	role: 'opponent',
 	sideTheme: 'opponent',
+	factionId: undefined,
+	factionName: undefined,
+	factionIcon: undefined,
+	factionColor: undefined,
 	hasHealthData: true,
 	isSimpleHazard: false,
 	disableChecksRequired: 0,
@@ -81,6 +87,10 @@ function characterToTrackerParticipant(
 		name: character.name,
 		role: meta.role,
 		sideTheme: meta.sideTheme,
+		factionId: meta.factionId,
+		factionName: meta.factionName,
+		factionIcon: meta.factionIcon,
+		factionColor: meta.factionColor,
 		state: characterStateToTrackerState(character.turnState, inInitiative),
 		currentHp: hasHealthData ? character.health : undefined,
 		maxHp: hasHealthData ? character.maxHealth : undefined,
@@ -194,6 +204,7 @@ export function runtimeToOutOfInitiativeData(
 		partyLevel,
 		delayedOrder,
 	} = store;
+	const factions = getEncounterFactionsWithFallback(encounterData?.factions);
 
 	const triggeredReinforcementSlots = new Set(
 		Object.values(trackerMetaMap)
@@ -225,6 +236,15 @@ export function runtimeToOutOfInitiativeData(
 		)
 		.flatMap((slot) =>
 			(slot.participants ?? []).map((participant, index) => {
+				const factionId =
+					participant.factionId ?? getBuiltinFactionIdForAlignment(participant.side);
+				const faction = factions.find((entry) => entry.id === factionId);
+				const sideTheme =
+					participant.side === ALIGNMENT.PCs
+						? 'pc'
+						: participant.side === ALIGNMENT.Neutral
+							? 'other'
+							: 'opponent';
 				const id = `${slot.id}-${index}`;
 				const initiative =
 					typeof (participant as { initiative?: unknown }).initiative ===
@@ -240,7 +260,11 @@ export function runtimeToOutOfInitiativeData(
 					id,
 					name: participant.name,
 					role: 'reinforcement' as const,
-					sideTheme: 'opponent' as const,
+					sideTheme,
+					factionId,
+					factionName: faction?.name,
+					factionIcon: faction?.icon,
+					factionColor: faction?.color,
 					state: 'inactive' as const,
 					initiative,
 					initiativeBonus: participant.initiativeBonus,

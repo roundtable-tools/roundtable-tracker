@@ -21,6 +21,13 @@ import {
 	challengePointTierLabel,
 	normalizePartySetup,
 } from '@/models/utility/challengePoints/challengePoints';
+import {
+	ENCOUNTER_FACTION_COLOR_KEYS,
+	ENCOUNTER_FACTION_ICON_KEYS,
+	FACTION_ALIGNMENT,
+	ensureEncounterFactions,
+	type EncounterFaction,
+} from '@/models/encounters/factions';
 import type { Party } from '@/store/savedParties';
 import { NoteListSection } from '../sections/NoteListSection';
 import { ParagraphFields } from '../ParagraphFields';
@@ -28,12 +35,34 @@ import { PartyLevelPicker } from '../PartyLevelPicker';
 import { PartySizePicker } from '../PartySizePicker';
 import type { BuilderListLayoutKey } from '../BuilderListLayout';
 import type { BuilderFormValues } from '../builderConvert';
+import { v4 as uuidv4 } from 'uuid';
+import { Trash2 } from 'lucide-react';
+import { factionAlignmentToAlignment } from '@/store/data';
 import type {
 	FieldArrayWithId,
 	UseFieldArrayAppend,
 	UseFieldArrayRemove,
 	UseFormReturn,
 } from 'react-hook-form';
+import { useWatch } from 'react-hook-form';
+
+const FACTION_ALIGNMENT_OPTIONS = [
+	{ value: FACTION_ALIGNMENT.Opponent, label: 'Opponent' },
+	{ value: FACTION_ALIGNMENT.Ally, label: 'Ally' },
+	{ value: FACTION_ALIGNMENT.Other, label: 'Other' },
+] as const;
+
+function sideFromAlignment(alignment: EncounterFaction['alignment']) {
+	if (alignment === FACTION_ALIGNMENT.Ally) {
+		return 'ally' as const;
+	}
+
+	if (alignment === FACTION_ALIGNMENT.Other) {
+		return 'other' as const;
+	}
+
+	return 'opponent' as const;
+}
 
 interface BuilderDetailsStepProps {
 	form: UseFormReturn<BuilderFormValues>;
@@ -80,6 +109,105 @@ export function BuilderDetailsStep({
 	layoutKey,
 	onLayoutKeyChange,
 }: BuilderDetailsStepProps) {
+	const factions = useWatch({ control: form.control, name: 'factions' }) ?? [];
+
+	const updateFaction = (
+		factionId: string,
+		updater: (current: EncounterFaction) => EncounterFaction
+	) => {
+		form.setValue(
+			'factions',
+			factions.map((faction) =>
+				faction.id === factionId ? updater(faction) : faction
+			),
+			{ shouldDirty: true, shouldTouch: true }
+		);
+	};
+
+	const addFaction = () => {
+		const nextFactions = ensureEncounterFactions([
+			...factions,
+			{
+				id: uuidv4(),
+				name: `Faction ${factions.length + 1}`,
+				alignment: FACTION_ALIGNMENT.Opponent,
+				icon: 'flag',
+				color: 'amber',
+				isBuiltIn: false,
+			},
+		]);
+
+		form.setValue('factions', nextFactions, {
+			shouldDirty: true,
+			shouldTouch: true,
+		});
+	};
+
+	const removeFaction = (factionId: string) => {
+		const removedFaction = factions.find((faction) => faction.id === factionId);
+
+		if (!removedFaction || removedFaction.isBuiltIn) {
+			return;
+		}
+
+		const nextFactions = ensureEncounterFactions(
+			factions.filter((faction) => faction.id !== factionId)
+		);
+		const fallbackFaction = nextFactions.find(
+			(faction) => faction.alignment === removedFaction.alignment
+		);
+
+		form.setValue('factions', nextFactions, {
+			shouldDirty: true,
+			shouldTouch: true,
+		});
+
+		if (!fallbackFaction) {
+			return;
+		}
+
+		const fallbackSide = sideFromAlignment(fallbackFaction.alignment);
+		const fallbackVisibility = factionAlignmentToAlignment(
+			fallbackFaction.alignment
+		);
+		const currentSlots = form.getValues('slots');
+		const currentNotes = form.getValues('notes');
+
+		form.setValue(
+			'slots',
+			currentSlots.map((slot) => ({
+				...slot,
+				factionId:
+					slot.factionId === factionId ? fallbackFaction.id : slot.factionId,
+				side: slot.factionId === factionId ? fallbackSide : slot.side,
+				reinforcementParticipants:
+					slot.reinforcementParticipants?.map((participant) => ({
+						...participant,
+						factionId:
+							participant.factionId === factionId
+								? fallbackFaction.id
+								: participant.factionId,
+						side:
+							participant.factionId === factionId
+								? fallbackSide
+								: participant.side,
+					})),
+			})),
+			{ shouldDirty: true, shouldTouch: true }
+		);
+
+		form.setValue(
+			'notes',
+			currentNotes.map((note) => ({
+				...note,
+				factionId: note.factionId === factionId ? fallbackFaction.id : note.factionId,
+				visibility:
+					note.factionId === factionId ? fallbackVisibility : note.visibility,
+			})),
+			{ shouldDirty: true, shouldTouch: true }
+		);
+	};
+
 	return (
 		<TabsContent value="details" className="space-y-3">
 			<section className="space-y-3">
@@ -314,6 +442,114 @@ export function BuilderDetailsStep({
 					</div>
 				</div>
 				<div className="space-y-2">
+					<section className="rounded-md border p-3 space-y-3">
+						<div className="flex items-center justify-between gap-2">
+							<div>
+								<h3 className="text-sm font-semibold">Factions</h3>
+								<p className="text-xs text-muted-foreground">
+									Players are reserved; factions apply to opponent, ally, and other
+									alignments.
+								</p>
+							</div>
+							<Button type="button" variant="outline" size="sm" onClick={addFaction}>
+								Add Faction
+							</Button>
+						</div>
+
+						<div className="space-y-2">
+							{factions.map((faction) => (
+								<div
+									key={faction.id}
+									className="grid gap-2 rounded-md border bg-muted/20 p-2 sm:grid-cols-[1.4fr_1fr_1fr_1fr_auto]"
+								>
+									<Input
+										value={faction.name}
+										onChange={(event) =>
+											updateFaction(faction.id, (current) => ({
+												...current,
+												name: event.target.value,
+											}))
+										}
+										placeholder="Faction name"
+									/>
+									<Select
+										value={faction.alignment}
+										onValueChange={(value) =>
+											updateFaction(faction.id, (current) => ({
+												...current,
+												alignment: value as EncounterFaction['alignment'],
+											}))
+										}
+									>
+										<SelectTrigger className="w-full">
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											{FACTION_ALIGNMENT_OPTIONS.map((option) => (
+												<SelectItem key={option.value} value={option.value}>
+													{option.label}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									<Select
+										value={faction.icon}
+										onValueChange={(value) =>
+											updateFaction(faction.id, (current) => ({
+												...current,
+												icon: value as EncounterFaction['icon'],
+											}))
+										}
+									>
+										<SelectTrigger className="w-full">
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											{ENCOUNTER_FACTION_ICON_KEYS.map((icon) => (
+												<SelectItem key={icon} value={icon}>
+													{icon}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									<Select
+										value={faction.color}
+										onValueChange={(value) =>
+											updateFaction(faction.id, (current) => ({
+												...current,
+												color: value as EncounterFaction['color'],
+											}))
+										}
+									>
+										<SelectTrigger className="w-full">
+											<SelectValue />
+										</SelectTrigger>
+										<SelectContent>
+											{ENCOUNTER_FACTION_COLOR_KEYS.map((color) => (
+												<SelectItem key={color} value={color}>
+													{color}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									<Button
+										type="button"
+										variant="ghost"
+										onClick={() => removeFaction(faction.id)}
+										disabled={Boolean(faction.isBuiltIn)}
+										title={
+											faction.isBuiltIn
+												? 'Built-in faction cannot be removed'
+												: 'Remove faction'
+										}
+									>
+										<Trash2 className="size-4" />
+									</Button>
+								</div>
+							))}
+						</div>
+					</section>
+
 					<NoteListSection
 						form={form}
 						noteFields={noteFields}

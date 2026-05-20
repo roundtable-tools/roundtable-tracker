@@ -22,6 +22,10 @@ export const participantsToEncounterCharacters = (
 
 type RuntimeParticipantFields = {
 	type?: 'creature' | 'hazard';
+	factionId?: string;
+	factionName?: string;
+	factionIcon?: string;
+	factionColor?: string;
 	hasHealthData?: boolean;
 	successesToDisable?: number;
 	isSimpleHazard?: boolean;
@@ -86,6 +90,11 @@ export const buildTrackerMetaMap = (
 		result[participant.uuid] = {
 			role: deriveRole(participant.side, runtime.type),
 			sideTheme: deriveSideTheme(participant.side),
+			factionId: runtime.factionId,
+			factionName: runtime.factionName,
+			factionIcon: runtime.factionIcon as TrackerParticipantMeta['factionIcon'],
+			factionColor:
+				runtime.factionColor as TrackerParticipantMeta['factionColor'],
 			hasHealthData: runtime.hasHealthData ?? true,
 			isSimpleHazard: runtime.isSimpleHazard ?? false,
 			disableChecksRequired: runtime.successesToDisable ?? 0,

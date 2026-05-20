@@ -9,6 +9,7 @@ import {
 	normalizeLevel,
 	Participant,
 	PRIORITY,
+	type Alignment,
 } from '@/store/data';
 import { generateUUID } from '@/utils/uuid';
 import { PreviewCard } from './PreviewCard';
@@ -36,10 +37,24 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { Bot, Trees, User } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import {
+	Bot,
+	Flag,
+	Shield,
+	Skull,
+	Sparkles,
+	Swords,
+	Trees,
+	User,
+	type LucideIcon,
+} from 'lucide-react';
 import { useSavedPartiesStore } from '@/store/savedPartiesInstance';
 import { Party } from '@/store/savedParties';
+import type { EncounterFaction } from '@/models/encounters/factions';
+import {
+	getBuiltinFactionIdForAlignment,
+	getEncounterFactionsWithFallback,
+} from '@/store/data';
 
 type PreviewDisplayProps = {
 	setView: (view: string) => void;
@@ -47,6 +62,10 @@ type PreviewDisplayProps = {
 
 type PreviewCharacterConfig = CharacterConfig & {
 	hasHealthData?: boolean;
+	factionId?: string;
+	factionName?: string;
+	factionIcon?: string;
+	factionColor?: string;
 };
 
 type TeamAppearance = {
@@ -55,6 +74,53 @@ type TeamAppearance = {
 	textClassName: string;
 	label: string;
 	Icon: LucideIcon;
+};
+
+type TeamColor = 'crimson' | 'amber' | 'emerald' | 'sky' | 'indigo' | 'slate';
+
+const FACTION_COLOR_APPEARANCE: Record<
+	TeamColor,
+	Pick<TeamAppearance, 'borderClassName' | 'markerClassName' | 'textClassName'>
+> = {
+	crimson: {
+		borderClassName: 'border-l-rose-700',
+		markerClassName: 'bg-rose-700',
+		textClassName: 'text-rose-700',
+	},
+	amber: {
+		borderClassName: 'border-l-amber-600',
+		markerClassName: 'bg-amber-600',
+		textClassName: 'text-amber-600',
+	},
+	emerald: {
+		borderClassName: 'border-l-emerald-600',
+		markerClassName: 'bg-emerald-600',
+		textClassName: 'text-emerald-600',
+	},
+	sky: {
+		borderClassName: 'border-l-sky-600',
+		markerClassName: 'bg-sky-600',
+		textClassName: 'text-sky-600',
+	},
+	indigo: {
+		borderClassName: 'border-l-indigo-600',
+		markerClassName: 'bg-indigo-600',
+		textClassName: 'text-indigo-600',
+	},
+	slate: {
+		borderClassName: 'border-l-slate-600',
+		markerClassName: 'bg-slate-600',
+		textClassName: 'text-slate-600',
+	},
+};
+
+const FACTION_ICON_MAP: Record<string, LucideIcon> = {
+	swords: Swords,
+	shield: Shield,
+	flag: Flag,
+	skull: Skull,
+	trees: Trees,
+	sparkles: Sparkles,
 };
 
 const TEAM_APPEARANCES = {
@@ -93,15 +159,41 @@ function getTeamAppearance(side: number, isParty: boolean): TeamAppearance {
 		return TEAM_APPEARANCES.pc;
 	}
 
-	if (side === ALIGNMENT.Opponents) {
-		return TEAM_APPEARANCES.opponents;
+	return side === ALIGNMENT.PCs
+		? TEAM_APPEARANCES.allies
+		: side === ALIGNMENT.Neutral
+			? TEAM_APPEARANCES.other
+			: TEAM_APPEARANCES.opponents;
+}
+
+function getFactionAppearance(
+	faction: EncounterFaction | undefined
+): TeamAppearance | null {
+	if (!faction) {
+		return null;
 	}
 
-	if (side === ALIGNMENT.PCs) {
-		return TEAM_APPEARANCES.allies;
+	const colorAppearance =
+		FACTION_COLOR_APPEARANCE[faction.color as TeamColor] ??
+		FACTION_COLOR_APPEARANCE.slate;
+
+	return {
+		...colorAppearance,
+		label: faction.name,
+		Icon: FACTION_ICON_MAP[faction.icon] ?? Flag,
+	};
+}
+
+function resolveTeamAppearance(
+	side: number,
+	isParty: boolean,
+	faction: EncounterFaction | undefined
+): TeamAppearance {
+	if (isParty) {
+		return TEAM_APPEARANCES.pc;
 	}
 
-	return TEAM_APPEARANCES.other;
+	return getFactionAppearance(faction) ?? getTeamAppearance(side, isParty);
 }
 
 function getDefaultParticipantName(participant: Participant<0 | 1>): string {
@@ -117,7 +209,7 @@ function getDefaultParticipantName(participant: Participant<0 | 1>): string {
 			return 'Other';
 
 		case ALIGNMENT.PCs:
-			return 'PC';
+			return 'Ally';
 
 		default:
 			return 'Combatant';
@@ -142,14 +234,16 @@ export const generateParticipants = (
 
 	const groupedBySide = allParticipants.reduce(
 		(acc, participant) => {
-			if (!acc[participant.side]) {
-				acc[participant.side] = [];
+			const key = `${participant.side}:${participant.factionId ?? 'default'}`;
+
+			if (!acc[key]) {
+				acc[key] = [];
 			}
-			acc[participant.side].push(participant);
+			acc[key].push(participant);
 
 			return acc;
 		},
-		{} as Record<number, Participant<0 | 1>[]>
+		{} as Record<string, Participant<0 | 1>[]>
 	);
 
 	return Object.values(groupedBySide).map((participants) =>
@@ -217,8 +311,9 @@ const generatePartyFromData = (party: Party): InitiativeParticipant[] =>
 
 export type Inputs = {
 	teams: {
-		side: number;
+		side: Alignment;
 		isParty: boolean;
+		factionId?: string;
 		characters: PreviewCharacterConfig[];
 	}[];
 };
@@ -246,6 +341,10 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 		() => parties.find((p) => p.id === lastUsedPartyId) ?? null,
 		[parties, lastUsedPartyId]
 	);
+	const encounterFactions = useMemo(
+		() => getEncounterFactionsWithFallback(encounterData?.factions),
+		[encounterData]
+	);
 
 	const participants = useMemo(
 		() => generateParticipants(encounterData, partyLevel),
@@ -268,22 +367,38 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 		() =>
 			fullParty
 				.filter((group) => group.length > 0)
-				.map((group, index) => ({
-					side: group[0].side,
-					isParty: index === 0,
-					characters: group.map((participant) => ({
+				.map((group, index) => {
+					const isParty = index === 0;
+					const groupFactionId = group[0].factionId;
+					const fallbackFactionId = getBuiltinFactionIdForAlignment(group[0].side);
+					const resolvedFaction = isParty
+						? undefined
+						: encounterFactions.find(
+								(entry) => entry.id === (groupFactionId ?? fallbackFactionId)
+							);
+
+					return {
+						side: group[0].side,
+						isParty,
+						factionId: resolvedFaction?.id,
+						characters: group.map((participant) => ({
 						hasHealthData:
 							typeof participant.maxHealth === 'number' ||
 							typeof participant.health === 'number' ||
 							typeof participant.tempHealth === 'number',
+						factionId: resolvedFaction?.id,
+						factionName: resolvedFaction?.name,
+						factionIcon: resolvedFaction?.icon,
+						factionColor: resolvedFaction?.color,
 						...participant,
 						initiative: participant.initiative ?? 0,
 						maxHealth: participant.maxHealth ?? 1,
 						tempHealth: participant.tempHealth ?? 0,
 						health: participant.health ?? participant.maxHealth,
-					})),
-				})),
-		[fullParty]
+						})),
+					};
+				}),
+		[encounterFactions, fullParty]
 	);
 
 	const sourceParticipantsById = useMemo(() => {
@@ -488,10 +603,19 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 				<form className="space-y-6">
 					<div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
 						{teamFields.map((teamField, index) => {
-							const appearance = getTeamAppearance(
-								teamField.side,
-								teamField.isParty
-							);
+								const factionId = teamField.factionId;
+								const faction = teamField.isParty
+									? undefined
+									: encounterFactions.find(
+										(entry) =>
+											entry.id ===
+											(factionId ?? getBuiltinFactionIdForAlignment(teamField.side))
+									);
+								const appearance = resolveTeamAppearance(
+									teamField.side,
+									teamField.isParty,
+									faction
+								);
 							const TeamIcon = appearance.Icon;
 
 							return (

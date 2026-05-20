@@ -1,5 +1,15 @@
 import { UUID } from '@/utils/uuid';
 import { z } from 'zod';
+import {
+	BUILTIN_FACTION_IDS,
+	createBuiltinFactions,
+	ensureEncounterFactions,
+	type EncounterFaction,
+	type FactionAlignment,
+	ENCOUNTER_FACTION_COLOR_KEYS,
+	ENCOUNTER_FACTION_ICON_KEYS,
+	FACTION_ALIGNMENT,
+} from '@/models/encounters/factions';
 
 export const PARTY_SETUP_MODE = {
 	Simple: 'simple',
@@ -215,6 +225,7 @@ export type CombatantParticipant<
 	name: string;
 	level: LevelFormat[IsAbstract];
 	side: Alignment;
+	factionId?: string;
 	count?: number;
 	tiePriority?: Priority;
 	maxHealth?: number;
@@ -298,6 +309,7 @@ export type NarrativeSlot = {
 export type EncounterTemplate = {
 	id: string; // Unique identifier for the encounter
 	name: string;
+	factions?: EncounterFaction[];
 	notes?: EncounterNotes;
 	difficultyLabel?: keyof typeof DIFFICULTY;
 	level?: [number, number]; // Range of levels for the encounter
@@ -318,6 +330,7 @@ export type EncounterNoteEntry = {
 	header: string;
 	content: string;
 	visibility: 'all' | Alignment;
+	factionId?: string;
 };
 
 export type EncounterNotes = {
@@ -341,6 +354,7 @@ export function normalizeEncounterNotes(
 						? entry.visibility
 						: 'all'
 				) as 'all' | Alignment,
+				factionId: entry.factionId,
 			})) ?? [];
 
 	return explicitEntries;
@@ -349,6 +363,7 @@ export function normalizeEncounterNotes(
 export type ConcreteEncounter = {
 	id: string; // Unique identifier for the encounter
 	name: string;
+	factions?: EncounterFaction[];
 	difficultyLabel?: keyof typeof DIFFICULTY;
 	levelRepresentation: typeof LEVEL_REPRESENTATION.Exact; // Encounter with participants of specific levels
 	level: number; // Concrete level for the encounter
@@ -383,6 +398,7 @@ const combatantParticipantSchema = z.object({
 	name: z.string(),
 	level: z.number(),
 	side: z.nativeEnum(ALIGNMENT),
+	factionId: z.string().optional(),
 	count: z.number().optional(),
 	tiePriority: z.nativeEnum(PRIORITY).optional(),
 	maxHealth: z.number().optional(),
@@ -445,9 +461,23 @@ const encounterNotesSchema = z.object({
 				header: z.string(),
 				content: z.string(),
 				visibility: z.union([z.literal('all'), z.nativeEnum(ALIGNMENT)]),
+				factionId: z.string().optional(),
 			})
 		)
 		.optional(),
+});
+
+const encounterFactionSchema = z.object({
+	id: z.string().min(1),
+	name: z.string().min(1),
+	alignment: z.enum([
+		FACTION_ALIGNMENT.Opponent,
+		FACTION_ALIGNMENT.Ally,
+		FACTION_ALIGNMENT.Other,
+	]),
+	icon: z.enum(ENCOUNTER_FACTION_ICON_KEYS),
+	color: z.enum(ENCOUNTER_FACTION_COLOR_KEYS),
+	isBuiltIn: z.boolean().optional(),
 });
 
 const concreteEncounterVariantSchema = z.object({
@@ -473,6 +503,7 @@ const concreteEncounterPartySetupSchema = z.object({
 export const ConcreteEncounterSchema = z.object({
 	id: z.string(),
 	name: z.string(),
+	factions: z.array(encounterFactionSchema).optional(),
 	difficulty: z.nativeEnum(DIFFICULTY),
 	level: z.number(),
 	levelRepresentation: z.literal(LEVEL_REPRESENTATION.Exact),
@@ -485,6 +516,52 @@ export const ConcreteEncounterSchema = z.object({
 	notes: encounterNotesSchema.optional(),
 	partySetup: concreteEncounterPartySetupSchema.optional(),
 });
+
+export function alignmentToFactionAlignment(
+	alignment: Alignment
+): FactionAlignment {
+	if (alignment === ALIGNMENT.PCs) {
+		return FACTION_ALIGNMENT.Ally;
+	}
+
+	if (alignment === ALIGNMENT.Neutral) {
+		return FACTION_ALIGNMENT.Other;
+	}
+
+	return FACTION_ALIGNMENT.Opponent;
+}
+
+export function factionAlignmentToAlignment(
+	alignment: FactionAlignment
+): Alignment {
+	if (alignment === FACTION_ALIGNMENT.Ally) {
+		return ALIGNMENT.PCs;
+	}
+
+	if (alignment === FACTION_ALIGNMENT.Other) {
+		return ALIGNMENT.Neutral;
+	}
+
+	return ALIGNMENT.Opponents;
+}
+
+export function getBuiltinFactionIdForAlignment(alignment: Alignment): string {
+	if (alignment === ALIGNMENT.PCs) {
+		return BUILTIN_FACTION_IDS.allies;
+	}
+
+	if (alignment === ALIGNMENT.Neutral) {
+		return BUILTIN_FACTION_IDS.other;
+	}
+
+	return BUILTIN_FACTION_IDS.opponents;
+}
+
+export function getEncounterFactionsWithFallback(
+	factions?: EncounterFaction[]
+): EncounterFaction[] {
+	return ensureEncounterFactions(factions ?? createBuiltinFactions());
+}
 
 export type Encounter = EncounterTemplate | ConcreteEncounter;
 // Example usage

@@ -34,15 +34,24 @@ import type {
 	SideType,
 	SlotType,
 } from './builderXp';
-import { normalizeSideType } from './builderXp';
 import type { AdditionalDataBlockKey } from './SlotRow';
-import type { UseFormReturn } from 'react-hook-form';
+import { useWatch, type UseFormReturn } from 'react-hook-form';
+import {
+	FACTION_ALIGNMENT,
+	type EncounterFaction,
+} from '@/models/encounters/factions';
 
-const SIDE_OPTIONS: { value: SideType; label: string }[] = [
-	{ value: 'opponent', label: 'Opponents' },
-	{ value: 'ally', label: 'Allies' },
-	{ value: 'other', label: 'Other' },
-];
+function sideFromFactionAlignment(alignment: EncounterFaction['alignment']): SideType {
+	if (alignment === FACTION_ALIGNMENT.Ally) {
+		return 'ally';
+	}
+
+	if (alignment === FACTION_ALIGNMENT.Other) {
+		return 'other';
+	}
+
+	return 'opponent';
+}
 
 const ADJUSTMENT_OPTIONS: { value: LevelAdjustment | 'none'; label: string }[] =
 	[
@@ -139,6 +148,7 @@ export function SlotRowParticipantContent({
 	onRemoveCombatReadyTab,
 }: SlotRowParticipantContentProps) {
 	const { control, setValue } = form;
+	const factions = useWatch({ control, name: 'factions' }) ?? [];
 
 	return (
 		<>
@@ -171,24 +181,34 @@ export function SlotRowParticipantContent({
 						<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 							<FormField
 								control={control}
-								name={`slots.${index}.side` as const}
+								name={`slots.${index}.factionId` as const}
 								render={({ field }) => (
 									<FormItem className="space-y-1">
-										<FormLabel>Side</FormLabel>
+										<FormLabel>Faction</FormLabel>
 										<FormControl>
 											<Select
-												value={normalizeSideType(field.value as SideType)}
-												onValueChange={(value) =>
-													field.onChange(value as SideType)
+												value={
+													typeof field.value === 'string' ? field.value : ''
 												}
+												onValueChange={(value) => {
+													const faction = factions.find((entry) => entry.id === value);
+
+													field.onChange(value);
+													if (faction) {
+														setValue(
+															`slots.${index}.side` as const,
+															sideFromFactionAlignment(faction.alignment)
+														);
+													}
+												}}
 											>
 												<SelectTrigger className="w-full">
-													<SelectValue />
+													<SelectValue placeholder="Choose faction" />
 												</SelectTrigger>
 												<SelectContent>
-													{SIDE_OPTIONS.map((option) => (
-														<SelectItem key={option.value} value={option.value}>
-															{option.label}
+													{factions.map((faction) => (
+														<SelectItem key={faction.id} value={faction.id}>
+															{faction.name}
 														</SelectItem>
 													))}
 												</SelectContent>
@@ -382,22 +402,30 @@ export function SlotRowParticipantContent({
 										</div>
 
 										<div className="space-y-1">
-											<FormLabel>Side</FormLabel>
+											<FormLabel>Faction</FormLabel>
 											<Select
-												value={normalizeSideType(participant.side)}
+												value={participant.factionId ?? ''}
 												onValueChange={(value) =>
+													{
+													const faction = factions.find((entry) => entry.id === value);
+													const side = faction
+														? sideFromFactionAlignment(faction.alignment)
+														: participant.side;
+
 													onReinforcementParticipantChange(participantIndex, {
-														side: value as SideType,
+														factionId: value,
+														side,
 													})
+													}
 												}
 											>
 												<SelectTrigger className="w-full">
-													<SelectValue />
+													<SelectValue placeholder="Choose faction" />
 												</SelectTrigger>
 												<SelectContent>
-													{SIDE_OPTIONS.map((option) => (
-														<SelectItem key={option.value} value={option.value}>
-															{option.label}
+													{factions.map((faction) => (
+														<SelectItem key={faction.id} value={faction.id}>
+															{faction.name}
 														</SelectItem>
 													))}
 												</SelectContent>

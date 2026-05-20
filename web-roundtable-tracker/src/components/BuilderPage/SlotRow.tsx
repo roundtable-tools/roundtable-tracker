@@ -29,6 +29,7 @@ import type {
 import { ParagraphFields } from './ParagraphFields';
 import { SlotRowEventFields } from './SlotRowEventFields';
 import { SlotRowParticipantContent } from './SlotRowParticipantContent';
+import { ALIGNMENT, getBuiltinFactionIdForAlignment } from '@/store/data';
 
 const SLOT_TYPES: { value: SlotType; label: string; Icon: LucideIcon }[] = [
 	{ value: 'creature', label: 'Creature', Icon: Skull },
@@ -434,6 +435,7 @@ export function SlotRow({
 			type: 'creature',
 			name: '',
 			side: 'opponent',
+			factionId: getBuiltinFactionIdForAlignment(ALIGNMENT.Opponents),
 			level: 1,
 			count: 1,
 			maxHealth: undefined,
