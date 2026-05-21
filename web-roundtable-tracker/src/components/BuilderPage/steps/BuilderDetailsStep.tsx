@@ -14,6 +14,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { Toggle } from '@/components/ui/toggle';
 import { TabsContent } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import {
@@ -22,8 +23,6 @@ import {
 	normalizePartySetup,
 } from '@/models/utility/challengePoints/challengePoints';
 import {
-	ENCOUNTER_FACTION_COLOR_KEYS,
-	ENCOUNTER_FACTION_ICON_KEYS,
 	FACTION_ALIGNMENT,
 	ensureEncounterFactions,
 	type EncounterFaction,
@@ -36,7 +35,17 @@ import { PartySizePicker } from '../PartySizePicker';
 import type { BuilderListLayoutKey } from '../BuilderListLayout';
 import type { BuilderFormValues } from '../builderConvert';
 import { v4 as uuidv4 } from 'uuid';
-import { Trash2 } from 'lucide-react';
+import {
+	Flag,
+	Shield,
+	Sparkles,
+	Skull,
+	Swords,
+	Trees,
+	Trash2,
+	type LucideIcon,
+} from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { factionAlignmentToAlignment } from '@/store/data';
 import type {
 	FieldArrayWithId,
@@ -51,6 +60,32 @@ const FACTION_ALIGNMENT_OPTIONS = [
 	{ value: FACTION_ALIGNMENT.Ally, label: 'Ally' },
 	{ value: FACTION_ALIGNMENT.Other, label: 'Other' },
 ] as const;
+
+const FACTION_ICON_OPTIONS: Array<{
+	value: EncounterFaction['icon'];
+	label: string;
+	Icon: LucideIcon;
+}> = [
+	{ value: 'swords', label: 'Swords', Icon: Swords },
+	{ value: 'shield', label: 'Shield', Icon: Shield },
+	{ value: 'flag', label: 'Flag', Icon: Flag },
+	{ value: 'skull', label: 'Skull', Icon: Skull },
+	{ value: 'trees', label: 'Trees', Icon: Trees },
+	{ value: 'sparkles', label: 'Sparkles', Icon: Sparkles },
+];
+
+const FACTION_COLOR_OPTIONS: Array<{
+	value: EncounterFaction['color'];
+	label: string;
+	swatchClassName: string;
+}> = [
+	{ value: 'crimson', label: 'Crimson', swatchClassName: 'bg-rose-700' },
+	{ value: 'amber', label: 'Amber', swatchClassName: 'bg-amber-600' },
+	{ value: 'emerald', label: 'Emerald', swatchClassName: 'bg-emerald-600' },
+	{ value: 'sky', label: 'Sky', swatchClassName: 'bg-sky-600' },
+	{ value: 'indigo', label: 'Indigo', swatchClassName: 'bg-indigo-600' },
+	{ value: 'slate', label: 'Slate', swatchClassName: 'bg-slate-600' },
+];
 
 function sideFromAlignment(alignment: EncounterFaction['alignment']) {
 	if (alignment === FACTION_ALIGNMENT.Ally) {
@@ -110,6 +145,7 @@ export function BuilderDetailsStep({
 	onLayoutKeyChange,
 }: BuilderDetailsStepProps) {
 	const factions = useWatch({ control: form.control, name: 'factions' }) ?? [];
+	const editableFactions = factions.filter((faction) => !faction.isBuiltIn);
 
 	const updateFaction = (
 		factionId: string,
@@ -129,7 +165,7 @@ export function BuilderDetailsStep({
 			...factions,
 			{
 				id: uuidv4(),
-				name: `Faction ${factions.length + 1}`,
+				name: `Faction ${editableFactions.length + 1}`,
 				alignment: FACTION_ALIGNMENT.Opponent,
 				icon: 'flag',
 				color: 'amber',
@@ -456,98 +492,158 @@ export function BuilderDetailsStep({
 							</Button>
 						</div>
 
-						<div className="space-y-2">
-							{factions.map((faction) => (
-								<div
-									key={faction.id}
-									className="grid gap-2 rounded-md border bg-muted/20 p-2 sm:grid-cols-[1.4fr_1fr_1fr_1fr_auto]"
-								>
-									<Input
-										value={faction.name}
-										onChange={(event) =>
-											updateFaction(faction.id, (current) => ({
-												...current,
-												name: event.target.value,
-											}))
-										}
-										placeholder="Faction name"
-									/>
-									<Select
-										value={faction.alignment}
-										onValueChange={(value) =>
-											updateFaction(faction.id, (current) => ({
-												...current,
-												alignment: value as EncounterFaction['alignment'],
-											}))
-										}
-									>
-										<SelectTrigger className="w-full">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											{FACTION_ALIGNMENT_OPTIONS.map((option) => (
-												<SelectItem key={option.value} value={option.value}>
-													{option.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<Select
-										value={faction.icon}
-										onValueChange={(value) =>
-											updateFaction(faction.id, (current) => ({
-												...current,
-												icon: value as EncounterFaction['icon'],
-											}))
-										}
-									>
-										<SelectTrigger className="w-full">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											{ENCOUNTER_FACTION_ICON_KEYS.map((icon) => (
-												<SelectItem key={icon} value={icon}>
-													{icon}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<Select
-										value={faction.color}
-										onValueChange={(value) =>
-											updateFaction(faction.id, (current) => ({
-												...current,
-												color: value as EncounterFaction['color'],
-											}))
-										}
-									>
-										<SelectTrigger className="w-full">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											{ENCOUNTER_FACTION_COLOR_KEYS.map((color) => (
-												<SelectItem key={color} value={color}>
-													{color}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<Button
-										type="button"
-										variant="ghost"
-										onClick={() => removeFaction(faction.id)}
-										disabled={Boolean(faction.isBuiltIn)}
-										title={
-											faction.isBuiltIn
-												? 'Built-in faction cannot be removed'
-												: 'Remove faction'
-										}
-									>
-										<Trash2 className="size-4" />
-									</Button>
-								</div>
-							))}
-						</div>
+						{editableFactions.length === 0 ? (
+							<p className="text-xs text-muted-foreground">
+								No custom factions yet. Add one to override alignment, icon, and color.
+							</p>
+						) : (
+							<div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+								{editableFactions.map((faction, index) => (
+									<Card key={faction.id} className="gap-0 py-0">
+										<CardContent className="space-y-2 px-3 py-3">
+											<div className="flex items-center justify-between gap-2">
+												<p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+													Faction {index + 1}
+												</p>
+												<Button
+													type="button"
+													variant="ghost"
+													size="sm"
+													onClick={() => removeFaction(faction.id)}
+													className="h-7 px-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+													title="Remove faction"
+												>
+													<Trash2 className="size-3.5" />
+													<span>Delete</span>
+												</Button>
+											</div>
+
+											<div className="space-y-1">
+												<FormLabel className="text-xs">Name</FormLabel>
+												<Input
+													value={faction.name}
+													onChange={(event) =>
+														updateFaction(faction.id, (current) => ({
+															...current,
+															name: event.target.value,
+														}))
+													}
+													placeholder="Faction name"
+													className="h-8 bg-background"
+												/>
+											</div>
+
+											<div className="space-y-1">
+												<FormLabel className="text-xs">Alignment</FormLabel>
+												<div
+													role="radiogroup"
+													aria-label="Faction alignment"
+													className="grid grid-cols-3 gap-1"
+												>
+													{FACTION_ALIGNMENT_OPTIONS.map((option) => (
+														<Toggle
+															key={option.value}
+															pressed={faction.alignment === option.value}
+															onPressedChange={(pressed) => {
+																if (!pressed) {
+																	return;
+																}
+
+																updateFaction(faction.id, (current) => ({
+																	...current,
+																	alignment: option.value,
+																}));
+															}}
+															variant="outline"
+															size="sm"
+															className={cn(
+																'h-7 w-full justify-center px-1 text-[11px]',
+																faction.alignment === option.value &&
+																	'border-primary bg-primary/10 text-primary'
+															)}
+														>
+															{option.label}
+														</Toggle>
+													))}
+												</div>
+											</div>
+
+											<div className="grid grid-cols-4 gap-2">
+												<div className="col-span-2 space-y-1">
+													<FormLabel className="text-xs">Icon</FormLabel>
+													<div className="grid grid-cols-3 gap-1 rounded-md border bg-background p-1">
+														{FACTION_ICON_OPTIONS.map((option) => {
+															const isSelected = faction.icon === option.value;
+
+															return (
+																<Toggle
+																	key={option.value}
+																	pressed={isSelected}
+																	onPressedChange={(pressed) => {
+																		if (!pressed) {
+																			return;
+																		}
+
+																		updateFaction(faction.id, (current) => ({
+																			...current,
+																			icon: option.value,
+																		}));
+																	}}
+																	variant="outline"
+																	size="sm"
+																	className={cn(
+																		'h-7 w-full px-0',
+																		isSelected && 'border-primary bg-primary/10 text-primary'
+																	)}
+																	title={option.label}
+																>
+																	<option.Icon className="size-3.5" />
+																</Toggle>
+															);
+														})}
+													</div>
+												</div>
+
+												<div className="col-span-2 space-y-1">
+													<FormLabel className="text-xs">Color</FormLabel>
+													<div className="grid grid-cols-3 gap-1 rounded-md border bg-background p-1">
+														{FACTION_COLOR_OPTIONS.map((option) => {
+															const isSelected = faction.color === option.value;
+
+															return (
+																<Toggle
+																	key={option.value}
+																	pressed={isSelected}
+																	onPressedChange={(pressed) => {
+																		if (!pressed) {
+																			return;
+																		}
+
+																		updateFaction(faction.id, (current) => ({
+																			...current,
+																			color: option.value,
+																		}));
+																	}}
+																	variant="outline"
+																	size="sm"
+																	className={cn(
+																		'h-7 w-full px-0',
+																		isSelected && 'border-primary bg-primary/10 text-primary'
+																	)}
+																	title={option.label}
+																>
+																	<span className={cn('h-3.5 w-3.5 rounded-full', option.swatchClassName)} />
+																</Toggle>
+															);
+														})}
+													</div>
+												</div>
+											</div>
+										</CardContent>
+									</Card>
+								))}
+							</div>
+						)}
 					</section>
 
 					<NoteListSection
