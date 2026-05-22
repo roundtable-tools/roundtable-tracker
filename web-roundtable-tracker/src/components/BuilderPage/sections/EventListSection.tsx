@@ -1,4 +1,4 @@
-import { ScrollText, ShieldPlus } from 'lucide-react';
+import { ScrollText, ShieldPlus, Sparkle, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
 	BuilderListLayout,
@@ -17,6 +17,7 @@ import type {
 const EVENT_ICONS: Record<string, typeof ScrollText> = {
 	narrative: ScrollText,
 	reinforcement: ShieldPlus,
+	skillChallenge: Zap,
 };
 
 interface EventItem {
@@ -123,6 +124,18 @@ export function EventListSection({
 						onClick={() => append({ ...defaultSlot(), type: 'narrative' })}
 					>
 						<ScrollText className="h-3.5 w-3.5" aria-hidden="true" />
+					</Button>
+					<Button
+						type="button"
+						variant="default"
+						title="Add skill challenge event"
+						size="sm"
+						className={
+							'flex h-7 w-7 items-center justify-center rounded bg-primary text-primary-foreground'
+						}
+						onClick={() => append({ ...defaultSlot(), type: 'skillChallenge' })}
+					>
+						<Zap className="h-3.5 w-3.5" aria-hidden="true" />
 					</Button>
 				</div>
 			}

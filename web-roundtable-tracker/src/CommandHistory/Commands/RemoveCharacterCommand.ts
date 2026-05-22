@@ -6,7 +6,7 @@ import {
 	getDeps,
 	STATUS,
 	undoOriginalState,
-} from '../common';
+} from '@/CommandHistory/common';
 
 type CommandProps = {
 	uuid: UUID;

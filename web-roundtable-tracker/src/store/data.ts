@@ -10,6 +10,12 @@ import {
 	ENCOUNTER_FACTION_ICON_KEYS,
 	FACTION_ALIGNMENT,
 } from '@/models/encounters/factions';
+import type {
+	SkillChallengeSlot as SkillChallengeSLotType,
+	SkillChallengeDC,
+	ChallengeRewardOption,
+	SkillChallengeProgress,
+} from '@/models/encounters/skillChallenge.types';
 
 export const PARTY_SETUP_MODE = {
 	Simple: 'simple',
@@ -310,6 +316,8 @@ export type NarrativeSlot = {
 	participants?: Participant<typeof LEVEL_REPRESENTATION.Relative>[];
 };
 
+export type SkillChallengeSlot = SkillChallengeSLotType;
+
 export type EncounterTemplate = {
 	id: string; // Unique identifier for the encounter
 	name: string;
@@ -324,6 +332,7 @@ export type EncounterTemplate = {
 	participants: Participant<typeof LEVEL_REPRESENTATION.Relative>[]; // List of participants
 	auras?: AuraElement[];
 	narrativeSlots?: NarrativeSlot[];
+	skillChallengeSlots?: SkillChallengeSlot[];
 	variants?: EncounterTemplateVariant[];
 };
 
@@ -377,6 +386,7 @@ export type ConcreteEncounter = {
 	participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[]; // List of participants
 	auras?: AuraElement[];
 	narrativeSlots?: NarrativeSlot[];
+	skillChallengeSlots?: SkillChallengeSlot[];
 	variants?: ConcreteEncounterVariant[];
 	notes?: EncounterNotes;
 	partySetup?: {
@@ -449,6 +459,52 @@ const narrativeSlotSchema = z.object({
 	participants: z.array(participantSchema).optional(),
 });
 
+const skillChallengeProgressSchema = z.object({
+	successCount: z.number().int().nonnegative(),
+	failureCount: z.number().int().nonnegative(),
+	awardedRewardIds: z.array(z.string().uuid()),
+	awardedPenaltyIds: z.array(z.string().uuid()),
+});
+
+const skillChallengeDCSchema = z.object({
+	name: z.string().min(1),
+	value: z.number().int().min(1).max(30),
+	icon: z.string().optional(),
+});
+
+const challengeRewardOptionSchema = z.object({
+	id: z.string().uuid(),
+	name: z.string().min(1),
+	description: z.string(),
+	multipleTimesAllowed: z.boolean(),
+});
+
+const skillChallengeSlotSchema = z.object({
+	id: z.string(),
+	type: z.literal('skillChallenge'),
+	description: z.string(),
+	name: z.string().optional(),
+	accomplishmentLevel: z
+		.enum(['story', 'minor', 'moderate', 'major'])
+		.optional(),
+	trigger: z.object({
+		round: z.number(),
+		frequency: z.number().optional(),
+	}),
+	shared: z.boolean(),
+	dcs: z.array(skillChallengeDCSchema),
+	successesRequired: z.number().int().positive(),
+	finishWhenMaxSuccesses: z.boolean(),
+	rewards: z.array(challengeRewardOptionSchema),
+	failuresRequired: z.number().int().positive(),
+	penalties: z.array(challengeRewardOptionSchema),
+	finishWhenMaxFailures: z.boolean().optional(),
+	progressByParticipant: z.record(z.string(), skillChallengeProgressSchema).optional(),
+	progressShared: skillChallengeProgressSchema.optional(),
+	isActive: z.boolean(),
+	endedAt: z.number().optional(),
+});
+
 const auraSchema = z.object({
 	id: z.string(),
 	name: z.string(),
@@ -517,6 +573,7 @@ export const ConcreteEncounterSchema = z.object({
 	variants: z.array(concreteEncounterVariantSchema).optional(),
 	auras: z.array(auraSchema).optional(),
 	narrativeSlots: z.array(narrativeSlotSchema).optional(),
+	skillChallengeSlots: z.array(skillChallengeSlotSchema).optional(),
 	notes: encounterNotesSchema.optional(),
 	partySetup: concreteEncounterPartySetupSchema.optional(),
 });

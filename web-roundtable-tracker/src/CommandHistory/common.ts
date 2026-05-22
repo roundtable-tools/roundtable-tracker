@@ -11,7 +11,7 @@ export const STATUS = {
 	success: 'SUCCESS',
 	failure: 'FAILURE',
 } as const;
-type Status = (typeof STATUS)[keyof typeof STATUS];
+export type Status = (typeof STATUS)[keyof typeof STATUS];
 
 export type Command<
 	T extends Record<string, unknown> = Record<string, unknown>,

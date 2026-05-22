@@ -1,5 +1,5 @@
 import { createStore } from 'zustand/vanilla';
-import { Character, type ParticipantDcEntry } from './data';
+import { Character, type ParticipantDcEntry, type SkillChallengeSlot } from './data';
 import { UUID } from '@/utils/uuid';
 import type {
 	EncounterFactionColorKey,
@@ -102,6 +102,7 @@ export interface EncounterStore {
 	turnDurationHistory: TurnDurationHistoryEntry[];
 	roundDurationHistory: RoundDurationHistoryEntry[];
 	charactersWithTurn: Set<UUID>;
+	skillChallengesActive: SkillChallengeSlot[];
 	history: Command[];
 	redoStack: Command[];
 	startEncounter: (characters: Character[]) => void;
@@ -112,6 +113,7 @@ export interface EncounterStore {
 	setTrackerMetaMap: (metaMap: Record<UUID, TrackerParticipantMeta>) => void;
 	setHistory: (history: ValueOrFunction<Command[]>) => void;
 	setRedoStack: (redoStack: ValueOrFunction<Command[]>) => void;
+	updateSkillChallengeProgress: (skillChallengeId: string) => void;
 }
 
 export type EncounterStoreJson = {
@@ -227,6 +229,7 @@ export const createEncounterStore = () =>
 				turnDurationHistory: [],
 				roundDurationHistory: [],
 				charactersWithTurn: new Set(),
+				skillChallengesActive: [],
 				history: [],
 				redoStack: [],
 				partyLevel: 1,
@@ -238,11 +241,21 @@ export const createEncounterStore = () =>
 				updateCharacter: updateCharacter(set),
 				setPartyLevel: (partyLevel: number) => set(() => ({ partyLevel })),
 				setEncounterData: (encounterData: Encounter) =>
-					set(() => ({ encounterData })),
+					set(() => ({
+						encounterData,
+						skillChallengesActive: encounterData.skillChallengeSlots ?? [],
+					})),
 				setTrackerMetaMap: (metaMap: Record<UUID, TrackerParticipantMeta>) =>
 					set(() => ({ trackerMetaMap: metaMap })),
 				setHistory: simpleSet<Command[], typeof set>(set, 'history'),
 				setRedoStack: simpleSet<Command[], typeof set>(set, 'redoStack'),
+				updateSkillChallengeProgress: (_skillChallengeId: string) => {
+					// This method triggers a re-render by causing a state update
+					// The actual progress update is done in the command's execute() method
+					set((state) => ({
+						skillChallengesActive: [...state.skillChallengesActive],
+					}));
+				},
 			}),
 			{
 				name: 'encounter-store',

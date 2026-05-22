@@ -124,9 +124,37 @@ export const ReinforcementEventSchema = BaseEventSchema.extend({
 	description: z.string().optional(),
 });
 
+// Skill Challenge Event Schemas
+export const SkillChallengeDCSchema = z.object({
+	name: z.string().min(1),
+	value: z.number().int().min(1).max(30),
+	icon: z.string().optional(),
+});
+
+export const ChallengeRewardOptionSchema = z.object({
+	id: z.string().uuid(),
+	name: z.string().min(1),
+	description: z.string(),
+	multipleTimesAllowed: z.boolean(),
+});
+
+export const SkillChallengeEventSchema = BaseEventSchema.extend({
+	type: z.literal('skillChallenge'),
+	description: z.string(),
+	accomplishmentLevel: AccomplishmentLevelSchema,
+	shared: z.boolean(),
+	dcs: z.array(SkillChallengeDCSchema).nonempty(),
+	successesRequired: z.number().int().positive(),
+	finishWhenMaxSuccesses: z.boolean(),
+	rewards: z.array(ChallengeRewardOptionSchema),
+	failuresRequired: z.number().int().positive(),
+	penalties: z.array(ChallengeRewardOptionSchema),
+});
+
 export const EventSchema = z.discriminatedUnion('type', [
 	NarrativeEventSchema,
 	ReinforcementEventSchema,
+	SkillChallengeEventSchema,
 ]) as z.ZodSchema<Event>;
 
 // ============================================================================

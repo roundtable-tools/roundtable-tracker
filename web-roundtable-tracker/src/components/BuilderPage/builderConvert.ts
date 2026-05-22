@@ -11,8 +11,9 @@ import {
 	normalizeEncounterNotes,
 	type NarrativeSlot,
 	type Participant,
-	type EncounterFaction,
+	type SkillChallengeSlot,
 } from '@/store/data';
+import type { EncounterFaction } from '@/models/encounters/factions';
 import {
 	computeBuilderXP,
 	normalizeSideType,
@@ -120,7 +121,9 @@ export function resolveFactionIdForBuilderSide(
 			: normalized === 'other'
 				? FACTION_ALIGNMENT.Other
 				: FACTION_ALIGNMENT.Opponent;
-	const faction = factions.find((entry) => entry.alignment === expectedAlignment);
+	const faction = factions.find(
+		(entry) => entry.alignment === expectedAlignment
+	);
 
 	if (faction) {
 		return faction.id;
@@ -166,6 +169,16 @@ export function defaultSlot(): BuilderSlot {
 		combatReadyState: 'active',
 		initiativeModifier: undefined,
 		hiddenFromPlayers: false,
+
+		// Skill Challenge defaults
+		shared: true,
+		skillChallengeDCs: [],
+		successesRequired: 3,
+		finishWhenMaxSuccesses: false,
+		rewards: [],
+		failuresRequired: 3,
+		penalties: [],
+		finishWhenMaxFailures: false,
 	};
 }
 
@@ -242,7 +255,8 @@ export function fromEncounterTemplate(
 		notes: defaultBuilderNotes(),
 		slots: variant.participants.map((participant) => {
 			const factionId =
-				participant.factionId ?? getBuiltinFactionIdForAlignment(participant.side);
+				participant.factionId ??
+				getBuiltinFactionIdForAlignment(participant.side);
 			const side =
 				resolveBuilderSideForFactionId(factionId, factions) ??
 				alignmentToBuilderSide(participant.side);
@@ -435,8 +449,10 @@ export function toConcreteEncounter(
 				s.type === 'reinforcement'
 					? s.reinforcementParticipants?.map((participant) => {
 							const side =
-								resolveAlignmentFromFactionId(participant.factionId, factions) ??
-								builderSideToAlignment(participant.side);
+								resolveAlignmentFromFactionId(
+									participant.factionId,
+									factions
+								) ?? builderSideToAlignment(participant.side);
 
 							if (participant.type === 'hazard') {
 								return {
@@ -604,6 +620,38 @@ export function toConcreteEncounter(
 		}))
 		.filter((note) => note.header.length > 0 || note.content.trim().length > 0);
 
+	const skillChallengeSlots: SkillChallengeSlot[] = values.slots
+		.filter((s) => s.type === 'skillChallenge')
+		.map((s) => ({
+			id: s.id,
+			type: 'skillChallenge' as const,
+			name: s.name || '',
+			description: s.description || '',
+			accomplishmentLevel: s.accomplishmentLevel,
+			trigger: {
+				round: 1,
+			},
+			shared: s.shared ?? true,
+			dcs: s.skillChallengeDCs || [],
+			successesRequired: s.successesRequired || 3,
+			finishWhenMaxSuccesses: s.finishWhenMaxSuccesses ?? false,
+			rewards: s.rewards || [],
+			failuresRequired: s.failuresRequired || 3,
+			penalties: s.penalties || [],
+			finishWhenMaxFailures: s.finishWhenMaxFailures ?? false,
+			progressShared:
+				(s.shared ?? true)
+					? {
+							successCount: 0,
+							failureCount: 0,
+							awardedRewardIds: [],
+							awardedPenaltyIds: [],
+						}
+					: undefined,
+			progressByParticipant: !(s.shared ?? true) ? {} : undefined,
+			isActive: true,
+		}));
+
 	return {
 		id,
 		name: values.name,
@@ -616,6 +664,8 @@ export function toConcreteEncounter(
 		participants,
 		variants,
 		narrativeSlots: narrativeSlots.length > 0 ? narrativeSlots : undefined,
+		skillChallengeSlots:
+			skillChallengeSlots.length > 0 ? skillChallengeSlots : undefined,
 		partySetup: {
 			mode: values.partySetupMode,
 			specificPartyId: values.specificPartyId,
@@ -761,6 +811,37 @@ export function fromConcreteEncounter(
 		});
 	}
 
+	for (const sc of encounter.skillChallengeSlots ?? []) {
+		slots.push({
+			id: sc.id,
+			type: 'skillChallenge',
+			name: sc.name ?? '',
+			description: sc.description ?? '',
+			side: 'opponent',
+			level: encounter.level,
+			count: 1,
+			maxHealth: undefined,
+			successesToDisable: 1,
+			adjustment: 'none',
+			isSimpleHazard: false,
+			reinforcementRound: 1,
+			reinforcementParticipants: [],
+			eventRound: 1,
+			repeatInterval: undefined,
+			accomplishmentLevel: sc.accomplishmentLevel,
+
+			// Skill Challenge fields
+			shared: sc.shared,
+			skillChallengeDCs: sc.dcs,
+			successesRequired: sc.successesRequired,
+			finishWhenMaxSuccesses: sc.finishWhenMaxSuccesses,
+			rewards: sc.rewards,
+			failuresRequired: sc.failuresRequired,
+			penalties: sc.penalties,
+			finishWhenMaxFailures: sc.finishWhenMaxFailures ?? false,
+		});
+	}
+
 	const normalizedNotes = normalizeEncounterNotes(encounter.notes);
 
 	return {
@@ -868,9 +949,9 @@ export function templateVariantToFormPartial(
 	return {
 		partySize: variant.partySize,
 		slots: variant.participants.map((participant) => ({
-				factionId:
-					participant.factionId ??
-					getBuiltinFactionIdForAlignment(participant.side),
+			factionId:
+				participant.factionId ??
+				getBuiltinFactionIdForAlignment(participant.side),
 			id: participant.id,
 			type:
 				participant.type === 'creature'

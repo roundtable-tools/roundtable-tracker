@@ -1,5 +1,5 @@
 import { UUID } from '@/utils/uuid';
-import { COMMAND_TAGS, Command, CommandDeps, STATUS, getDeps } from '../common';
+import { COMMAND_TAGS, Command, CommandDeps, STATUS, getDeps } from '@/CommandHistory/common';
 import { CompositeCommand } from './CompositeCommand';
 import { DelayCharacterCommand } from './DelayCharacterCommand';
 import { EndRoundCommand } from './EndRoundCommand';

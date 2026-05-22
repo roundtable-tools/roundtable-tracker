@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { RemoveCharacterCommand } from './RemoveCharacterCommand';
 import { createEncounterStore } from '../../store/encounterRuntimeStore';
 import { Character } from '../../store/data';
-import { STATUS } from '../common';
+import { STATUS } from '@/CommandHistory/common';
 
 describe('RemoveCharacterCommand', () => {
 	let uuid: string;

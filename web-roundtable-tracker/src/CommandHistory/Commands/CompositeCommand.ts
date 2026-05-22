@@ -1,4 +1,4 @@
-import { Command, STATUS } from '../common';
+import { Command, STATUS } from '@/CommandHistory/common';
 
 export class CompositeCommand implements Command {
 	readonly type = 'CompositeCommand';

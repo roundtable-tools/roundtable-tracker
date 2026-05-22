@@ -1,4 +1,4 @@
-import { Command, CommandDeps, STATUS, getDeps } from '../common';
+import { Command, CommandDeps, STATUS, getDeps } from '@/CommandHistory/common';
 import { UUID } from '@/utils/uuid';
 import { getChangeCharacterState } from './composites/ChangeCharacterState';
 

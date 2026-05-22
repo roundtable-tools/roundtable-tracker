@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { CompositeCommand } from './CompositeCommand';
-import { Command, STATUS } from '../common';
+import { Command, STATUS } from '@/CommandHistory/common';
 
 describe('CompositeCommand', () => {
 	it('should execute all commands and return success if all succeed', () => {

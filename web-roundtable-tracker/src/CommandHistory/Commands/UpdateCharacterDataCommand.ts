@@ -1,6 +1,6 @@
 import { UUID } from '@/utils/uuid';
 import { Character } from '@/store/data';
-import { Command, CommandDeps, getDeps, STATUS } from '../common';
+import { Command, CommandDeps, getDeps, STATUS } from '@/CommandHistory/common';
 
 type CommandProps = {
 	uuid: UUID;

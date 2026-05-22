@@ -95,6 +95,12 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table';
+import type { SkillChallengeSlot } from '@/store/data';
+import { AwardSkillChallengeSuccessCommand } from '@/CommandHistory/Commands/AwardSkillChallengeSuccessCommand';
+import { AwardSkillChallengeFailureCommand } from '@/CommandHistory/Commands/AwardSkillChallengeFailureCommand';
+import { EndSkillChallengeCommand } from '@/CommandHistory/Commands/EndSkillChallengeCommand';
+import { CompositeCommand } from '@/CommandHistory/Commands/CompositeCommand';
+import SkillChallengeProgress from './SkillChallengeProgress';
 
 function logTrackerButton(action: string, details?: Record<string, unknown>) {
 	if (details) {
@@ -735,6 +741,131 @@ type ParticipantDetailsProps = {
 	onSetTempHp?: (amount: number, description: string) => void;
 };
 
+function ParticipantSkillChallenges({
+	participant,
+}: {
+	participant: TrackerParticipant;
+}) {
+	const { executeCommand } = useContext(CommandHistoryContext);
+	const skillChallengesActive = useEncounterStore((state) => state.skillChallengesActive);
+
+	const relevantChallenges: SkillChallengeSlot[] = skillChallengesActive.filter((sc) => {
+		if (!sc.isActive) return false;
+		if (sc.shared) return true;
+		// Individual tracking: show if participant has progress or is a PC
+		return participant.role === 'pc';
+	});
+
+	if (relevantChallenges.length === 0) return null;
+
+	const handleAwardSuccess = (
+		challenge: SkillChallengeSlot,
+		rewardId?: string
+	) => {
+		const newSuccessCount =
+			(challenge.shared
+				? (challenge.progressShared?.successCount ?? 0)
+				: (challenge.progressByParticipant?.[participant.id]?.successCount ?? 0)) + 1;
+		const willReachMax = newSuccessCount >= challenge.successesRequired;
+
+		const successCmd = new AwardSkillChallengeSuccessCommand({
+			skillChallengeId: challenge.id,
+			participantId: challenge.shared ? undefined : participant.id,
+			rewardId,
+		});
+
+		if (willReachMax && challenge.finishWhenMaxSuccesses) {
+			executeCommand(
+				new CompositeCommand({
+					commands: [
+						successCmd,
+						new EndSkillChallengeCommand({
+							skillChallengeId: challenge.id,
+							participantId: challenge.shared ? undefined : participant.id,
+							result: { type: 'success', successCount: newSuccessCount, failureCount: 0, reason: 'max_reached' },
+						}),
+					],
+				})
+			);
+		} else {
+			executeCommand(successCmd);
+		}
+	};
+
+	const handleAwardFailure = (
+		challenge: SkillChallengeSlot,
+		penaltyId?: string
+	) => {
+		const newFailureCount =
+			(challenge.shared
+				? (challenge.progressShared?.failureCount ?? 0)
+				: (challenge.progressByParticipant?.[participant.id]?.failureCount ?? 0)) + 1;
+		const currentSuccessCount = challenge.shared
+			? (challenge.progressShared?.successCount ?? 0)
+			: (challenge.progressByParticipant?.[participant.id]?.successCount ?? 0);
+		const willReachMax = newFailureCount >= challenge.failuresRequired;
+
+		const failureCmd = new AwardSkillChallengeFailureCommand({
+			skillChallengeId: challenge.id,
+			participantId: challenge.shared ? undefined : participant.id,
+			penaltyId,
+		});
+
+		if (willReachMax && challenge.finishWhenMaxFailures) {
+			executeCommand(
+				new CompositeCommand({
+					commands: [
+						failureCmd,
+						new EndSkillChallengeCommand({
+							skillChallengeId: challenge.id,
+							participantId: challenge.shared ? undefined : participant.id,
+							result: { type: 'failure', successCount: currentSuccessCount, failureCount: newFailureCount, reason: 'max_reached' },
+						}),
+					],
+				})
+			);
+		} else {
+			executeCommand(failureCmd);
+		}
+	};
+
+	const handleEndChallenge = (challenge: SkillChallengeSlot) => {
+		const successCount = challenge.shared
+			? (challenge.progressShared?.successCount ?? 0)
+			: (challenge.progressByParticipant?.[participant.id]?.successCount ?? 0);
+		const failureCount = challenge.shared
+			? (challenge.progressShared?.failureCount ?? 0)
+			: (challenge.progressByParticipant?.[participant.id]?.failureCount ?? 0);
+		// Success takes priority when both maxes are reached
+		const resultType: 'success' | 'failure' =
+			successCount >= challenge.successesRequired ? 'success' : 'failure';
+
+		executeCommand(
+			new EndSkillChallengeCommand({
+				skillChallengeId: challenge.id,
+				participantId: challenge.shared ? undefined : participant.id,
+				result: { type: resultType, successCount, failureCount, reason: 'manual_end' },
+			})
+		);
+	};
+
+	return (
+		<div className="space-y-2">
+			<h4 className="text-sm font-medium">Skill Challenges</h4>
+			{relevantChallenges.map((challenge) => (
+				<SkillChallengeProgress
+					key={challenge.id}
+					skillChallenge={challenge}
+					participantId={challenge.shared ? undefined : participant.id}
+					onAwardSuccess={(rewardId) => handleAwardSuccess(challenge, rewardId)}
+					onAwardFailure={(penaltyId) => handleAwardFailure(challenge, penaltyId)}
+					onEndChallenge={() => handleEndChallenge(challenge)}
+				/>
+			))}
+		</div>
+	);
+}
+
 function ParticipantDetails({
 	participant,
 	alignmentNotes = [],
@@ -963,6 +1094,9 @@ function ParticipantDetails({
 						</div>
 					))}
 				</div>
+			)}
+			{participant.role === 'pc' && (
+				<ParticipantSkillChallenges participant={participant} />
 			)}
 		</div>
 	);

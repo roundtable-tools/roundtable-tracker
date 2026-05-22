@@ -17,6 +17,7 @@ import {
 	ShieldPlus,
 	Skull,
 	TriangleAlert,
+	Zap,
 	type LucideIcon,
 } from 'lucide-react';
 import type { BuilderFormValues } from './builderConvert';
@@ -36,13 +37,14 @@ const SLOT_TYPES: { value: SlotType; label: string; Icon: LucideIcon }[] = [
 	{ value: 'hazard', label: 'Hazard', Icon: TriangleAlert },
 	{ value: 'reinforcement', label: 'Reinforcement', Icon: ShieldPlus },
 	{ value: 'narrative', label: 'Narrative Event', Icon: ScrollText },
+	{ value: 'skillChallenge', label: 'Skill Challenge', Icon: Zap },
 ];
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const PARTICIPANT_SLOT_TYPES: SlotType[] = ['creature', 'hazard'];
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const EVENT_SLOT_TYPES: SlotType[] = ['narrative', 'reinforcement'];
+export const EVENT_SLOT_TYPES: SlotType[] = ['narrative', 'reinforcement', 'skillChallenge'];
 
 export type AdditionalDataBlockKey =
 	| 'hp'

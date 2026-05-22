@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { GiveAdditionalTurnCommand } from './GiveAdditionalTurnCommand';
 import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import { Character } from '@/store/data';
-import { STATUS } from '../common';
+import { STATUS } from '@/CommandHistory/common';
 
 describe('GiveAdditionalTurnCommand', () => {
 	let encounterStore: ReturnType<typeof createEncounterStore>;

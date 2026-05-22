@@ -5,8 +5,9 @@ import { Threat } from '@/models/utility/threat/Threat.class';
 import type { LevelAdjustment } from '@/models/utility/level/Level';
 import type { AccomplishmentLevel } from '@/models/encounters/encounter.types';
 import type { ParticipantDcEntry } from '@/store/data';
+import type { SkillChallengeDC, ChallengeRewardOption } from '@/models/encounters/skillChallenge.types';
 
-export type SlotType = 'creature' | 'hazard' | 'reinforcement' | 'narrative';
+export type SlotType = 'creature' | 'hazard' | 'reinforcement' | 'narrative' | 'skillChallenge';
 
 export type CanonicalSideType = 'opponent' | 'ally' | 'other';
 
@@ -76,6 +77,16 @@ export interface BuilderSlot {
 	combatReadyState?: 'active' | 'delayed' | 'knocked-out';
 	initiativeModifier?: number;
 	hiddenFromPlayers?: boolean;
+
+	// Skill Challenge fields
+	shared?: boolean; // Party shares progress or individual tracking
+	skillChallengeDCs?: SkillChallengeDC[];
+	successesRequired?: number;
+	finishWhenMaxSuccesses?: boolean;
+	rewards?: ChallengeRewardOption[];
+	failuresRequired?: number;
+	penalties?: ChallengeRewardOption[];
+	finishWhenMaxFailures?: boolean;
 }
 
 export interface DelayedReinforcementConfig {

@@ -13,6 +13,9 @@ import { TriggerReinforcementEventCommand } from './Commands/TriggerReinforcemen
 import { UpdateCharacterDataCommand } from './Commands/UpdateCharacterDataCommand';
 import { SetTempHealthCommand } from './Commands/SetTempHealthCommand';
 import { StartInitiativeCommand } from './Commands/StartInitiativeCommand';
+import { AwardSkillChallengeSuccessCommand } from './Commands/AwardSkillChallengeSuccessCommand';
+import { AwardSkillChallengeFailureCommand } from './Commands/AwardSkillChallengeFailureCommand';
+import { EndSkillChallengeCommand } from './Commands/EndSkillChallengeCommand';
 import { Command } from './common';
 
 const commandMap: Record<string, new (data: Command['data']) => Command> = {};
@@ -74,4 +77,16 @@ export const registerSerializableCommands = () => {
 	registerSerializableCommand(ChangeHealthCommand, 'ChangeHealthCommand');
 	registerSerializableCommand(SetTempHealthCommand, 'SetTempHealthCommand');
 	registerSerializableCommand(StartInitiativeCommand, 'StartInitiativeCommand');
+	registerSerializableCommand(
+		AwardSkillChallengeSuccessCommand,
+		'AwardSkillChallengeSuccessCommand'
+	);
+	registerSerializableCommand(
+		AwardSkillChallengeFailureCommand,
+		'AwardSkillChallengeFailureCommand'
+	);
+	registerSerializableCommand(
+		EndSkillChallengeCommand,
+		'EndSkillChallengeCommand'
+	);
 };

@@ -5,7 +5,7 @@ import {
 	CommandDeps,
 	STATUS,
 	getDeps,
-} from '../common';
+} from '@/CommandHistory/common';
 import { FinalizeTurnAction } from './FinalizeTurnAndAdvanceRoundCommand';
 import {
 	freezeElapsed,

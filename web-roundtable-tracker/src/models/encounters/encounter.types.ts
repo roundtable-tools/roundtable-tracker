@@ -5,6 +5,7 @@
 
 import { LevelDifference } from '../utility/level/LevelDifference';
 import type { EncounterFaction } from './factions';
+import type { SkillChallengeEvent } from './skillChallenge.types';
 
 // ============================================================================
 // Role Literals
@@ -118,7 +119,7 @@ export interface ReinforcementEvent extends BaseEvent {
  * Discriminated union prevents invalid transitions
  * (e.g., narrative events cannot reference participant IDs).
  */
-export type Event = NarrativeEvent | ReinforcementEvent;
+export type Event = NarrativeEvent | ReinforcementEvent | SkillChallengeEvent;
 
 // ============================================================================
 // Variant and Template

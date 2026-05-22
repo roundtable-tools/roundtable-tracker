@@ -1,5 +1,5 @@
 import { UUID } from '@/utils/uuid';
-import { Command, CommandDeps, getDeps, STATUS } from '../common';
+import { Command, CommandDeps, getDeps, STATUS } from '@/CommandHistory/common';
 import { EncounterStore } from '@/store/encounterRuntimeStore';
 import { freezeElapsed } from '@/store/timers';
 import { INITIATIVE_PHASE } from '@/store/encounterRuntimeStore';

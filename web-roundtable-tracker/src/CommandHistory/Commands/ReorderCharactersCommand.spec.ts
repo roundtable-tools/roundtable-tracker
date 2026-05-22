@@ -5,7 +5,7 @@ import {
 	INITIATIVE_PHASE,
 } from '@/store/encounterRuntimeStore';
 import { Character } from '@/store/data';
-import { STATUS } from '../common';
+import { STATUS } from '@/CommandHistory/common';
 
 describe('ReorderCharactersCommand', () => {
 	let initialCharacters: Character[];

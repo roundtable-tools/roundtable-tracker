@@ -8,13 +8,14 @@ const ACCOMPLISHMENT_LABELS = {
 } as const;
 
 const PARTICIPANT_TYPES: SlotType[] = ['creature', 'hazard'];
-const EVENT_TYPES: SlotType[] = ['narrative', 'reinforcement'];
+const EVENT_TYPES: SlotType[] = ['narrative', 'reinforcement', 'skillChallenge'];
 
 const PARTICIPANT_TYPE_LABELS: Record<SlotType, string> = {
 	creature: 'creatures',
 	hazard: 'hazards',
 	reinforcement: 'reinforcement events',
 	narrative: 'narrative events',
+	skillChallenge: 'skill challenge events',
 };
 
 const EVENT_TYPE_LABELS: Record<SlotType, string> = {
@@ -22,6 +23,7 @@ const EVENT_TYPE_LABELS: Record<SlotType, string> = {
 	hazard: 'hazards',
 	reinforcement: 'reinforcement events',
 	narrative: 'narrative events',
+	skillChallenge: 'skill challenge events',
 };
 
 type SlotSectionKind = 'participants' | 'events';

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import { Character } from '@/store/data';
-import { STATUS } from '../common';
+import { STATUS } from '@/CommandHistory/common';
 import { ReactivateCharacterCommand } from './ReactivateCharacterCommand';
 import { KnockOutCharacterCommand } from './KnockOutCharacterCommand';
 

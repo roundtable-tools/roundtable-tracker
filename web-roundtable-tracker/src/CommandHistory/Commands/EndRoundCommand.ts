@@ -6,7 +6,7 @@ import {
 	getDeps,
 	STATUS,
 	undoOriginalState,
-} from '../common';
+} from '@/CommandHistory/common';
 import { freezeElapsed } from '@/store/timers';
 import { INITIATIVE_PHASE } from '@/store/encounterRuntimeStore';
 

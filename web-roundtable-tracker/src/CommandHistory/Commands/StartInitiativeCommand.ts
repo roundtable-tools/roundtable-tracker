@@ -2,7 +2,7 @@ import {
 	INITIATIVE_PHASE,
 	type InitiativePhase,
 } from '@/store/encounterRuntimeStore';
-import { Command, CommandDeps, STATUS, getDeps } from '../common';
+import { Command, CommandDeps, STATUS, getDeps } from '@/CommandHistory/common';
 import { getNowMs } from '@/store/timers';
 
 type CommandData = {
