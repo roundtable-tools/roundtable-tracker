@@ -45,7 +45,11 @@ export function SlotRowEventFields({
 }: SlotRowEventFieldsProps) {
 	const { control } = form;
 
-	if (slotType !== 'reinforcement' && slotType !== 'narrative' && slotType !== 'skillChallenge') {
+	if (
+		slotType !== 'reinforcement' &&
+		slotType !== 'narrative' &&
+		slotType !== 'skillChallenge'
+	) {
 		return null;
 	}
 

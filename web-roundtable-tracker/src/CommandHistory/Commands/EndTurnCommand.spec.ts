@@ -106,7 +106,11 @@ describe('EndTurnCommand', () => {
 
 		const executedState = encounterStore.getState();
 		expect(executedState.lastTurnElapsedMs).toBe(400);
-		expect(executedState.turnElapsedByRoundParticipant['1:00000000-0000-0000-0000-000000000001']).toBe(400);
+		expect(
+			executedState.turnElapsedByRoundParticipant[
+				'1:00000000-0000-0000-0000-000000000001'
+			]
+		).toBe(400);
 		expect(executedState.turnDurationHistory).toHaveLength(1);
 
 		const undoStatus = command.undo();
@@ -115,7 +119,11 @@ describe('EndTurnCommand', () => {
 		const undoneState = encounterStore.getState();
 		expect(undoneState.lastTurnElapsedMs).toBe(0);
 		expect(undoneState.turnDurationHistory).toHaveLength(0);
-		expect(undoneState.turnElapsedByRoundParticipant['1:00000000-0000-0000-0000-000000000001']).toBeUndefined();
+		expect(
+			undoneState.turnElapsedByRoundParticipant[
+				'1:00000000-0000-0000-0000-000000000001'
+			]
+		).toBeUndefined();
 
 		nowSpy.mockRestore();
 	});

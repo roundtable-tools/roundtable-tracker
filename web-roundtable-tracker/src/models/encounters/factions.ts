@@ -91,7 +91,9 @@ export function ensureEncounterFactions(
 	}
 
 	for (const builtin of createBuiltinFactions()) {
-		if (!Array.from(byId.values()).some((f) => f.alignment === builtin.alignment)) {
+		if (
+			!Array.from(byId.values()).some((f) => f.alignment === builtin.alignment)
+		) {
 			byId.set(builtin.id, builtin);
 		}
 	}

@@ -1,11 +1,12 @@
-import React from 'react';
-import type { SkillChallengeSlot, SkillChallengeProgress } from '@/store/data';
+import type {
+	SkillChallengeSlot,
+	SkillChallengeProgress,
+} from '@/models/encounters/skillChallenge.types';
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
-	DialogDescription,
 	DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -26,12 +27,12 @@ export default function EndChallengeModal({
 	progress,
 	onConfirm,
 }: EndChallengeModalProps) {
-	const succeeded =
-		progress.successCount >= skillChallenge.successesRequired;
+	const succeeded = progress.successCount >= skillChallenge.successesRequired;
 	const failureReached =
 		progress.failureCount >= skillChallenge.failuresRequired;
 
 	let outcome = 'ongoing';
+
 	if (succeeded) {
 		outcome = 'success';
 	} else if (failureReached) {
@@ -83,46 +84,55 @@ export default function EndChallengeModal({
 						</div>
 					</div>
 
-					{progress.awardedRewardIds && progress.awardedRewardIds.length > 0 && (
-						<div className="space-y-1 p-2 rounded bg-muted">
-							<p className="text-xs font-medium">Rewards Earned:</p>
-							<ul className="text-xs space-y-1">
-								{progress.awardedRewardIds.map((rewardId) => {
-									const reward = skillChallenge.rewards?.find((r) => r.id === rewardId);
-									return reward ? (
-										<li key={rewardId} className="text-green-700 dark:text-green-300">
-											• {reward.name}
-										</li>
-									) : null;
-								})}
-							</ul>
-						</div>
-					)}
+					{progress.awardedRewardIds &&
+						progress.awardedRewardIds.length > 0 && (
+							<div className="space-y-1 p-2 rounded bg-muted">
+								<p className="text-xs font-medium">Rewards Earned:</p>
+								<ul className="text-xs space-y-1">
+									{progress.awardedRewardIds.map((rewardId) => {
+										const reward = skillChallenge.rewards?.find(
+											(r) => r.id === rewardId
+										);
 
-					{progress.awardedPenaltyIds && progress.awardedPenaltyIds.length > 0 && (
-						<div className="space-y-1 p-2 rounded bg-muted">
-							<p className="text-xs font-medium">Penalties Applied:</p>
-							<ul className="text-xs space-y-1">
-								{progress.awardedPenaltyIds.map((penaltyId) => {
-									const penalty = skillChallenge.config.penalties?.find(
-										(p) => p.id === penaltyId
-									);
-									return penalty ? (
-										<li key={penaltyId} className="text-red-700 dark:text-red-300">
-											• {penalty.name}
-										</li>
-									) : null;
-								})}
-							</ul>
-						</div>
-					)}
+										return reward ? (
+											<li
+												key={rewardId}
+												className="text-green-700 dark:text-green-300"
+											>
+												• {reward.name}
+											</li>
+										) : null;
+									})}
+								</ul>
+							</div>
+						)}
+
+					{progress.awardedPenaltyIds &&
+						progress.awardedPenaltyIds.length > 0 && (
+							<div className="space-y-1 p-2 rounded bg-muted">
+								<p className="text-xs font-medium">Penalties Applied:</p>
+								<ul className="text-xs space-y-1">
+									{progress.awardedPenaltyIds.map((penaltyId) => {
+										const penalty = skillChallenge.penalties?.find(
+											(p) => p.id === penaltyId
+										);
+
+										return penalty ? (
+											<li
+												key={penaltyId}
+												className="text-red-700 dark:text-red-300"
+											>
+												• {penalty.name}
+											</li>
+										) : null;
+									})}
+								</ul>
+							</div>
+						)}
 				</div>
 
 				<DialogFooter>
-					<Button
-						variant="outline"
-						onClick={() => onOpenChange(false)}
-					>
+					<Button variant="outline" onClick={() => onOpenChange(false)}>
 						Cancel
 					</Button>
 					<Button onClick={handleConfirm}>Confirm End Challenge</Button>

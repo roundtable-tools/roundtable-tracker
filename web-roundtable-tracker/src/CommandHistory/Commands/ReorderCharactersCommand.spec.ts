@@ -134,14 +134,24 @@ describe('ReorderCharactersCommand', () => {
 		expect(command.execute()).toBe(STATUS.success);
 
 		const reorderedState = encounterStore.getState();
-		expect(reorderedState.activeTurnParticipantId).toBe(initialCharacters[1].uuid);
-		expect(reorderedState.turnElapsedByRoundParticipant['1:00000000-0000-0000-0000-000000000001']).toBe(300);
+		expect(reorderedState.activeTurnParticipantId).toBe(
+			initialCharacters[1].uuid
+		);
+		expect(
+			reorderedState.turnElapsedByRoundParticipant[
+				'1:00000000-0000-0000-0000-000000000001'
+			]
+		).toBe(300);
 
 		expect(command.undo()).toBe(STATUS.success);
 
 		const undoneState = encounterStore.getState();
 		expect(undoneState.activeTurnParticipantId).toBe(initialCharacters[0].uuid);
-		expect(undoneState.turnElapsedByRoundParticipant['1:00000000-0000-0000-0000-000000000001']).toBeUndefined();
+		expect(
+			undoneState.turnElapsedByRoundParticipant[
+				'1:00000000-0000-0000-0000-000000000001'
+			]
+		).toBeUndefined();
 
 		nowSpy.mockRestore();
 	});

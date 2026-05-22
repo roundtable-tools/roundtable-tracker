@@ -243,7 +243,8 @@ export function runtimeToOutOfInitiativeData(
 		.flatMap((slot) =>
 			(slot.participants ?? []).map((participant, index) => {
 				const factionId =
-					participant.factionId ?? getBuiltinFactionIdForAlignment(participant.side);
+					participant.factionId ??
+					getBuiltinFactionIdForAlignment(participant.side);
 				const faction = factions.find((entry) => entry.id === factionId);
 				const sideTheme =
 					participant.side === ALIGNMENT.PCs

@@ -11,6 +11,7 @@ export const STATUS = {
 	success: 'SUCCESS',
 	failure: 'FAILURE',
 } as const;
+
 export type Status = (typeof STATUS)[keyof typeof STATUS];
 
 export type Command<

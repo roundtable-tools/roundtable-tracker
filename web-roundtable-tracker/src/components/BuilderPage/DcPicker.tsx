@@ -133,7 +133,12 @@ export function DcPicker({ dcs, onDcsChange }: DcPickerProps) {
 
 						<div>
 							<label className="block text-sm font-medium">Icon</label>
-							<Select value={formIcon} onValueChange={(value: ParticipantDcIconKey) => setFormIcon(value)}>
+							<Select
+								value={formIcon}
+								onValueChange={(value: ParticipantDcIconKey) =>
+									setFormIcon(value)
+								}
+							>
 								<SelectTrigger className="mt-1">
 									<SelectValue />
 								</SelectTrigger>
@@ -149,10 +154,18 @@ export function DcPicker({ dcs, onDcsChange }: DcPickerProps) {
 					</div>
 
 					<DialogFooter>
-						<Button type="button" variant="outline" onClick={() => setOpen(false)}>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setOpen(false)}
+						>
 							Cancel
 						</Button>
-						<Button type="button" onClick={handleAdd} disabled={!formName.trim()}>
+						<Button
+							type="button"
+							onClick={handleAdd}
+							disabled={!formName.trim()}
+						>
 							Add
 						</Button>
 					</DialogFooter>

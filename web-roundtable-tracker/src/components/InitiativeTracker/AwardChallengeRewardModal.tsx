@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import type { SkillChallengeSlot, SkillChallengeProgress } from '@/store/data';
+import type {
+	SkillChallengeSlot,
+	SkillChallengeProgress,
+} from '@/models/encounters/skillChallenge.types';
 import {
 	Dialog,
 	DialogContent,
@@ -41,6 +43,7 @@ export default function AwardChallengeRewardModal({
 
 	const isOneTimeUsed = (id: string) => {
 		const option = options.find((o) => o.id === id);
+
 		return !option?.multipleTimesAllowed && awardedIds.includes(id);
 	};
 
@@ -48,7 +51,9 @@ export default function AwardChallengeRewardModal({
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="max-w-md">
 				<DialogHeader>
-					<DialogTitle>{isReward ? 'Choose Reward' : 'Choose Penalty'}</DialogTitle>
+					<DialogTitle>
+						{isReward ? 'Choose Reward' : 'Choose Penalty'}
+					</DialogTitle>
 					<DialogDescription>
 						{isReward
 							? 'Select a reward to award for this success.'
@@ -65,6 +70,7 @@ export default function AwardChallengeRewardModal({
 						) : (
 							options.map((option) => {
 								const isDisabled = isOneTimeUsed(option.id);
+
 								return (
 									<button
 										key={option.id}
@@ -79,10 +85,11 @@ export default function AwardChallengeRewardModal({
 										<div className="flex items-start justify-between gap-2">
 											<div className="flex-1">
 												<div className="flex items-center gap-1 text-sm font-medium">
-													{isReward
-														? <Trophy className="h-3.5 w-3.5 text-amber-500" />
-														: <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
-													}
+													{isReward ? (
+														<Trophy className="h-3.5 w-3.5 text-amber-500" />
+													) : (
+														<AlertTriangle className="h-3.5 w-3.5 text-red-500" />
+													)}
 													{option.name}
 												</div>
 												{option.description && (
@@ -91,7 +98,9 @@ export default function AwardChallengeRewardModal({
 													</p>
 												)}
 												{!option.multipleTimesAllowed && (
-													<p className="mt-0.5 text-xs text-muted-foreground/70">One-time only</p>
+													<p className="mt-0.5 text-xs text-muted-foreground/70">
+														One-time only
+													</p>
 												)}
 											</div>
 											{isDisabled && (

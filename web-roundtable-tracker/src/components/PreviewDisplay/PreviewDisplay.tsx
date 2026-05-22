@@ -368,7 +368,9 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 				.map((group, index) => {
 					const isParty = index === 0;
 					const groupFactionId = group[0].factionId;
-					const fallbackFactionId = getBuiltinFactionIdForAlignment(group[0].side);
+					const fallbackFactionId = getBuiltinFactionIdForAlignment(
+						group[0].side
+					);
 					const resolvedFaction = isParty
 						? undefined
 						: encounterFactions.find(
@@ -380,19 +382,19 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 						isParty,
 						factionId: resolvedFaction?.id,
 						characters: group.map((participant) => ({
-						hasHealthData:
-							typeof participant.maxHealth === 'number' ||
-							typeof participant.health === 'number' ||
-							typeof participant.tempHealth === 'number',
-						factionId: resolvedFaction?.id,
-						factionName: resolvedFaction?.name,
-						factionIcon: resolvedFaction?.icon,
-						factionColor: resolvedFaction?.color,
-						...participant,
-						initiative: participant.initiative ?? 0,
-						maxHealth: participant.maxHealth ?? 1,
-						tempHealth: participant.tempHealth ?? 0,
-						health: participant.health ?? participant.maxHealth,
+							hasHealthData:
+								typeof participant.maxHealth === 'number' ||
+								typeof participant.health === 'number' ||
+								typeof participant.tempHealth === 'number',
+							factionId: resolvedFaction?.id,
+							factionName: resolvedFaction?.name,
+							factionIcon: resolvedFaction?.icon,
+							factionColor: resolvedFaction?.color,
+							...participant,
+							initiative: participant.initiative ?? 0,
+							maxHealth: participant.maxHealth ?? 1,
+							tempHealth: participant.tempHealth ?? 0,
+							health: participant.health ?? participant.maxHealth,
 						})),
 					};
 				}),
@@ -600,19 +602,20 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 				<form className="space-y-6">
 					<div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
 						{teamFields.map((teamField, index) => {
-								const factionId = teamField.factionId;
-								const faction = teamField.isParty
-									? undefined
-									: encounterFactions.find(
+							const factionId = teamField.factionId;
+							const faction = teamField.isParty
+								? undefined
+								: encounterFactions.find(
 										(entry) =>
 											entry.id ===
-											(factionId ?? getBuiltinFactionIdForAlignment(teamField.side))
+											(factionId ??
+												getBuiltinFactionIdForAlignment(teamField.side))
 									);
-								const appearance = resolveTeamAppearance(
-									teamField.side,
-									teamField.isParty,
-									faction
-								);
+							const appearance = resolveTeamAppearance(
+								teamField.side,
+								teamField.isParty,
+								faction
+							);
 							const TeamIcon = appearance.Icon;
 
 							return (

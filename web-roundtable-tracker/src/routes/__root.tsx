@@ -73,7 +73,9 @@ function EncounterHeaderInfo() {
 	const encounterData = useEncounterStore((state) => state.encounterData);
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
 	const round = useEncounterStore((state) => state.round);
-	const lastTurnElapsedMs = useEncounterStore((state) => state.lastTurnElapsedMs);
+	const lastTurnElapsedMs = useEncounterStore(
+		(state) => state.lastTurnElapsedMs
+	);
 	const activeTurnStartedAtMs = useEncounterStore(
 		(state) => state.activeTurnStartedAtMs
 	);
@@ -129,7 +131,7 @@ function EncounterHeaderInfo() {
 		? encounterToTrackerHeader(encounterData, partyLevel, round, {
 				lastTurn: toDurationLabel(lastTurnElapsedMs),
 				currentTurn: toDurationLabel(currentTurnElapsedMs),
-		  })
+			})
 		: null;
 
 	if (!encounterHeader) {

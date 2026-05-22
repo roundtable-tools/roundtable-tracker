@@ -39,6 +39,7 @@ export class EndSkillChallengeCommand implements Command {
 		const challengeIndex = skillChallenges.findIndex(
 			(sc) => sc.id === this.data.skillChallengeId
 		);
+
 		if (challengeIndex === -1) {
 			return STATUS.failure;
 		}
@@ -69,6 +70,7 @@ export class EndSkillChallengeCommand implements Command {
 		const challenge = skillChallenges.find(
 			(sc) => sc.id === this.data.skillChallengeId
 		);
+
 		if (!challenge) {
 			return STATUS.failure;
 		}

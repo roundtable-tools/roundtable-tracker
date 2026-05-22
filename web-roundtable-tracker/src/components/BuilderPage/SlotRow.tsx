@@ -44,7 +44,11 @@ const SLOT_TYPES: { value: SlotType; label: string; Icon: LucideIcon }[] = [
 export const PARTICIPANT_SLOT_TYPES: SlotType[] = ['creature', 'hazard'];
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const EVENT_SLOT_TYPES: SlotType[] = ['narrative', 'reinforcement', 'skillChallenge'];
+export const EVENT_SLOT_TYPES: SlotType[] = [
+	'narrative',
+	'reinforcement',
+	'skillChallenge',
+];
 
 export type AdditionalDataBlockKey =
 	| 'hp'

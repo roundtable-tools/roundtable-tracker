@@ -747,14 +747,20 @@ function ParticipantSkillChallenges({
 	participant: TrackerParticipant;
 }) {
 	const { executeCommand } = useContext(CommandHistoryContext);
-	const skillChallengesActive = useEncounterStore((state) => state.skillChallengesActive);
+	const skillChallengesActive = useEncounterStore(
+		(state) => state.skillChallengesActive
+	);
 
-	const relevantChallenges: SkillChallengeSlot[] = skillChallengesActive.filter((sc) => {
-		if (!sc.isActive) return false;
-		if (sc.shared) return true;
-		// Individual tracking: show if participant has progress or is a PC
-		return participant.role === 'pc';
-	});
+	const relevantChallenges: SkillChallengeSlot[] = skillChallengesActive.filter(
+		(sc) => {
+			if (!sc.isActive) return false;
+
+			if (sc.shared) return true;
+
+			// Individual tracking: show if participant has progress or is a PC
+			return participant.role === 'pc';
+		}
+	);
 
 	if (relevantChallenges.length === 0) return null;
 
@@ -765,7 +771,8 @@ function ParticipantSkillChallenges({
 		const newSuccessCount =
 			(challenge.shared
 				? (challenge.progressShared?.successCount ?? 0)
-				: (challenge.progressByParticipant?.[participant.id]?.successCount ?? 0)) + 1;
+				: (challenge.progressByParticipant?.[participant.id]?.successCount ??
+					0)) + 1;
 		const willReachMax = newSuccessCount >= challenge.successesRequired;
 
 		const successCmd = new AwardSkillChallengeSuccessCommand({
@@ -782,7 +789,12 @@ function ParticipantSkillChallenges({
 						new EndSkillChallengeCommand({
 							skillChallengeId: challenge.id,
 							participantId: challenge.shared ? undefined : participant.id,
-							result: { type: 'success', successCount: newSuccessCount, failureCount: 0, reason: 'max_reached' },
+							result: {
+								type: 'success',
+								successCount: newSuccessCount,
+								failureCount: 0,
+								reason: 'max_reached',
+							},
 						}),
 					],
 				})
@@ -799,7 +811,8 @@ function ParticipantSkillChallenges({
 		const newFailureCount =
 			(challenge.shared
 				? (challenge.progressShared?.failureCount ?? 0)
-				: (challenge.progressByParticipant?.[participant.id]?.failureCount ?? 0)) + 1;
+				: (challenge.progressByParticipant?.[participant.id]?.failureCount ??
+					0)) + 1;
 		const currentSuccessCount = challenge.shared
 			? (challenge.progressShared?.successCount ?? 0)
 			: (challenge.progressByParticipant?.[participant.id]?.successCount ?? 0);
@@ -819,7 +832,12 @@ function ParticipantSkillChallenges({
 						new EndSkillChallengeCommand({
 							skillChallengeId: challenge.id,
 							participantId: challenge.shared ? undefined : participant.id,
-							result: { type: 'failure', successCount: currentSuccessCount, failureCount: newFailureCount, reason: 'max_reached' },
+							result: {
+								type: 'failure',
+								successCount: currentSuccessCount,
+								failureCount: newFailureCount,
+								reason: 'max_reached',
+							},
 						}),
 					],
 				})
@@ -844,7 +862,12 @@ function ParticipantSkillChallenges({
 			new EndSkillChallengeCommand({
 				skillChallengeId: challenge.id,
 				participantId: challenge.shared ? undefined : participant.id,
-				result: { type: resultType, successCount, failureCount, reason: 'manual_end' },
+				result: {
+					type: resultType,
+					successCount,
+					failureCount,
+					reason: 'manual_end',
+				},
 			})
 		);
 	};
@@ -858,7 +881,9 @@ function ParticipantSkillChallenges({
 					skillChallenge={challenge}
 					participantId={challenge.shared ? undefined : participant.id}
 					onAwardSuccess={(rewardId) => handleAwardSuccess(challenge, rewardId)}
-					onAwardFailure={(penaltyId) => handleAwardFailure(challenge, penaltyId)}
+					onAwardFailure={(penaltyId) =>
+						handleAwardFailure(challenge, penaltyId)
+					}
 					onEndChallenge={() => handleEndChallenge(challenge)}
 				/>
 			))}
@@ -1485,10 +1510,15 @@ export function InitiativeTrackerPage() {
 				: null;
 
 			if (isTurnEnding) turnIdx++;
+
 			if (isRoundEnding) roundIdx++;
 
 			if (cmd.description) {
-				result.push({ description: cmd.description, turnDuration, roundDuration });
+				result.push({
+					description: cmd.description,
+					turnDuration,
+					roundDuration,
+				});
 			}
 		}
 
@@ -1601,13 +1631,16 @@ export function InitiativeTrackerPage() {
 		setReorderDraftParticipants(storeAllInitiativeParticipants);
 	}, [storeAllInitiativeParticipants, reorderOpen]);
 
-	const queueHistoryScroll = useCallback((targetRef: React.RefObject<HTMLElement | null>) => {
-		const id = window.setTimeout(() => {
-			targetRef.current?.scrollIntoView({ block: 'nearest' });
-		}, 0);
+	const queueHistoryScroll = useCallback(
+		(targetRef: React.RefObject<HTMLElement | null>) => {
+			const id = window.setTimeout(() => {
+				targetRef.current?.scrollIntoView({ block: 'nearest' });
+			}, 0);
 
-		return () => window.clearTimeout(id);
-	}, []);
+			return () => window.clearTimeout(id);
+		},
+		[]
+	);
 
 	useEffect(() => {
 		if (desktopInfoTab !== 'history') {
@@ -2691,10 +2724,17 @@ export function InitiativeTrackerPage() {
 								</TabsContent>
 							)}
 							<TabsContent value="history" className="mt-3 min-h-0 flex-1">
-								<ScrollArea ref={desktopHistoryScrollAreaRef} className="h-full pr-3">
+								<ScrollArea
+									ref={desktopHistoryScrollAreaRef}
+									className="h-full pr-3"
+								>
 									<div className="mb-3 flex gap-4 text-xs text-muted-foreground">
-										<span>Turn: {toDurationLabel(liveCurrentTurnElapsedMs)}</span>
-										<span>Round: {toDurationLabel(liveCurrentRoundElapsedMs)}</span>
+										<span>
+											Turn: {toDurationLabel(liveCurrentTurnElapsedMs)}
+										</span>
+										<span>
+											Round: {toDurationLabel(liveCurrentRoundElapsedMs)}
+										</span>
 									</div>
 									<ul className="space-y-2 text-sm">
 										{annotatedHistory.map((entry, index) => (
@@ -3133,8 +3173,12 @@ export function InitiativeTrackerPage() {
 								)}
 								<TabsContent value="history" className="mt-0 text-sm">
 									<div className="mb-3 flex gap-4 text-xs text-muted-foreground">
-										<span>Turn: {toDurationLabel(liveCurrentTurnElapsedMs)}</span>
-										<span>Round: {toDurationLabel(liveCurrentRoundElapsedMs)}</span>
+										<span>
+											Turn: {toDurationLabel(liveCurrentTurnElapsedMs)}
+										</span>
+										<span>
+											Round: {toDurationLabel(liveCurrentRoundElapsedMs)}
+										</span>
 									</div>
 									<ul className="space-y-2">
 										{annotatedHistory.map((entry, index) => (

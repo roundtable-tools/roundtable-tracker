@@ -1,4 +1,4 @@
-import { ScrollText, ShieldPlus, Sparkle, Zap } from 'lucide-react';
+import { ScrollText, ShieldPlus, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
 	BuilderListLayout,

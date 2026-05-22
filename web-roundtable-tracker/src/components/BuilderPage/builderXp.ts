@@ -5,9 +5,17 @@ import { Threat } from '@/models/utility/threat/Threat.class';
 import type { LevelAdjustment } from '@/models/utility/level/Level';
 import type { AccomplishmentLevel } from '@/models/encounters/encounter.types';
 import type { ParticipantDcEntry } from '@/store/data';
-import type { SkillChallengeDC, ChallengeRewardOption } from '@/models/encounters/skillChallenge.types';
+import type {
+	SkillChallengeDC,
+	ChallengeRewardOption,
+} from '@/models/encounters/skillChallenge.types';
 
-export type SlotType = 'creature' | 'hazard' | 'reinforcement' | 'narrative' | 'skillChallenge';
+export type SlotType =
+	| 'creature'
+	| 'hazard'
+	| 'reinforcement'
+	| 'narrative'
+	| 'skillChallenge';
 
 export type CanonicalSideType = 'opponent' | 'ally' | 'other';
 

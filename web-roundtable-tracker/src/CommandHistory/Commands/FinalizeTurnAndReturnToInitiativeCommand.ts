@@ -1,5 +1,11 @@
 import { UUID } from '@/utils/uuid';
-import { COMMAND_TAGS, Command, CommandDeps, STATUS, getDeps } from '@/CommandHistory/common';
+import {
+	COMMAND_TAGS,
+	Command,
+	CommandDeps,
+	STATUS,
+	getDeps,
+} from '@/CommandHistory/common';
 import { CompositeCommand } from './CompositeCommand';
 import { EndRoundCommand } from './EndRoundCommand';
 import { FinalizeTurnAction } from './FinalizeTurnAndAdvanceRoundCommand';

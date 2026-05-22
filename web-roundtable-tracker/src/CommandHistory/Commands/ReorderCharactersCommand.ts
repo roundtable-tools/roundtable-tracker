@@ -61,7 +61,9 @@ export class ReorderCharactersCommand implements Command {
 						? nextActiveParticipantId
 						: undefined;
 				nextState.activeTurnRound =
-					state.initiativePhase === INITIATIVE_PHASE.Active ? state.round : undefined;
+					state.initiativePhase === INITIATIVE_PHASE.Active
+						? state.round
+						: undefined;
 				nextState.activeTurnStartedAtMs =
 					state.initiativePhase === INITIATIVE_PHASE.Active &&
 					typeof nextActiveParticipantId === 'string'

@@ -5,6 +5,8 @@ import {
 	ConcreteEncounterVariant,
 	DIFFICULTY,
 	LEVEL_REPRESENTATION,
+	type Alignment,
+	type EncounterNoteEntry,
 	factionAlignmentToAlignment,
 	getBuiltinFactionIdForAlignment,
 	getEncounterFactionsWithFallback,
@@ -38,7 +40,7 @@ export interface BuilderNote {
 	id: string;
 	header: string;
 	content: string;
-	visibility: 'all' | number;
+	visibility: 'all' | Alignment;
 	factionId?: string;
 }
 
@@ -73,7 +75,7 @@ export function defaultBuilderNotes(): BuilderNote[] {
 function resolveAlignmentFromFactionId(
 	factionId: string | undefined,
 	factions: EncounterFaction[]
-): number | null {
+): Alignment | null {
 	if (!factionId) {
 		return null;
 	}
@@ -84,7 +86,7 @@ function resolveAlignmentFromFactionId(
 		return null;
 	}
 
-	return factionAlignmentToAlignment(faction.alignment);
+	return factionAlignmentToAlignment(faction.alignment) as Alignment;
 }
 
 export function resolveBuilderSideForFactionId(
@@ -606,18 +608,22 @@ export function toConcreteEncounter(
 					};
 				})
 			: undefined;
-	const normalizedNoteEntries = values.notes
-		.map((note) => ({
-			id: note.id,
-			header: note.header.trim(),
-			content: note.content,
-			visibility:
+	const normalizedNoteEntries: EncounterNoteEntry[] = values.notes
+		.map((note): EncounterNoteEntry => {
+			const visibility: 'all' | Alignment =
 				note.visibility === 'all'
 					? 'all'
 					: (resolveAlignmentFromFactionId(note.factionId, factions) ??
-						note.visibility),
-			factionId: note.factionId,
-		}))
+						note.visibility);
+
+			return {
+				id: note.id,
+				header: note.header.trim(),
+				content: note.content,
+				visibility,
+				factionId: note.factionId,
+			};
+		})
 		.filter((note) => note.header.length > 0 || note.content.trim().length > 0);
 
 	const skillChallengeSlots: SkillChallengeSlot[] = values.slots
@@ -625,6 +631,7 @@ export function toConcreteEncounter(
 		.map((s) => ({
 			id: s.id,
 			type: 'skillChallenge' as const,
+			turnIndex: 0,
 			name: s.name || '',
 			description: s.description || '',
 			accomplishmentLevel: s.accomplishmentLevel,

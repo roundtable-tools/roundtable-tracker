@@ -216,8 +216,8 @@ export function BuilderDetailsStep({
 				factionId:
 					slot.factionId === factionId ? fallbackFaction.id : slot.factionId,
 				side: slot.factionId === factionId ? fallbackSide : slot.side,
-				reinforcementParticipants:
-					slot.reinforcementParticipants?.map((participant) => ({
+				reinforcementParticipants: slot.reinforcementParticipants?.map(
+					(participant) => ({
 						...participant,
 						factionId:
 							participant.factionId === factionId
@@ -227,7 +227,8 @@ export function BuilderDetailsStep({
 							participant.factionId === factionId
 								? fallbackSide
 								: participant.side,
-					})),
+					})
+				),
 			})),
 			{ shouldDirty: true, shouldTouch: true }
 		);
@@ -236,7 +237,8 @@ export function BuilderDetailsStep({
 			'notes',
 			currentNotes.map((note) => ({
 				...note,
-				factionId: note.factionId === factionId ? fallbackFaction.id : note.factionId,
+				factionId:
+					note.factionId === factionId ? fallbackFaction.id : note.factionId,
 				visibility:
 					note.factionId === factionId ? fallbackVisibility : note.visibility,
 			})),
@@ -274,7 +276,9 @@ export function BuilderDetailsStep({
 										<Button
 											key={mode.key}
 											type="button"
-											variant={partySetupMode === mode.key ? 'default' : 'outline'}
+											variant={
+												partySetupMode === mode.key ? 'default' : 'outline'
+											}
 											onClick={() =>
 												form.setValue(
 													'partySetupMode',
@@ -327,7 +331,9 @@ export function BuilderDetailsStep({
 												<SelectValue placeholder="Use custom level list" />
 											</SelectTrigger>
 											<SelectContent>
-												<SelectItem value="custom">Custom level list</SelectItem>
+												<SelectItem value="custom">
+													Custom level list
+												</SelectItem>
 												{savedParties.map((party) => (
 													<SelectItem key={party.id} value={party.id}>
 														{party.name} ({party.members.length})
@@ -338,7 +344,8 @@ export function BuilderDetailsStep({
 									</div>
 									{selectedSavedParty ? (
 										<p className="text-xs text-muted-foreground">
-											Using saved party levels: {resolvedSpecificPartyLevels.join(', ')}
+											Using saved party levels:{' '}
+											{resolvedSpecificPartyLevels.join(', ')}
 										</p>
 									) : (
 										<div className="space-y-2">
@@ -358,7 +365,10 @@ export function BuilderDetailsStep({
 																const nextLevels = [...specificPartyLevels];
 
 																nextLevels[index] = Number(event.target.value);
-																form.setValue('specificPartyLevels', nextLevels);
+																form.setValue(
+																	'specificPartyLevels',
+																	nextLevels
+																);
 															}}
 														/>
 														<Button
@@ -369,7 +379,10 @@ export function BuilderDetailsStep({
 																	(_, i) => i !== index
 																);
 
-																form.setValue('specificPartyLevels', nextLevels);
+																form.setValue(
+																	'specificPartyLevels',
+																	nextLevels
+																);
 															}}
 														>
 															X
@@ -439,8 +452,8 @@ export function BuilderDetailsStep({
 										{normalizedPartySetup.challengePointBudget} ChP equals{' '}
 										{normalizedPartySetup.xpBudgetEquivalent} XP at tier{' '}
 										{normalizedPartySetup.challengePointTierLabel} (basis level{' '}
-										{normalizedPartySetup.challengePointBasisLevel}). Assumed party size
-										for threat display:{' '}
+										{normalizedPartySetup.challengePointBasisLevel}). Assumed
+										party size for threat display:{' '}
 										{normalizedPartySetup.inferredChallengePointPartySize}.
 									</p>
 								</div>
@@ -448,7 +461,8 @@ export function BuilderDetailsStep({
 
 							<p className="text-xs text-muted-foreground">
 								Effective calculation context: level {safePartyLevel}, size{' '}
-								{safePartySize}, {normalizedPartySetup.challengePointBudget} ChP.
+								{safePartySize}, {normalizedPartySetup.challengePointBudget}{' '}
+								ChP.
 							</p>
 						</div>
 
@@ -483,18 +497,24 @@ export function BuilderDetailsStep({
 							<div>
 								<h3 className="text-sm font-semibold">Factions</h3>
 								<p className="text-xs text-muted-foreground">
-									Players are reserved; factions apply to opponent, ally, and other
-									alignments.
+									Players are reserved; factions apply to opponent, ally, and
+									other alignments.
 								</p>
 							</div>
-							<Button type="button" variant="outline" size="sm" onClick={addFaction}>
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								onClick={addFaction}
+							>
 								Add Faction
 							</Button>
 						</div>
 
 						{editableFactions.length === 0 ? (
 							<p className="text-xs text-muted-foreground">
-								No custom factions yet. Add one to override alignment, icon, and color.
+								No custom factions yet. Add one to override alignment, icon, and
+								color.
 							</p>
 						) : (
 							<div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
@@ -593,7 +613,8 @@ export function BuilderDetailsStep({
 																	size="sm"
 																	className={cn(
 																		'h-7 w-full px-0',
-																		isSelected && 'border-primary bg-primary/10 text-primary'
+																		isSelected &&
+																			'border-primary bg-primary/10 text-primary'
 																	)}
 																	title={option.label}
 																>
@@ -628,11 +649,17 @@ export function BuilderDetailsStep({
 																	size="sm"
 																	className={cn(
 																		'h-7 w-full px-0',
-																		isSelected && 'border-primary bg-primary/10 text-primary'
+																		isSelected &&
+																			'border-primary bg-primary/10 text-primary'
 																	)}
 																	title={option.label}
 																>
-																	<span className={cn('h-3.5 w-3.5 rounded-full', option.swatchClassName)} />
+																	<span
+																		className={cn(
+																			'h-3.5 w-3.5 rounded-full',
+																			option.swatchClassName
+																		)}
+																	/>
 																</Toggle>
 															);
 														})}

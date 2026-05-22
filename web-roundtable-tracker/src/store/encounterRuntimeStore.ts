@@ -1,5 +1,9 @@
 import { createStore } from 'zustand/vanilla';
-import { Character, type ParticipantDcEntry, type SkillChallengeSlot } from './data';
+import {
+	Character,
+	type ParticipantDcEntry,
+	type SkillChallengeSlot,
+} from './data';
 import { UUID } from '@/utils/uuid';
 import type {
 	EncounterFactionColorKey,

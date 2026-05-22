@@ -20,7 +20,10 @@ export class StartInitiativeCommand implements Command {
 	description = 'Start Initiative Command';
 	data: CommandData;
 
-	constructor(data: CommandData = {}, private deps?: CommandDeps) {
+	constructor(
+		data: CommandData = {},
+		private deps?: CommandDeps
+	) {
 		this.data = data;
 	}
 

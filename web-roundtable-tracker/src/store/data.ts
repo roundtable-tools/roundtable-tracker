@@ -360,13 +360,11 @@ export function normalizeEncounterNotes(
 				id: entry.id,
 				header: entry.header,
 				content: entry.content ?? '',
-				visibility: (
-					entry.visibility === ALIGNMENT.PCs ||
-					entry.visibility === ALIGNMENT.Opponents ||
-					entry.visibility === ALIGNMENT.Neutral
-						? entry.visibility
-						: 'all'
-				) as 'all' | Alignment,
+				visibility: (entry.visibility === ALIGNMENT.PCs ||
+				entry.visibility === ALIGNMENT.Opponents ||
+				entry.visibility === ALIGNMENT.Neutral
+					? entry.visibility
+					: 'all') as 'all' | Alignment,
 				factionId: entry.factionId,
 			})) ?? [];
 
@@ -499,7 +497,9 @@ const skillChallengeSlotSchema = z.object({
 	failuresRequired: z.number().int().positive(),
 	penalties: z.array(challengeRewardOptionSchema),
 	finishWhenMaxFailures: z.boolean().optional(),
-	progressByParticipant: z.record(z.string(), skillChallengeProgressSchema).optional(),
+	progressByParticipant: z
+		.record(z.string(), skillChallengeProgressSchema)
+		.optional(),
 	progressShared: skillChallengeProgressSchema.optional(),
 	isActive: z.boolean(),
 	endedAt: z.number().optional(),

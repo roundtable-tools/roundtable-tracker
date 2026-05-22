@@ -41,7 +41,9 @@ import {
 	type EncounterFaction,
 } from '@/models/encounters/factions';
 
-function sideFromFactionAlignment(alignment: EncounterFaction['alignment']): SideType {
+function sideFromFactionAlignment(
+	alignment: EncounterFaction['alignment']
+): SideType {
 	if (alignment === FACTION_ALIGNMENT.Ally) {
 		return 'ally';
 	}
@@ -154,159 +156,162 @@ export function SlotRowParticipantContent({
 		<>
 			<div className="space-y-3">
 				{isCombatSlot && (
-				<div className="grid grid-cols-[1fr_auto] gap-3 items-start">
-					<div className="space-y-3">
-						<FormField
-							control={control}
-							name={`slots.${index}.level` as const}
-							render={({ field }) => (
-								<FormItem className="space-y-1">
-									<FormLabel>Level</FormLabel>
-									<FormControl>
-										<PartyLevelPicker
-											value={field.value}
-											onChange={field.onChange}
-											onBlur={field.onBlur}
-											name={field.name}
-											ref={field.ref}
-											min={-1}
-											max={25}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+					<div className="grid grid-cols-[1fr_auto] gap-3 items-start">
+						<div className="space-y-3">
 							<FormField
 								control={control}
-								name={`slots.${index}.factionId` as const}
+								name={`slots.${index}.level` as const}
 								render={({ field }) => (
 									<FormItem className="space-y-1">
-										<FormLabel>Faction</FormLabel>
+										<FormLabel>Level</FormLabel>
 										<FormControl>
-											<Select
-												value={
-													typeof field.value === 'string' ? field.value : ''
-												}
-												onValueChange={(value) => {
-													const faction = factions.find((entry) => entry.id === value);
-
-													field.onChange(value);
-													if (faction) {
-														setValue(
-															`slots.${index}.side` as const,
-															sideFromFactionAlignment(faction.alignment)
-														);
-													}
-												}}
-											>
-												<SelectTrigger className="w-full">
-													<SelectValue placeholder="Choose faction" />
-												</SelectTrigger>
-												<SelectContent>
-													{factions.map((faction) => (
-														<SelectItem key={faction.id} value={faction.id}>
-															{faction.name}
-														</SelectItem>
-													))}
-												</SelectContent>
-											</Select>
+											<PartyLevelPicker
+												value={field.value}
+												onChange={field.onChange}
+												onBlur={field.onBlur}
+												name={field.name}
+												ref={field.ref}
+												min={-1}
+												max={25}
+											/>
 										</FormControl>
 										<FormMessage />
 									</FormItem>
 								)}
 							/>
 
-							{slotType === 'hazard' && (
-								<>
-									<FormField
-										control={control}
-										name={`slots.${index}.successesToDisable` as const}
-										render={({ field }) => (
-											<FormItem className="space-y-1">
-												<FormLabel>Successes</FormLabel>
-												<FormControl>
-													<Input
-														type="number"
-														min={1}
-														value={field.value ?? ''}
-														onChange={(event) => {
-															const value = event.target.value;
-															field.onChange(
-																value === '' ? undefined : Number(value)
-															);
-														}}
-														onBlur={field.onBlur}
-														name={field.name}
-														ref={field.ref}
-													/>
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-									<FormField
-										control={control}
-										name={`slots.${index}.isSimpleHazard` as const}
-										render={({ field }) => (
-											<FormItem className="mt-5 flex items-center gap-2 space-y-0 sm:col-span-2">
-												<FormControl>
-													<input
-														type="checkbox"
-														id={`simple-hazard-${index}`}
-														className="h-4 w-4"
-														checked={Boolean(field.value)}
-														onChange={(event) =>
-															field.onChange(event.target.checked)
-														}
-														onBlur={field.onBlur}
-														name={field.name}
-														ref={field.ref}
-													/>
-												</FormControl>
-												<FormLabel htmlFor={`simple-hazard-${index}`}>
-													Simple Hazard
-												</FormLabel>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-								</>
-							)}
-						</div>
-					</div>
+							<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+								<FormField
+									control={control}
+									name={`slots.${index}.factionId` as const}
+									render={({ field }) => (
+										<FormItem className="space-y-1">
+											<FormLabel>Faction</FormLabel>
+											<FormControl>
+												<Select
+													value={
+														typeof field.value === 'string' ? field.value : ''
+													}
+													onValueChange={(value) => {
+														const faction = factions.find(
+															(entry) => entry.id === value
+														);
 
-					<FormField
-						control={control}
-						name={`slots.${index}.count` as const}
-						render={({ field }) => (
-							<FormItem className="space-y-1">
-								<FormLabel className='-mb-5'>Count</FormLabel>
-								<FormControl>
-									<PartySizePicker
-										value={field.value}
-										onChange={(value) => {
-											field.onChange(value == field.value ? 0 : value);
-										}}
-										onBlur={field.onBlur}
-										name={field.name}
-										ref={field.ref}
-										min={1}
-										max={12}
-										rows={3}
-										buttonSize="md"
-										icon={slotType === 'hazard' ? TriangleAlert : Skull}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-				</div>
-			)}
-		</div>
+														field.onChange(value);
+
+														if (faction) {
+															setValue(
+																`slots.${index}.side` as const,
+																sideFromFactionAlignment(faction.alignment)
+															);
+														}
+													}}
+												>
+													<SelectTrigger className="w-full">
+														<SelectValue placeholder="Choose faction" />
+													</SelectTrigger>
+													<SelectContent>
+														{factions.map((faction) => (
+															<SelectItem key={faction.id} value={faction.id}>
+																{faction.name}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								{slotType === 'hazard' && (
+									<>
+										<FormField
+											control={control}
+											name={`slots.${index}.successesToDisable` as const}
+											render={({ field }) => (
+												<FormItem className="space-y-1">
+													<FormLabel>Successes</FormLabel>
+													<FormControl>
+														<Input
+															type="number"
+															min={1}
+															value={field.value ?? ''}
+															onChange={(event) => {
+																const value = event.target.value;
+																field.onChange(
+																	value === '' ? undefined : Number(value)
+																);
+															}}
+															onBlur={field.onBlur}
+															name={field.name}
+															ref={field.ref}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={control}
+											name={`slots.${index}.isSimpleHazard` as const}
+											render={({ field }) => (
+												<FormItem className="mt-5 flex items-center gap-2 space-y-0 sm:col-span-2">
+													<FormControl>
+														<input
+															type="checkbox"
+															id={`simple-hazard-${index}`}
+															className="h-4 w-4"
+															checked={Boolean(field.value)}
+															onChange={(event) =>
+																field.onChange(event.target.checked)
+															}
+															onBlur={field.onBlur}
+															name={field.name}
+															ref={field.ref}
+														/>
+													</FormControl>
+													<FormLabel htmlFor={`simple-hazard-${index}`}>
+														Simple Hazard
+													</FormLabel>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									</>
+								)}
+							</div>
+						</div>
+
+						<FormField
+							control={control}
+							name={`slots.${index}.count` as const}
+							render={({ field }) => (
+								<FormItem className="space-y-1">
+									<FormLabel className="-mb-5">Count</FormLabel>
+									<FormControl>
+										<PartySizePicker
+											value={field.value}
+											onChange={(value) => {
+												field.onChange(value == field.value ? 0 : value);
+											}}
+											onBlur={field.onBlur}
+											name={field.name}
+											ref={field.ref}
+											min={1}
+											max={12}
+											rows={3}
+											buttonSize="md"
+											icon={slotType === 'hazard' ? TriangleAlert : Skull}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+					</div>
+				)}
+			</div>
 
 			{slotType === 'reinforcement' && (
 				<section className="space-y-3 rounded-md border p-3">
@@ -405,9 +410,10 @@ export function SlotRowParticipantContent({
 											<FormLabel>Faction</FormLabel>
 											<Select
 												value={participant.factionId ?? ''}
-												onValueChange={(value) =>
-													{
-													const faction = factions.find((entry) => entry.id === value);
+												onValueChange={(value) => {
+													const faction = factions.find(
+														(entry) => entry.id === value
+													);
 													const side = faction
 														? sideFromFactionAlignment(faction.alignment)
 														: participant.side;
@@ -415,9 +421,8 @@ export function SlotRowParticipantContent({
 													onReinforcementParticipantChange(participantIndex, {
 														factionId: value,
 														side,
-													})
-													}
-												}
+													});
+												}}
 											>
 												<SelectTrigger className="w-full">
 													<SelectValue placeholder="Choose faction" />

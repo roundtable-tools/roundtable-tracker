@@ -121,7 +121,11 @@ describe('ReturnToInitiativeCommand', () => {
 		);
 		expect(stateAfterExecute.activeTurnParticipantId).toBe(characters[1].uuid);
 		expect(stateAfterExecute.lastTurnElapsedMs).toBe(250);
-		expect(stateAfterExecute.turnElapsedByRoundParticipant['1:00000000-0000-0000-0000-000000000001']).toBe(250);
+		expect(
+			stateAfterExecute.turnElapsedByRoundParticipant[
+				'1:00000000-0000-0000-0000-000000000001'
+			]
+		).toBe(250);
 		expect(stateAfterExecute.turnDurationHistory).toHaveLength(1);
 
 		const undoStatus = command.undo();

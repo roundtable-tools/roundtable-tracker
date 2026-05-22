@@ -76,7 +76,7 @@ export interface SkillChallengeSlot extends SkillChallengeEvent {
 	shared: boolean;
 	progressByParticipant?: Record<string, SkillChallengeProgress>; // When shared=false
 	progressShared?: SkillChallengeProgress; // When shared=true
-	
+
 	// State tracking
 	isActive: boolean;
 	endedAt?: number; // Round when challenge ended (if applicable)

@@ -61,8 +61,10 @@ function NoteEditor({
 }) {
 	const factions = useWatch({ control: form.control, name: 'factions' }) ?? [];
 	const noteFactionId =
-		useWatch({ control: form.control, name: `notes.${index}.factionId` as const }) ??
-		undefined;
+		useWatch({
+			control: form.control,
+			name: `notes.${index}.factionId` as const,
+		}) ?? undefined;
 	const visibilityOptions = resolveNoteVisibilityOptions(factions);
 
 	return (
@@ -75,11 +77,12 @@ function NoteEditor({
 						<FormLabel>Visibility</FormLabel>
 						<FormControl>
 							<div className="flex flex-wrap gap-1">
-									{visibilityOptions.map((option) => {
-										const isActive =
-											option.value === 'all'
-												? (field.value ?? 'all') === 'all' && !noteFactionId
-												: noteFactionId === option.value;
+								{visibilityOptions.map((option) => {
+									const isFactionOption = 'faction' in option;
+									const isActive =
+										option.value === 'all'
+											? (field.value ?? 'all') === 'all' && !noteFactionId
+											: noteFactionId === option.value;
 
 									return (
 										<button
@@ -88,18 +91,23 @@ function NoteEditor({
 											onClick={() => {
 												if (option.value === 'all') {
 													field.onChange('all');
-														form.setValue(
-															`notes.${index}.factionId` as const,
-															undefined
-														);
+													form.setValue(
+														`notes.${index}.factionId` as const,
+														undefined
+													);
 												} else {
-														field.onChange(
-															factionAlignmentToAlignment(option.faction.alignment)
-														);
-														form.setValue(
-															`notes.${index}.factionId` as const,
-															option.value
-														);
+													if (!isFactionOption) {
+														return;
+													}
+													field.onChange(
+														factionAlignmentToAlignment(
+															option.faction.alignment
+														)
+													);
+													form.setValue(
+														`notes.${index}.factionId` as const,
+														option.value
+													);
 												}
 											}}
 											className={cn(

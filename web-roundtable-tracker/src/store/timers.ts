@@ -2,7 +2,10 @@ import type { UUID } from '@/utils/uuid';
 import type { EncounterStore } from './encounterRuntimeStore';
 
 export function getNowMs() {
-	if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+	if (
+		typeof performance !== 'undefined' &&
+		typeof performance.now === 'function'
+	) {
 		return performance.now();
 	}
 
@@ -13,15 +16,17 @@ export function getTurnDurationKey(round: number, participantId: string) {
 	return `${round}:${participantId}`;
 }
 
-export function freezeElapsed(state: Pick<
-	EncounterStore,
-	| 'turnElapsedByRoundParticipant'
-	| 'roundElapsedByRound'
-	| 'activeTurnParticipantId'
-	| 'activeTurnRound'
-	| 'activeTurnStartedAtMs'
-	| 'activeRoundStartedAtMs'
->) {
+export function freezeElapsed(
+	state: Pick<
+		EncounterStore,
+		| 'turnElapsedByRoundParticipant'
+		| 'roundElapsedByRound'
+		| 'activeTurnParticipantId'
+		| 'activeTurnRound'
+		| 'activeTurnStartedAtMs'
+		| 'activeRoundStartedAtMs'
+	>
+) {
 	const now = getNowMs();
 	let turnElapsedByRoundParticipant = state.turnElapsedByRoundParticipant;
 	let roundElapsedByRound = state.roundElapsedByRound;

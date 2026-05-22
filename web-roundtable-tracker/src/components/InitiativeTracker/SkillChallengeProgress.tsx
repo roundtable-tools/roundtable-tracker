@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import type { SkillChallengeSlot, SkillChallengeProgress as SkillChallengeProgressType } from '@/store/data';
+import { useState } from 'react';
+import type { SkillChallengeSlot } from '@/store/data';
+import type { SkillChallengeProgress as SkillChallengeProgressType } from '@/models/encounters/skillChallenge.types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
 import { CheckCircle, X, Trophy } from 'lucide-react';
-import AwardChallengeRewardModal from './AwardChallengeRewardModal';
-import EndChallengeModal from './EndChallengeModal';
+import AwardChallengeRewardModal from '@/components/InitiativeTracker/AwardChallengeRewardModal';
+import EndChallengeModal from '@/components/InitiativeTracker/EndChallengeModal';
 
 interface SkillChallengeProgressProps {
 	skillChallenge: SkillChallengeSlot;
@@ -42,7 +43,8 @@ export default function SkillChallengeProgress({
 	const failurePercent = (progress.failureCount / failuresRequired) * 100;
 	const maxSuccessReached = progress.successCount >= successesRequired;
 	const maxFailureReached = progress.failureCount >= failuresRequired;
-	const isCompleted = maxSuccessReached || maxFailureReached || !skillChallenge.isActive;
+	const isCompleted =
+		maxSuccessReached || maxFailureReached || !skillChallenge.isActive;
 	const succeeded = maxSuccessReached;
 	const hasRewards = (skillChallenge.rewards?.length ?? 0) > 0;
 	const hasPenalties = (skillChallenge.penalties?.length ?? 0) > 0;
@@ -67,10 +69,14 @@ export default function SkillChallengeProgress({
 		<Card className="p-4 space-y-3">
 			<div className="space-y-1">
 				<h4 className="font-medium text-sm">
-					{skillChallenge.name || skillChallenge.description || 'Skill Challenge'}
+					{skillChallenge.name ||
+						skillChallenge.description ||
+						'Skill Challenge'}
 				</h4>
 				{skillChallenge.description && skillChallenge.name && (
-					<p className="text-xs text-muted-foreground">{skillChallenge.description}</p>
+					<p className="text-xs text-muted-foreground">
+						{skillChallenge.description}
+					</p>
 				)}
 				<p className="text-xs text-muted-foreground">
 					Successes: {progress.successCount}/{successesRequired}
@@ -103,17 +109,21 @@ export default function SkillChallengeProgress({
 					<p className="text-xs text-muted-foreground">Rewards</p>
 					<div className="flex flex-wrap gap-1">
 						{progress.awardedRewardIds.map((rewardId) => {
-							const reward = skillChallenge.rewards?.find((r) => r.id === rewardId);
+							const reward = skillChallenge.rewards?.find(
+								(r) => r.id === rewardId
+							);
+
 							if (!reward) return null;
 							const isOneTime = !reward.multipleTimesAllowed;
-							const count = progress.awardedRewardIds.filter((id) => id === rewardId).length;
+							const count = progress.awardedRewardIds.filter(
+								(id) => id === rewardId
+							).length;
+
 							return (
 								<Badge
 									key={rewardId}
 									variant="outline"
-									className={
-										isOneTime && count > 0 ? 'opacity-70' : ''
-									}
+									className={isOneTime && count > 0 ? 'opacity-70' : ''}
 									title={reward.description}
 								>
 									<Trophy className="w-3 h-3 mr-1" />
@@ -130,17 +140,21 @@ export default function SkillChallengeProgress({
 					<p className="text-xs text-muted-foreground">Penalties</p>
 					<div className="flex flex-wrap gap-1">
 						{progress.awardedPenaltyIds.map((penaltyId) => {
-							const penalty = skillChallenge.penalties?.find((p) => p.id === penaltyId);
+							const penalty = skillChallenge.penalties?.find(
+								(p) => p.id === penaltyId
+							);
+
 							if (!penalty) return null;
 							const isOneTime = !penalty.multipleTimesAllowed;
-							const count = progress.awardedPenaltyIds.filter((id) => id === penaltyId).length;
+							const count = progress.awardedPenaltyIds.filter(
+								(id) => id === penaltyId
+							).length;
+
 							return (
 								<Badge
 									key={penaltyId}
 									variant="destructive"
-									className={
-										isOneTime && count > 0 ? 'opacity-70' : ''
-									}
+									className={isOneTime && count > 0 ? 'opacity-70' : ''}
 									title={penalty.description}
 								>
 									<X className="w-3 h-3 mr-1" />

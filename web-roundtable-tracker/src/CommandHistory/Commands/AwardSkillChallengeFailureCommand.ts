@@ -8,10 +8,11 @@ export type AwardSkillChallengeFailureCommandProps = {
 	penaltyId?: string; // Optional: which penalty to award
 };
 
-export type AwardSkillChallengeFailureCommandData = AwardSkillChallengeFailureCommandProps & {
-	previousFailureCount?: number;
-	previousAwardedPenaltyIds?: string[];
-};
+export type AwardSkillChallengeFailureCommandData =
+	AwardSkillChallengeFailureCommandProps & {
+		previousFailureCount?: number;
+		previousAwardedPenaltyIds?: string[];
+	};
 
 /**
  * Award a failure to a skill challenge.
@@ -37,6 +38,7 @@ export class AwardSkillChallengeFailureCommand implements Command {
 		const challenge = skillChallenges.find(
 			(sc) => sc.id === this.data.skillChallengeId
 		);
+
 		if (!challenge) {
 			return STATUS.failure;
 		}
@@ -48,11 +50,13 @@ export class AwardSkillChallengeFailureCommand implements Command {
 				challenge.progressShared.awardedPenaltyIds;
 
 			challenge.progressShared.failureCount += 1;
+
 			if (this.data.penaltyId) {
 				challenge.progressShared.awardedPenaltyIds.push(this.data.penaltyId);
 			}
 		} else if (!challenge.shared && challenge.progressByParticipant) {
 			const participantId = this.data.participantId;
+
 			if (!participantId) {
 				return STATUS.failure;
 			}
@@ -71,6 +75,7 @@ export class AwardSkillChallengeFailureCommand implements Command {
 			this.data.previousAwardedPenaltyIds = progress.awardedPenaltyIds;
 
 			progress.failureCount += 1;
+
 			if (this.data.penaltyId) {
 				progress.awardedPenaltyIds.push(this.data.penaltyId);
 			}
@@ -92,6 +97,7 @@ export class AwardSkillChallengeFailureCommand implements Command {
 		const challenge = skillChallenges.find(
 			(sc) => sc.id === this.data.skillChallengeId
 		);
+
 		if (!challenge || this.data.previousFailureCount === undefined) {
 			return STATUS.failure;
 		}
@@ -103,6 +109,7 @@ export class AwardSkillChallengeFailureCommand implements Command {
 				this.data.previousAwardedPenaltyIds ?? [];
 		} else if (!challenge.shared && challenge.progressByParticipant) {
 			const participantId = this.data.participantId;
+
 			if (!participantId || !challenge.progressByParticipant[participantId]) {
 				return STATUS.failure;
 			}

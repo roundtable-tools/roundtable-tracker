@@ -10,17 +10,10 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '@/components/ui/dialog';
-import {
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-} from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { v4 as uuidv4 } from 'uuid';
 import { X } from 'lucide-react';
 import type { ChallengeRewardOption } from '@/models/encounters/skillChallenge.types';
-import type { UseFormReturn } from 'react-hook-form';
 
 interface RewardPenaltyListProps {
 	items: ChallengeRewardOption[];
