@@ -12,6 +12,7 @@ import { ReorderCharactersCommand } from './Commands/ReorderCharactersCommand';
 import { TriggerReinforcementEventCommand } from './Commands/TriggerReinforcementEventCommand';
 import { UpdateCharacterDataCommand } from './Commands/UpdateCharacterDataCommand';
 import { SetTempHealthCommand } from './Commands/SetTempHealthCommand';
+import { StartInitiativeCommand } from './Commands/StartInitiativeCommand';
 import { Command } from './common';
 
 const commandMap: Record<string, new (data: Command['data']) => Command> = {};
@@ -72,4 +73,5 @@ export const registerSerializableCommands = () => {
 	);
 	registerSerializableCommand(ChangeHealthCommand, 'ChangeHealthCommand');
 	registerSerializableCommand(SetTempHealthCommand, 'SetTempHealthCommand');
+	registerSerializableCommand(StartInitiativeCommand, 'StartInitiativeCommand');
 };

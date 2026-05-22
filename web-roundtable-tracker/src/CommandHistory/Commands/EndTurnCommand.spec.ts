@@ -1,6 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { EndTurnCommand } from './EndTurnCommand';
-import { createEncounterStore } from '@/store/encounterRuntimeStore';
+import {
+	createEncounterStore,
+	INITIATIVE_PHASE,
+} from '@/store/encounterRuntimeStore';
 import { Character } from '@/store/data';
 import { STATUS } from '../common';
 
@@ -77,5 +80,43 @@ describe('EndTurnCommand', () => {
 		const status = command.undo();
 
 		expect(status).toBe(STATUS.failure);
+	});
+
+	it('should finalize elapsed turn timing and restore it on undo', () => {
+		encounterStore.setState(() => ({
+			initiativePhase: INITIATIVE_PHASE.Active,
+			activeTurnParticipantId: character.uuid,
+			activeTurnRound: 1,
+			activeTurnStartedAtMs: 1000,
+			activeRoundStartedAtMs: 1000,
+			turnElapsedByRoundParticipant: {},
+			roundElapsedByRound: {},
+			turnDurationHistory: [],
+			lastTurnElapsedMs: 0,
+		}));
+
+		const nowSpy = vi.spyOn(performance, 'now').mockReturnValue(1400);
+		const command = new EndTurnCommand(
+			{ uuid: character.uuid },
+			{ encounterStore }
+		);
+
+		const status = command.execute();
+		expect(status).toBe(STATUS.success);
+
+		const executedState = encounterStore.getState();
+		expect(executedState.lastTurnElapsedMs).toBe(400);
+		expect(executedState.turnElapsedByRoundParticipant['1:00000000-0000-0000-0000-000000000001']).toBe(400);
+		expect(executedState.turnDurationHistory).toHaveLength(1);
+
+		const undoStatus = command.undo();
+		expect(undoStatus).toBe(STATUS.success);
+
+		const undoneState = encounterStore.getState();
+		expect(undoneState.lastTurnElapsedMs).toBe(0);
+		expect(undoneState.turnDurationHistory).toHaveLength(0);
+		expect(undoneState.turnElapsedByRoundParticipant['1:00000000-0000-0000-0000-000000000001']).toBeUndefined();
+
+		nowSpy.mockRestore();
 	});
 });

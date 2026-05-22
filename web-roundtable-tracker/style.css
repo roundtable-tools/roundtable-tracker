@@ -7,6 +7,52 @@ body {
 	padding: 0;
 	overflow: hidden;
 	overflow-y: auto;
+	.table-sticky > [data-slot="table-container"] {
+		height: 100%;
+		overflow-y: auto;
+		scroll-behavior: smooth;
+		
+		/* Custom scrollbar styling to match ScrollArea component */
+		scrollbar-width: thin;
+		scrollbar-color: transparent transparent;
+		
+		/* Webkit browsers (Chrome, Safari, Edge) */
+		&::-webkit-scrollbar {
+			width: 10px;
+		}
+		
+		&::-webkit-scrollbar-button {
+			display: none;
+		}
+		
+		&::-webkit-scrollbar-track {
+			background: transparent;
+		}
+		
+		&::-webkit-scrollbar-thumb {
+			background: transparent;
+			border-radius: 9999px;
+			transition: background-color 150ms ease-out;
+		}
+	}
+	/* Show scrollbar on hover */
+	.table-sticky:hover > [data-slot="table-container"] {
+		scrollbar-color: var(--border) transparent !important;
+		
+		&::-webkit-scrollbar-thumb {
+			background: var(--border);
+		}
+	}
+	/* Show scrollbar on touch */
+	@media (hover: none) {
+		.table-sticky > [data-slot="table-container"] {
+			scrollbar-color: var(--border) transparent !important;
+		}
+		
+		&::-webkit-scrollbar-thumb {
+			background: var(--border);
+		}
+	}
 }
 @import 'tw-animate-css';
 

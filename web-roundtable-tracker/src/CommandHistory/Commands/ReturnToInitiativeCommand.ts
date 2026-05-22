@@ -1,6 +1,12 @@
 import { UUID } from '@/utils/uuid';
 import { Command, CommandDeps, STATUS, getDeps } from '../common';
 import { FinalizeTurnAction } from './FinalizeTurnAndAdvanceRoundCommand';
+import {
+	freezeElapsed,
+	getOwnerLabelAndKey,
+	getTurnDurationKey,
+} from '@/store/timers';
+import { INITIATIVE_PHASE } from '@/store/encounterRuntimeStore';
 
 type CommandData = {
 	activeUuid: UUID;
@@ -11,6 +17,22 @@ type CommandData = {
 		charactersWithTurn: Set<UUID>;
 		delayedOrder: UUID[];
 		charactersMap: Record<UUID, { turnState: string }>;
+		turnElapsedByRoundParticipant: Record<string, number>;
+		roundElapsedByRound: Record<number, number>;
+		lastTurnElapsedMs: number;
+		turnDurationHistory: Array<{
+			id: string;
+			round: number;
+			participantId: UUID;
+			participantName: string;
+			ownerKey: string;
+			ownerLabel: string;
+			elapsedMs: number;
+		}>;
+		activeTurnParticipantId?: UUID;
+		activeTurnRound?: number;
+		activeTurnStartedAtMs?: number;
+		activeRoundStartedAtMs?: number;
 	};
 };
 
@@ -59,6 +81,16 @@ export class ReturnToInitiativeCommand implements Command {
 			charactersOrder: structuredClone(state.charactersOrder),
 			charactersWithTurn: new Set(state.charactersWithTurn),
 			delayedOrder: structuredClone(state.delayedOrder),
+			turnElapsedByRoundParticipant: structuredClone(
+				state.turnElapsedByRoundParticipant
+			),
+			roundElapsedByRound: structuredClone(state.roundElapsedByRound),
+			lastTurnElapsedMs: state.lastTurnElapsedMs,
+			turnDurationHistory: structuredClone(state.turnDurationHistory),
+			activeTurnParticipantId: state.activeTurnParticipantId,
+			activeTurnRound: state.activeTurnRound,
+			activeTurnStartedAtMs: state.activeTurnStartedAtMs,
+			activeRoundStartedAtMs: state.activeRoundStartedAtMs,
 			charactersMap: Object.fromEntries(
 				Object.entries(state.charactersMap).map(([id, char]) => [
 					id,
@@ -68,6 +100,17 @@ export class ReturnToInitiativeCommand implements Command {
 		};
 
 		encounterStore.setState((state) => {
+			const { now, turnElapsedByRoundParticipant, roundElapsedByRound } =
+				freezeElapsed(state);
+			const endedRound = state.activeTurnRound ?? state.round;
+			const turnKey = getTurnDurationKey(endedRound, this.data.activeUuid);
+			const elapsedMs = turnElapsedByRoundParticipant[turnKey] ?? 0;
+			const { ownerKey, ownerLabel, participantName } = getOwnerLabelAndKey(
+				state,
+				this.data.activeUuid
+			);
+			const turnDurationHistoryEntryId = `${endedRound}:${this.data.activeUuid}:${state.turnDurationHistory.length}`;
+
 			const newCharactersWithTurn = new Set(state.charactersWithTurn);
 			// Active participant loses their turn
 			newCharactersWithTurn.delete(this.data.activeUuid);
@@ -128,6 +171,33 @@ export class ReturnToInitiativeCommand implements Command {
 				charactersWithTurn: newCharactersWithTurn,
 				delayedOrder: newDelayedOrder,
 				charactersMap: newCharactersMap,
+				turnElapsedByRoundParticipant,
+				roundElapsedByRound,
+				lastTurnElapsedMs: elapsedMs,
+				turnDurationHistory: [
+					...state.turnDurationHistory,
+					{
+						id: turnDurationHistoryEntryId,
+						round: endedRound,
+						participantId: this.data.activeUuid,
+						participantName,
+						ownerKey,
+						ownerLabel,
+						elapsedMs,
+					},
+				],
+				activeTurnParticipantId:
+					state.initiativePhase === INITIATIVE_PHASE.Active
+						? this.data.returningUuid
+						: undefined,
+				activeTurnRound:
+					state.initiativePhase === INITIATIVE_PHASE.Active
+						? state.round
+						: undefined,
+				activeTurnStartedAtMs:
+					state.initiativePhase === INITIATIVE_PHASE.Active ? now : undefined,
+				activeRoundStartedAtMs:
+					state.initiativePhase === INITIATIVE_PHASE.Active ? now : undefined,
 			};
 		});
 
@@ -161,6 +231,16 @@ export class ReturnToInitiativeCommand implements Command {
 				charactersWithTurn: new Set(original.charactersWithTurn),
 				delayedOrder: structuredClone(original.delayedOrder),
 				charactersMap: restoredMap,
+				turnElapsedByRoundParticipant: structuredClone(
+					original.turnElapsedByRoundParticipant
+				),
+				roundElapsedByRound: structuredClone(original.roundElapsedByRound),
+				lastTurnElapsedMs: original.lastTurnElapsedMs,
+				turnDurationHistory: structuredClone(original.turnDurationHistory),
+				activeTurnParticipantId: original.activeTurnParticipantId,
+				activeTurnRound: original.activeTurnRound,
+				activeTurnStartedAtMs: original.activeTurnStartedAtMs,
+				activeRoundStartedAtMs: original.activeRoundStartedAtMs,
 			};
 		});
 

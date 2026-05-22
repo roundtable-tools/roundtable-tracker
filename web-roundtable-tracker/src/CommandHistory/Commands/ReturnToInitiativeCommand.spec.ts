@@ -1,5 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import { createEncounterStore } from '@/store/encounterRuntimeStore';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	createEncounterStore,
+	INITIATIVE_PHASE,
+} from '@/store/encounterRuntimeStore';
 import { Character } from '@/store/data';
 import { STATUS } from '../common';
 import { ReturnToInitiativeCommand } from './ReturnToInitiativeCommand';
@@ -69,10 +72,20 @@ describe('ReturnToInitiativeCommand', () => {
 					turnState: 'delayed',
 				},
 			},
+			initiativePhase: INITIATIVE_PHASE.Active,
+			activeTurnParticipantId: characters[0].uuid,
+			activeTurnRound: 1,
+			activeTurnStartedAtMs: 1000,
+			activeRoundStartedAtMs: 1000,
+			turnElapsedByRoundParticipant: {},
+			roundElapsedByRound: {},
+			turnDurationHistory: [],
+			lastTurnElapsedMs: 0,
 		}));
 	};
 
 	it('repositions a returning participant without duplicating initiative entries', () => {
+		const nowSpy = vi.spyOn(performance, 'now').mockReturnValue(1250);
 		const command = new ReturnToInitiativeCommand(
 			{
 				activeUuid: characters[0].uuid,
@@ -106,6 +119,10 @@ describe('ReturnToInitiativeCommand', () => {
 		expect(stateAfterExecute.charactersMap[characters[1].uuid].turnState).toBe(
 			'normal'
 		);
+		expect(stateAfterExecute.activeTurnParticipantId).toBe(characters[1].uuid);
+		expect(stateAfterExecute.lastTurnElapsedMs).toBe(250);
+		expect(stateAfterExecute.turnElapsedByRoundParticipant['1:00000000-0000-0000-0000-000000000001']).toBe(250);
+		expect(stateAfterExecute.turnDurationHistory).toHaveLength(1);
 
 		const undoStatus = command.undo();
 		expect(undoStatus).toBe(STATUS.success);
@@ -126,5 +143,10 @@ describe('ReturnToInitiativeCommand', () => {
 		expect(stateAfterUndo.charactersMap[characters[1].uuid].turnState).toBe(
 			'delayed'
 		);
+		expect(stateAfterUndo.activeTurnParticipantId).toBe(characters[0].uuid);
+		expect(stateAfterUndo.lastTurnElapsedMs).toBe(0);
+		expect(stateAfterUndo.turnDurationHistory).toHaveLength(0);
+
+		nowSpy.mockRestore();
 	});
 });

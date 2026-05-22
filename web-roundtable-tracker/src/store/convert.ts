@@ -22,6 +22,7 @@ export const participantsToEncounterCharacters = (
 
 type RuntimeParticipantFields = {
 	type?: 'creature' | 'hazard';
+	playerName?: string;
 	factionId?: string;
 	factionName?: string;
 	factionIcon?: string;
@@ -86,10 +87,23 @@ export const buildTrackerMetaMap = (
 
 	for (const participant of participants) {
 		const runtime = participant as CharacterConfig & RuntimeParticipantFields;
+		const normalizedPlayerName = runtime.playerName?.trim();
+		const ownerLabel =
+			deriveRole(participant.side, runtime.type) === 'pc'
+				? normalizedPlayerName && normalizedPlayerName.length > 0
+					? normalizedPlayerName
+					: participant.name
+				: 'GM';
+		const ownerKey =
+			deriveRole(participant.side, runtime.type) === 'pc'
+				? `pc:${ownerLabel.toLowerCase()}`
+				: 'gm';
 
 		result[participant.uuid] = {
 			role: deriveRole(participant.side, runtime.type),
 			sideTheme: deriveSideTheme(participant.side),
+			ownerKey,
+			ownerLabel,
 			factionId: runtime.factionId,
 			factionName: runtime.factionName,
 			factionIcon: runtime.factionIcon as TrackerParticipantMeta['factionIcon'],

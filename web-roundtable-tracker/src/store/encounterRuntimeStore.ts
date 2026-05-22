@@ -19,6 +19,8 @@ export type TrackerParticipantSideTheme = 'pc' | 'opponent' | 'ally' | 'other';
 export type TrackerParticipantMeta = {
 	role: TrackerParticipantRole;
 	sideTheme: TrackerParticipantSideTheme;
+	ownerKey?: string;
+	ownerLabel?: string;
 	factionId?: string;
 	factionName?: string;
 	factionIcon?: EncounterFactionIconKey;
@@ -57,6 +59,29 @@ function unpackValue<T>(value: ValueOrFunction<T>, currentValue: T): T {
 	return value;
 }
 
+export const INITIATIVE_PHASE = {
+	PreInitiative: 'pre-initiative',
+	Active: 'active',
+} as const;
+
+export type InitiativePhase =
+	(typeof INITIATIVE_PHASE)[keyof typeof INITIATIVE_PHASE];
+
+export type TurnDurationHistoryEntry = {
+	id: string;
+	round: number;
+	participantId: UUID;
+	participantName: string;
+	ownerKey: string;
+	ownerLabel: string;
+	elapsedMs: number;
+};
+
+export type RoundDurationHistoryEntry = {
+	round: number;
+	elapsedMs: number;
+};
+
 export interface EncounterStore {
 	encounterData?: Encounter;
 	charactersMap: Record<UUID, Character>;
@@ -65,6 +90,17 @@ export interface EncounterStore {
 	trackerMetaMap: Record<UUID, TrackerParticipantMeta>;
 	partyLevel: number;
 	round: number;
+	initiativePhase: InitiativePhase;
+	activeTurnParticipantId?: UUID;
+	activeTurnRound?: number;
+	activeTurnStartedAtMs?: number;
+	activeRoundStartedAtMs?: number;
+	turnElapsedByRoundParticipant: Record<string, number>;
+	roundElapsedByRound: Record<number, number>;
+	lastTurnElapsedMs: number;
+	lastRoundElapsedMs: number;
+	turnDurationHistory: TurnDurationHistoryEntry[];
+	roundDurationHistory: RoundDurationHistoryEntry[];
 	charactersWithTurn: Set<UUID>;
 	history: Command[];
 	redoStack: Command[];
@@ -133,6 +169,17 @@ const startEncounter = (characters: Character[]): Partial<EncounterStore> => {
 		delayedOrder,
 		trackerMetaMap: {},
 		round: 1,
+		initiativePhase: INITIATIVE_PHASE.PreInitiative,
+		activeTurnParticipantId: undefined,
+		activeTurnRound: undefined,
+		activeTurnStartedAtMs: undefined,
+		activeRoundStartedAtMs: undefined,
+		turnElapsedByRoundParticipant: {},
+		roundElapsedByRound: {},
+		lastTurnElapsedMs: 0,
+		lastRoundElapsedMs: 0,
+		turnDurationHistory: [],
+		roundDurationHistory: [],
 		charactersWithTurn: new Set(charactersOrder),
 		...resetHistory(),
 	};
@@ -168,6 +215,17 @@ export const createEncounterStore = () =>
 				delayedOrder: [],
 				trackerMetaMap: {},
 				round: 0,
+				initiativePhase: INITIATIVE_PHASE.PreInitiative,
+				activeTurnParticipantId: undefined,
+				activeTurnRound: undefined,
+				activeTurnStartedAtMs: undefined,
+				activeRoundStartedAtMs: undefined,
+				turnElapsedByRoundParticipant: {},
+				roundElapsedByRound: {},
+				lastTurnElapsedMs: 0,
+				lastRoundElapsedMs: 0,
+				turnDurationHistory: [],
+				roundDurationHistory: [],
 				charactersWithTurn: new Set(),
 				history: [],
 				redoStack: [],

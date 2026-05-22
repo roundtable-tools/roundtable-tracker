@@ -35,6 +35,7 @@ export type CharacterConfig = {
 	health: number;
 	tempHealth: number;
 	initiative: number;
+	playerName?: string;
 } & InitiativeParticipant;
 
 export const characterConfigToCharacter = (
@@ -47,6 +48,7 @@ export const characterConfigToCharacter = (
 	return {
 		uuid: participant.uuid,
 		name: participant.name,
+		playerName: participant.playerName,
 		initiative: participant.initiative ?? 0,
 		health,
 		maxHealth,
@@ -60,6 +62,7 @@ export const characterConfigToCharacter = (
 export interface Character {
 	uuid: UUID;
 	name: string;
+	playerName?: string;
 	initiative: number;
 	turnState: State;
 	hasTurn: boolean;
@@ -266,6 +269,7 @@ export type InitiativeParticipant = {
 	tiePriority: Priority;
 	initiative?: number;
 	isSimpleHazard?: boolean;
+	playerName?: string;
 	level: number;
 } & Omit<Creature<typeof LEVEL_REPRESENTATION.Exact>, 'type' | 'adjustment'> & {
 		adjustment?: ParticipantAdjustment;

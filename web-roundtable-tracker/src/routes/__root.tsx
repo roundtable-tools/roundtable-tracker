@@ -21,15 +21,19 @@ import {
 } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import React from 'react';
+import { useEncounterStore } from '@/store/encounterRuntimeInstance';
+import { encounterToTrackerHeader } from '@/store/trackerMappers';
+import { INITIATIVE_PHASE } from '@/store/encounterRuntimeStore';
 
-type EncounterHeader = {
-	title: string;
-	threatLevel: string;
-	turnTimers: {
-		lastTurn: string;
-		currentTurn: string;
-	};
-};
+function toDurationLabel(milliseconds: number) {
+	const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+	const minutes = Math.floor(totalSeconds / 60)
+		.toString()
+		.padStart(2, '0');
+	const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+
+	return `${minutes}:${seconds}`;
+}
 
 function BreadCrumbs() {
 	const matches = useMatches();
@@ -61,25 +65,72 @@ function BreadCrumbs() {
 
 function EncounterHeaderInfo() {
 	const matches = useMatches();
+	const [nowMs, setNowMs] = React.useState(() =>
+		typeof performance !== 'undefined' && typeof performance.now === 'function'
+			? performance.now()
+			: Date.now()
+	);
+	const encounterData = useEncounterStore((state) => state.encounterData);
+	const partyLevel = useEncounterStore((state) => state.partyLevel);
+	const round = useEncounterStore((state) => state.round);
+	const lastTurnElapsedMs = useEncounterStore((state) => state.lastTurnElapsedMs);
+	const activeTurnStartedAtMs = useEncounterStore(
+		(state) => state.activeTurnStartedAtMs
+	);
+	const activeTurnParticipantId = useEncounterStore(
+		(state) => state.activeTurnParticipantId
+	);
+	const activeTurnRound = useEncounterStore((state) => state.activeTurnRound);
+	const initiativePhase = useEncounterStore((state) => state.initiativePhase);
+
+	React.useEffect(() => {
+		if (initiativePhase !== INITIATIVE_PHASE.Active) {
+			return;
+		}
+
+		let frameId: number | null = null;
+
+		const tick = () => {
+			setNowMs(
+				typeof performance !== 'undefined' &&
+					typeof performance.now === 'function'
+					? performance.now()
+					: Date.now()
+			);
+			frameId = window.requestAnimationFrame(tick);
+		};
+
+		frameId = window.requestAnimationFrame(tick);
+
+		return () => {
+			if (frameId !== null) {
+				window.cancelAnimationFrame(frameId);
+			}
+		};
+	}, [initiativePhase]);
+	const turnElapsedByRoundParticipant = useEncounterStore(
+		(state) => state.turnElapsedByRoundParticipant
+	);
 	const isInitiativeTrackerRoute = matches.some(
 		(match) => match.routeId === '/initiative_tracker'
 	);
-	const encounterMatch = matches
-		.filter(
-			(
-				match
-			): match is typeof match & {
-				loaderData: { encounterHeader: EncounterHeader };
-			} =>
-				Boolean(
-					match.loaderData &&
-					typeof match.loaderData === 'object' &&
-					'encounterHeader' in match.loaderData
-				)
-		)
-		.at(-1);
-
-	const encounterHeader = encounterMatch?.loaderData.encounterHeader ?? null;
+	const activeTurnKey =
+		typeof activeTurnRound === 'number' && activeTurnParticipantId
+			? `${activeTurnRound}:${activeTurnParticipantId}`
+			: null;
+	const currentTurnElapsedMs =
+		initiativePhase === INITIATIVE_PHASE.Active && activeTurnKey
+			? (turnElapsedByRoundParticipant[activeTurnKey] ?? 0) +
+				(typeof activeTurnStartedAtMs === 'number'
+					? Math.max(0, nowMs - activeTurnStartedAtMs)
+					: 0)
+			: 0;
+	const encounterHeader = encounterData
+		? encounterToTrackerHeader(encounterData, partyLevel, round, {
+				lastTurn: toDurationLabel(lastTurnElapsedMs),
+				currentTurn: toDurationLabel(currentTurnElapsedMs),
+		  })
+		: null;
 
 	if (!encounterHeader) {
 		return null;
@@ -96,7 +147,7 @@ function EncounterHeaderInfo() {
 					].join(' ')}
 				>
 					<span className="truncate text-sm font-semibold">
-						{encounterHeader.title}
+						{encounterHeader.encounterTitle}
 					</span>
 					<span className="text-xs text-muted-foreground">
 						{encounterHeader.threatLevel}

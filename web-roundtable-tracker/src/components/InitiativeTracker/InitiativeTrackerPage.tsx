@@ -19,7 +19,7 @@ import {
 	CarouselPrevious,
 } from '@/components/ui/carousel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
 	Dialog,
 	DialogContent,
@@ -36,8 +36,11 @@ import {
 } from '@/components/ui/tooltip';
 import {
 	ArrowRight,
+	ArrowDown,
+	ArrowUp,
 	ArrowUpDown,
 	History,
+	Minus,
 	Redo2,
 	ShieldOff,
 	SkipForward,
@@ -73,6 +76,21 @@ import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/Reactivate
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 import { Input } from '@/components/ui/input';
 import { type SwipeAction } from './InitiativeActionCarouselCard';
+import { StartInitiativeCommand } from '@/CommandHistory/Commands/StartInitiativeCommand';
+import { INITIATIVE_PHASE } from '@/store/encounterRuntimeStore';
+import {
+	HoverCard,
+	HoverCardContent,
+	HoverCardTrigger,
+} from '@/components/ui/hover-card';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '@/components/ui/table';
 
 function logTrackerButton(action: string, details?: Record<string, unknown>) {
 	if (details) {
@@ -221,8 +239,200 @@ function getDcName(dc: NonNullable<TrackerParticipant['dcs']>[number]) {
 	return dc.name ?? dc.inline ?? 'DC';
 }
 
+function getNowMs() {
+	if (
+		typeof performance !== 'undefined' &&
+		typeof performance.now === 'function'
+	) {
+		return performance.now();
+	}
+
+	return Date.now();
+}
+
+function toDurationLabel(milliseconds: number) {
+	const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
+	const minutes = Math.floor(totalSeconds / 60)
+		.toString()
+		.padStart(2, '0');
+	const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+
+	return `${minutes}:${seconds}`;
+}
+
+function getTurnDurationKey(round: number, participantId: string) {
+	return `${round}:${participantId}`;
+}
+
+type TurnStatsRankingRow = {
+	ownerKey: string;
+	ownerLabel: string;
+	averageMs: number;
+	lastMs: number;
+	highestMs: number;
+	rank: number;
+	change: number;
+	holdRounds: number;
+	contributors: string[];
+};
+
+type TurnHistoryRow = {
+	round: number;
+	ownerKey: string;
+	ownerLabel: string;
+	elapsedMs: number;
+	participantName: string;
+};
+
+function aggregateRankingRows(historyRows: TurnHistoryRow[]) {
+	const grouped = historyRows.reduce(
+		(acc, row) => {
+			if (!acc[row.ownerKey]) {
+				acc[row.ownerKey] = {
+					ownerKey: row.ownerKey,
+					ownerLabel: row.ownerLabel,
+					values: [] as number[],
+					contributors: new Set<string>(),
+				};
+			}
+
+			acc[row.ownerKey].values.push(row.elapsedMs);
+			acc[row.ownerKey].contributors.add(row.participantName);
+
+			return acc;
+		},
+		{} as Record<
+			string,
+			{
+				ownerKey: string;
+				ownerLabel: string;
+				values: number[];
+				contributors: Set<string>;
+			}
+		>
+	);
+
+	return Object.values(grouped)
+		.map((entry) => {
+			const lastMs = entry.values[entry.values.length - 1] ?? 0;
+			const highestMs = entry.values.reduce(
+				(max, value) => Math.max(max, value),
+				0
+			);
+			const averageMs =
+				entry.values.length > 0
+					? entry.values.reduce((sum, value) => sum + value, 0) /
+						entry.values.length
+					: 0;
+
+			return {
+				ownerKey: entry.ownerKey,
+				ownerLabel: entry.ownerLabel,
+				averageMs,
+				lastMs,
+				highestMs,
+				contributors: Array.from(entry.contributors),
+			};
+		})
+		.sort((a, b) => {
+			if (a.averageMs !== b.averageMs) {
+				return a.averageMs - b.averageMs;
+			}
+
+			return a.ownerLabel.localeCompare(b.ownerLabel);
+		});
+}
+
+function computeRoundRankMap(historyRows: TurnHistoryRow[], round: number) {
+	const ranking = aggregateRankingRows(
+		historyRows.filter((entry) => entry.round <= round)
+	);
+
+	return ranking.reduce(
+		(acc, row, index) => {
+			acc[row.ownerKey] = index + 1;
+
+			return acc;
+		},
+		{} as Record<string, number>
+	);
+}
+
+function buildRankingRows(
+	historyRows: TurnHistoryRow[],
+	completedRounds: number[]
+): TurnStatsRankingRow[] {
+	const sorted = aggregateRankingRows(historyRows);
+	const latestCompletedRound = completedRounds.at(-1);
+	const previousCompletedRound = completedRounds.at(-2);
+	const previousRankByOwner =
+		typeof previousCompletedRound === 'number'
+			? computeRoundRankMap(historyRows, previousCompletedRound)
+			: {};
+	const roundRankMaps = completedRounds
+		.map((value) => ({
+			round: value,
+			map: computeRoundRankMap(historyRows, value),
+		}))
+		.sort((a, b) => a.round - b.round);
+
+	const getHoldRounds = (ownerKey: string, currentRank: number) => {
+		if (
+			roundRankMaps.length === 0 ||
+			typeof latestCompletedRound !== 'number'
+		) {
+			return 0;
+		}
+
+		let holdCount = 0;
+
+		for (let index = roundRankMaps.length - 1; index >= 0; index -= 1) {
+			const rankAtRound = roundRankMaps[index].map[ownerKey];
+
+			if (rankAtRound !== currentRank) {
+				break;
+			}
+
+			holdCount += 1;
+		}
+
+		return holdCount;
+	};
+
+	return sorted.map((entry, index) => {
+		const rank = index + 1;
+		const previousRank = previousRankByOwner[entry.ownerKey];
+		const change = typeof previousRank === 'number' ? previousRank - rank : 0;
+		const holdRounds = change === 0 ? getHoldRounds(entry.ownerKey, rank) : 0;
+
+		return {
+			...entry,
+			rank,
+			change,
+			holdRounds,
+		};
+	});
+}
+
+function StartInitiativeMarkerCard() {
+	return (
+		<div className="relative flex h-full min-h-0 w-full items-center rounded-md bg-transparent px-1">
+			<div className="absolute left-0 right-0 top-4/7 -translate-y-1/2 border-t border-dashed border-sky-400/70" />
+			<p className="relative truncate bg-background px-2 text-left text-xs font-medium text-sky-200">
+				Start Initiative
+			</p>
+		</div>
+	);
+}
+
 type SideTheme = 'pc' | 'opponent' | 'ally' | 'other';
-type FactionColor = 'crimson' | 'amber' | 'emerald' | 'sky' | 'indigo' | 'slate';
+type FactionColor =
+	| 'crimson'
+	| 'amber'
+	| 'emerald'
+	| 'sky'
+	| 'indigo'
+	| 'slate';
 
 function resolveParticipantSideTheme(
 	participant: TrackerParticipant
@@ -883,6 +1093,10 @@ function getRoundBoundaryIndex(
 type InitiativeCarouselItemData =
 	| {
 			key: string;
+			type: 'starter';
+	  }
+	| {
+			key: string;
 			type: 'marker';
 	  }
 	| {
@@ -951,6 +1165,33 @@ export function InitiativeTrackerPage() {
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
 	const round = useEncounterStore((state) => state.round);
 	const history = useEncounterStore((state) => state.history);
+	const initiativePhase = useEncounterStore((state) => state.initiativePhase);
+	const activeTurnParticipantId = useEncounterStore(
+		(state) => state.activeTurnParticipantId
+	);
+	const activeTurnRound = useEncounterStore((state) => state.activeTurnRound);
+	const activeTurnStartedAtMs = useEncounterStore(
+		(state) => state.activeTurnStartedAtMs
+	);
+	const activeRoundStartedAtMs = useEncounterStore(
+		(state) => state.activeRoundStartedAtMs
+	);
+	const turnElapsedByRoundParticipant = useEncounterStore(
+		(state) => state.turnElapsedByRoundParticipant
+	);
+	const roundElapsedByRound = useEncounterStore(
+		(state) => state.roundElapsedByRound
+	);
+	const lastTurnElapsedMs = useEncounterStore(
+		(state) => state.lastTurnElapsedMs
+	);
+	const turnDurationHistory = useEncounterStore(
+		(state) => state.turnDurationHistory
+	);
+	const roundDurationHistory = useEncounterStore(
+		(state) => state.roundDurationHistory
+	);
+	const [liveTimerNowMs, setLiveTimerNowMs] = useState(() => getNowMs());
 
 	const storeInitiativeParticipants = useMemo(
 		() =>
@@ -997,9 +1238,38 @@ export function InitiativeTrackerPage() {
 	const trackerHeader = useMemo(
 		() =>
 			encounterData
-				? encounterToTrackerHeader(encounterData, partyLevel, round)
+				? encounterToTrackerHeader(encounterData, partyLevel, round, {
+						lastTurn: toDurationLabel(lastTurnElapsedMs),
+						currentTurn:
+							initiativePhase === INITIATIVE_PHASE.Active &&
+							typeof activeTurnRound === 'number' &&
+							typeof activeTurnParticipantId === 'string'
+								? toDurationLabel(
+										(turnElapsedByRoundParticipant[
+											getTurnDurationKey(
+												activeTurnRound,
+												activeTurnParticipantId
+											)
+										] ?? 0) +
+											(typeof activeTurnStartedAtMs === 'number'
+												? Math.max(0, liveTimerNowMs - activeTurnStartedAtMs)
+												: 0)
+									)
+								: '00:00',
+					})
 				: null,
-		[encounterData, partyLevel, round]
+		[
+			encounterData,
+			partyLevel,
+			round,
+			lastTurnElapsedMs,
+			initiativePhase,
+			activeTurnRound,
+			activeTurnParticipantId,
+			turnElapsedByRoundParticipant,
+			activeTurnStartedAtMs,
+			liveTimerNowMs,
+		]
 	);
 
 	const timeline = useMemo(
@@ -1073,6 +1343,7 @@ export function InitiativeTrackerPage() {
 	>(storeInitiativeParticipants);
 	const currentInitiativeParticipantId = charactersOrder[0] ?? null;
 	const nextTurnTimeoutRef = useRef<number | null>(null);
+	const timerFrameRef = useRef<number | null>(null);
 	const reorderScrollContainerRef = useRef<HTMLDivElement | null>(null);
 	const reorderAutoScrollVelocityRef = useRef(0);
 	const reorderAutoScrollFrameRef = useRef<number | null>(null);
@@ -1098,12 +1369,42 @@ export function InitiativeTrackerPage() {
 				window.clearTimeout(nextTurnTimeoutRef.current);
 			}
 
+			if (timerFrameRef.current !== null) {
+				window.cancelAnimationFrame(timerFrameRef.current);
+				timerFrameRef.current = null;
+			}
+
 			if (reorderAutoScrollFrameRef.current !== null) {
 				window.cancelAnimationFrame(reorderAutoScrollFrameRef.current);
 				reorderAutoScrollFrameRef.current = null;
 			}
 		};
 	}, []);
+
+	useEffect(() => {
+		if (initiativePhase !== INITIATIVE_PHASE.Active) {
+			if (timerFrameRef.current !== null) {
+				window.cancelAnimationFrame(timerFrameRef.current);
+				timerFrameRef.current = null;
+			}
+
+			return;
+		}
+
+		const tick = () => {
+			setLiveTimerNowMs(getNowMs());
+			timerFrameRef.current = window.requestAnimationFrame(tick);
+		};
+
+		timerFrameRef.current = window.requestAnimationFrame(tick);
+
+		return () => {
+			if (timerFrameRef.current !== null) {
+				window.cancelAnimationFrame(timerFrameRef.current);
+				timerFrameRef.current = null;
+			}
+		};
+	}, [initiativePhase]);
 
 	useEffect(() => {
 		if (!reorderOpen) {
@@ -1234,6 +1535,19 @@ export function InitiativeTrackerPage() {
 	};
 
 	const handleNextTurn = () => {
+		if (initiativePhase === INITIATIVE_PHASE.PreInitiative) {
+			logTrackerButton('Start Initiative button clicked');
+
+			try {
+				executeCommand(new StartInitiativeCommand());
+				queueFocusCurrentParticipant();
+			} catch (error) {
+				console.error('Failed to start initiative', error);
+			}
+
+			return;
+		}
+
 		const currentParticipantId = charactersOrder[0];
 
 		if (!currentParticipantId) {
@@ -1697,19 +2011,75 @@ export function InitiativeTrackerPage() {
 		: undefined;
 
 	const nextRound = (trackerHeader?.currentRound ?? round) + 1;
-	const nextRoundMarkerIndex =
-		pinnedMarkerRound === round
-			? initiativeParticipants.length
-			: activeRoundBoundaryIndex;
-	const initiativeCarouselItems = useMemo(
+	const liveCurrentTurnElapsedMs = (() => {
+		if (
+			initiativePhase !== INITIATIVE_PHASE.Active ||
+			!activeTurnParticipantId ||
+			typeof activeTurnRound !== 'number'
+		) {
+			return 0;
+		}
+
+		const key = getTurnDurationKey(activeTurnRound, activeTurnParticipantId);
+		const base = turnElapsedByRoundParticipant[key] ?? 0;
+		const live =
+			typeof activeTurnStartedAtMs === 'number'
+				? Math.max(0, liveTimerNowMs - activeTurnStartedAtMs)
+				: 0;
+
+		return base + live;
+	})();
+	const liveCurrentRoundElapsedMs = (() => {
+		if (initiativePhase !== INITIATIVE_PHASE.Active) {
+			return 0;
+		}
+
+		const base = roundElapsedByRound[round] ?? 0;
+		const live =
+			typeof activeRoundStartedAtMs === 'number'
+				? Math.max(0, liveTimerNowMs - activeRoundStartedAtMs)
+				: 0;
+
+		return base + live;
+	})();
+	const rankingRows = useMemo(
 		() =>
-			buildInitiativeCarouselItems(
-				initiativeParticipants,
-				nextRoundMarkerIndex,
-				nextRound
+			buildRankingRows(
+				turnDurationHistory.map((entry) => ({
+					round: entry.round,
+					ownerKey: entry.ownerKey,
+					ownerLabel: entry.ownerLabel,
+					elapsedMs: entry.elapsedMs,
+					participantName: entry.participantName,
+				})),
+				roundDurationHistory.map((entry) => entry.round)
 			),
-		[initiativeParticipants, nextRoundMarkerIndex, nextRound]
+		[turnDurationHistory, roundDurationHistory]
 	);
+	const nextRoundMarkerIndex =
+		initiativePhase === INITIATIVE_PHASE.PreInitiative
+			? 0
+			: pinnedMarkerRound === round
+				? initiativeParticipants.length
+				: activeRoundBoundaryIndex;
+	const initiativeCarouselItems = useMemo(() => {
+		const items = buildInitiativeCarouselItems(
+			initiativeParticipants,
+			nextRoundMarkerIndex,
+			nextRound
+		);
+
+		if (initiativePhase === INITIATIVE_PHASE.PreInitiative) {
+			return [{ key: 'starter-marker', type: 'starter' as const }, ...items];
+		}
+
+		return items;
+	}, [
+		initiativeParticipants,
+		nextRoundMarkerIndex,
+		nextRound,
+		initiativePhase,
+	]);
 
 	const timelineEvents = useMemo(
 		() =>
@@ -1907,13 +2277,17 @@ export function InitiativeTrackerPage() {
 												'min-w-0 pt-2 -mb-3',
 												item.type === 'marker'
 													? 'basis-[2rem]'
-													: item.participant.state === 'delayed'
+													: item.type !== 'participant'
 														? 'basis-[2.5rem]'
-														: 'basis-[5rem]',
+														: item.participant.state === 'delayed'
+															? 'basis-[2.5rem]'
+															: 'basis-[5rem]',
 											].join(' ')}
 										>
 											{item.type === 'marker' ? (
 												<NextRoundMarkerCard nextRound={nextRound} />
+											) : item.type === 'starter' ? (
+												<StartInitiativeMarkerCard />
 											) : item.participant.state === 'delayed' ? (
 												<DelayedMarkerCard participant={item.participant} />
 											) : (
@@ -2074,11 +2448,17 @@ export function InitiativeTrackerPage() {
 										Narrative Events
 									</TabsTrigger>
 								)}
-								<TabsTrigger value="history" className="whitespace-normal">
-									Command History
+								<TabsTrigger
+									value="command_history"
+									className="whitespace-normal"
+								>
+									Commands
 								</TabsTrigger>
-								<TabsTrigger value="stats" className="whitespace-normal">
-									Turn Stats
+								<TabsTrigger value="turn_history" className="whitespace-normal">
+									Turns
+								</TabsTrigger>
+								<TabsTrigger value="turn_ranking" className="whitespace-normal">
+									Ranking
 								</TabsTrigger>
 							</TabsList>
 							<TabsContent
@@ -2104,7 +2484,10 @@ export function InitiativeTrackerPage() {
 									</ScrollArea>
 								</TabsContent>
 							)}
-							<TabsContent value="history" className="mt-3 min-h-0 flex-1">
+							<TabsContent
+								value="command_history"
+								className="mt-3 min-h-0 flex-1"
+							>
 								<ScrollArea className="h-full pr-3">
 									<ul className="space-y-2 text-sm">
 										{historyPreview.map((entry, index) => (
@@ -2116,12 +2499,118 @@ export function InitiativeTrackerPage() {
 								</ScrollArea>
 							</TabsContent>
 							<TabsContent
-								value="stats"
+								value="turn_history"
 								className="mt-3 min-h-0 flex-1 text-sm"
 							>
 								<ScrollArea className="h-full pr-3">
-									<p>Average turn duration data will be connected in MVP.</p>
+									<ul className="space-y-2">
+										{roundDurationHistory.map((entry) => (
+											<li
+												key={`round-${entry.round}`}
+												className="rounded-md border p-2"
+											>
+												<p className="text-xs text-muted-foreground">
+													Round {entry.round}
+												</p>
+												<p className="font-medium">
+													Total {toDurationLabel(entry.elapsedMs)}
+												</p>
+											</li>
+										))}
+										{turnDurationHistory.map((entry) => (
+											<li key={entry.id} className="rounded-md border p-2">
+												<p className="text-xs text-muted-foreground">
+													Round {entry.round} · {entry.ownerLabel}
+												</p>
+												<p className="font-medium">
+													{entry.participantName}:{' '}
+													{toDurationLabel(entry.elapsedMs)}
+												</p>
+											</li>
+										))}
+										<li className="rounded-md border border-dashed p-2">
+											<p className="text-xs text-muted-foreground">
+												Current Round
+											</p>
+											<p className="font-medium">
+												{toDurationLabel(liveCurrentRoundElapsedMs)}
+											</p>
+										</li>
+										<li className="rounded-md border border-dashed p-2">
+											<p className="text-xs text-muted-foreground">
+												Current Turn
+											</p>
+											<p className="font-medium">
+												{toDurationLabel(liveCurrentTurnElapsedMs)}
+											</p>
+										</li>
+									</ul>
 								</ScrollArea>
+							</TabsContent>
+							<TabsContent
+								value="turn_ranking"
+								className="mt-3 min-h-0 flex-1 table-sticky h-full"
+							>
+								<Table>
+									<TableHeader className="sticky top-0 z-10 bg-background">
+										<TableRow>
+											<TableHead>Owner</TableHead>
+											<TableHead>Average</TableHead>
+											<TableHead>Last</TableHead>
+											<TableHead>Highest</TableHead>
+											<TableHead>Change</TableHead>
+										</TableRow>
+									</TableHeader>
+									<TableBody>
+										{rankingRows.map((row) => (
+											<TableRow key={row.ownerKey}>
+												<TableCell>
+													<HoverCard>
+														<HoverCardTrigger asChild>
+															<button
+																className="underline decoration-dotted underline-offset-2"
+																type="button"
+															>
+																{row.ownerLabel}
+															</button>
+														</HoverCardTrigger>
+														<HoverCardContent className="w-56">
+															<p className="text-xs font-medium text-muted-foreground">
+																Contributors
+															</p>
+															<ul className="mt-1 space-y-1 text-sm">
+																{row.contributors.map((name) => (
+																	<li key={name}>{name}</li>
+																))}
+															</ul>
+														</HoverCardContent>
+													</HoverCard>
+												</TableCell>
+												<TableCell>{toDurationLabel(row.averageMs)}</TableCell>
+												<TableCell>{toDurationLabel(row.lastMs)}</TableCell>
+												<TableCell>{toDurationLabel(row.highestMs)}</TableCell>
+												<TableCell>
+													{row.change > 0 ? (
+														<span className="inline-flex items-center gap-1 text-emerald-500">
+															<ArrowUp className="h-3 w-3" />
+															{row.change}
+														</span>
+													) : row.change < 0 ? (
+														<span className="inline-flex items-center gap-1 text-rose-500">
+															<ArrowDown className="h-3 w-3" />
+															{Math.abs(row.change)}
+														</span>
+													) : (
+														<span className="inline-flex items-center gap-1 text-muted-foreground">
+															<Minus className="h-3 w-3" />
+															{row.holdRounds}
+														</span>
+													)}
+												</TableCell>
+											</TableRow>
+										))}
+									</TableBody>
+								</Table>
 							</TabsContent>
 						</Tabs>
 					</Card>
@@ -2359,13 +2848,17 @@ export function InitiativeTrackerPage() {
 											className={[
 												item.type === 'marker'
 													? 'h-full min-w-20 basis-[28%] pl-2'
-													: item.participant.state === 'delayed'
-														? 'h-full min-w-24 basis-[30%] pl-2'
-														: 'h-full min-w-30 basis-[41%] pl-2',
+													: item.type !== 'participant'
+														? 'h-full min-w-20 basis-[28%] pl-2'
+														: item.participant.state === 'delayed'
+															? 'h-full min-w-24 basis-[30%] pl-2'
+															: 'h-full min-w-30 basis-[41%] pl-2',
 											].join(' ')}
 										>
 											{item.type === 'marker' ? (
 												<NextRoundMarkerCard nextRound={nextRound} compact />
+											) : item.type === 'starter' ? (
+												<StartInitiativeMarkerCard />
 											) : item.participant.state === 'delayed' ? (
 												<DelayedMarkerCard
 													participant={item.participant}
@@ -2452,7 +2945,51 @@ export function InitiativeTrackerPage() {
 									</ul>
 								</TabsContent>
 								<TabsContent value="stats" className="mt-0 text-sm">
-									<p>Average turn duration data will be connected in MVP.</p>
+									<Tabs defaultValue="history" className="space-y-3">
+										<TabsList className="w-full h-auto">
+											<TabsTrigger value="history">History</TabsTrigger>
+											<TabsTrigger value="ranking">Ranking</TabsTrigger>
+										</TabsList>
+										<TabsContent value="history" className="mt-0">
+											<ul className="space-y-2">
+												{roundDurationHistory.map((entry) => (
+													<li
+														key={`mobile-round-${entry.round}`}
+														className="rounded-md border p-2"
+													>
+														Round {entry.round}:{' '}
+														{toDurationLabel(entry.elapsedMs)}
+													</li>
+												))}
+												{turnDurationHistory.map((entry) => (
+													<li
+														key={`mobile-${entry.id}`}
+														className="rounded-md border p-2"
+													>
+														{entry.participantName}:{' '}
+														{toDurationLabel(entry.elapsedMs)}
+													</li>
+												))}
+											</ul>
+										</TabsContent>
+										<TabsContent value="ranking" className="mt-0">
+											<ul className="space-y-2">
+												{rankingRows.map((row) => (
+													<li
+														key={`mobile-rank-${row.ownerKey}`}
+														className="rounded-md border p-2"
+													>
+														<div className="flex items-center justify-between gap-2">
+															<p className="font-medium">{row.ownerLabel}</p>
+															<p className="text-xs text-muted-foreground">
+																Avg {toDurationLabel(row.averageMs)}
+															</p>
+														</div>
+													</li>
+												))}
+											</ul>
+										</TabsContent>
+									</Tabs>
 								</TabsContent>
 							</Tabs>
 						</Card>

@@ -298,6 +298,7 @@ const generatePartyFromData = (party: Party): InitiativeParticipant[] =>
 	party.members.map((member) => ({
 		uuid: member.uuid,
 		name: member.name,
+		playerName: member.player,
 		level: member.level,
 		side: ALIGNMENT.PCs,
 		tiePriority: member.tiePriority ? PRIORITY.PC : PRIORITY.NPC,
@@ -329,9 +330,6 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
 	const setView = props.setView;
 	const [showInitiativeChoice, setShowInitiativeChoice] = useState(false);
-	const [preparedParticipants, setPreparedParticipants] = useState<
-		PreviewCharacterConfig[]
-	>([]);
 
 	const parties = useSavedPartiesStore((s) => s.parties);
 	const lastUsedPartyId = useSavedPartiesStore((s) => s.lastUsedPartyId);
@@ -486,7 +484,8 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 						};
 					});
 				console.log('Prepared participants for encounter:', formParticipants);
-				setPreparedParticipants(formParticipants);
+				startEncounter(participantsToEncounterCharacters(formParticipants));
+				setTrackerMetaMap(buildTrackerMetaMap(formParticipants));
 				setShowInitiativeChoice(true);
 			},
 			(errors) => {
@@ -498,8 +497,6 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	const onSelectInitiativeView = (
 		view: 'initiativeTracker' | 'initiativePlayer'
 	) => {
-		startEncounter(participantsToEncounterCharacters(preparedParticipants));
-		setTrackerMetaMap(buildTrackerMetaMap(preparedParticipants));
 		setShowInitiativeChoice(false);
 		setView(view);
 

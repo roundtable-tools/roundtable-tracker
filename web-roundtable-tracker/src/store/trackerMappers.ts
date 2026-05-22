@@ -23,6 +23,10 @@ export type TrackerHeader = {
 	encounterTitle: string;
 	threatLevel: string;
 	currentRound: number;
+	turnTimers: {
+		lastTurn: string;
+		currentTurn: string;
+	};
 	descriptionSections: Array<{
 		label: string;
 		content: string;
@@ -47,6 +51,8 @@ export type PlayerTrackerParticipant = {
 const DEFAULT_META: TrackerParticipantMeta = {
 	role: 'opponent',
 	sideTheme: 'opponent',
+	ownerKey: 'gm',
+	ownerLabel: 'GM',
 	factionId: undefined,
 	factionName: undefined,
 	factionIcon: undefined,
@@ -384,7 +390,11 @@ function stableInitiativeFromId(id: string): number {
 export function encounterToTrackerHeader(
 	encounterData: Encounter,
 	partyLevel: number,
-	round: number
+	round: number,
+	turnTimers: { lastTurn: string; currentTurn: string } = {
+		lastTurn: '00:00',
+		currentTurn: '00:00',
+	}
 ): TrackerHeader {
 	const difficulty =
 		encounterData.levelRepresentation === LEVEL_REPRESENTATION.Exact
@@ -465,6 +475,7 @@ export function encounterToTrackerHeader(
 		encounterTitle: encounterData.name,
 		threatLevel: `${difficultyLabel} ${encounterLevel}`,
 		currentRound: round,
+		turnTimers,
 		descriptionSections,
 		participantNoteSectionsBySideTheme,
 		narrativeDetails,
