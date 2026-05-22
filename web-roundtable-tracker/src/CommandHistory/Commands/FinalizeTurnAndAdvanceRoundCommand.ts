@@ -1,5 +1,5 @@
 import { UUID } from '@/utils/uuid';
-import { Command, CommandDeps, STATUS, getDeps } from '../common';
+import { COMMAND_TAGS, Command, CommandDeps, STATUS, getDeps } from '../common';
 import { CompositeCommand } from './CompositeCommand';
 import { DelayCharacterCommand } from './DelayCharacterCommand';
 import { EndRoundCommand } from './EndRoundCommand';
@@ -37,6 +37,7 @@ const getActionCommand = (
 
 export class FinalizeTurnAndAdvanceRoundCommand implements Command {
 	readonly type = 'FinalizeTurnAndAdvanceRoundCommand';
+	readonly tags = [COMMAND_TAGS.endsTurn, COMMAND_TAGS.endsRound] as const;
 	description = 'Finalize Turn And Advance Round Command';
 	data: CommandData;
 

@@ -1,5 +1,6 @@
 import { nextRound } from '@/store/operations';
 import {
+	COMMAND_TAGS,
 	Command,
 	CommandDeps,
 	getDeps,
@@ -27,6 +28,7 @@ type CommandData = {
 
 export class EndRoundCommand implements Command {
 	readonly type = 'EndRoundCommand';
+	readonly tags = [COMMAND_TAGS.endsRound] as const;
 	description = 'End Round Command';
 
 	constructor(

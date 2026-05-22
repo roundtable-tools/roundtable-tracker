@@ -1,4 +1,4 @@
-import { Command, CommandDeps, STATUS, getDeps } from '../common';
+import { COMMAND_TAGS, Command, CommandDeps, STATUS, getDeps } from '../common';
 import { UUID } from '@/utils/uuid';
 import { getChangeCharacterState } from './composites/ChangeCharacterState';
 
@@ -9,6 +9,7 @@ type CommandData = {
 
 export class DelayCharacterCommand implements Command {
 	readonly type = 'DelayCharacterCommand';
+	readonly tags = [COMMAND_TAGS.endsTurn] as const;
 	description = 'Delay Character Command';
 	data: CommandData;
 

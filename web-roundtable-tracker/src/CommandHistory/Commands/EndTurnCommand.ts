@@ -1,5 +1,6 @@
 import { UUID } from '@/utils/uuid';
 import {
+	COMMAND_TAGS,
 	Command,
 	CommandDeps,
 	getDeps,
@@ -42,6 +43,7 @@ type CommandData = CommandProps & {
 
 export class EndTurnCommand implements Command {
 	readonly type = 'EndTurnCommand';
+	readonly tags = [COMMAND_TAGS.endsTurn] as const;
 	data: CommandData;
 	description = 'End Turn Command';
 	constructor(

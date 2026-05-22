@@ -19,7 +19,7 @@ import {
 	CarouselPrevious,
 } from '@/components/ui/carousel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
 	Dialog,
 	DialogContent,
@@ -61,7 +61,11 @@ import {
 	historyToPreviewLines,
 } from '@/store/trackerMappers';
 import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
-import { type Command } from '@/CommandHistory/common';
+import {
+	COMMAND_TAGS,
+	hasCommandTag,
+	type Command,
+} from '@/CommandHistory/common';
 import { DelayCharacterCommand } from '@/CommandHistory/Commands/DelayCharacterCommand';
 import { EndTurnCommand } from '@/CommandHistory/Commands/EndTurnCommand';
 import { FinalizeTurnAndAdvanceRoundCommand } from '@/CommandHistory/Commands/FinalizeTurnAndAdvanceRoundCommand';
@@ -414,13 +418,26 @@ function buildRankingRows(
 	});
 }
 
-function StartInitiativeMarkerCard() {
+function StartInitiativeMarkerCard({
+	onStart,
+	compact = false,
+}: {
+	onStart: () => void;
+	compact?: boolean;
+}) {
 	return (
-		<div className="relative flex h-full min-h-0 w-full items-center rounded-md bg-transparent px-1">
-			<div className="absolute left-0 right-0 top-4/7 -translate-y-1/2 border-t border-dashed border-sky-400/70" />
-			<p className="relative truncate bg-background px-2 text-left text-xs font-medium text-sky-200">
-				Start Initiative
+		<div
+			className={[
+				'flex w-full min-w-0 flex-col items-center justify-between rounded-xl text-center',
+				compact ? 'h-full min-h-0 px-3 py-3' : 'min-h-15 px-4 py-4',
+			].join(' ')}
+		>
+			<p className="text-xs font-medium uppercase tracking-[0.24em] text-primary/80">
+				Encounter Begins
 			</p>
+			<Button size="sm" className="mt-2" onClick={onStart}>
+				Start
+			</Button>
 		</div>
 	);
 }
@@ -1165,6 +1182,7 @@ export function InitiativeTrackerPage() {
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
 	const round = useEncounterStore((state) => state.round);
 	const history = useEncounterStore((state) => state.history);
+	const redoStack = useEncounterStore((state) => state.redoStack);
 	const initiativePhase = useEncounterStore((state) => state.initiativePhase);
 	const activeTurnParticipantId = useEncounterStore(
 		(state) => state.activeTurnParticipantId
@@ -1313,9 +1331,39 @@ export function InitiativeTrackerPage() {
 		[encounterData]
 	);
 
-	const historyPreview = useMemo(
-		() => historyToPreviewLines(history),
-		[history]
+	const annotatedHistory = useMemo(() => {
+		let turnIdx = 0;
+		let roundIdx = 0;
+		const result: Array<{
+			description: string;
+			turnDuration: number | null;
+			roundDuration: number | null;
+		}> = [];
+
+		for (const cmd of history) {
+			const isTurnEnding = hasCommandTag(cmd, COMMAND_TAGS.endsTurn);
+			const isRoundEnding = hasCommandTag(cmd, COMMAND_TAGS.endsRound);
+			const turnDuration = isTurnEnding
+				? (turnDurationHistory[turnIdx]?.elapsedMs ?? null)
+				: null;
+			const roundDuration = isRoundEnding
+				? (roundDurationHistory[roundIdx]?.elapsedMs ?? null)
+				: null;
+
+			if (isTurnEnding) turnIdx++;
+			if (isRoundEnding) roundIdx++;
+
+			if (cmd.description) {
+				result.push({ description: cmd.description, turnDuration, roundDuration });
+			}
+		}
+
+		return result;
+	}, [history, turnDurationHistory, roundDurationHistory]);
+
+	const redoPreview = useMemo(
+		() => historyToPreviewLines(redoStack),
+		[redoStack]
 	);
 
 	const [initiativeCarouselApi, setInitiativeCarouselApi] =
@@ -1325,6 +1373,10 @@ export function InitiativeTrackerPage() {
 		string | null
 	>(storeInitiativeParticipants[0]?.id ?? null);
 	const [reorderOpen, setReorderOpen] = useState(false);
+	const [desktopInfoTab, setDesktopInfoTab] = useState('description');
+	const [mobileGeneralTab, setMobileGeneralTab] = useState('description');
+	const desktopHistoryScrollTargetRef = useRef<HTMLElement | null>(null);
+	const mobileHistoryScrollTargetRef = useRef<HTMLElement | null>(null);
 	const [nextRoundAnnouncement, setNextRoundAnnouncement] =
 		useState<RoundAnnouncementState | null>(null);
 	const [pinnedMarkerRound, setPinnedMarkerRound] = useState<number | null>(
@@ -1344,6 +1396,7 @@ export function InitiativeTrackerPage() {
 	const currentInitiativeParticipantId = charactersOrder[0] ?? null;
 	const nextTurnTimeoutRef = useRef<number | null>(null);
 	const timerFrameRef = useRef<number | null>(null);
+	const desktopHistoryScrollAreaRef = useRef<HTMLDivElement | null>(null);
 	const reorderScrollContainerRef = useRef<HTMLDivElement | null>(null);
 	const reorderAutoScrollVelocityRef = useRef(0);
 	const reorderAutoScrollFrameRef = useRef<number | null>(null);
@@ -1413,6 +1466,30 @@ export function InitiativeTrackerPage() {
 
 		setReorderDraftParticipants(storeAllInitiativeParticipants);
 	}, [storeAllInitiativeParticipants, reorderOpen]);
+
+	const queueHistoryScroll = useCallback((targetRef: React.RefObject<HTMLElement | null>) => {
+		const id = window.setTimeout(() => {
+			targetRef.current?.scrollIntoView({ block: 'nearest' });
+		}, 0);
+
+		return () => window.clearTimeout(id);
+	}, []);
+
+	useEffect(() => {
+		if (desktopInfoTab !== 'history') {
+			return;
+		}
+
+		return queueHistoryScroll(desktopHistoryScrollTargetRef);
+	}, [desktopInfoTab, history.length, redoStack.length, queueHistoryScroll]);
+
+	useEffect(() => {
+		if (mobileGeneralTab !== 'history') {
+			return;
+		}
+
+		return queueHistoryScroll(mobileHistoryScrollTargetRef);
+	}, [mobileGeneralTab, history.length, redoStack.length, queueHistoryScroll]);
 
 	const focusCurrentParticipant = useCallback(() => {
 		if (!initiativeCarouselApi) {
@@ -2058,7 +2135,7 @@ export function InitiativeTrackerPage() {
 	);
 	const nextRoundMarkerIndex =
 		initiativePhase === INITIATIVE_PHASE.PreInitiative
-			? 0
+			? initiativeParticipants.length
 			: pinnedMarkerRound === round
 				? initiativeParticipants.length
 				: activeRoundBoundaryIndex;
@@ -2278,7 +2355,7 @@ export function InitiativeTrackerPage() {
 												item.type === 'marker'
 													? 'basis-[2rem]'
 													: item.type !== 'participant'
-														? 'basis-[2.5rem]'
+														? 'basis-[6rem]'
 														: item.participant.state === 'delayed'
 															? 'basis-[2.5rem]'
 															: 'basis-[5rem]',
@@ -2287,7 +2364,7 @@ export function InitiativeTrackerPage() {
 											{item.type === 'marker' ? (
 												<NextRoundMarkerCard nextRound={nextRound} />
 											) : item.type === 'starter' ? (
-												<StartInitiativeMarkerCard />
+												<StartInitiativeMarkerCard onStart={handleNextTurn} />
 											) : item.participant.state === 'delayed' ? (
 												<DelayedMarkerCard participant={item.participant} />
 											) : (
@@ -2436,7 +2513,8 @@ export function InitiativeTrackerPage() {
 				<div className="grid h-full min-h-0 min-w-0 gap-4 lg:grid-rows-[minmax(0,1fr)_minmax(0,1fr)]">
 					<Card className="flex min-h-0 min-w-0 flex-col p-4">
 						<Tabs
-							defaultValue="description"
+							value={desktopInfoTab}
+							onValueChange={setDesktopInfoTab}
 							className="flex min-h-0 flex-1 flex-col"
 						>
 							<TabsList className="w-full h-auto">
@@ -2448,14 +2526,8 @@ export function InitiativeTrackerPage() {
 										Narrative Events
 									</TabsTrigger>
 								)}
-								<TabsTrigger
-									value="command_history"
-									className="whitespace-normal"
-								>
-									Commands
-								</TabsTrigger>
-								<TabsTrigger value="turn_history" className="whitespace-normal">
-									Turns
+								<TabsTrigger value="history" className="whitespace-normal">
+									History
 								</TabsTrigger>
 								<TabsTrigger value="turn_ranking" className="whitespace-normal">
 									Ranking
@@ -2484,66 +2556,49 @@ export function InitiativeTrackerPage() {
 									</ScrollArea>
 								</TabsContent>
 							)}
-							<TabsContent
-								value="command_history"
-								className="mt-3 min-h-0 flex-1"
-							>
-								<ScrollArea className="h-full pr-3">
+							<TabsContent value="history" className="mt-3 min-h-0 flex-1">
+								<ScrollArea ref={desktopHistoryScrollAreaRef} className="h-full pr-3">
+									<div className="mb-3 flex gap-4 text-xs text-muted-foreground">
+										<span>Turn: {toDurationLabel(liveCurrentTurnElapsedMs)}</span>
+										<span>Round: {toDurationLabel(liveCurrentRoundElapsedMs)}</span>
+									</div>
 									<ul className="space-y-2 text-sm">
-										{historyPreview.map((entry, index) => (
+										{annotatedHistory.map((entry, index) => (
 											<li key={index} className="rounded-md border p-2">
+												<p>{entry.description}</p>
+												{(entry.turnDuration !== null ||
+													entry.roundDuration !== null) && (
+													<p className="mt-0.5 text-xs text-muted-foreground">
+														{entry.turnDuration !== null &&
+															`Turn: ${toDurationLabel(entry.turnDuration)}`}
+														{entry.turnDuration !== null &&
+															entry.roundDuration !== null &&
+															' · '}
+														{entry.roundDuration !== null &&
+															`Round: ${toDurationLabel(entry.roundDuration)}`}
+													</p>
+												)}
+											</li>
+										))}
+										<li
+											ref={(el) => {
+												desktopHistoryScrollTargetRef.current = el;
+											}}
+											className="flex items-center gap-2 py-1 text-xs text-muted-foreground"
+											aria-hidden="true"
+										>
+											<div className="h-px flex-1 border-t border-dashed" />
+											{redoPreview.length > 0 && <span>Redo</span>}
+											<div className="h-px flex-1 border-t border-dashed" />
+										</li>
+										{redoPreview.map((entry, index) => (
+											<li
+												key={`redo-${index}`}
+												className="rounded-md border border-dashed p-2 opacity-40"
+											>
 												{entry}
 											</li>
 										))}
-									</ul>
-								</ScrollArea>
-							</TabsContent>
-							<TabsContent
-								value="turn_history"
-								className="mt-3 min-h-0 flex-1 text-sm"
-							>
-								<ScrollArea className="h-full pr-3">
-									<ul className="space-y-2">
-										{roundDurationHistory.map((entry) => (
-											<li
-												key={`round-${entry.round}`}
-												className="rounded-md border p-2"
-											>
-												<p className="text-xs text-muted-foreground">
-													Round {entry.round}
-												</p>
-												<p className="font-medium">
-													Total {toDurationLabel(entry.elapsedMs)}
-												</p>
-											</li>
-										))}
-										{turnDurationHistory.map((entry) => (
-											<li key={entry.id} className="rounded-md border p-2">
-												<p className="text-xs text-muted-foreground">
-													Round {entry.round} · {entry.ownerLabel}
-												</p>
-												<p className="font-medium">
-													{entry.participantName}:{' '}
-													{toDurationLabel(entry.elapsedMs)}
-												</p>
-											</li>
-										))}
-										<li className="rounded-md border border-dashed p-2">
-											<p className="text-xs text-muted-foreground">
-												Current Round
-											</p>
-											<p className="font-medium">
-												{toDurationLabel(liveCurrentRoundElapsedMs)}
-											</p>
-										</li>
-										<li className="rounded-md border border-dashed p-2">
-											<p className="text-xs text-muted-foreground">
-												Current Turn
-											</p>
-											<p className="font-medium">
-												{toDurationLabel(liveCurrentTurnElapsedMs)}
-											</p>
-										</li>
 									</ul>
 								</ScrollArea>
 							</TabsContent>
@@ -2849,7 +2904,7 @@ export function InitiativeTrackerPage() {
 												item.type === 'marker'
 													? 'h-full min-w-20 basis-[28%] pl-2'
 													: item.type !== 'participant'
-														? 'h-full min-w-20 basis-[28%] pl-2'
+														? 'h-full min-w-28 basis-[41%] pl-2'
 														: item.participant.state === 'delayed'
 															? 'h-full min-w-24 basis-[30%] pl-2'
 															: 'h-full min-w-30 basis-[41%] pl-2',
@@ -2858,7 +2913,10 @@ export function InitiativeTrackerPage() {
 											{item.type === 'marker' ? (
 												<NextRoundMarkerCard nextRound={nextRound} compact />
 											) : item.type === 'starter' ? (
-												<StartInitiativeMarkerCard />
+												<StartInitiativeMarkerCard
+													onStart={handleNextTurn}
+													compact
+												/>
 											) : item.participant.state === 'delayed' ? (
 												<DelayedMarkerCard
 													participant={item.participant}
@@ -2899,7 +2957,11 @@ export function InitiativeTrackerPage() {
 					</TabsList>
 					<TabsContent value="general" className="mt-0">
 						<Card className="p-4">
-							<Tabs defaultValue="description" className="space-y-3">
+							<Tabs
+								value={mobileGeneralTab}
+								onValueChange={setMobileGeneralTab}
+								className="space-y-3"
+							>
 								<TabsList className="w-full h-auto">
 									<TabsTrigger
 										value="description"
@@ -2913,10 +2975,10 @@ export function InitiativeTrackerPage() {
 										</TabsTrigger>
 									)}
 									<TabsTrigger value="history" className="whitespace-normal">
-										Command History
+										History
 									</TabsTrigger>
-									<TabsTrigger value="stats" className="whitespace-normal">
-										Turn Stats
+									<TabsTrigger value="ranking" className="whitespace-normal">
+										Ranking
 									</TabsTrigger>
 								</TabsList>
 								<TabsContent value="description" className="mt-0 text-sm">
@@ -2935,61 +2997,66 @@ export function InitiativeTrackerPage() {
 										</ul>
 									</TabsContent>
 								)}
-								<TabsContent value="history" className="mt-0">
-									<ul className="space-y-2 text-sm">
-										{historyPreview.map((entry, index) => (
+								<TabsContent value="history" className="mt-0 text-sm">
+									<div className="mb-3 flex gap-4 text-xs text-muted-foreground">
+										<span>Turn: {toDurationLabel(liveCurrentTurnElapsedMs)}</span>
+										<span>Round: {toDurationLabel(liveCurrentRoundElapsedMs)}</span>
+									</div>
+									<ul className="space-y-2">
+										{annotatedHistory.map((entry, index) => (
 											<li key={index} className="rounded-md border p-2">
+												<p>{entry.description}</p>
+												{(entry.turnDuration !== null ||
+													entry.roundDuration !== null) && (
+													<p className="mt-0.5 text-xs text-muted-foreground">
+														{entry.turnDuration !== null &&
+															`Turn: ${toDurationLabel(entry.turnDuration)}`}
+														{entry.turnDuration !== null &&
+															entry.roundDuration !== null &&
+															' · '}
+														{entry.roundDuration !== null &&
+															`Round: ${toDurationLabel(entry.roundDuration)}`}
+													</p>
+												)}
+											</li>
+										))}
+										<li
+											ref={(el) => {
+												mobileHistoryScrollTargetRef.current = el;
+											}}
+											className="flex items-center gap-2 py-1 text-xs text-muted-foreground"
+											aria-hidden="true"
+										>
+											<div className="h-px flex-1 border-t border-dashed" />
+											{redoPreview.length > 0 && <span>Redo</span>}
+											<div className="h-px flex-1 border-t border-dashed" />
+										</li>
+										{redoPreview.map((entry, index) => (
+											<li
+												key={`mobile-redo-${index}`}
+												className="rounded-md border border-dashed p-2 opacity-40"
+											>
 												{entry}
 											</li>
 										))}
 									</ul>
 								</TabsContent>
-								<TabsContent value="stats" className="mt-0 text-sm">
-									<Tabs defaultValue="history" className="space-y-3">
-										<TabsList className="w-full h-auto">
-											<TabsTrigger value="history">History</TabsTrigger>
-											<TabsTrigger value="ranking">Ranking</TabsTrigger>
-										</TabsList>
-										<TabsContent value="history" className="mt-0">
-											<ul className="space-y-2">
-												{roundDurationHistory.map((entry) => (
-													<li
-														key={`mobile-round-${entry.round}`}
-														className="rounded-md border p-2"
-													>
-														Round {entry.round}:{' '}
-														{toDurationLabel(entry.elapsedMs)}
-													</li>
-												))}
-												{turnDurationHistory.map((entry) => (
-													<li
-														key={`mobile-${entry.id}`}
-														className="rounded-md border p-2"
-													>
-														{entry.participantName}:{' '}
-														{toDurationLabel(entry.elapsedMs)}
-													</li>
-												))}
-											</ul>
-										</TabsContent>
-										<TabsContent value="ranking" className="mt-0">
-											<ul className="space-y-2">
-												{rankingRows.map((row) => (
-													<li
-														key={`mobile-rank-${row.ownerKey}`}
-														className="rounded-md border p-2"
-													>
-														<div className="flex items-center justify-between gap-2">
-															<p className="font-medium">{row.ownerLabel}</p>
-															<p className="text-xs text-muted-foreground">
-																Avg {toDurationLabel(row.averageMs)}
-															</p>
-														</div>
-													</li>
-												))}
-											</ul>
-										</TabsContent>
-									</Tabs>
+								<TabsContent value="ranking" className="mt-0">
+									<ul className="space-y-2 text-sm">
+										{rankingRows.map((row) => (
+											<li
+												key={`mobile-rank-${row.ownerKey}`}
+												className="rounded-md border p-2"
+											>
+												<div className="flex items-center justify-between gap-2">
+													<p className="font-medium">{row.ownerLabel}</p>
+													<p className="text-xs text-muted-foreground">
+														Avg {toDurationLabel(row.averageMs)}
+													</p>
+												</div>
+											</li>
+										))}
+									</ul>
 								</TabsContent>
 							</Tabs>
 						</Card>

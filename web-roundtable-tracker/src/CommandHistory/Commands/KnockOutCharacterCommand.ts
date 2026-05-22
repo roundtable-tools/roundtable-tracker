@@ -1,4 +1,4 @@
-import { Command, CommandDeps, STATUS, getDeps } from '../common';
+import { COMMAND_TAGS, Command, CommandDeps, STATUS, getDeps } from '../common';
 import { UUID } from '@/utils/uuid';
 import { getChangeCharacterState } from './composites/ChangeCharacterState';
 
@@ -9,6 +9,7 @@ type CommandData = {
 
 export class KnockOutCharacterCommand implements Command {
 	readonly type = 'KnockOutCharacterCommand';
+	readonly tags = [COMMAND_TAGS.endsTurn] as const;
 	description = 'Knock Out Character Command';
 	data: CommandData;
 

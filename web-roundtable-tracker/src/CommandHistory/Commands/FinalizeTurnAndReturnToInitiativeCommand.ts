@@ -1,5 +1,5 @@
 import { UUID } from '@/utils/uuid';
-import { Command, CommandDeps, STATUS, getDeps } from '../common';
+import { COMMAND_TAGS, Command, CommandDeps, STATUS, getDeps } from '../common';
 import { CompositeCommand } from './CompositeCommand';
 import { EndRoundCommand } from './EndRoundCommand';
 import { FinalizeTurnAction } from './FinalizeTurnAndAdvanceRoundCommand';
@@ -19,6 +19,7 @@ const getRemainingTurnCount = (
 
 export class FinalizeTurnAndReturnToInitiativeCommand implements Command {
 	readonly type = 'FinalizeTurnAndReturnToInitiativeCommand';
+	readonly tags = [COMMAND_TAGS.endsTurn, COMMAND_TAGS.endsRound] as const;
 	description = 'Finalize Turn And Return To Initiative Command';
 	data: CommandData;
 

@@ -1,5 +1,12 @@
 import { getEncounterStore } from '@/store/encounterRuntimeInstance';
 
+export const COMMAND_TAGS = {
+	endsTurn: 'ends-turn',
+	endsRound: 'ends-round',
+} as const;
+
+export type CommandTag = (typeof COMMAND_TAGS)[keyof typeof COMMAND_TAGS];
+
 export const STATUS = {
 	success: 'SUCCESS',
 	failure: 'FAILURE',
@@ -10,6 +17,7 @@ export type Command<
 	T extends Record<string, unknown> = Record<string, unknown>,
 > = {
 	readonly type: string;
+	readonly tags?: readonly CommandTag[];
 	partOfTransaction?: boolean;
 	description?: string;
 	data: T;
@@ -17,6 +25,9 @@ export type Command<
 	execute: () => Status;
 	undo: () => Status;
 };
+
+export const hasCommandTag = (command: Command, tag: CommandTag) =>
+	command.tags?.includes(tag) ?? false;
 
 export const isCommand = (obj: unknown): obj is Command => {
 	const command = obj as Command;

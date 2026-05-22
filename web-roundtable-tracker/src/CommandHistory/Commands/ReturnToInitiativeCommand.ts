@@ -1,5 +1,11 @@
 import { UUID } from '@/utils/uuid';
-import { Command, CommandDeps, STATUS, getDeps } from '../common';
+import {
+	COMMAND_TAGS,
+	Command,
+	CommandDeps,
+	STATUS,
+	getDeps,
+} from '../common';
 import { FinalizeTurnAction } from './FinalizeTurnAndAdvanceRoundCommand';
 import {
 	freezeElapsed,
@@ -46,6 +52,7 @@ type CommandData = {
  */
 export class ReturnToInitiativeCommand implements Command {
 	readonly type = 'ReturnToInitiativeCommand';
+	readonly tags = [COMMAND_TAGS.endsTurn] as const;
 	description = 'Return to Initiative Command';
 	data: CommandData;
 
