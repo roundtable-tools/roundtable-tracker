@@ -65,3 +65,12 @@ a legacy document has `remaster_id`, its remastered version has `legacy_id`.
 - Say which version (remaster or legacy) you used when the two differ.
 - If a search returns nothing, retry with fewer words, `--name-only` off, or without filters before
   concluding something does not exist.
+- Before claiming the game "never" or "nowhere" does something (e.g. "nothing happens at the end of a
+  round"), run a full-text search with no category filter, e.g.
+  `$AON query '{"query":{"match_phrase":{"text":"end of each round"}}}'`. Creatures, hazards, traits
+  and adventure rules count, not only the core rules chapters.
+- Keep the rule's exact subject when paraphrasing. "Directly before the turn in which you were
+  reduced to 0 HP" means the turn in progress, not the turn of the creature that dealt the damage.
+  Quote the sentence when the wording decides the answer.
+- Pathfinder Society scenarios are not on AoN. Don't conclude something doesn't exist in organized
+  play just because AoN lacks it.
