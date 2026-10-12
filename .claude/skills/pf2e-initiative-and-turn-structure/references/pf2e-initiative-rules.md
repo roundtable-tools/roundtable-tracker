@@ -275,7 +275,6 @@ The [multiple attack penalty](https://2e.aonprd.com/Rules.aspx?ID=2289) applies 
 - **Creatures brought in by hazards:**
   - [Summoning Rune](https://2e.aonprd.com/Hazards.aspx?ID=495) (GM Core, a complex hazard): "The creature rolls initiative and remains for 2d6 rounds". It "can use 3 actions each round and can use reactions, unlike most summoned creatures."
   - [The Bastard's Portrait](https://2e.aonprd.com/Hazards.aspx?ID=762): "The wraiths roll initiative and remain for 1 minute".
-  - Pathfinder Society scenarios (not indexed on AoN) include simple summoning runes whose creature acts at an initiative set relative to the triggering creature, e.g. right after it. Read the scenario's wording; the tracker should allow placing a new creature relative to an existing one, not only by a rolled number.
 - **Reinforcements and late arrivals:** the rules have no procedure for them.
   - GM Core only handles them narratively: [Evolving Battlefields](https://2e.aonprd.com/Rules.aspx?ID=2730) ("reinforcements arrive for whichever side was outmatched"), [Combining and Separating Encounters](https://2e.aonprd.com/Rules.aspx?ID=2731).
   - Common table practice: the arrivals roll initiative when they show up and slot into the existing order.

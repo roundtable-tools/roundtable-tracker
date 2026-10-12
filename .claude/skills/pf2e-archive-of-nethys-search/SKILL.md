@@ -72,5 +72,3 @@ a legacy document has `remaster_id`, its remastered version has `legacy_id`.
 - Keep the rule's exact subject when paraphrasing. "Directly before the turn in which you were
   reduced to 0 HP" means the turn in progress, not the turn of the creature that dealt the damage.
   Quote the sentence when the wording decides the answer.
-- Pathfinder Society scenarios are not on AoN. Don't conclude something doesn't exist in organized
-  play just because AoN lacks it.

@@ -48,7 +48,6 @@ Read the section you need; both files have a table of contents or headings. For 
 - **Simple hazards** never take turns themselves.
 - **Hazards can add creatures** to the fight:
   - In the GM Core [Summoning Rune](https://2e.aonprd.com/Hazards.aspx?ID=495) (a complex hazard), the summoned creature rolls its own initiative and gets 3 actions and reactions.
-  - Pathfinder Society scenarios (not on AoN) have simple summoning runes whose creature acts at an initiative set relative to the triggering creature.
 - **No rules support**: multiple slots for one creature, and a procedure for reinforcements. Those are GM or house rules; the usual practice is that arrivals roll on arrival and slot in.
 
 ## When working on the tracker
