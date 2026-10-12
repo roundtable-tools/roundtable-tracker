@@ -1,6 +1,6 @@
 ---
 name: pf2e-encounter-building
-description: Reference for Pathfinder 2e (remaster) encounter building and how Roundtable Tracker implements it. Covers XP budget and threat levels (trivial to extreme), party level and party-size character adjustment, creature XP by level difference, simple vs complex hazard XP, encounter templates and creature roles (boss, lieutenant, lackey), elite/weak adjustments (level 0 skipped, HP tables), partial and custom adjustments, incapacitation, number of creatures and solo bosses, power growth per level (1/1.5/2/3/4 and √2), power spike levels, synergy and terrain, accomplishment XP, reinforcements, recurring creatures and allies. Load before designing, implementing, reviewing or testing the encounter builder, XP or threat math, templates, adjustments or the threat tracker, before writing tickets about them, and when answering PF2e encounter-design questions.
+description: Reference for Pathfinder 2e (remaster) encounter building and how Roundtable Tracker implements it. Covers XP budget and threat levels (trivial to extreme), party level and party-size character adjustment, creature XP by level difference, simple vs complex hazard XP, encounter templates and creature roles (boss, lieutenant, lackey), elite/weak adjustments (level 0 skipped, HP tables), partial and custom adjustments, incapacitation, number of creatures and solo bosses, power growth per level (1/1.5/2/3/4 and √2), power spike levels, synergy and terrain, accomplishment XP, reinforcements, recurring creatures, allies, and Pathfinder Society Challenge Points scaling. Load before designing, implementing, reviewing or testing the encounter builder, XP or threat math, templates, adjustments or the threat tracker, before writing tickets about them, and when answering PF2e encounter-design questions.
 ---
 
 # PF2e encounter building
@@ -71,6 +71,7 @@ For the full text of any linked rule, or to look up a creature's level, use the 
   - The rules say nothing on XP for a creature that flees and returns. Count it once, possibly weakened.
   - A recurring villain comes back stronger and counter-built.
 - **Level changes the feel:** levels 1–2 are swingy (a single crit can drop a PC, and level 0 PCs count as level –1). High levels and many lackeys make fights long rather than dangerous.
+- **Pathfinder Society** scales older scenarios by Challenge Points instead: 2/3/4/6 CP per PC by level within the adventure's range (1 CP ≈ 5 XP). The CP total picks the subtier and a scaling band, which is finer than a threat level. Newer scenarios use easier and harder sidebars instead (rules file §16).
 - **Allies:** the core books have no rule. The Battlecry! approach, which the tracker uses, subtracts allied XP from the enemy side. The alternative is to count an ally as an extra PC.
 
 ## When working on the tracker

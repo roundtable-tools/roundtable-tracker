@@ -21,6 +21,7 @@ Where the rules are silent, this file says so.
 13. Allies, troops, swarms, companions
 14. Design guidance and pitfalls
 15. How party level changes the feel of a budget
+16. Pathfinder Society scaling: Challenge Points
 
 ---
 
@@ -371,3 +372,47 @@ points below are official text close to it, plus derived reasoning, labelled as 
 - [Time Pressure](https://2e.aonprd.com/Rules.aspx?ID=2732): low and trivial opposition "can usually hold on long enough to make the PCs spend a few rounds to defeat them".
 - [Ending the Encounter](https://2e.aonprd.com/Rules.aspx?ID=2570): the GM may call a fight when "the player characters are just cleaning up the last few weak enemies."
 - *Community:* high-level PCs have more options and take longer turns, and PL–4 fodder still has HP to chew through. Many lackeys can make a fight long without making it dangerous.
+
+## 16. Pathfinder Society scaling: Challenge Points
+
+Organized play scales encounters by **Challenge Points (CP)** instead of the GM Core budget. Source: the
+Guide to Organized Play, [Challenge Points](https://lorespire.paizo.com/tiki-index.php?page=pfs2guide._.Challenge-Points)
+(Lorespire). It is not on AoN.
+
+**Status:** from Year 7, new scenarios dropped CP. They are balanced for six PCs of the adventure's lowest level, with "easier" and "harder" adjustments in each encounter's sidebar. Older scenarios still use CP.
+
+**Points per PC**, by level within the adventure's 4-level range (e.g. 1–4):
+
+| PC level | CP |
+|---|---|
+| lowest allowed level | 2 |
+| +1 | 3 |
+| +2 | 4 |
+| +3 | 6 |
+
+- Guide example: "A party of five PCs levels 1, 2, 3, 4, and 4 would contribute 2, 3, 4, 6, and 6 Challenge Points."
+- The steps (×1.5, ×1.33, ×1.5) follow the same progression as creature XP.
+- **Rule of thumb** (not in the guide): 1 CP ≈ 5 XP of budget. So a PC at the lowest level ≈ 10 XP and a PC 3 levels higher ≈ 30 XP.
+
+**Choosing the level range (subtier)** from the party's total CP:
+- 15 or less: lower range.
+- 19 or more: higher range.
+- 16–18: higher range only with 4 or fewer PCs; 5 or more PCs play the lower range.
+
+**Encounter scaling** uses CP bands, which are finer than threat levels. Each scenario prints its own bands. The guide's generic table for early scenarios:
+
+| Lower range CP | Higher range CP | Adjustment |
+|---|---|---|
+| 8–9 | 16–18 | none |
+| 10–11 | 19–22 | 5-player adjustment |
+| 12–13 | 23–27 | 6-player adjustment or 1 Level Bump |
+| 14–15 | 28–32 | 5-player adjustment and 1 Level Bump |
+| 16–18 | 33–42 | 6-player adjustment and 1 Level Bump |
+
+**Level Bump** (enemies): +1 to all DCs, attacks, damage, saves, skills, Perception and AC, and +10 HP or +10 % HP, whichever is higher. It works like a lighter elite adjustment.
+
+**Lowest-level PCs in the higher range** get the same bump themselves: +1 to DCs, attacks, damage, saves, skills, Perception and AC, +10 HP or 10 %. Their companions are adjusted too.
+
+**Small tables:**
+- Groups under 4 PCs add pregens or a CP bonus (see the guide's table).
+- Groups of three in Level 7+ adventures add 2 CP (total under 12) or 4 CP (12 or more) ([Paizo blog](https://paizo.com/blog/organized-play-table-adjustments)).

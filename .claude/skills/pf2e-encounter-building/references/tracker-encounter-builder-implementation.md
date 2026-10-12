@@ -82,6 +82,7 @@ math changes.
 | Solo Boss | Extreme | boss +4 | Table 10-2 PL+4 row |
 
 - Party-size variants are picked by `partySize`, not computed.
+- There is no Pathfinder Society Challenge Points mode.
 - The migration helper `inferCreatureRole` (`models/encounters/migrate.adapter.ts`) guesses a role from the name.
 
 ## Accomplishment XP, narrative slots, allies
@@ -131,16 +132,15 @@ math changes.
 | `tests/ThreatTracker.spec.ts` | band layout |
 | `models/encounters/EncounterTemplate.spec.ts` | template XP |
 
-## Known quirks (not ticketed yet)
+## Known quirks
 
 Check the code before relying on these.
 
-- The threat tracker and the saved difficulty use different band rules ("at or above" vs "at or below") and different Moderate+ adjustments. For example, 50 XP shows Trivial in the builder but is saved as Low; 110 XP shows Moderate but is saved as Severe.
-- `elite-offense` is +0.75 level for XP but +0.5 for display.
-- `Math.trunc` on fractional level differences rounds toward zero: positive fractions round down, negative ones round up. Partial adjustments therefore often change nothing, and a –1.25 difference costs like –1.
-- Several reinforcement waves collapse into one, at the earliest round.
-- The saved difficulty ignores reinforcements.
-- Weak on a level –1 creature gives –2. The rules don't define it, and there is no XP value below –1 from the creature tables.
+- The threat tracker and the saved difficulty use different band rules ("at or above" vs "at or below") and different Moderate+ adjustments. For example, 50 XP shows Trivial in the builder but is saved as Low; 110 XP shows Moderate but is saved as Severe (#97).
+- `elite-offense` is +0.75 level for XP but +0.5 for display (#98).
+- `Math.trunc` on fractional level differences rounds toward zero: positive fractions round down, negative ones round up. Partial adjustments therefore often change nothing, and a –1.25 difference costs like –1 (#99).
+- Several reinforcement waves collapse into one, at the earliest round, and the saved difficulty ignores reinforcements (#100).
+- Weak on a level 0 or –1 creature gives –1 or –2. The rules don't cover weak at those levels.
 - The default template "Lieutenant and Lackeys" variant texts say "(-3) lackeys" or "Weak Lackey", where the data is –4.
-- Builder traits aren't saved. Combat-ready state, hidden-from-players and initiative description aren't saved either (#94).
+- Builder traits aren't saved (#101). Combat-ready state, hidden-from-players and initiative description aren't saved either (#94).
 - `migrateOldTemplate` drops adjustments and events. It isn't used at runtime.
