@@ -16,7 +16,8 @@ Read the section you need; both files have a table of contents or headings. For 
 
 - **Encounter** = initiative rolled once, then rounds until it ends.
 - **Round** ≈ 6 s. Every participant gets one turn per round, from the highest initiative to the lowest.
-  - The rules have **no start-of-round or end-of-round events**. Everything ticks on some creature's turn.
+  - The core turn rules tick on **turns**: reactions come back at the start of your turn, durations run until the start or end of a named creature's turn, persistent damage happens at the end of your turn, and delayers return at the end of any turn.
+  - **Round boundaries matter too.** Adventure content uses "at the start/end of (each) round": environmental damage on some planes, hazards that reset or run their routine at the end of the round, creature abilities, mob attacks. A tracker needs hooks for turn start/end **and** round start/end.
 - **Initiative**:
   - Usually Perception. Stealth if Avoiding Notice; a skill for social or special openings.
   - The GM rolls for all non-PCs.
@@ -35,7 +36,7 @@ Read the section you need; both files have a table of contents or headings. For 
 - **Order changes**:
   - **Delay** (free, at the start of your turn): you leave the order and return after any other creature's turn, permanently at that spot. No reactions while delaying. A whole round of delay loses the turn and returns you to your old spot. Negative start/end effects happen right away.
   - **Ready** doesn't change position.
-  - **Knocked out**: move to directly before the turn that dropped you, then dying 1 or 2 + wounded.
+  - **Knocked out**: move to directly before **the turn that is happening** when you drop to 0 HP, whoever caused it (an attack, a reaction, a hazard, persistent damage). It is not "before the creature that knocked you out". Then dying 1 or 2 + wounded. Dropping on your own turn leaves your position unchanged. Dropping before anyone's first turn (damage from whatever started the fight) is a GM call.
   - Most monsters die at 0 HP and leave the order.
 - **Action-changing conditions**:
   - Stunned overrides slowed.
@@ -44,7 +45,10 @@ Read the section you need; both files have a table of contents or headings. For 
   - All of them apply when actions are regained.
 - **No own slot**: minions, summons, companions, familiars and mounts act on their master's turn (2 actions when commanded). Eidolons share the summoner's turn.
 - **Own slot**: complex hazards, rolled with Stealth.
-- **Simple hazards** never take turns.
+- **Simple hazards** never take turns themselves.
+- **Hazards can add creatures** to the fight:
+  - In the GM Core [Summoning Rune](https://2e.aonprd.com/Hazards.aspx?ID=495) (a complex hazard), the summoned creature rolls its own initiative and gets 3 actions and reactions.
+  - Pathfinder Society scenarios (not on AoN) have simple summoning runes whose creature acts at an initiative set relative to the triggering creature.
 - **No rules support**: multiple slots for one creature, and a procedure for reinforcements. Those are GM or house rules; the usual practice is that arrivals roll on arrival and slot in.
 
 ## When working on the tracker

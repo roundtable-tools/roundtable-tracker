@@ -30,7 +30,20 @@ with invented rules.
 - [Ending the Encounter](https://2e.aonprd.com/Rules.aspx?ID=2570) (GM Core):
   - The encounter usually ends when one side is killed, knocked out or surrenders.
   - Keep using rounds while time pressure remains, e.g. a PC is dying or hanging from a cliff.
-- **Nothing happens "at the start of a round" or "at the end of a round" in the rules.** Every timed effect hangs on some creature's turn (§6). A round number matters only for the GM's own triggers, such as reinforcements arriving "on round 3".
+- **Turn boundaries.** The core turn rules attach everything to turns (§4, §6):
+  - reactions and actions come back at the start of a turn;
+  - durations end at the start or end of a named creature's turn;
+  - persistent damage and frightened tick at the end of a turn;
+  - delayers may return at the end of any other creature's turn.
+- **Round boundaries.** Adventure and bestiary content also uses the start and end of the round. Examples:
+  - The [Void](https://2e.aonprd.com/Traits.aspx?ID=510) and [Vitality](https://2e.aonprd.com/Traits.aspx?ID=509) plane traits: "At the end of each round", living or undead creatures take environmental damage.
+  - [Water](https://2e.aonprd.com/Traits.aspx?ID=732) planes: creatures with water weakness take damage at the end of each round.
+  - Hazards that reset at the start or end of the round: [Ash Web](https://2e.aonprd.com/Hazards.aspx?ID=79), [Tripartite Lock](https://2e.aonprd.com/Hazards.aspx?ID=791).
+  - [The Doom of Azlant](https://2e.aonprd.com/Hazards.aspx?ID=795) "doesn't roll initiative; its routine plays out at the end of each following round, starting with round 7."
+  - Creature abilities: [Heart-Eating Vulture](https://2e.aonprd.com/Monsters.aspx?ID=4672) explodes at the end of the round it dies; [Gromog](https://2e.aonprd.com/Monsters.aspx?ID=2218) makes a flat check at the start of each round.
+  - Brawling crowds such as the [Commoner](https://2e.aonprd.com/NPCs.aspx?ID=3488): "Roll one or two attacks at the end of each round against each PC".
+  - The round number also drives the GM's own triggers, such as reinforcements arriving "on round 3".
+- So a tracker needs four hook points: turn start, turn end, round start and round end.
 
 ## 2. Rolling initiative
 
@@ -245,6 +258,9 @@ The [multiple attack penalty](https://2e.aonprd.com/Rules.aspx?ID=2289) applies 
 - PCs, companions and important NPCs are **knocked out** instead. The GM decides which NPCs count: villains, creatures with ferocity or regeneration.
 - When knocked out:
   - "Move your initiative position to directly before the turn in which you were reduced to 0 HP."
+    - "The turn in which" is **whichever turn is happening** at that moment, not the turn of whoever caused the damage. You can drop on another creature's turn because of your own enemy's reaction, a hazard, persistent damage, or nobody's fault at all; the rule is the same.
+    - If you drop on your own turn (e.g. persistent damage at its end), "directly before your own turn" is where you already are, so your position doesn't change.
+    - If you drop before anyone has taken a turn (damage from whatever started the encounter), the rules don't say; it's a GM call (e.g. keep the rolled position).
   - You gain dying 1, or dying 2 if it was an enemy's critical success or your critical failure, plus your wounded value. You fall unconscious.
   - Nonlethal damage leaves you unconscious but not dying.
 - The knocked-out creature keeps a turn every round, because recovery checks happen at the start of its turn.
@@ -256,6 +272,10 @@ The [multiple attack penalty](https://2e.aonprd.com/Rules.aspx?ID=2289) applies 
   - PCs already in encounter mode keep their initiative.
   - Each round, the hazard follows its routine on its own initiative. Routine (N) gives the number of actions.
   - **Simple hazards never take turns.** They react once to a trigger.
+- **Creatures brought in by hazards:**
+  - [Summoning Rune](https://2e.aonprd.com/Hazards.aspx?ID=495) (GM Core, a complex hazard): "The creature rolls initiative and remains for 2d6 rounds". It "can use 3 actions each round and can use reactions, unlike most summoned creatures."
+  - [The Bastard's Portrait](https://2e.aonprd.com/Hazards.aspx?ID=762): "The wraiths roll initiative and remain for 1 minute".
+  - Pathfinder Society scenarios (not indexed on AoN) include simple summoning runes whose creature acts at an initiative set relative to the triggering creature, e.g. right after it. Read the scenario's wording; the tracker should allow placing a new creature relative to an existing one, not only by a rolled number.
 - **Reinforcements and late arrivals:** the rules have no procedure for them.
   - GM Core only handles them narratively: [Evolving Battlefields](https://2e.aonprd.com/Rules.aspx?ID=2730) ("reinforcements arrive for whichever side was outmatched"), [Combining and Separating Encounters](https://2e.aonprd.com/Rules.aspx?ID=2731).
   - Common table practice: the arrivals roll initiative when they show up and slot into the existing order.

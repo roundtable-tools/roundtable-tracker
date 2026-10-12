@@ -80,7 +80,7 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
   3. removes the returner from `delayedOrder`.
 
   It is the rules' "return after another creature's turn".
-- **Knock-out position:** the end of a rotating queue is "directly before the current actor". A knock-out outside the participant's own turn therefore matches the rule "move to directly before the turn in which you were reduced to 0 HP".
+- **Knock-out position:** the end of a rotating queue is "directly before the current actor". A knock-out on someone else's turn therefore matches the rule "move to directly before the turn in which you were reduced to 0 HP", whatever caused it. A knock-out on the participant's own turn ends that turn and moves it to the end of the queue, which is the position it already had, as the rule requires.
 - Knocked-out participants keep getting a turn every round, which fits recovery checks; the GM passes the turn.
 - `ChangeHealthCommand` does **not** knock out at 0 HP. Linking the two is a planned feature.
 - `RemoveCharacterCommand` ("Slay") deletes the participant from the map, both orders and the turn Set.
