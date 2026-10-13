@@ -111,4 +111,56 @@ describe('reinforcements from preview to trigger', () => {
 		expect(secondTrigger.execute()).toBe(STATUS.failure);
 		expect(namesInStore(encounterStore)).toHaveLength(2);
 	});
+
+	it('names triggered reinforcements uniquely against the tracker roster', () => {
+		const encounterStore = createEncounterStore();
+		const prepared = [
+			{
+				uuid: 'guard-on-watch',
+				name: 'Guard',
+				level: 3,
+				side: ALIGNMENT.Opponents,
+				tiePriority: 0,
+				initiative: 12,
+				health: 10,
+				maxHealth: 10,
+				tempHealth: 0,
+			},
+		] as CharacterConfig[];
+
+		encounterStore.getState().setEncounterData({
+			...encounter,
+			narrativeSlots: [
+				{
+					id: 'guard-arrives',
+					type: 'reinforcement',
+					trigger: { round: 2 },
+					participants: [
+						{
+							type: 'creature',
+							name: 'Guard',
+							level: '+0',
+							side: ALIGNMENT.Opponents,
+							count: 2,
+						},
+					],
+				},
+			],
+		});
+		encounterStore
+			.getState()
+			.startEncounter(participantsToEncounterCharacters(prepared));
+		encounterStore.getState().setTrackerMetaMap(buildTrackerMetaMap(prepared));
+
+		new TriggerReinforcementEventCommand(
+			{ slotId: 'guard-arrives' },
+			{ encounterStore }
+		).execute();
+
+		expect(namesInStore(encounterStore).sort()).toEqual([
+			'Guard',
+			'Guard A',
+			'Guard B',
+		]);
+	});
 });

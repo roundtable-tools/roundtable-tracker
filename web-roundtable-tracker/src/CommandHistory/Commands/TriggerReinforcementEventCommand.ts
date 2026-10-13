@@ -6,6 +6,7 @@ import {
 } from '@/store/data';
 import { TrackerParticipantMeta } from '@/store/encounterRuntimeStore';
 import { generateUUID, UUID } from '@/utils/uuid';
+import { uniqueNames } from '@/utils/uniqueNames';
 import {
 	Command,
 	CommandDeps,
@@ -89,13 +90,14 @@ const normalizeParticipantInitiative = (
 
 const expandSlotParticipants = (
 	slot: NarrativeSlot,
-	partyLevel: number
+	partyLevel: number,
+	takenNames: string[]
 ): SpawnedParticipant[] => {
 	if (!slot.participants || slot.participants.length === 0) {
 		return [];
 	}
 
-	return slot.participants.flatMap((slotParticipant, slotIndex) => {
+	const spawned = slot.participants.flatMap((slotParticipant, slotIndex) => {
 		const count = Math.max(1, slotParticipant.count ?? 1);
 		const level = normalizeParticipantLevel(slotParticipant, partyLevel);
 		const maxHealth = slotParticipant.maxHealth ?? Math.max(1, level * 5);
@@ -109,13 +111,12 @@ const expandSlotParticipants = (
 				fallbackId
 			);
 			const baseName = slotParticipant.name.trim() || 'Reinforcement';
-			const withSuffix = count > 1 ? `${baseName} ${countIndex + 1}` : baseName;
 			const notes =
 				slot.description?.trim() || slotParticipant.description?.trim() || '';
 
 			const character: Character = {
 				uuid,
-				name: withSuffix,
+				name: baseName,
 				initiative,
 				turnState: 'normal',
 				hasTurn: false,
@@ -153,6 +154,15 @@ const expandSlotParticipants = (
 			};
 		});
 	});
+	const names = uniqueNames(
+		spawned.map(({ character }) => character.name),
+		takenNames
+	);
+
+	return spawned.map((participant, index) => ({
+		...participant,
+		character: { ...participant.character, name: names[index] },
+	}));
 };
 
 function insertByInitiative(
@@ -218,7 +228,8 @@ export class TriggerReinforcementEventCommand implements Command {
 		if (!this.data.spawnedParticipants) {
 			this.data.spawnedParticipants = expandSlotParticipants(
 				slot,
-				state.partyLevel
+				state.partyLevel,
+				Object.values(state.charactersMap).map((character) => character.name)
 			);
 		}
 
