@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { fromEncounterTemplate } from './builderConvert';
-import { ALIGNMENT } from '@/store/data';
+import {
+	defaultFormValues,
+	fromEncounterTemplate,
+	toConcreteEncounter,
+} from './builderConvert';
+import { computeEncounterXpUsage, type BuilderSlot } from './builderXp';
+import { Threat } from '@/models/utility/threat/Threat.class';
+import { ALIGNMENT, DIFFICULTY } from '@/store/data';
 import { LevelDifference } from '@/models/utility/level/LevelDifference';
 import type { EncounterTemplateData } from '@/models/encounters/encounter.types';
 
@@ -80,5 +86,70 @@ describe('fromEncounterTemplate', () => {
 		expect(formValues.slots[0]?.maxHealth).toBe(77);
 		expect(formValues.slots[0]?.initiativeBonus).toBe(4);
 		expect(formValues.slots[1]?.hardness).toBe(12);
+	});
+});
+
+describe('toConcreteEncounter difficulty', () => {
+	const slot = (overrides: Partial<BuilderSlot>): BuilderSlot => ({
+		id: 'slot',
+		type: 'creature',
+		name: 'Guard',
+		description: '',
+		side: 'enemy',
+		level: 5,
+		count: 1,
+		successesToDisable: 1,
+		adjustment: 'none',
+		isSimpleHazard: false,
+		reinforcementRound: 1,
+		eventRound: 1,
+		...overrides,
+	});
+
+	it('counts reinforcements, using the effective XP the builder shows', () => {
+		const slots = [
+			slot({ id: 'main', count: 2 }), // 80 XP, Moderate on its own
+			slot({ id: 'wave', type: 'reinforcement', reinforcementRound: 1 }),
+		];
+		const values = {
+			...defaultFormValues(),
+			partyLevel: 5,
+			partySize: 4,
+			slots,
+		};
+		const usage = computeEncounterXpUsage(slots, 5, 4);
+
+		expect(usage.effectiveXp.valueOf()).toBe(120);
+		expect(Threat.fromExperienceBudget(usage.effectiveXp, 4).toLabel()).toBe(
+			'Severe'
+		);
+		expect(toConcreteEncounter(values).difficulty).toBe(DIFFICULTY.Severe);
+	});
+
+	it('saves the same threat for a builder variant with reinforcements', () => {
+		const slots = [
+			slot({ id: 'main', count: 2 }),
+			slot({ id: 'wave', type: 'reinforcement', reinforcementRound: 1 }),
+		];
+		const values = {
+			...defaultFormValues(),
+			partyLevel: 5,
+			partySize: 4,
+			slots: [slot({ id: 'main', count: 2 })],
+			variants: [
+				{
+					id: 'variant',
+					description: 'With reinforcements',
+					partyLevel: 5,
+					partySize: 4,
+					slots,
+				},
+			],
+		};
+
+		const encounter = toConcreteEncounter(values);
+
+		expect(encounter.difficulty).toBe(DIFFICULTY.Moderate);
+		expect(encounter.variants?.[0]?.difficulty).toBe(DIFFICULTY.Severe);
 	});
 });

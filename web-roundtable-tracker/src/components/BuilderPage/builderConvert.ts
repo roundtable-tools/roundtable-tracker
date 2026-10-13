@@ -9,7 +9,7 @@ import {
 	type Participant,
 } from '@/store/data';
 import {
-	computeBuilderXP,
+	computeEncounterXpUsage,
 	normalizeSideType,
 	type BuilderSlot,
 	type SideType,
@@ -211,7 +211,12 @@ export function toConcreteEncounter(
 	existingId?: string
 ): ConcreteEncounter {
 	const id = existingId ?? uuidv4();
-	const xp = computeBuilderXP(values.slots, values.partyLevel);
+	// The same effective XP the builder's threat bar shows, reinforcements included.
+	const xp = computeEncounterXpUsage(
+		values.slots,
+		values.partyLevel,
+		values.partySize
+	).effectiveXp;
 	const threat = Threat.fromExperienceBudget(xp, values.partySize);
 	const difficulty = threatToDifficulty(threat.threat);
 
@@ -391,7 +396,11 @@ export function toConcreteEncounter(
 	const variants: ConcreteEncounterVariant[] | undefined =
 		values.variants.length > 0
 			? values.variants.map((snapshot) => {
-					const snapXp = computeBuilderXP(snapshot.slots, snapshot.partyLevel);
+					const snapXp = computeEncounterXpUsage(
+						snapshot.slots,
+						snapshot.partyLevel,
+						snapshot.partySize
+					).effectiveXp;
 					const snapThreat = Threat.fromExperienceBudget(
 						snapXp,
 						snapshot.partySize

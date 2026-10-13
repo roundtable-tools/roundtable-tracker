@@ -343,15 +343,33 @@ function calculateWaveInteractionThreat(
 	};
 }
 
+interface ReinforcementArrival {
+	round: number;
+	xp: number;
+}
+
+function normalizeArrivalRound(round: number | undefined): number {
+	return Math.max(1, Math.floor(round || 1));
+}
+
 function simulateEncounterThreat(
 	wave0Xp: number,
-	wave1Xp: number,
-	arrivalRound: number,
+	reinforcements: ReinforcementArrival[],
 	partySize: number,
 	config: Required<DelayedReinforcementConfig>
 ): EncounterThreatSimulation {
 	let currentWave0 = Math.max(0, wave0Xp);
-	let currentWave1 = 0;
+	// XP still standing per reinforcement wave, in arrival order.
+	const arrivals = reinforcements
+		.map((wave) => ({
+			round: normalizeArrivalRound(wave.round),
+			xp: Math.max(0, wave.xp),
+		}))
+		.sort((a, b) => a.round - b.round);
+	const currentWaves = arrivals.map(() => 0);
+	const lastArrivalRound = arrivals.length
+		? arrivals[arrivals.length - 1].round
+		: 1;
 	let accumulatedAttrition = 0;
 	let pendingAttrition = 0;
 	let round = 1;
@@ -359,22 +377,26 @@ function simulateEncounterThreat(
 	let maxThreatExactXp = 0;
 	const history: SimulationRoundPoint[] = [];
 
-	const normalizedArrivalRound = Math.max(1, Math.floor(arrivalRound || 1));
 	const partyReductionPerRound =
 		config.basePartyOutputPerRound * (Math.max(1, partySize) / 4);
+	const sumReinforcements = () =>
+		currentWaves.reduce((sum, waveXp) => sum + waveXp, 0);
 
 	while (
 		currentWave0 > 0 ||
-		currentWave1 > 0 ||
-		round <= normalizedArrivalRound
+		sumReinforcements() > 0 ||
+		round <= lastArrivalRound
 	) {
-		if (round === normalizedArrivalRound) {
-			currentWave1 = Math.max(0, wave1Xp);
-		}
+		arrivals.forEach((wave, index) => {
+			if (wave.round === round) {
+				currentWaves[index] = wave.xp;
+			}
+		});
 
 		accumulatedAttrition += pendingAttrition;
 
-		const currentBaseThreat = currentWave0 + currentWave1;
+		const currentReinforcements = sumReinforcements();
+		const currentBaseThreat = currentWave0 + currentReinforcements;
 
 		if (currentBaseThreat === 0 && accumulatedAttrition < 5) {
 			accumulatedAttrition = 0;
@@ -392,29 +414,26 @@ function simulateEncounterThreat(
 		history.push({
 			round,
 			wave0: currentWave0,
-			wave1: currentWave1,
+			wave1: currentReinforcements,
 			attrition: accumulatedAttrition,
 			totalExact,
 			totalDisplay,
 		});
 
+		// The party defeats the main forces first, then the waves in the order
+		// they arrived.
 		let damageToDeal = partyReductionPerRound;
+		const dealDamage = (standingXp: number): number => {
+			const dealt = Math.min(standingXp, damageToDeal);
+			damageToDeal -= dealt;
 
-		if (currentWave0 >= damageToDeal) {
-			currentWave0 -= damageToDeal;
-			damageToDeal = 0;
-		} else {
-			damageToDeal -= currentWave0;
-			currentWave0 = 0;
-		}
+			return standingXp - dealt;
+		};
 
-		if (currentWave1 >= damageToDeal) {
-			currentWave1 -= damageToDeal;
-			damageToDeal = 0;
-		} else {
-			damageToDeal -= currentWave1;
-			currentWave1 = 0;
-		}
+		currentWave0 = dealDamage(currentWave0);
+		currentWaves.forEach((waveXp, index) => {
+			currentWaves[index] = dealDamage(waveXp);
+		});
 
 		if (damageToDeal > 0) {
 			accumulatedAttrition = Math.max(0, accumulatedAttrition - damageToDeal);
@@ -465,6 +484,24 @@ export function computeBuilderXP(
 	return total;
 }
 
+function resolveReinforcementSlotXp(
+	slot: BuilderSlot,
+	partyLevel: number
+): ExperienceBudget {
+	if (!Array.isArray(slot.reinforcementParticipants)) {
+		return resolveSlotBaseXp(slot, partyLevel) ?? new ExperienceBudget(0);
+	}
+
+	return slot.reinforcementParticipants.reduce(
+		(sum, participant) =>
+			sum.sum(
+				resolveReinforcementParticipantXp(participant, partyLevel) ??
+					new ExperienceBudget(0)
+			),
+		new ExperienceBudget(0)
+	);
+}
+
 export function computeEncounterXpUsage(
 	slots: BuilderSlot[],
 	partyLevel: number,
@@ -485,46 +522,29 @@ export function computeEncounterXpUsage(
 	const reinforcementSlots = slots.filter(
 		(slot) => slot.type === 'reinforcement'
 	);
-	const rawReinforcementXp = reinforcementSlots.reduce((sum, slot) => {
-		const hasParticipantList = Array.isArray(slot.reinforcementParticipants);
-		const slotParticipants = hasParticipantList
-			? slot.reinforcementParticipants
-			: [];
-
-		if (!hasParticipantList) {
-			const legacyContribution =
-				resolveSlotBaseXp(slot, partyLevel) ?? new ExperienceBudget(0);
-
-			return sum.sum(legacyContribution);
-		}
-
-		const slotContribution = slotParticipants?.reduce(
-			(participantSum, participant) => {
-				const contribution =
-					resolveReinforcementParticipantXp(participant, partyLevel) ??
-					new ExperienceBudget(0);
-
-				return participantSum.sum(contribution);
-			},
-			new ExperienceBudget(0)
-		);
-
-		return slotContribution != undefined ? sum.sum(slotContribution) : sum;
-	}, new ExperienceBudget(0));
+	// Each reinforcement slot is its own wave, arriving at its own round.
+	const reinforcementWaves = reinforcementSlots.map((slot) => ({
+		round: normalizeArrivalRound(slot.reinforcementRound),
+		rawXp: resolveReinforcementSlotXp(slot, partyLevel),
+	}));
+	const rawReinforcementXp = reinforcementWaves.reduce(
+		(sum, wave) => sum.sum(wave.rawXp),
+		new ExperienceBudget(0)
+	);
 
 	const rawXp = immediateXp.sum(rawReinforcementXp);
 	const hasSimulatedReinforcement = rawReinforcementXp.valueOf() > 0;
-	const reinforcementRound = reinforcementSlots.length
-		? Math.min(
-				...reinforcementSlots.map((slot) => slot.reinforcementRound || 1)
-			)
+	const reinforcementRound = reinforcementWaves.length
+		? Math.min(...reinforcementWaves.map((wave) => wave.round))
 		: 1;
 
 	const simulation = hasSimulatedReinforcement
 		? simulateEncounterThreat(
 				immediateXp.valueOf(),
-				rawReinforcementXp.valueOf(),
-				reinforcementRound,
+				reinforcementWaves.map((wave) => ({
+					round: wave.round,
+					xp: wave.rawXp.valueOf(),
+				})),
 				partySize,
 				normalizedConfig
 			)
@@ -538,18 +558,17 @@ export function computeEncounterXpUsage(
 		? rawReinforcementXp
 		: new ExperienceBudget(0);
 
-	const waves: ReinforcementWaveBreakdown[] =
-		reinforcementSlots.length > 0
-			? [
-					{
-						round: Math.max(1, Math.floor(reinforcementRound || 1)),
-						rawXp: rawReinforcementXp,
-						delayFactor: 1,
-						attritionFactor: 1,
-						effectiveXp: effectiveReinforcementXp,
-					},
-				]
-			: [];
+	const waves: ReinforcementWaveBreakdown[] = reinforcementWaves.map(
+		(wave) => ({
+			round: wave.round,
+			rawXp: wave.rawXp,
+			delayFactor: 1,
+			attritionFactor: 1,
+			effectiveXp: hasSimulatedReinforcement
+				? wave.rawXp
+				: new ExperienceBudget(0),
+		})
+	);
 
 	const wave0Threat = Threat.fromExperienceBudget(immediateXp, partySize);
 	const wave1Threat =

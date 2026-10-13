@@ -242,7 +242,7 @@ describe('computeEncounterXpUsage', () => {
 		expect(round3?.totalDisplay).toBe(90);
 	});
 
-	it('sums multiple reinforcement slots into the same wave budget', () => {
+	it('keeps each reinforcement slot as its own wave', () => {
 		const usage = computeEncounterXpUsage(
 			[
 				creature({
@@ -262,11 +262,77 @@ describe('computeEncounterXpUsage', () => {
 			4
 		);
 
+		expect(usage.waves).toHaveLength(2);
+		expect(usage.waves.map((wave) => wave.round)).toEqual([2, 2]);
+		expect(usage.waves.map((wave) => wave.rawXp.valueOf())).toEqual([80, 40]);
 		// 3 total creatures at level 5 = 120 XP
-		expect(usage.waves).toHaveLength(1);
-		expect(usage.waves[0].round).toBe(2);
-		expect(usage.waves[0].rawXp.valueOf()).toBe(120);
-		expect(usage.waves[0].effectiveXp.valueOf()).toBe(120);
+		expect(usage.rawReinforcementXp.valueOf()).toBe(120);
+	});
+
+	it('simulates two waves at different rounds, each arriving at its own round', () => {
+		const usage = computeEncounterXpUsage(
+			[
+				creature({ level: 5, count: 2 }),
+				creature({
+					id: 'wave-2',
+					type: 'reinforcement',
+					level: 5,
+					count: 1,
+					reinforcementRound: 2,
+				}),
+				creature({
+					id: 'wave-5',
+					type: 'reinforcement',
+					level: 5,
+					count: 2,
+					reinforcementRound: 5,
+				}),
+			],
+			5,
+			4
+		);
+
+		expect(usage.waves.map((wave) => wave.round)).toEqual([2, 5]);
+		expect(usage.waves.map((wave) => wave.rawXp.valueOf())).toEqual([40, 80]);
+
+		const history = usage.simulation?.history ?? [];
+		// Main forces 80 XP; the party defeats 20 XP per round.
+		expect(history[0]?.wave1).toBe(0);
+		// Round 2: only the first wave (40 XP) has arrived.
+		expect(history[1]?.wave0).toBe(60);
+		expect(history[1]?.wave1).toBe(40);
+		// Round 5: the party spent rounds 1–4 on the main forces (80 XP), so the
+		// first wave is still whole when the second one (80 XP) joins it.
+		expect(history[4]?.wave0).toBe(0);
+		expect(history[4]?.wave1).toBe(120);
+	});
+
+	it('staggered waves produce a lower peak than simultaneous ones', () => {
+		const main = creature({ level: 5, count: 2 });
+		const wave = (id: string, round: number) =>
+			creature({
+				id,
+				type: 'reinforcement',
+				level: 5,
+				count: 1,
+				reinforcementRound: round,
+			});
+
+		const simultaneous = computeEncounterXpUsage(
+			[main, wave('a', 2), wave('b', 2)],
+			5,
+			4
+		);
+		const staggered = computeEncounterXpUsage(
+			[main, wave('a', 2), wave('b', 5)],
+			5,
+			4
+		);
+
+		expect(staggered.rawXp.valueOf()).toBe(simultaneous.rawXp.valueOf());
+		expect(staggered.effectiveXp.valueOf()).toBeLessThan(
+			simultaneous.effectiveXp.valueOf()
+		);
 	});
 
 	it('scales party output by party size during simulation', () => {
