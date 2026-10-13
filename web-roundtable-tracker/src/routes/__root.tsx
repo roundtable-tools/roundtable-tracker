@@ -1,4 +1,5 @@
 import { AppSidebar } from '@/components/app-sidebar';
+import { getRouteTitle } from '@/components/appNavigation';
 import { ThemeProvider } from '@/components/theme-provider';
 import {
 	Breadcrumb,
@@ -34,12 +35,11 @@ type EncounterHeader = {
 function BreadCrumbs() {
 	const matches = useMatches();
 
-	const breadcrumbItems = matches
-		.filter((match) => match.loaderData?.crumb)
-		.map(({ pathname, loaderData }) => ({
-			href: pathname,
-			label: loaderData?.crumb,
-		}));
+	const breadcrumbItems = matches.flatMap(({ pathname, routeId }) => {
+		const label = getRouteTitle(routeId);
+
+		return label ? [{ href: pathname, label }] : [];
+	});
 
 	return (
 		<Breadcrumb>
@@ -64,22 +64,18 @@ function EncounterHeaderInfo() {
 	const isInitiativeTrackerRoute = matches.some(
 		(match) => match.routeId === '/initiative_tracker'
 	);
-	const encounterMatch = matches
-		.filter(
-			(
-				match
-			): match is typeof match & {
-				loaderData: { encounterHeader: EncounterHeader };
-			} =>
-				Boolean(
-					match.loaderData &&
-					typeof match.loaderData === 'object' &&
-					'encounterHeader' in match.loaderData
-				)
-		)
-		.at(-1);
-
-	const encounterHeader = encounterMatch?.loaderData.encounterHeader ?? null;
+	const encounterHeader =
+		matches
+			.map((match): unknown => match.loaderData)
+			.filter(
+				(loaderData): loaderData is { encounterHeader: EncounterHeader } =>
+					Boolean(
+						loaderData &&
+						typeof loaderData === 'object' &&
+						'encounterHeader' in loaderData
+					)
+			)
+			.at(-1)?.encounterHeader ?? null;
 
 	if (!encounterHeader) {
 		return null;

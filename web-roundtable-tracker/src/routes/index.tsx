@@ -11,9 +11,6 @@ import {
 
 export const Route = createFileRoute('/')({
 	component: Index,
-	loader: () => ({
-		crumb: 'Index',
-	}),
 });
 
 function Index() {
