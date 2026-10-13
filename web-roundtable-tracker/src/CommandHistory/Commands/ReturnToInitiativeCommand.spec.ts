@@ -3,6 +3,7 @@ import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import { Character } from '@/store/data';
 import { STATUS } from '../common';
 import { ReturnToInitiativeCommand } from './ReturnToInitiativeCommand';
+import { FinalizeTurnAndAdvanceRoundCommand } from './FinalizeTurnAndAdvanceRoundCommand';
 
 describe('ReturnToInitiativeCommand', () => {
 	let encounterStore: ReturnType<typeof createEncounterStore>;
@@ -125,6 +126,58 @@ describe('ReturnToInitiativeCommand', () => {
 		);
 		expect(stateAfterUndo.charactersMap[characters[1].uuid].turnState).toBe(
 			'delayed'
+		);
+	});
+
+	it('returns after the last turn as the final turn of the same round', () => {
+		encounterStore.setState(() => ({
+			charactersOrder: [
+				characters[2].uuid,
+				characters[1].uuid,
+				characters[0].uuid,
+			],
+			charactersWithTurn: new Set([characters[2].uuid]),
+		}));
+
+		const returnCommand = new ReturnToInitiativeCommand(
+			{
+				activeUuid: characters[2].uuid,
+				returningUuid: characters[1].uuid,
+				action: 'end-turn',
+			},
+			{ encounterStore }
+		);
+
+		expect(returnCommand.execute()).toBe(STATUS.success);
+
+		const stateAfterReturn = encounterStore.getState();
+		expect(stateAfterReturn.round).toBe(1);
+		expect(stateAfterReturn.charactersOrder).toEqual([
+			characters[1].uuid,
+			characters[0].uuid,
+			characters[2].uuid,
+		]);
+		expect(stateAfterReturn.delayedOrder).toEqual([]);
+		expect(stateAfterReturn.charactersWithTurn).toEqual(
+			new Set([characters[1].uuid])
+		);
+
+		const endReturnerTurn = new FinalizeTurnAndAdvanceRoundCommand(
+			{ uuid: characters[1].uuid, action: 'end-turn' },
+			{ encounterStore }
+		);
+
+		expect(endReturnerTurn.execute()).toBe(STATUS.success);
+
+		const stateAfterTurn = encounterStore.getState();
+		expect(stateAfterTurn.round).toBe(2);
+		expect(stateAfterTurn.charactersOrder).toEqual([
+			characters[0].uuid,
+			characters[2].uuid,
+			characters[1].uuid,
+		]);
+		expect(stateAfterTurn.charactersWithTurn).toEqual(
+			new Set(characters.map((character) => character.uuid))
 		);
 	});
 });

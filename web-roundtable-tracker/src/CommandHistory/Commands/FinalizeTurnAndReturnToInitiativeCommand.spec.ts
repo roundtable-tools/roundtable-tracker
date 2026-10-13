@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import { Character } from '@/store/data';
 import { STATUS } from '../common';
+import { getCommand, registerSerializableCommands } from '../commandRegistry';
 import { FinalizeTurnAndReturnToInitiativeCommand } from './FinalizeTurnAndReturnToInitiativeCommand';
 
-describe('FinalizeTurnAndReturnToInitiativeCommand', () => {
+describe('FinalizeTurnAndReturnToInitiativeCommand (legacy, persisted history only)', () => {
 	let encounterStore: ReturnType<typeof createEncounterStore>;
 	let characters: Character[];
 
@@ -51,7 +52,15 @@ describe('FinalizeTurnAndReturnToInitiativeCommand', () => {
 		encounterStore.getState().startEncounter(characters);
 	});
 
-	it('returns delayed participant and advances round for final active turn', () => {
+	it('stays registered so persisted history can still be revived', () => {
+		registerSerializableCommands();
+
+		expect(getCommand('FinalizeTurnAndReturnToInitiativeCommand')).toBe(
+			FinalizeTurnAndReturnToInitiativeCommand
+		);
+	});
+
+	it('replays the legacy return that also advanced the round', () => {
 		encounterStore.setState((state) => ({
 			charactersOrder: [
 				characters[0].uuid,

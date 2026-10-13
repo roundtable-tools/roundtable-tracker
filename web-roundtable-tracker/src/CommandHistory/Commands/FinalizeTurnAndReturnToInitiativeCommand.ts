@@ -17,6 +17,13 @@ const getRemainingTurnCount = (
 	charactersWithTurn: Set<UUID>
 ) => charactersOrder.filter((uuid) => charactersWithTurn.has(uuid)).length;
 
+/**
+ * @deprecated Legacy command: returned a delayed participant after the round's
+ * last turn and advanced the round at once, so the returner lost the rest of the
+ * current round (#93). The tracker now uses `ReturnToInitiativeCommand` for every
+ * return. The class stays registered only so encounter history persisted before
+ * the change can still be revived, undone and redone.
+ */
 export class FinalizeTurnAndReturnToInitiativeCommand implements Command {
 	readonly type = 'FinalizeTurnAndReturnToInitiativeCommand';
 	description = 'Finalize Turn And Return To Initiative Command';

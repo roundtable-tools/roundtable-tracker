@@ -55,7 +55,6 @@ import { type Command } from '@/CommandHistory/common';
 import { DelayCharacterCommand } from '@/CommandHistory/Commands/DelayCharacterCommand';
 import { EndTurnCommand } from '@/CommandHistory/Commands/EndTurnCommand';
 import { FinalizeTurnAndAdvanceRoundCommand } from '@/CommandHistory/Commands/FinalizeTurnAndAdvanceRoundCommand';
-import { FinalizeTurnAndReturnToInitiativeCommand } from '@/CommandHistory/Commands/FinalizeTurnAndReturnToInitiativeCommand';
 import { KnockOutCharacterCommand } from '@/CommandHistory/Commands/KnockOutCharacterCommand';
 import { TriggerReinforcementEventCommand } from '@/CommandHistory/Commands/TriggerReinforcementEventCommand';
 import { ReturnToInitiativeCommand } from '@/CommandHistory/Commands/ReturnToInitiativeCommand';
@@ -1022,33 +1021,30 @@ export function InitiativeTrackerPage() {
 	}) => {
 		clearPinnedMarkerForCurrentRound();
 
-		const shouldReturnToInitiative = isNextParticipantDelayed();
-		const shouldAdvanceRound = isFinalActiveParticipant(participantId);
-		const returningParticipantId = charactersOrder[1];
+		const returningParticipantId = isNextParticipantDelayed()
+			? charactersOrder[1]
+			: undefined;
+		// A participant returning from Delay after the last turn acts as the final
+		// turn of this round; the round advances only once they end their turn.
+		const shouldAdvanceRound =
+			!returningParticipantId && isFinalActiveParticipant(participantId);
 
-		const command: Command =
-			shouldAdvanceRound && shouldReturnToInitiative && returningParticipantId
-				? new FinalizeTurnAndReturnToInitiativeCommand({
-						activeUuid: participantId,
-						returningUuid: returningParticipantId,
+		const command: Command = returningParticipantId
+			? new ReturnToInitiativeCommand({
+					activeUuid: participantId,
+					returningUuid: returningParticipantId,
+					action,
+				})
+			: shouldAdvanceRound
+				? new FinalizeTurnAndAdvanceRoundCommand({
+						uuid: participantId,
 						action,
 					})
-				: shouldAdvanceRound
-					? new FinalizeTurnAndAdvanceRoundCommand({
-							uuid: participantId,
-							action,
-						})
-					: shouldReturnToInitiative && returningParticipantId
-						? new ReturnToInitiativeCommand({
-								activeUuid: participantId,
-								returningUuid: returningParticipantId,
-								action,
-							})
-						: action === 'delay'
-							? new DelayCharacterCommand({ uuid: participantId })
-							: action === 'ko'
-								? new KnockOutCharacterCommand({ uuid: participantId })
-								: new EndTurnCommand({ uuid: participantId });
+				: action === 'delay'
+					? new DelayCharacterCommand({ uuid: participantId })
+					: action === 'ko'
+						? new KnockOutCharacterCommand({ uuid: participantId })
+						: new EndTurnCommand({ uuid: participantId });
 
 		try {
 			executeCommand(command);

@@ -18,9 +18,9 @@ type CommandData = {
  * Ends the active participant's turn (with the given action) and simultaneously
  * returns a delayed participant to the initiative queue at the front.
  *
- * Corner case: when the active participant is the last one with a turn this round,
- * the returning participant re-enters as the new final participant of the current
- * round instead of triggering a round advance.
+ * It never advances the round. When the active participant is the last one with
+ * a turn this round, the returning participant re-enters as the new final
+ * participant of the current round; the round advances when they end their turn.
  */
 export class ReturnToInitiativeCommand implements Command {
 	readonly type = 'ReturnToInitiativeCommand';
