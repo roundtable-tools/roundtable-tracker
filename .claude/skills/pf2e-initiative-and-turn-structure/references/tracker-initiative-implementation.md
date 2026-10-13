@@ -69,7 +69,7 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 |---|---|
 | normal → delayed (`DelayCharacterCommand`) | `EndTurnCommand` (to the end of the queue) + added to `delayedOrder`. Only allowed while the participant still has its turn |
 | normal → knocked-out (`KnockOutCharacterCommand`) | `EndTurnCommand` if it still has a turn, otherwise a move to the end of the queue |
-| delayed → normal | Removed from `delayedOrder`, put at the front of the queue |
+| delayed → normal (also `ReactivateCharacterCommand` on a delayed participant) | Removed from `delayedOrder`, put at the front of the queue. Known bug: `[uuid].concat(charactersOrder)` doesn't remove the uuid first, and `EndTurnCommand` left it at the end, so it appears twice (#28, fixed by PR #123). New code should use `ReturnToInitiativeCommand`, which filters first |
 | delayed → knocked-out | Removed from `delayedOrder`, then the knock-out step |
 | knocked-out → delayed | Moved to the end of the queue and added to `delayedOrder` |
 | knocked-out → normal (`ReactivateCharacterCommand`) | Turn state only. The participant doesn't get its turn back |

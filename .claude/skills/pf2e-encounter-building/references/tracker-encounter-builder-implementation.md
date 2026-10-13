@@ -102,14 +102,14 @@ math changes.
   - Immediate XP is everything that isn't a reinforcement, including narrative XP.
   - Reinforcement XP is simulated by `simulateEncounterThreat`:
     - The party removes `20 × partySize/4` XP per round.
-    - Attrition is 5 %; at most 20 rounds.
+    - Attrition adds 5 % of (current threat + accumulated attrition) to the threat each round, so it compounds upwards; at most 20 rounds.
     - `effectiveXp` is the peak simultaneous XP. The display rounds it up to a multiple of 5.
   - All reinforcement slots are merged into one wave, at the earliest `reinforcementRound`.
 - **`ThreatTracker.tsx`** shows effective vs raw XP, a per-round chart and the threat bands. It uses its own thresholds:
   - `getBaseXpFromThreatKey` = 60 + 20 × key.
   - `CHARACTER_ADJUSTMENT_BY_THREAT` = {Trivial 10, Low 20, Moderate 20, Severe 30, Extreme 40, Impossible 40}.
   - "At or above" bands.
-- **Saved difficulty** (`store/savedEncounters.ts`, `toConcreteEncounter`): `Threat.fromExperienceBudget(computeBuilderXP)`, with the "+" grades collapsed to their base threat. It ignores reinforcements.
+- **Saved difficulty** (`components/BuilderPage/builderConvert.ts`, `toConcreteEncounter`): `Threat.fromExperienceBudget(computeBuilderXP)`, with the "+" grades collapsed to their base threat. It ignores reinforcements.
 
 ## Not modelled
 
