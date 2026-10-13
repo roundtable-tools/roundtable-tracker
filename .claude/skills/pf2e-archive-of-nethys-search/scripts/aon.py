@@ -20,6 +20,8 @@ import urllib.request
 
 ENDPOINT = "https://elasticsearch.aonprd.com/aon/_search"
 SITE = "https://2e.aonprd.com"
+# Player Core and GM Core, the first remaster books.
+REMASTER_RELEASE = "2023-11-15"
 
 
 def es(body):
@@ -88,7 +90,8 @@ def build_search(args):
     body = {
         "size": args.limit,
         "_source": ["id", "name", "category", "level", "rarity", "trait_raw", "summary",
-                    "primary_source", "url", "actions", "hp", "ac", "price_raw", "legacy_id", "remaster_id"],
+                    "primary_source", "url", "actions", "hp", "ac", "price_raw", "legacy_id", "remaster_id",
+                    "release_date"],
         "query": {"bool": {"must": must or [{"match_all": {}}], "filter": filters, "must_not": must_not}},
     }
     if not args.terms:
@@ -96,12 +99,18 @@ def build_search(args):
     return body
 
 
+def version_tag(s):
+    """[legacy] if a remastered version exists; [pre-remaster] if published before the remaster."""
+    if s.get("remaster_id"):
+        return " [legacy]"
+    if not s.get("legacy_id") and s.get("release_date", REMASTER_RELEASE) < REMASTER_RELEASE:
+        return " [pre-remaster]"
+    return ""
+
+
 def cmd_search(args):
     body = build_search(args)
     res = es(body)
-    if "error" in res and "name.keyword" in json.dumps(res["error"]):
-        body["sort"] = [{"level": "asc"}]
-        res = es(body)
     if args.json:
         print(json.dumps(res["hits"], indent=2, ensure_ascii=False))
         return
@@ -122,7 +131,7 @@ def cmd_search(args):
         if s.get("price_raw"):
             bits.append(s["price_raw"])
         traits = ", ".join(s.get("trait_raw") or [])
-        tag = " [legacy]" if s.get("remaster_id") else ""
+        tag = version_tag(s)
         print(f"- {s.get('name')}{tag} ({'; '.join(bits)}) id={s.get('id')} src={s.get('primary_source')}")
         if traits:
             print(f"    traits: {traits}")
@@ -146,6 +155,10 @@ def clean_markdown(md, keep_links=False):
     md = re.sub(r"<traits>(.*?)</traits>",
                 lambda m: "Traits: " + ", ".join(re.findall(r'label="([^"]+)"', m.group(1))),
                 md, flags=re.S)
+    # Keep table cells and list items apart before the tags are stripped.
+    md = re.sub(r"</t[dh]>", " | ", md)
+    md = re.sub(r"</tr>|</li>|<br\s*/?>", "\n", md)
+    md = re.sub(r"<li(\s[^>]*)?>", "- ", md)
     md = re.sub(r"</?[a-z][a-z-]*(\s[^>]*)?/?>", "", md)  # remaining layout tags (column, row, ...)
     if keep_links:
         md = re.sub(r"\]\((/[^)]+)\)", lambda m: f"]({SITE}{m.group(1)})", md)
@@ -158,23 +171,24 @@ def clean_markdown(md, keep_links=False):
 
 def cmd_get(args):
     target = " ".join(args.target)
-    by_id = bool(re.fullmatch(r"[a-z-]+(-\d+)+", target))
-    if by_id:
-        query = {"ids": {"values": [target]}}
+    if re.fullmatch(r"[a-z-]+(-\d+)+", target.lower()):
+        if args.category or args.legacy:
+            print("Note: -c and --legacy apply only to name lookups, not to ids.", file=sys.stderr)
+        hits = es({"size": 1, "query": {"ids": {"values": [target.lower()]}}})["hits"]["hits"]
     else:
         filters, must_not = base_filters(args)
-        query = {"bool": {"must": [{"match_phrase": {"name": target}}], "filter": filters, "must_not": must_not}}
-    res = es({"size": 10, "query": query})
-    hits = res["hits"]["hits"]
-    if not by_id:
-        related = hits
-        hits = [h for h in hits if h["_source"].get("name", "").lower() == target.lower()]
-        if not hits and related:
-            print(f"No entry is named exactly {target!r}. Related names; pass an id:", file=sys.stderr)
-            for h in related:
-                s = h["_source"]
-                print(f"  {s['id']}  {s['name']} ({s.get('category')}, {s.get('primary_source')})", file=sys.stderr)
-            sys.exit(2)
+        exact = {"term": {"name.keyword": {"value": target, "case_insensitive": True}}}
+        query = {"bool": {"must": [exact], "filter": filters, "must_not": must_not}}
+        hits = es({"size": 100, "query": query})["hits"]["hits"]
+        if not hits:
+            query["bool"]["must"] = [{"match_phrase": {"name": target}}]
+            related = es({"size": 10, "query": query})["hits"]["hits"]
+            if related:
+                print(f"No entry is named exactly {target!r}. Related names; pass an id:", file=sys.stderr)
+                for h in related:
+                    s = h["_source"]
+                    print(f"  {s['id']}  {s['name']} ({s.get('category')}, {s.get('primary_source')})", file=sys.stderr)
+                sys.exit(2)
     if not hits:
         sys.exit(f"Nothing found for {target!r}. Try: aon.py search {target}")
     if len(hits) > 1 and not args.first:
@@ -197,7 +211,10 @@ def cmd_get(args):
 
 
 def cmd_categories(args):
-    res = es({"size": 0, "aggs": {"c": {"terms": {"field": "category", "size": 500}}}})
+    args.category = None
+    _, must_not = base_filters(args)
+    res = es({"size": 0, "query": {"bool": {"must_not": must_not}},
+              "aggs": {"c": {"terms": {"field": "category", "size": 500}}}})
     for b in res["aggregations"]["c"]["buckets"]:
         print(f"{b['key']}\t{b['doc_count']}")
 
@@ -237,13 +254,16 @@ def main():
     s.set_defaults(func=cmd_search)
 
     g = sub.add_parser("get", help="show one document as text")
-    g.add_argument("target", nargs="+", help="AoN id (spell-1530, creature-232) or exact name")
+    g.add_argument("target", nargs="+",
+                   help="AoN id (spell-1530, creature-232) or exact name; -c and --legacy apply only to names")
     common(g)
     g.add_argument("--first", action="store_true", help="when a name matches several documents, show the first")
     g.add_argument("--links", action="store_true", help="keep links (as absolute AoN URLs)")
     g.set_defaults(func=cmd_get)
 
-    c = sub.add_parser("categories", help="list categories and counts")
+    c = sub.add_parser("categories", help="list categories and counts (same hidden/legacy filters as search)")
+    c.add_argument("--legacy", action="store_true",
+                   help="also count legacy (pre-remaster) documents that have a remastered version")
     c.set_defaults(func=cmd_categories)
 
     r = sub.add_parser("query", help="raw Elasticsearch body")

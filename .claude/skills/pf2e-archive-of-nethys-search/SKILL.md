@@ -41,6 +41,11 @@ a legacy document has `remaster_id`, its remastered version has `legacy_id`.
   current rules. Legacy-only content (never remastered) still shows.
 - Pass `--legacy` when the user plays with pre-remaster rules or asks about the old version
   (e.g. alignment, the old schools of magic, Core Rulebook text). Legacy hits are tagged `[legacy]`.
+- The index has no flag for legacy-only content, so `search` tags hits published before Player Core
+  (2023-11-15) with no remastered version as `[pre-remaster]`. They may still use legacy terms
+  (alignment, schools); say so when it matters.
+- `get` by id ignores `-c` and `--legacy`; `categories` counts with the same hidden/legacy filters as
+  `search` (`--legacy` to count legacy documents too).
 - `get` output ends with `(remaster of …)` / `(legacy version; remastered as …)` when relevant.
 
 ## Useful facts about the index
