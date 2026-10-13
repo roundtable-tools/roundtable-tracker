@@ -82,7 +82,6 @@ export function InitiativeActionCarouselCard({
 	density,
 	accent,
 	indicatorLabel,
-	logAction,
 }: {
 	participant: TrackerParticipant;
 	selected: boolean;
@@ -92,7 +91,6 @@ export function InitiativeActionCarouselCard({
 	density: InitiativeCardDensity;
 	accent: ParticipantAccent;
 	indicatorLabel: string;
-	logAction: (action: string, details?: Record<string, unknown>) => void;
 }) {
 	const {
 		swipeRevealPx,
@@ -141,11 +139,6 @@ export function InitiativeActionCarouselCard({
 
 	const registerSwipeInput = (action: SwipeAction) => {
 		onSwipeAction(participant.id, action);
-		logAction(`${density === 'mobile' ? 'Mobile ' : ''}swipe action input`, {
-			action,
-			participantId: participant.id,
-			participantName: participant.name,
-		});
 		setSwipeActionFlash(action);
 
 		if (swipeFlashTimeoutRef.current !== null) {
@@ -259,13 +252,6 @@ export function InitiativeActionCarouselCard({
 			return;
 		}
 
-		logAction(
-			`${density === 'mobile' ? 'Mobile ' : ''}initiative card selected`,
-			{
-				participantId: participant.id,
-				participantName: participant.name,
-			}
-		);
 		onSelect(participant.id);
 	};
 

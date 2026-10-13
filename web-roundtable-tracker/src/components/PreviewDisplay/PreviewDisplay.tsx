@@ -313,71 +313,65 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	}, [defaultTeams, reset]);
 
 	const onStartEncounter = () => {
-		handleSubmit(
-			(data) => {
-				const formParticipants = data.teams
-					.flatMap(({ characters }) => characters)
-					.map((participant) => {
-						const sourceParticipant = sourceParticipantsById.get(
-							participant.uuid
-						);
-						const mergedParticipant = {
-							...sourceParticipant,
-							...participant,
-						};
-						const hasHealthData = mergedParticipant.hasHealthData !== false;
-						const maxHealth =
-							typeof mergedParticipant.maxHealth === 'number' &&
-							Number.isFinite(mergedParticipant.maxHealth) &&
-							mergedParticipant.maxHealth >= 0
-								? mergedParticipant.maxHealth
-								: 1;
-						const health =
-							typeof mergedParticipant.health === 'number' &&
-							Number.isFinite(mergedParticipant.health) &&
-							mergedParticipant.health >= 0
-								? mergedParticipant.health
-								: maxHealth;
-						const tempHealth =
-							typeof mergedParticipant.tempHealth === 'number' &&
-							Number.isFinite(mergedParticipant.tempHealth) &&
-							mergedParticipant.tempHealth >= 0
-								? mergedParticipant.tempHealth
-								: 0;
-						const initiative =
-							typeof mergedParticipant.initiative === 'number' &&
-							Number.isFinite(mergedParticipant.initiative)
-								? mergedParticipant.initiative
-								: (mergedParticipant.initiative ?? 0);
+		handleSubmit((data) => {
+			const formParticipants = data.teams
+				.flatMap(({ characters }) => characters)
+				.map((participant) => {
+					const sourceParticipant = sourceParticipantsById.get(
+						participant.uuid
+					);
+					const mergedParticipant = {
+						...sourceParticipant,
+						...participant,
+					};
+					const hasHealthData = mergedParticipant.hasHealthData !== false;
+					const maxHealth =
+						typeof mergedParticipant.maxHealth === 'number' &&
+						Number.isFinite(mergedParticipant.maxHealth) &&
+						mergedParticipant.maxHealth >= 0
+							? mergedParticipant.maxHealth
+							: 1;
+					const health =
+						typeof mergedParticipant.health === 'number' &&
+						Number.isFinite(mergedParticipant.health) &&
+						mergedParticipant.health >= 0
+							? mergedParticipant.health
+							: maxHealth;
+					const tempHealth =
+						typeof mergedParticipant.tempHealth === 'number' &&
+						Number.isFinite(mergedParticipant.tempHealth) &&
+						mergedParticipant.tempHealth >= 0
+							? mergedParticipant.tempHealth
+							: 0;
+					const initiative =
+						typeof mergedParticipant.initiative === 'number' &&
+						Number.isFinite(mergedParticipant.initiative)
+							? mergedParticipant.initiative
+							: (mergedParticipant.initiative ?? 0);
 
-						if (!hasHealthData) {
-							return {
-								...mergedParticipant,
-								hasHealthData: false,
-								initiative,
-								maxHealth: 1,
-								health: 1,
-								tempHealth: 0,
-							};
-						}
-
+					if (!hasHealthData) {
 						return {
 							...mergedParticipant,
-							hasHealthData: true,
+							hasHealthData: false,
 							initiative,
-							maxHealth,
-							health,
-							tempHealth,
+							maxHealth: 1,
+							health: 1,
+							tempHealth: 0,
 						};
-					});
-				console.log('Prepared participants for encounter:', formParticipants);
-				setPreparedParticipants(formParticipants);
-				setShowInitiativeChoice(true);
-			},
-			(errors) => {
-				console.log(errors);
-			}
-		)();
+					}
+
+					return {
+						...mergedParticipant,
+						hasHealthData: true,
+						initiative,
+						maxHealth,
+						health,
+						tempHealth,
+					};
+				});
+			setPreparedParticipants(formParticipants);
+			setShowInitiativeChoice(true);
+		})();
 	};
 
 	const onSelectInitiativeView = (

@@ -29,23 +29,15 @@ type Conf = NonNullable<
  * @property {Function} replacer - A function that transforms the value before stringifying it.
  */
 export const jsonConfiguration: Conf = {
-	//@ts-expect-error: context parameter is not typed
-	reviver(key, value, context) {
-		try {
-			if (value && typeof value === 'object')
-				switch (true) {
-					case isCommandJSON(value):
-						return commandFromJSON(value);
+	reviver(_key, value) {
+		if (value && typeof value === 'object')
+			switch (true) {
+				case isCommandJSON(value):
+					return commandFromJSON(value);
 
-					case isSetJSON(value):
-						return new Set(value.data);
-				}
-		} catch (e) {
-			console.log('context', context);
-			console.log('key', key);
-			console.log('value', value);
-			throw e;
-		}
+				case isSetJSON(value):
+					return new Set(value.data);
+			}
 
 		return value;
 	},
