@@ -486,20 +486,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@legendapp/state@npm:^3.0.0-beta.30":
-  version: 3.0.0-beta.47
-  resolution: "@legendapp/state@npm:3.0.0-beta.47"
-  dependencies:
-    use-sync-external-store: "npm:^1.2.2"
-  peerDependencies:
-    expo-sqlite: ^15.0.0
-  peerDependenciesMeta:
-    expo-sqlite:
-      optional: true
-  checksum: 10c0/195c9b1a72ff958851d273432cc87833bac65df5ded2d5621c9b4d6dbf6bbc71d3ac7a29c2cf20f15d0af60dc50151f402602bb056a3475bc3533c5f03b62563
-  languageName: node
-  linkType: hard
-
 "@napi-rs/wasm-runtime@npm:^1.1.1, @napi-rs/wasm-runtime@npm:^1.1.4":
   version: 1.1.4
   resolution: "@napi-rs/wasm-runtime@npm:1.1.4"
@@ -4645,7 +4631,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"use-sync-external-store@npm:^1.2.2, use-sync-external-store@npm:^1.6.0":
+"use-sync-external-store@npm:^1.6.0":
   version: 1.6.0
   resolution: "use-sync-external-store@npm:1.6.0"
   peerDependencies:
@@ -4809,7 +4795,6 @@ __metadata:
   resolution: "web-roundtable-tracker@workspace:web-roundtable-tracker"
   dependencies:
     "@eslint/js": "npm:^9.17.0"
-    "@legendapp/state": "npm:^3.0.0-beta.30"
     "@radix-ui/react-accordion": "npm:^1.2.11"
     "@radix-ui/react-collapsible": "npm:^1.1.10"
     "@radix-ui/react-dialog": "npm:^1.1.13"
