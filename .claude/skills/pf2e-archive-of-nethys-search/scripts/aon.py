@@ -158,15 +158,23 @@ def clean_markdown(md, keep_links=False):
 
 def cmd_get(args):
     target = " ".join(args.target)
-    if re.fullmatch(r"[a-z-]+(-\d+)+", target):
+    by_id = bool(re.fullmatch(r"[a-z-]+(-\d+)+", target))
+    if by_id:
         query = {"ids": {"values": [target]}}
     else:
         filters, must_not = base_filters(args)
         query = {"bool": {"must": [{"match_phrase": {"name": target}}], "filter": filters, "must_not": must_not}}
     res = es({"size": 10, "query": query})
     hits = res["hits"]["hits"]
-    exact = [h for h in hits if h["_source"].get("name", "").lower() == target.lower()]
-    hits = exact or hits
+    if not by_id:
+        related = hits
+        hits = [h for h in hits if h["_source"].get("name", "").lower() == target.lower()]
+        if not hits and related:
+            print(f"No entry is named exactly {target!r}. Related names; pass an id:", file=sys.stderr)
+            for h in related:
+                s = h["_source"]
+                print(f"  {s['id']}  {s['name']} ({s.get('category')}, {s.get('primary_source')})", file=sys.stderr)
+            sys.exit(2)
     if not hits:
         sys.exit(f"Nothing found for {target!r}. Try: aon.py search {target}")
     if len(hits) > 1 and not args.first:
