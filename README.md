@@ -20,8 +20,10 @@ This repository is a monorepo containing the following workspaces:
 
 ## Prerequisites 📋
 
-- Node.js (v20.x or higher)
-- Yarn (v4.9.0 or higher)
+- Node.js 24 (the version in `mise.toml` and CI)
+- Yarn 4 (v4.9.0 or higher), through Corepack
+
+> **Note**: Node 25 and later no longer bundle Corepack. If `corepack` is missing, install it with `npm install -g corepack`, then run `corepack enable` so `yarn` picks up the version from `packageManager` in `package.json`.
 
 ## Setup Instructions 🚀
 
