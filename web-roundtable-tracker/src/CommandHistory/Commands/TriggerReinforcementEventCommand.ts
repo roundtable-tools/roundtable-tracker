@@ -4,7 +4,10 @@ import {
 	NarrativeSlot,
 	normalizeLevel,
 } from '@/store/data';
-import { TrackerParticipantMeta } from '@/store/encounterRuntimeStore';
+import {
+	isSimpleHazardId,
+	TrackerParticipantMeta,
+} from '@/store/encounterRuntimeStore';
 import { generateUUID, UUID } from '@/utils/uuid';
 import {
 	Command,
@@ -270,7 +273,9 @@ export class TriggerReinforcementEventCommand implements Command {
 				const orderWithoutPending = current.charactersOrder.filter(
 					(uuid) => !preAddedUuids.includes(uuid)
 				);
+				// Simple hazards never take turns, so they stay out of the order.
 				const pendingCharacters = preAddedUuids
+					.filter((uuid) => !isSimpleHazardId(trackerMetaMap, uuid))
 					.map((uuid) => current.charactersMap[uuid])
 					.filter((c): c is NonNullable<typeof c> => c != null);
 
@@ -285,7 +290,10 @@ export class TriggerReinforcementEventCommand implements Command {
 						...trackerMetaMap[uuid],
 						reinforcementPending: false,
 					};
-					charactersWithTurn.add(uuid);
+
+					if (!isSimpleHazardId(trackerMetaMap, uuid)) {
+						charactersWithTurn.add(uuid);
+					}
 				}
 
 				return {
@@ -316,21 +324,27 @@ export class TriggerReinforcementEventCommand implements Command {
 				const trackerMetaMap = { ...current.trackerMetaMap };
 				const charactersWithTurn = new Set(current.charactersWithTurn);
 
-				for (const participant of this.data.spawnedParticipants ?? []) {
+				const spawnedParticipants = this.data.spawnedParticipants ?? [];
+
+				for (const participant of spawnedParticipants) {
 					charactersMap[participant.character.uuid] = participant.character;
 					trackerMetaMap[participant.character.uuid] = {
 						...participant.meta,
 						reinforcementPending: false,
 					};
-					charactersWithTurn.add(participant.character.uuid);
+
+					if (!participant.meta.isSimpleHazard) {
+						charactersWithTurn.add(participant.character.uuid);
+					}
 				}
 
+				// Simple hazards never take turns, so they stay out of the order.
 				const charactersOrder = insertByInitiative(
 					current.charactersOrder,
 					charactersMap,
-					(this.data.spawnedParticipants ?? []).map(
-						(participant) => participant.character
-					)
+					spawnedParticipants
+						.filter((participant) => !participant.meta.isSimpleHazard)
+						.map((participant) => participant.character)
 				);
 
 				return {
