@@ -1,8 +1,13 @@
 import { FC, ReactNode } from 'react';
 
 import { CommandHistoryContext } from './CommandHistoryContext';
-import { useEncounterStore } from '@/store/encounterRuntimeInstance';
-import { Command } from './common';
+import {
+	getEncounterStore,
+	useEncounterStore,
+} from '@/store/encounterRuntimeInstance';
+import { Command, STATUS } from './common';
+
+const commandName = (command: Command) => command.description ?? command.type;
 
 export const CommandHistoryProvider: FC<{ children: ReactNode }> = ({
 	children,
@@ -29,29 +34,33 @@ export const CommandHistoryProvider: FC<{ children: ReactNode }> = ({
 	};
 
 	const undo = () => {
-		setHistory((prev) => {
-			const lastCommand = prev.pop();
+		const lastCommand = getEncounterStore().getState().history.at(-1);
 
-			if (lastCommand) {
-				lastCommand.undo();
-				setRedoStack((redo) => [lastCommand, ...redo]);
-			}
+		if (!lastCommand) return;
 
-			return [...prev];
-		});
+		if (lastCommand.undo() === STATUS.failure) {
+			console.error(`Failed to undo command: ${commandName(lastCommand)}`);
+
+			return;
+		}
+
+		setHistory((prev) => prev.slice(0, -1));
+		setRedoStack((prev) => [lastCommand, ...prev]);
 	};
 
 	const redo = () => {
-		setRedoStack((prev) => {
-			const lastCommand = prev.shift();
+		const nextCommand = getEncounterStore().getState().redoStack[0];
 
-			if (lastCommand) {
-				lastCommand.execute();
-				setHistory((history) => [...history, lastCommand]);
-			}
+		if (!nextCommand) return;
 
-			return [...prev];
-		});
+		if (nextCommand.execute() === STATUS.failure) {
+			console.error(`Failed to redo command: ${commandName(nextCommand)}`);
+
+			return;
+		}
+
+		setRedoStack((prev) => prev.slice(1));
+		setHistory((prev) => [...prev, nextCommand]);
 	};
 
 	const clearHistory = () => {
