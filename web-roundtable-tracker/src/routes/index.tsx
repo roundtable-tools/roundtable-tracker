@@ -3,7 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 
 import {
 	FolderOpen,
-	LayoutDashboard,
+	MonitorPlay,
 	PencilRuler,
 	Play,
 	Users,
@@ -22,19 +22,13 @@ function Index() {
 			<div className="flex gap-4 p-4 flex-wrap items-center justify-center">
 				<Button asChild className="text-xl h-auto">
 					<Link to="/initiative_tracker">
-						<Play size={48} /> Continue
-					</Link>
-				</Button>
-
-				<Button asChild className="text-xl h-auto" variant="secondary">
-					<Link to="/initiative_tracker">
-						<LayoutDashboard size={48} /> Tracker PoC
+						<Play size={48} /> Continue Encounter
 					</Link>
 				</Button>
 
 				<Button asChild className="text-xl h-auto" variant="secondary">
 					<Link to="/initiative_player">
-						<Users size={48} /> Player PoC
+						<MonitorPlay size={48} /> Player View
 					</Link>
 				</Button>
 
@@ -47,6 +41,12 @@ function Index() {
 				<Button asChild className="text-xl h-auto" variant="secondary">
 					<Link to="/builder">
 						<PencilRuler size={48} /> Create New
+					</Link>
+				</Button>
+
+				<Button asChild className="text-xl h-auto" variant="secondary">
+					<Link to="/party_setup">
+						<Users size={48} /> Parties
 					</Link>
 				</Button>
 			</div>

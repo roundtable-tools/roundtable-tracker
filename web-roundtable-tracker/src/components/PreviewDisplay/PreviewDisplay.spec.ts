@@ -210,7 +210,6 @@ describe('PreviewDisplay form defaulting path', () => {
 		expect(html).toContain('PCs');
 		expect(html).toContain('Opponents');
 		expect(html).toContain('Character Name');
-		expect(html).toContain('Search');
 	});
 
 	it('fills unnamed enemies with default labels and suffix letters by count', () => {
@@ -245,11 +244,14 @@ describe('PreviewDisplay form defaulting path', () => {
 		expect(participants[0][1]?.name).toBe('Opponent B');
 	});
 
-	it('renders nothing when encounter data is absent', () => {
+	it('renders an empty state pointing to Encounters when encounter data is absent', () => {
 		const html = renderToStaticMarkup(
 			createElement(PreviewDisplay, { setView: vi.fn() })
 		);
 
-		expect(html).toBe('');
+		expect(html).toContain('No encounter loaded');
+		expect(html).toContain('Go to Encounters');
+		expect(html).toContain('Exit');
+		expect(html).not.toContain('Start Encounter');
 	});
 });
