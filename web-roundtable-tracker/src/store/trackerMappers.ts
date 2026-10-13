@@ -46,6 +46,7 @@ const DEFAULT_META: TrackerParticipantMeta = {
 	dcs: undefined,
 	adjustmentDescription: undefined,
 	adjustmentLevelModifier: undefined,
+	traits: undefined,
 };
 
 export function characterStateToTrackerState(
@@ -86,6 +87,7 @@ function characterToTrackerParticipant(
 		dcs: meta.dcs,
 		adjustmentDescription: meta.adjustmentDescription,
 		adjustmentLevelModifier: meta.adjustmentLevelModifier,
+		traits: meta.traits,
 	};
 
 	if (meta.disableChecksRequired > 0) {
@@ -243,6 +245,7 @@ export function runtimeToOutOfInitiativeData(
 					dcs: participant.dcs,
 					adjustmentDescription: participant.adjustmentDescription,
 					adjustmentLevelModifier: participant.adjustmentLevelModifier,
+					traits: participant.traits,
 					notes: slot.description ?? '',
 				} satisfies TrackerParticipant;
 			})

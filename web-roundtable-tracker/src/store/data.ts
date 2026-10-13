@@ -218,6 +218,7 @@ export type CombatantParticipant<
 	// TEMP: Set state to @ostatni5's format until the types get unified
 	// startingState?: INITIATIVE_STATE.Normal,
 	startingState?: 'normal' | 'delayed' | 'knocked-out';
+	traits?: string[];
 	description?: string;
 	dcs?: ParticipantDcEntry[];
 };
@@ -352,6 +353,7 @@ const combatantParticipantSchema = z.object({
 	// TEMP: Set state to @ostatni5's format until the types get unified
 	// startingState: z.nativeEnum(INITIATIVE_STATE).optional(),
 	startingState: z.enum(['normal', 'delayed', 'knocked-out']).optional(),
+	traits: z.array(z.string()).optional(),
 	description: z.string().optional(),
 	dcs: dcsSchema.optional(),
 });

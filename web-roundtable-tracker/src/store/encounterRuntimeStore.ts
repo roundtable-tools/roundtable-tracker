@@ -25,6 +25,7 @@ export type TrackerParticipantMeta = {
 	dcs?: ParticipantDcEntry[];
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
+	traits?: string[];
 	reinforcementSlotId?: string;
 	reinforcementPending?: boolean;
 };

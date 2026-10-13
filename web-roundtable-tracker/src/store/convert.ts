@@ -38,6 +38,7 @@ type RuntimeParticipantFields = {
 	}>;
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
+	traits?: string[];
 	reinforcementSlotId?: string;
 	reinforcementPending?: boolean;
 };
@@ -96,6 +97,7 @@ export const buildTrackerMetaMap = (
 			dcs: runtime.dcs,
 			adjustmentDescription: runtime.adjustmentDescription,
 			adjustmentLevelModifier: runtime.adjustmentLevelModifier,
+			traits: runtime.traits,
 			...(runtime.reinforcementSlotId !== undefined
 				? {
 						reinforcementSlotId: runtime.reinforcementSlotId,

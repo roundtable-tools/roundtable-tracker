@@ -144,6 +144,7 @@ const expandSlotParticipants = (
 				dcs: slotParticipant.dcs,
 				adjustmentDescription: slotParticipant.adjustmentDescription,
 				adjustmentLevelModifier: slotParticipant.adjustmentLevelModifier,
+				traits: slotParticipant.traits,
 				reinforcementSlotId: slot.id,
 			};
 

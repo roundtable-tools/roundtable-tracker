@@ -206,6 +206,10 @@ function fromRelativeLevelString(
 	return partyLevel + parsed;
 }
 
+function toSavedTraits(traits: string[] | undefined): string[] | undefined {
+	return traits && traits.length > 0 ? [...traits] : undefined;
+}
+
 export function toConcreteEncounter(
 	values: BuilderFormValues,
 	existingId?: string
@@ -225,6 +229,7 @@ export function toConcreteEncounter(
 					return {
 						type: 'hazard' as const,
 						name: s.name,
+						traits: toSavedTraits(s.traits),
 						level: s.level,
 						side,
 						count: s.count,
@@ -257,6 +262,7 @@ export function toConcreteEncounter(
 				return {
 					type: 'creature' as const,
 					name: s.name,
+					traits: toSavedTraits(s.traits),
 					level: s.level,
 					side,
 					count: s.count,
@@ -317,6 +323,7 @@ export function toConcreteEncounter(
 								return {
 									type: 'hazard' as const,
 									name: participant.name,
+									traits: toSavedTraits(participant.traits),
 									level: toRelativeLevelString(
 										participant.level,
 										values.partyLevel
@@ -353,6 +360,7 @@ export function toConcreteEncounter(
 							return {
 								type: 'creature' as const,
 								name: participant.name,
+								traits: toSavedTraits(participant.traits),
 								level: toRelativeLevelString(
 									participant.level,
 									values.partyLevel
@@ -407,6 +415,7 @@ export function toConcreteEncounter(
 								return {
 									type: 'hazard' as const,
 									name: s.name,
+									traits: toSavedTraits(s.traits),
 									level: s.level,
 									side,
 									count: s.count,
@@ -429,6 +438,7 @@ export function toConcreteEncounter(
 							return {
 								type: 'creature' as const,
 								name: s.name,
+								traits: toSavedTraits(s.traits),
 								level: s.level,
 								side,
 								count: s.count,
@@ -490,6 +500,7 @@ export function fromConcreteEncounter(
 				id: uuidv4(),
 				type: 'creature',
 				name: p.name,
+				traits: p.traits ?? [],
 				description: p.description ?? '',
 				side: alignmentToBuilderSide(p.side),
 				level: p.level,
@@ -516,6 +527,7 @@ export function fromConcreteEncounter(
 			id: uuidv4(),
 			type: 'hazard',
 			name: p.name,
+			traits: p.traits ?? [],
 			description: p.description ?? '',
 			side: alignmentToBuilderSide(p.side),
 			level: p.level,
@@ -558,6 +570,7 @@ export function fromConcreteEncounter(
 						id: uuidv4(),
 						type: participant.type,
 						name: participant.name,
+						traits: participant.traits ?? [],
 						side: alignmentToBuilderSide(participant.side),
 						level: fromRelativeLevelString(participant.level, encounter.level),
 						count: participant.count ?? 1,
@@ -618,6 +631,7 @@ function participantsToBuilderSlots(
 				id: uuidv4(),
 				type: 'creature' as const,
 				name: p.name,
+				traits: p.traits ?? [],
 				description: p.description ?? '',
 				side: alignmentToBuilderSide(p.side),
 				level: p.level,
@@ -643,6 +657,7 @@ function participantsToBuilderSlots(
 			id: uuidv4(),
 			type: 'hazard' as const,
 			name: p.name,
+			traits: p.traits ?? [],
 			description: p.description ?? '',
 			side: alignmentToBuilderSide(p.side),
 			level: p.level,

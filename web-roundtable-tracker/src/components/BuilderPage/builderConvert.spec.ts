@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { fromEncounterTemplate } from './builderConvert';
-import { ALIGNMENT } from '@/store/data';
+import {
+	defaultFormValues,
+	defaultSlot,
+	fromConcreteEncounter,
+	fromEncounterTemplate,
+	toConcreteEncounter,
+	type BuilderFormValues,
+} from './builderConvert';
+import { ALIGNMENT, ConcreteEncounterSchema, PRIORITY } from '@/store/data';
+import { buildTrackerMetaMap } from '@/store/convert';
 import { LevelDifference } from '@/models/utility/level/LevelDifference';
 import type { EncounterTemplateData } from '@/models/encounters/encounter.types';
 
@@ -80,5 +88,109 @@ describe('fromEncounterTemplate', () => {
 		expect(formValues.slots[0]?.maxHealth).toBe(77);
 		expect(formValues.slots[0]?.initiativeBonus).toBe(4);
 		expect(formValues.slots[1]?.hardness).toBe(12);
+	});
+});
+
+describe('traits round trip', () => {
+	const values: BuilderFormValues = {
+		...defaultFormValues(),
+		name: 'Traits',
+		partyLevel: 3,
+		slots: [
+			{ ...defaultSlot(), name: 'Goblin', traits: ['Goblin', 'Small'] },
+			{ ...defaultSlot(), name: 'Trap', type: 'hazard', traits: ['Rare'] },
+			{ ...defaultSlot(), name: 'Plain', traits: [] },
+			{
+				...defaultSlot(),
+				type: 'reinforcement',
+				reinforcementRound: 2,
+				reinforcementParticipants: [
+					{
+						id: 'reinforcement-participant',
+						type: 'creature',
+						name: 'Ogre',
+						side: 'opponent',
+						level: 4,
+						count: 1,
+						successesToDisable: 1,
+						adjustment: 'none',
+						isSimpleHazard: false,
+						traits: ['Giant', 'Large'],
+					},
+				],
+			},
+		],
+	};
+
+	it('saves traits and loads them back into the builder', () => {
+		const encounter = toConcreteEncounter(values);
+		const loaded = fromConcreteEncounter(encounter);
+
+		expect(encounter.participants.map(({ traits }) => traits)).toEqual([
+			['Goblin', 'Small'],
+			['Rare'],
+			undefined,
+		]);
+		expect(encounter.narrativeSlots?.[0]?.participants?.[0]?.traits).toEqual([
+			'Giant',
+			'Large',
+		]);
+		expect(loaded.slots.slice(0, 3).map(({ traits }) => traits)).toEqual([
+			['Goblin', 'Small'],
+			['Rare'],
+			[],
+		]);
+		expect(loaded.slots[3]?.reinforcementParticipants?.[0]?.traits).toEqual([
+			'Giant',
+			'Large',
+		]);
+	});
+
+	it('keeps traits in saved variants', () => {
+		const encounter = toConcreteEncounter({
+			...values,
+			variants: [
+				{
+					id: 'variant',
+					description: 'Variant',
+					partyLevel: 3,
+					partySize: 4,
+					slots: values.slots,
+				},
+			],
+		});
+
+		expect(encounter.variants?.[0]?.participants[0]?.traits).toEqual([
+			'Goblin',
+			'Small',
+		]);
+		expect(
+			fromConcreteEncounter(encounter).variants[0]?.slots[1]?.traits
+		).toEqual(['Rare']);
+	});
+
+	it('keeps traits when the saved participants are validated', () => {
+		const { participants } = toConcreteEncounter(values);
+
+		expect(
+			ConcreteEncounterSchema.shape.participants.parse(participants)
+		).toEqual(participants);
+	});
+
+	it('passes saved traits to the tracker', () => {
+		const [goblin] = toConcreteEncounter(values).participants;
+		const metaMap = buildTrackerMetaMap([
+			{
+				...goblin,
+				uuid: 'goblin',
+				tiePriority: PRIORITY.NPC,
+				initiative: 10,
+				maxHealth: 10,
+				health: 10,
+				tempHealth: 0,
+			},
+		]);
+
+		expect(metaMap.goblin?.traits).toEqual(['Goblin', 'Small']);
 	});
 });

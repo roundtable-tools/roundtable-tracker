@@ -29,6 +29,7 @@ export type TrackerParticipant = {
 	}>;
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
+	traits?: string[];
 	notes: string;
 };
 
