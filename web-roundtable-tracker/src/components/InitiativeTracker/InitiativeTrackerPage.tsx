@@ -1003,8 +1003,12 @@ export function InitiativeTrackerPage() {
 		}
 	};
 
+	// Delaying participants keep their turn but aren't in the active part of the
+	// round, so acting on one (e.g. a K.O.) never closes the round.
 	const isFinalActiveParticipant = (participantId: string) =>
-		activeRoundBoundaryIndex === 1 && charactersWithTurn.has(participantId);
+		activeRoundBoundaryIndex === 1 &&
+		charactersWithTurn.has(participantId) &&
+		charactersMap[participantId]?.turnState !== 'delayed';
 
 	const isNextParticipantDelayed = () => {
 		return (
