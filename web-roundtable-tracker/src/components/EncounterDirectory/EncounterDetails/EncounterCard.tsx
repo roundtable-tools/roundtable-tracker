@@ -182,6 +182,20 @@ export const EncounterCard = (props: EncounterCardProps) => {
 				description:
 					activeSavedVariant.description ?? selectedEncounter.description,
 				participants: activeSavedVariant.participants,
+				// Imported template variants carry their own events and notes
+				...(selectedEncounter.levelRepresentation ===
+				LEVEL_REPRESENTATION.Relative
+					? {
+							narrativeSlots:
+								'narrativeSlots' in activeSavedVariant
+									? activeSavedVariant.narrativeSlots
+									: undefined,
+							notes:
+								'notes' in activeSavedVariant
+									? activeSavedVariant.notes
+									: undefined,
+						}
+					: {}),
 			} as Encounter;
 		}
 
