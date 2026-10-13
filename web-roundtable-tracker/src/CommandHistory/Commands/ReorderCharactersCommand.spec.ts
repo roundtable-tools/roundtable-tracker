@@ -3,6 +3,8 @@ import { ReorderCharactersCommand } from './ReorderCharactersCommand';
 import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import { Character } from '@/store/data';
 import { STATUS } from '../common';
+import { DelayCharacterCommand } from './DelayCharacterCommand';
+import { RemoveCharacterCommand } from './RemoveCharacterCommand';
 
 describe('ReorderCharactersCommand', () => {
 	let initialCharacters: Character[];
@@ -103,5 +105,80 @@ describe('ReorderCharactersCommand', () => {
 		const status = command.undo();
 
 		expect(status).toBe(STATUS.failure);
+	});
+
+	describe('stale or duplicated initiative orders (#28)', () => {
+		const [alice, bob, charlie] = [
+			'00000000-0000-0000-0000-000000000001',
+			'00000000-0000-0000-0000-000000000002',
+			'00000000-0000-0000-0000-000000000003',
+		];
+
+		beforeEach(() => {
+			encounterStore.getState().startEncounter(initialCharacters);
+		});
+
+		it('does not duplicate a participant that delayed while the order was being dragged', () => {
+			// The drag started on [Alice, Bob, Charlie] and the dragged list ended
+			// up holding Alice twice: once from before her Delay, once after it.
+			const staleDraggedOrder = [charlie, alice, bob, alice];
+
+			new DelayCharacterCommand({ uuid: alice }, { encounterStore }).execute();
+			expect(encounterStore.getState().charactersOrder).toEqual([
+				bob,
+				charlie,
+				alice,
+			]);
+
+			const command = new ReorderCharactersCommand(
+				{ newOrder: staleDraggedOrder },
+				{ encounterStore }
+			);
+
+			expect(command.execute()).toBe(STATUS.success);
+			expect(encounterStore.getState().charactersOrder).toEqual([
+				charlie,
+				alice,
+				bob,
+			]);
+			expect(encounterStore.getState().delayedOrder).toEqual([alice]);
+
+			expect(command.undo()).toBe(STATUS.success);
+			expect(encounterStore.getState().charactersOrder).toEqual([
+				bob,
+				charlie,
+				alice,
+			]);
+		});
+
+		it('keeps participants that a stale order misses', () => {
+			const command = new ReorderCharactersCommand(
+				{ newOrder: [charlie, alice] },
+				{ encounterStore }
+			);
+
+			command.execute();
+
+			expect(encounterStore.getState().charactersOrder).toEqual([
+				charlie,
+				bob,
+				alice,
+			]);
+		});
+
+		it('does not bring back a participant removed after the order was built', () => {
+			const staleOrder = [charlie, bob, alice];
+
+			new RemoveCharacterCommand({ uuid: bob }, { encounterStore }).execute();
+			new ReorderCharactersCommand(
+				{ newOrder: staleOrder },
+				{ encounterStore }
+			).execute();
+
+			expect(encounterStore.getState().charactersOrder).toEqual([
+				charlie,
+				alice,
+			]);
+		});
 	});
 });
