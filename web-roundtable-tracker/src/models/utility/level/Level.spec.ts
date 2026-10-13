@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { formatAdjustedLevel, getAdjustedLevel, Level } from './Level';
 import { adjustedLevel } from '@/store/data';
+import { ExperienceBudget } from '../experienceBudget/ExperienceBudget';
 import { LevelDifference } from './LevelDifference';
 import { LevelRange } from './LevelRange';
 
@@ -200,6 +201,55 @@ describe('Level', () => {
 			const diff = new LevelDifference(-6);
 			const exp = diff.toExperience();
 			expect(exp.valueOf()).toBe(0);
+		});
+
+		it.each([
+			{ difference: 0.5, xp: 50 }, // halfway between 40 and 60
+			{ difference: 0.75, xp: 55 }, // elite-offense at party level
+			{ difference: -1.25, xp: 28 }, // between 30 (-1) and 20 (-2): 27.5
+			{ difference: 1.5, xp: 70 },
+			{ difference: -3.5, xp: 13 }, // between 15 and 10: 12.5
+			{ difference: 4.5, xp: 200 }, // between 160 and the extrapolated 240
+		])(
+			'should interpolate XP linearly at difference $difference',
+			({ difference, xp }) => {
+				expect(new LevelDifference(difference).toExperience().valueOf()).toBe(
+					xp
+				);
+			}
+		);
+
+		it('should interpolate simple hazard XP too', () => {
+			expect(new LevelDifference(0.5).toExperience(false).valueOf()).toBe(10);
+		});
+
+		it('should change XP in the direction of a fractional adjustment', () => {
+			for (let whole = -4; whole <= 5; whole += 1) {
+				const base = new LevelDifference(whole).toExperience().valueOf();
+
+				expect(
+					new LevelDifference(whole + 0.5).toExperience().valueOf()
+				).toBeGreaterThan(base);
+
+				if (whole > -4) {
+					expect(
+						new LevelDifference(whole - 0.25).toExperience().valueOf()
+					).toBeLessThan(base);
+				}
+			}
+		});
+
+		it('should keep extrapolating whole levels past +4', () => {
+			expect(new LevelDifference(5).toExperience().valueOf()).toBe(240);
+			expect(new LevelDifference(6).toExperience().valueOf()).toBe(320);
+		});
+
+		it('should agree with ExperienceBudget.fromLevel', () => {
+			for (let difference = -4; difference <= 6; difference += 0.25) {
+				expect(new LevelDifference(difference).toExperience().valueOf()).toBe(
+					ExperienceBudget.fromLevel(difference).valueOf()
+				);
+			}
 		});
 
 		it('should return 0 simple hazard XP for differences below -4', () => {

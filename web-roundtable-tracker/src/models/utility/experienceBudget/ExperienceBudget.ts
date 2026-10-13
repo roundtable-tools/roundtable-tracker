@@ -33,17 +33,12 @@ export class ExperienceBudget extends Number {
 	}
 
 	/**
-	 * Convert a relative level (e.g., -2, 0, +3) to XP budget.
-	 * Uses PF2e scaling: 40 * multiplier where multiplier depends on level difference.
-	 * Relative level < -4 yields 0 XP (creatures too weak to be worth experience).
+	 * XP for a creature or complex hazard at a whole level difference.
+	 * –4..+4 gives the GM Core table (10, 15, 20, 30, 40, 60, 80, 120, 160);
+	 * above +4 the same 1 / 1.5 / 2 / 3 / 4 steps keep going (house rule).
 	 */
-	static fromLevel(relativeLevel: number): ExperienceBudget {
-		if (relativeLevel < -4) {
-			return new ExperienceBudget(0);
-		}
-
+	private static wholeLevelXp(difference: number): number {
 		const baseCost = 40;
-		const difference = Math.trunc(relativeLevel);
 
 		const multiplier = (() => {
 			if (difference === 0) return 1;
@@ -65,9 +60,37 @@ export class ExperienceBudget extends Number {
 			return 0.75 / Math.pow(2, (absoluteDifference - 1) / 2);
 		})();
 
-		const xp = baseCost * multiplier;
+		return baseCost * multiplier;
+	}
 
-		return new ExperienceBudget(xp);
+	/**
+	 * Convert a relative level (e.g., -2, 0, +3) to XP budget.
+	 * Whole levels give the table values; fractional levels (partial or custom
+	 * adjustments) interpolate linearly between the two neighbouring whole
+	 * levels, so +0.5 is halfway between 40 and 60 XP.
+	 * Relative level < -4 yields 0 XP (creatures too weak to be worth experience).
+	 * A simple hazard is worth a fifth of a complex one.
+	 */
+	static fromLevel(
+		relativeLevel: number,
+		isComplexHazard: boolean = true
+	): ExperienceBudget {
+		if (relativeLevel < -4) {
+			return new ExperienceBudget(0);
+		}
+
+		const lower = Math.floor(relativeLevel);
+		const fraction = relativeLevel - lower;
+		const lowerXp = ExperienceBudget.wholeLevelXp(lower);
+		const complexHazardXp =
+			fraction === 0
+				? lowerXp
+				: lowerXp +
+					(ExperienceBudget.wholeLevelXp(lower + 1) - lowerXp) * fraction;
+
+		return new ExperienceBudget(
+			isComplexHazard ? complexHazardXp : complexHazardXp / 5
+		);
 	}
 
 	private static resolveCharacterAdjustmentValue(baseReward: number): number {
