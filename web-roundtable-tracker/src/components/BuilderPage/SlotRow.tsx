@@ -171,7 +171,10 @@ function hasAdditionalBlock(
 	}
 
 	if (key === 'initiative') {
-		return typeof slot.initiativeBonus === 'number';
+		return (
+			typeof slot.initiativeBonus === 'number' ||
+			(slot.initiativeDescription?.trim().length ?? 0) > 0
+		);
 	}
 
 	if (key === 'adjustment') {
@@ -216,7 +219,10 @@ function hasReinforcementAdditionalBlock(
 	}
 
 	if (key === 'initiative') {
-		return typeof participant.initiativeBonus === 'number';
+		return (
+			typeof participant.initiativeBonus === 'number' ||
+			(participant.initiativeDescription?.trim().length ?? 0) > 0
+		);
 	}
 
 	if (key === 'adjustment') {
