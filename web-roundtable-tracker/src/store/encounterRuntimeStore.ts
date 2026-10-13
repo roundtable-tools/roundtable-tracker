@@ -32,7 +32,10 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { Encounter } from './data';
 import { Command } from '@/CommandHistory/common';
 import { jsonConfiguration } from './serializer';
-import { CommandJSON } from '@/CommandHistory/serialization';
+import {
+	CommandJSON,
+	keepRestorableCommands,
+} from '@/CommandHistory/serialization';
 import { splitArray } from '@/utils/array';
 
 type ValueOrFunction<T> = T | ((prev: T) => T);
@@ -184,6 +187,16 @@ export const createEncounterStore = () =>
 					() => localStorage,
 					jsonConfiguration
 				),
+				merge: (persistedState, currentState) => {
+					const persisted = persistedState as Partial<EncounterStore>;
+
+					return {
+						...currentState,
+						...persisted,
+						history: keepRestorableCommands(persisted?.history ?? []),
+						redoStack: keepRestorableCommands(persisted?.redoStack ?? []),
+					};
+				},
 			}
 		)
 	);

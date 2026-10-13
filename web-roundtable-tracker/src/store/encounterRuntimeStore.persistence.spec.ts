@@ -1,9 +1,11 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { createEncounterStore } from './encounterRuntimeStore';
 import { getEncounterStore } from './encounterRuntimeInstance';
 import { Character } from './data';
 import { STATUS } from '@/CommandHistory/common';
 import { ReturnToInitiativeCommand } from '@/CommandHistory/Commands/ReturnToInitiativeCommand';
+import { GiveAdditionalTurnCommand } from '@/CommandHistory/Commands/GiveAdditionalTurnCommand';
+import { CompositeCommand } from '@/CommandHistory/Commands/CompositeCommand';
 
 const characters: Character[] = [
 	{
@@ -61,5 +63,50 @@ describe('encounter store persistence', () => {
 		expect(reloaded.getState().history[0]).toBeInstanceOf(
 			ReturnToInitiativeCommand
 		);
+	});
+
+	it('drops an unknown stored command and the history after it', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const store = createEncounterStore();
+		store.getState().startEncounter(characters);
+		const giveTurn = (uuid: string) =>
+			new GiveAdditionalTurnCommand({ uuid: uuid as Character['uuid'] });
+		store
+			.getState()
+			.setHistory([
+				giveTurn(characters[0].uuid),
+				giveTurn('removed'),
+				giveTurn(characters[1].uuid),
+			]);
+		store
+			.getState()
+			.setRedoStack([
+				giveTurn(characters[0].uuid),
+				new CompositeCommand({ commands: [giveTurn('removed')] }),
+				giveTurn(characters[1].uuid),
+			]);
+		const stored = localStorage.getItem('encounter-store')!;
+		const withUnknown = stored.replace(
+			/"type":"Command\.GiveAdditionalTurnCommand"(,"description":"[^"]*")?,"data":\{"uuid":"removed"/g,
+			'"type":"Command.RemovedCommand","data":{"uuid":"removed"'
+		);
+		expect(withUnknown).not.toBe(stored);
+		localStorage.setItem('encounter-store', withUnknown);
+
+		const reloaded = createEncounterStore();
+
+		const { charactersOrder, history, redoStack } = reloaded.getState();
+		expect(charactersOrder).toEqual(store.getState().charactersOrder);
+		expect(history.map((command) => command.data.uuid)).toEqual([
+			characters[0].uuid,
+		]);
+		expect(redoStack.map((command) => command.data.uuid)).toEqual([
+			characters[0].uuid,
+		]);
+		expect(warn).toHaveBeenCalledWith(
+			expect.stringContaining('RemovedCommand'),
+			expect.any(Error)
+		);
+		warn.mockRestore();
 	});
 });
