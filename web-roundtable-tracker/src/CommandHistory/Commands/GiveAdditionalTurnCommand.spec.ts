@@ -3,6 +3,7 @@ import { GiveAdditionalTurnCommand } from './GiveAdditionalTurnCommand';
 import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import { Character } from '@/store/data';
 import { STATUS } from '../common';
+import { getCommand, registerSerializableCommands } from '../commandRegistry';
 
 describe('GiveAdditionalTurnCommand', () => {
 	let encounterStore: ReturnType<typeof createEncounterStore>;
@@ -76,5 +77,13 @@ describe('GiveAdditionalTurnCommand', () => {
 		const status = command.undo();
 
 		expect(status).toBe(STATUS.failure);
+	});
+
+	it('is registered so it can be revived from the saved history', () => {
+		registerSerializableCommands();
+
+		expect(getCommand('GiveAdditionalTurnCommand')).toBe(
+			GiveAdditionalTurnCommand
+		);
 	});
 });

@@ -54,6 +54,7 @@ import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
 import { type Command } from '@/CommandHistory/common';
 import { DelayCharacterCommand } from '@/CommandHistory/Commands/DelayCharacterCommand';
 import { EndTurnCommand } from '@/CommandHistory/Commands/EndTurnCommand';
+import { GiveAdditionalTurnCommand } from '@/CommandHistory/Commands/GiveAdditionalTurnCommand';
 import { FinalizeTurnAndAdvanceRoundCommand } from '@/CommandHistory/Commands/FinalizeTurnAndAdvanceRoundCommand';
 import { FinalizeTurnAndReturnToInitiativeCommand } from '@/CommandHistory/Commands/FinalizeTurnAndReturnToInitiativeCommand';
 import { KnockOutCharacterCommand } from '@/CommandHistory/Commands/KnockOutCharacterCommand';
@@ -394,6 +395,7 @@ type ParticipantDetailsProps = {
 	onHeal?: (amount: number) => void;
 	onDamage?: (amount: number) => void;
 	onSetTempHp?: (amount: number, description: string) => void;
+	onGiveTurnBack?: () => void;
 };
 
 function ParticipantDetails({
@@ -401,6 +403,7 @@ function ParticipantDetails({
 	onHeal,
 	onDamage,
 	onSetTempHp,
+	onGiveTurnBack,
 }: ParticipantDetailsProps) {
 	const [hpAmount, setHpAmount] = useState('');
 	const [tempHpAmount, setTempHpAmount] = useState('');
@@ -453,6 +456,21 @@ function ParticipantDetails({
 				<Badge>{getParticipantRoleLabel(participant)}</Badge>
 				<Badge variant="secondary">{participant.state}</Badge>
 			</div>
+			{onGiveTurnBack && (
+				<div className="flex items-center justify-between gap-2 rounded-md border p-3">
+					<p className="text-sm text-muted-foreground">
+						Already acted this round.
+					</p>
+					<Button
+						size="sm"
+						variant="outline"
+						className="shrink-0"
+						onClick={onGiveTurnBack}
+					>
+						Give Turn Back
+					</Button>
+				</div>
+			)}
 			{isHazard && (
 				<p className="inline-flex items-center gap-1 text-sm text-muted-foreground">
 					<ShieldOff className="h-4 w-4" /> {indicatorLabel}
@@ -715,14 +733,36 @@ function DelayedMarkerCard({
 	);
 }
 
+function hasTurnLeft(
+	participant: TrackerParticipant,
+	charactersWithTurn: Set<string>
+) {
+	return (
+		participant.state !== 'delayed' && charactersWithTurn.has(participant.id)
+	);
+}
+
+function countParticipantsWithTurn(
+	participants: TrackerParticipant[],
+	charactersWithTurn: Set<string>
+) {
+	return participants.filter((participant) =>
+		hasTurnLeft(participant, charactersWithTurn)
+	).length;
+}
+
+// The round ends after the last participant that still has a turn. After a
+// manual reorder, participants that already acted can sit before it; they are
+// skipped when the turn passes to them.
 function getRoundBoundaryIndex(
 	participants: TrackerParticipant[],
 	charactersWithTurn: Set<string>
 ) {
-	return participants.filter(
-		(participant) =>
-			participant.state !== 'delayed' && charactersWithTurn.has(participant.id)
-	).length;
+	return (
+		participants.findLastIndex((participant) =>
+			hasTurnLeft(participant, charactersWithTurn)
+		) + 1
+	);
 }
 
 type InitiativeCarouselItemData =
@@ -936,6 +976,10 @@ export function InitiativeTrackerPage() {
 		() => getRoundBoundaryIndex(initiativeParticipants, charactersWithTurn),
 		[initiativeParticipants, charactersWithTurn]
 	);
+	const activeParticipantCount = useMemo(
+		() => countParticipantsWithTurn(initiativeParticipants, charactersWithTurn),
+		[initiativeParticipants, charactersWithTurn]
+	);
 
 	useEffect(() => {
 		return () => {
@@ -1004,7 +1048,7 @@ export function InitiativeTrackerPage() {
 	};
 
 	const isFinalActiveParticipant = (participantId: string) =>
-		activeRoundBoundaryIndex === 1 && charactersWithTurn.has(participantId);
+		activeParticipantCount === 1 && charactersWithTurn.has(participantId);
 
 	const isNextParticipantDelayed = () => {
 		return (
@@ -1129,12 +1173,21 @@ export function InitiativeTrackerPage() {
 				return;
 			}
 
-			logTrackerButton(
-				'Next Turn ignored because current participant has no turn',
-				{
-					participantId: currentParticipantId,
-				}
-			);
+			// Already acted this round (e.g. moved up by a manual reorder before
+			// this fix): skip it. The reorder command rotates the queue to the next
+			// participant that still has a turn.
+			logTrackerButton('Next Turn skipping participant that already acted', {
+				participantId: currentParticipantId,
+			});
+
+			try {
+				executeCommand(
+					new ReorderCharactersCommand({ newOrder: charactersOrder })
+				);
+				queueFocusCurrentParticipant();
+			} catch (error) {
+				console.error('Failed to skip participant without a turn', error);
+			}
 
 			return;
 		}
@@ -1531,6 +1584,28 @@ export function InitiativeTrackerPage() {
 				}
 			}
 		: undefined;
+
+	const canGiveSelectedTurnBack =
+		selectedParticipantId !== null &&
+		charactersOrder.includes(selectedParticipantId) &&
+		!delayedOrder.includes(selectedParticipantId) &&
+		!charactersWithTurn.has(selectedParticipantId);
+
+	const handleSelectedGiveTurnBack =
+		selectedParticipantId && canGiveSelectedTurnBack
+			? () => {
+					try {
+						executeCommand(
+							new GiveAdditionalTurnCommand({ uuid: selectedParticipantId })
+						);
+						logTrackerButton('Turn given back to participant', {
+							participantId: selectedParticipantId,
+						});
+					} catch (error) {
+						console.error('Failed to give turn back', error);
+					}
+				}
+			: undefined;
 
 	const nextRound = (trackerHeader?.currentRound ?? round) + 1;
 	const nextRoundMarkerIndex =
@@ -1963,6 +2038,7 @@ export function InitiativeTrackerPage() {
 								onHeal={handleSelectedHeal}
 								onDamage={handleSelectedDamage}
 								onSetTempHp={handleSelectedSetTempHp}
+								onGiveTurnBack={handleSelectedGiveTurnBack}
 							/>
 						</ScrollArea>
 					</Card>
@@ -2293,6 +2369,7 @@ export function InitiativeTrackerPage() {
 								onHeal={handleSelectedHeal}
 								onDamage={handleSelectedDamage}
 								onSetTempHp={handleSelectedSetTempHp}
+								onGiveTurnBack={handleSelectedGiveTurnBack}
 							/>
 						</Card>
 					</TabsContent>
