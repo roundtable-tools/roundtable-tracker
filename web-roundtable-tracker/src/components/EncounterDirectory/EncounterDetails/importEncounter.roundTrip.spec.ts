@@ -120,6 +120,12 @@ function toTemplateData(encounter: EncounterTemplate): EncounterTemplateData {
 		defaultVariantId: encounter.defaultVariantId as string,
 		variants: (encounter.variants ?? []).map(toTemplateVariant),
 		...(encounter.tags === undefined ? {} : { tags: encounter.tags }),
+		...(encounter.createdAt === undefined
+			? {}
+			: { createdAt: encounter.createdAt }),
+		...(encounter.updatedAt === undefined
+			? {}
+			: { updatedAt: encounter.updatedAt }),
 	};
 }
 
@@ -140,6 +146,8 @@ const fullTemplate: EncounterTemplateData = {
 	description: 'Cultists defend a crumbling shrine',
 	defaultVariantId: '6b0e2a52-3a8b-4d2e-8b44-6e7c1a9f0b21',
 	tags: ['Severe', 'cultists'],
+	createdAt: new Date('2026-09-01T10:00:00.000Z'),
+	updatedAt: new Date('2026-10-01T12:30:00.000Z'),
 	variants: [
 		{
 			id: '6b0e2a52-3a8b-4d2e-8b44-6e7c1a9f0b21',
@@ -289,6 +297,16 @@ describe('validateImportedEncounter template round trip', () => {
 				participants: [{ name: 'Acolyte', count: 2 }],
 			},
 		]);
+	});
+
+	it('rejects timestamps that are not dates or date strings', () => {
+		for (const createdAt of [0, null, 'not a date']) {
+			const [encounter] = validateImportedEncounter(
+				JSON.stringify({ ...fullTemplate, createdAt })
+			);
+
+			expect(encounter).toBeNull();
+		}
 	});
 
 	it('warns about reinforcement references it cannot store', () => {

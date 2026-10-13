@@ -310,6 +310,8 @@ export type EncounterTemplate = {
 	variants?: EncounterTemplateVariant[];
 	defaultVariantId?: string;
 	tags?: string[];
+	createdAt?: Date;
+	updatedAt?: Date;
 };
 
 export type AbstractEncounter = EncounterTemplate;

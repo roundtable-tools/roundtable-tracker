@@ -185,6 +185,8 @@ function normalizeImportedTemplate(
 		variants,
 		defaultVariantId: template.defaultVariantId,
 		tags: template.tags,
+		createdAt: template.createdAt,
+		updatedAt: template.updatedAt,
 	};
 }
 
