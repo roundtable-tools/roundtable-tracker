@@ -28,6 +28,18 @@ export type TrackerParticipantMeta = {
 	traits?: string[];
 	reinforcementSlotId?: string;
 };
+
+// A hazard is disabled once its Disable a Device successes reach the required
+// count. Hazards without a required count can't be disabled this way.
+export const isHazardDisabled = (
+	meta: Pick<
+		TrackerParticipantMeta,
+		'role' | 'disableChecksRequired' | 'disableChecksSucceeded'
+	>
+) =>
+	meta.role === 'hazard' &&
+	meta.disableChecksRequired > 0 &&
+	meta.disableChecksSucceeded >= meta.disableChecksRequired;
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Encounter } from './data';
 import { Command } from '@/CommandHistory/common';
