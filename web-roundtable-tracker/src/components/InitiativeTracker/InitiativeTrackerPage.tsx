@@ -37,6 +37,7 @@ import {
 	Undo2,
 } from 'lucide-react';
 import { Reorder } from 'motion/react';
+import { useNavigate } from '@tanstack/react-router';
 import { InitiativeActionCarouselCard } from './InitiativeActionCarouselCard';
 import {
 	getEncounterStore,
@@ -796,6 +797,17 @@ export function InitiativeTrackerPage() {
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
 	const round = useEncounterStore((state) => state.round);
 	const history = useEncounterStore((state) => state.history);
+	const startEncounter = useEncounterStore((state) => state.startEncounter);
+	const navigate = useNavigate();
+	const [endEncounterOpen, setEndEncounterOpen] = useState(false);
+
+	// Clears the running initiative but keeps the loaded encounter, so it can
+	// be started again from its preview. Clearing after leaving the page keeps
+	// the tracker from rendering an empty order.
+	const endEncounter = () => {
+		setEndEncounterOpen(false);
+		void navigate({ to: '/encounters' }).then(() => startEncounter([]));
+	};
 
 	const storeInitiativeParticipants = useMemo(
 		() =>
@@ -1637,9 +1649,7 @@ export function InitiativeTrackerPage() {
 											variant="secondary"
 											size="icon"
 											className="border border-amber-500/50 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25"
-											onClick={() =>
-												logTrackerButton('End Encounter button clicked')
-											}
+											onClick={() => setEndEncounterOpen(true)}
 										>
 											<ArrowRight className="h-4 w-4" />
 										</Button>
@@ -2010,9 +2020,7 @@ export function InitiativeTrackerPage() {
 									variant="secondary"
 									size="icon"
 									className="border border-amber-500/50 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25"
-									onClick={() =>
-										logTrackerButton('End Encounter button clicked')
-									}
+									onClick={() => setEndEncounterOpen(true)}
 								>
 									<ArrowRight className="h-4 w-4" />
 								</Button>
@@ -2343,6 +2351,29 @@ export function InitiativeTrackerPage() {
 					<DialogFooter>
 						<Button onClick={() => handleNextRoundAnnouncementChange(false)}>
 							Continue
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			<Dialog open={endEncounterOpen} onOpenChange={setEndEncounterOpen}>
+				<DialogContent className="sm:max-w-sm">
+					<DialogHeader>
+						<DialogTitle>End Encounter?</DialogTitle>
+						<DialogDescription>
+							This clears the initiative order, health changes and undo history,
+							and returns to Encounters.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => setEndEncounterOpen(false)}
+						>
+							Cancel
+						</Button>
+						<Button variant="destructive" onClick={endEncounter}>
+							End Encounter
 						</Button>
 					</DialogFooter>
 				</DialogContent>
