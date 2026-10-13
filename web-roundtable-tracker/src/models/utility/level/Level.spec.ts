@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { formatAdjustedLevel, getAdjustedLevel, Level } from './Level';
+import { adjustedLevel } from '@/store/data';
 import { LevelDifference } from './LevelDifference';
 import { LevelRange } from './LevelRange';
 
@@ -62,6 +63,42 @@ describe('Level', () => {
 		it('should apply elite/weak low-level special cases', () => {
 			expect(getAdjustedLevel(0, 'elite')).toBe(2);
 			expect(getAdjustedLevel(1, 'weak')).toBe(-1);
+		});
+
+		it('should pin the partial adjustments', () => {
+			expect(getAdjustedLevel(5, 'elite-offense')).toBe(5.75);
+			expect(getAdjustedLevel(0, 'elite-offense')).toBe(1.5);
+			expect(getAdjustedLevel(-1, 'elite-offense')).toBe(0.5);
+			expect(getAdjustedLevel(5, 'elite-defense')).toBe(5.5);
+			expect(getAdjustedLevel(0, 'elite-defense')).toBe(1);
+			expect(getAdjustedLevel(-1, 'elite-defense')).toBe(0);
+		});
+
+		it('should add the custom level modifier once, on top of the preset', () => {
+			expect(getAdjustedLevel(5, 'elite-offense', 0.5)).toBe(6.25);
+			expect(getAdjustedLevel(5, 'none', -0.3)).toBeCloseTo(4.7);
+			expect(getAdjustedLevel(5, undefined, Number.NaN)).toBe(5);
+		});
+
+		it('should give display and XP the same adjusted level', () => {
+			const adjustments = [
+				'none',
+				'elite',
+				'weak',
+				'elite-offense',
+				'elite-defense',
+			] as const;
+
+			for (const baseLevel of [-1, 0, 1, 2, 5]) {
+				for (const adjustment of adjustments) {
+					for (const modifier of [undefined, 0.5, -1]) {
+						expect(
+							adjustedLevel(baseLevel, adjustment, modifier),
+							`${baseLevel} ${adjustment} ${modifier}`
+						).toBe(getAdjustedLevel(baseLevel, adjustment, modifier));
+					}
+				}
+			}
 		});
 
 		it('should format fractional levels as n(+) / n(-)', () => {

@@ -1,5 +1,6 @@
 import { UUID } from '@/utils/uuid';
 import { z } from 'zod';
+import { getAdjustedLevel } from '@/models/utility/level/Level';
 
 export const STATE = [
 	'normal',
@@ -124,33 +125,8 @@ export const adjustedLevel = (
 	baseLevel: number,
 	adjustment?: ParticipantAdjustment,
 	customAdjustmentLevelModifier?: number
-): number => {
-	const levelWithPreset = (() => {
-		switch (adjustment) {
-			case 'elite':
-				return baseLevel + (baseLevel <= 0 ? 2 : 1);
-
-			case 'weak':
-				return baseLevel - (baseLevel === 1 ? 2 : 1);
-
-			case 'elite-offense':
-			case 'elite-defense':
-				return baseLevel + (baseLevel <= 0 ? 1 : 0.5);
-
-			default:
-				return baseLevel;
-		}
-	})();
-
-	if (
-		typeof customAdjustmentLevelModifier === 'number' &&
-		Number.isFinite(customAdjustmentLevelModifier)
-	) {
-		return levelWithPreset + customAdjustmentLevelModifier;
-	}
-
-	return levelWithPreset;
-};
+): number =>
+	getAdjustedLevel(baseLevel, adjustment, customAdjustmentLevelModifier);
 
 export const formatAdjustedLevel = (level: number): string => {
 	if (Number.isInteger(level)) {
