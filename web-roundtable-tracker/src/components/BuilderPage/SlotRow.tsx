@@ -65,10 +65,6 @@ const SLOT_TYPES: { value: SlotType; label: string; Icon: LucideIcon }[] = [
 	{ value: 'narrative', label: 'Narrative Event', Icon: ScrollText },
 ];
 
-export const PARTICIPANT_SLOT_TYPES: SlotType[] = ['creature', 'hazard'];
-
-export const EVENT_SLOT_TYPES: SlotType[] = ['narrative', 'reinforcement'];
-
 const SIDE_OPTIONS: { value: SideType; label: string }[] = [
 	{ value: 'opponent', label: 'Opponents' },
 	{ value: 'ally', label: 'Allies' },
