@@ -3,12 +3,7 @@ export type TrackerParticipant = {
 	name: string;
 	role: 'pc' | 'opponent' | 'neutral' | 'ally' | 'hazard' | 'reinforcement';
 	sideTheme?: 'pc' | 'opponent' | 'ally' | 'other' | 'neutral';
-	state:
-		| 'active'
-		| 'delayed'
-		| 'knocked-out'
-		| 'inactive'
-		| 'pending-reinforcement';
+	state: 'active' | 'delayed' | 'knocked-out' | 'inactive';
 	initiative?: number;
 	eventId?: string;
 	eventRound?: number;

@@ -230,21 +230,10 @@ export class TriggerReinforcementEventCommand implements Command {
 			return STATUS.failure;
 		}
 
-		const existingMetaValues = Object.entries(state.trackerMetaMap);
-
-		// Check if participants were pre-added as pending reinforcements for this slot
-		const preAddedUuids = existingMetaValues
-			.filter(
-				([, meta]) =>
-					meta.reinforcementSlotId === this.data.slotId &&
-					meta.reinforcementPending === true
-			)
-			.map(([uuid]) => uuid);
-
-		const alreadyTriggered = existingMetaValues.some(
-			([, meta]) =>
-				meta.reinforcementSlotId === this.data.slotId &&
-				meta.reinforcementPending === false
+		// Reinforcements are not in the starting roster; any participant tagged
+		// with this slot means the event has already been triggered.
+		const alreadyTriggered = Object.values(state.trackerMetaMap).some(
+			(meta) => meta.reinforcementSlotId === this.data.slotId
 		);
 
 		if (alreadyTriggered) {
@@ -261,86 +250,32 @@ export class TriggerReinforcementEventCommand implements Command {
 			trackerMetaMap: structuredClone(state.trackerMetaMap),
 		};
 
-		if (preAddedUuids.length > 0) {
-			// Activate pre-added pending participants
-			encounterStore.setState((current) => {
-				const trackerMetaMap = { ...current.trackerMetaMap };
-				const charactersWithTurn = new Set(current.charactersWithTurn);
-				// Re-insert by initiative relative to current queue (excluding themselves)
-				const orderWithoutPending = current.charactersOrder.filter(
-					(uuid) => !preAddedUuids.includes(uuid)
-				);
-				const pendingCharacters = preAddedUuids
-					.map((uuid) => current.charactersMap[uuid])
-					.filter((c): c is NonNullable<typeof c> => c != null);
+		encounterStore.setState((current) => {
+			const charactersMap = { ...current.charactersMap };
+			const trackerMetaMap = { ...current.trackerMetaMap };
+			const charactersWithTurn = new Set(current.charactersWithTurn);
 
-				const newCharactersOrder = insertByInitiative(
-					orderWithoutPending,
-					current.charactersMap,
-					pendingCharacters
-				);
-
-				for (const uuid of preAddedUuids) {
-					trackerMetaMap[uuid] = {
-						...trackerMetaMap[uuid],
-						reinforcementPending: false,
-					};
-					charactersWithTurn.add(uuid);
-				}
-
-				return {
-					charactersOrder: newCharactersOrder,
-					charactersWithTurn,
-					trackerMetaMap,
-				};
-			});
-		} else {
-			// No pre-added participants — spawn fresh
-			if (!this.data.spawnedParticipants) {
-				this.data.spawnedParticipants = expandSlotParticipants(
-					slot,
-					state.partyLevel
-				);
+			for (const participant of this.data.spawnedParticipants ?? []) {
+				charactersMap[participant.character.uuid] = participant.character;
+				trackerMetaMap[participant.character.uuid] = participant.meta;
+				charactersWithTurn.add(participant.character.uuid);
 			}
 
-			if (this.data.spawnedParticipants.length === 0) {
-				console.error(
-					`Reinforcement slot ${this.data.slotId} has no participants`
-				);
+			const charactersOrder = insertByInitiative(
+				current.charactersOrder,
+				charactersMap,
+				(this.data.spawnedParticipants ?? []).map(
+					(participant) => participant.character
+				)
+			);
 
-				return STATUS.failure;
-			}
-
-			encounterStore.setState((current) => {
-				const charactersMap = { ...current.charactersMap };
-				const trackerMetaMap = { ...current.trackerMetaMap };
-				const charactersWithTurn = new Set(current.charactersWithTurn);
-
-				for (const participant of this.data.spawnedParticipants ?? []) {
-					charactersMap[participant.character.uuid] = participant.character;
-					trackerMetaMap[participant.character.uuid] = {
-						...participant.meta,
-						reinforcementPending: false,
-					};
-					charactersWithTurn.add(participant.character.uuid);
-				}
-
-				const charactersOrder = insertByInitiative(
-					current.charactersOrder,
-					charactersMap,
-					(this.data.spawnedParticipants ?? []).map(
-						(participant) => participant.character
-					)
-				);
-
-				return {
-					charactersMap,
-					charactersOrder,
-					charactersWithTurn,
-					trackerMetaMap,
-				};
-			});
-		}
+			return {
+				charactersMap,
+				charactersOrder,
+				charactersWithTurn,
+				trackerMetaMap,
+			};
+		});
 
 		return STATUS.success;
 	}

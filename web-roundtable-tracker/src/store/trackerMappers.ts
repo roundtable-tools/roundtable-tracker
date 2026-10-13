@@ -111,8 +111,6 @@ export function runtimeToInitiativeQueue(
 
 		if (meta.isSimpleHazard) return false;
 
-		if (meta.reinforcementPending) return false;
-
 		return true;
 	});
 
@@ -124,41 +122,6 @@ export function runtimeToInitiativeQueue(
 			if (!character) return null;
 
 			return characterToTrackerParticipant(character, meta, true);
-		})
-		.filter((p): p is TrackerParticipant => p !== null);
-}
-
-export function runtimeToInitiativeQueueWithPending(
-	store: Pick<
-		EncounterStore,
-		'charactersOrder' | 'delayedOrder' | 'charactersMap' | 'trackerMetaMap'
-	>
-): TrackerParticipant[] {
-	const { charactersOrder, charactersMap, trackerMetaMap } = store;
-
-	const allIds = charactersOrder.filter((uuid) => {
-		const meta = trackerMetaMap[uuid];
-
-		return meta ? !meta.isSimpleHazard : true;
-	});
-
-	return allIds
-		.map((uuid) => {
-			const character = charactersMap[uuid];
-			const meta = trackerMetaMap[uuid] ?? DEFAULT_META;
-
-			if (!character) return null;
-
-			const participant = characterToTrackerParticipant(character, meta, true);
-
-			if (meta.reinforcementPending) {
-				return {
-					...participant,
-					state: 'pending-reinforcement' as TrackerParticipant['state'],
-				};
-			}
-
-			return participant;
 		})
 		.filter((p): p is TrackerParticipant => p !== null);
 }
@@ -188,9 +151,6 @@ export function runtimeToOutOfInitiativeData(
 
 	const triggeredReinforcementSlots = new Set(
 		Object.values(trackerMetaMap)
-			.filter(
-				(meta) => meta.reinforcementSlotId && meta.reinforcementPending !== true
-			)
 			.map((meta) => meta.reinforcementSlotId)
 			.filter((slotId): slotId is string => Boolean(slotId))
 	);

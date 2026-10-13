@@ -38,8 +38,6 @@ type RuntimeParticipantFields = {
 	}>;
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
-	reinforcementSlotId?: string;
-	reinforcementPending?: boolean;
 };
 
 function deriveRole(
@@ -96,12 +94,6 @@ export const buildTrackerMetaMap = (
 			dcs: runtime.dcs,
 			adjustmentDescription: runtime.adjustmentDescription,
 			adjustmentLevelModifier: runtime.adjustmentLevelModifier,
-			...(runtime.reinforcementSlotId !== undefined
-				? {
-						reinforcementSlotId: runtime.reinforcementSlotId,
-						reinforcementPending: runtime.reinforcementPending ?? false,
-					}
-				: {}),
 		};
 	}
 
