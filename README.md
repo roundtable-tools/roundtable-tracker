@@ -100,6 +100,10 @@ Contributions are welcome:
 2. Create a branch for your feature or bug fix.
 3. Run the checks above, commit your changes and open a pull request.
 
+## License 📜
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
 ## Acknowledgments 🙌
 
 - Built with [React](https://react.dev/), [Vite](https://vite.dev/), [TanStack Router](https://tanstack.com/router), [Zustand](https://zustand.docs.pmnd.rs/), [shadcn/ui](https://ui.shadcn.com/), [Tailwind CSS](https://tailwindcss.com/), [React Hook Form](https://react-hook-form.com/), [Zod](https://zod.dev/) and [Vitest](https://vitest.dev/).
