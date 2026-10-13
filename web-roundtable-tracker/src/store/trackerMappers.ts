@@ -10,10 +10,48 @@ import type {
 	EncounterStore,
 	TrackerParticipantMeta,
 } from './encounterRuntimeStore';
-import type {
-	TrackerParticipant,
-	TimelineEvent,
-} from '@/components/InitiativeTracker/mockData';
+
+export type TrackerParticipant = {
+	id: string;
+	name: string;
+	role: 'pc' | 'opponent' | 'neutral' | 'ally' | 'hazard' | 'reinforcement';
+	sideTheme?: 'pc' | 'opponent' | 'ally' | 'other' | 'neutral';
+	state:
+		| 'active'
+		| 'delayed'
+		| 'knocked-out'
+		| 'inactive'
+		| 'pending-reinforcement';
+	initiative?: number;
+	eventId?: string;
+	eventRound?: number;
+	currentHp?: number;
+	maxHp?: number;
+	tempHp?: number;
+	tempHpDescription?: string;
+	disableChecksSucceeded?: number;
+	disableChecksRequired?: number;
+	hardness?: number;
+	initiativeBonus?: number;
+	dcs?: Array<{
+		name?: string;
+		inline?: string;
+		value: number;
+		icon?: string;
+		disableSuccesses?: number;
+	}>;
+	adjustmentDescription?: string;
+	adjustmentLevelModifier?: number;
+	notes: string;
+};
+
+export type TimelineEvent = {
+	id?: string;
+	round: number;
+	title: string;
+	detail: string;
+	type?: 'default' | 'reinforcement' | 'ongoing';
+};
 
 export type TrackerHeader = {
 	encounterTitle: string;
@@ -56,7 +94,7 @@ export function characterStateToTrackerState(
 
 	if (turnState === 'delayed') return 'delayed';
 
-	if (!inInitiative || turnState === 'on-hold') return 'inactive';
+	if (!inInitiative) return 'inactive';
 
 	return 'active';
 }

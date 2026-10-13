@@ -6,10 +6,9 @@ when the turn flow changes.
 
 ## Data model
 
-- **`Character`** (`store/data.ts`): `uuid`, `name`, `initiative`, `turnState`, `hasTurn`, `health`, `maxHealth`, `tempHealth`, `group` (`players` | `enemies`), `wounded?`, `knockedBy?`, `level?`.
-  - `turnState` is one of `STATE`: `normal`, `active`, `on-hold`, `delayed`, `knocked-out`. Only `normal`, `delayed` and `knocked-out` are ever written.
-  - `hasTurn` is always `false`. Whether a participant has its turn left is held in the store's `charactersWithTurn` Set.
-  - `wounded` and `knockedBy` aren't used.
+- **`Character`** (`store/data.ts`): `uuid`, `name`, `initiative`, `turnState`, `health`, `maxHealth`, `tempHealth`, `tempHealthDescription?`, `group?` (`players` | `enemies`), `level?`.
+  - `turnState` is one of `STATE`: `normal`, `delayed`, `knocked-out`.
+  - Whether a participant has its turn left is held in the store's `charactersWithTurn` Set, not on `Character`.
 - **Tie priority** `PRIORITY = { PC: 0, NPC: 1, SPECIAL: 2 }`. Higher goes first on a tie, so by default enemies (`NPC`) win ties against PCs, as the rules say. The party form's "Initiative tie advantage" checkbox is ticked by default and maps ticked to `PC`, unticked to `NPC`.
 - **Sides** `ALIGNMENT = { PCs: 0, Opponents: 1, Neutral: 2 }`.
 - **Template participant** (`CombatantParticipant`): `initiativeBonus?`, `tiePriority?`, `startingState?` (`normal` | `delayed` | `knocked-out`), `count?`. Hazards add `successesToDisable` and `isComplexHazard?`.

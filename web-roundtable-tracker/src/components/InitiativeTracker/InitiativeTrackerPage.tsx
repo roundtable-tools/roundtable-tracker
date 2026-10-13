@@ -1,5 +1,4 @@
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { type TrackerParticipant } from './mockData';
 import Timeline from '@/components/InitiativeList/Timeline';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -49,6 +48,7 @@ import {
 	narrativeSlotsToTimeline,
 	encounterToTrackerHeader,
 	historyToPreviewLines,
+	type TrackerParticipant,
 } from '@/store/trackerMappers';
 import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
 import { type Command } from '@/CommandHistory/common';
@@ -66,16 +66,6 @@ import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/Reactivate
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 import { Input } from '@/components/ui/input';
 import { type SwipeAction } from './InitiativeActionCarouselCard';
-
-function logTrackerButton(action: string, details?: Record<string, unknown>) {
-	if (details) {
-		console.log('[InitiativeTrackerPage]', action, details);
-
-		return;
-	}
-
-	console.log('[InitiativeTrackerPage]', action);
-}
 
 const HAZARD_DISABLE_CHECK_NAMES = [
 	'Disrupted',
@@ -342,10 +332,6 @@ function ParticipantRow({
 		<button
 			type="button"
 			onClick={() => {
-				logTrackerButton('Participant row selected', {
-					participantId: participant.id,
-					participantName: participant.name,
-				});
 				onSelect(participant.id);
 			}}
 			className={[
@@ -960,13 +946,10 @@ export function InitiativeTrackerPage() {
 
 	const focusCurrentParticipant = () => {
 		if (!initiativeCarouselApi) {
-			logTrackerButton('Focus Current attempted before carousel API ready');
-
 			return;
 		}
 
 		initiativeCarouselApi.scrollTo(0);
-		logTrackerButton('Focus Current scrolled to top initiative element');
 	};
 
 	const queueFocusCurrentParticipant = () => {
@@ -988,9 +971,6 @@ export function InitiativeTrackerPage() {
 		const announcement = nextRoundAnnouncement;
 
 		setNextRoundAnnouncement(null);
-		logTrackerButton('Next Round announcement closed', {
-			round: announcement.round,
-		});
 
 		if (announcement.focusCurrentOnClose) {
 			queueFocusCurrentParticipant();
@@ -1061,11 +1041,6 @@ export function InitiativeTrackerPage() {
 					round: nextRoundState.round,
 					focusCurrentOnClose: true,
 				});
-				logTrackerButton('Next Round announcement opened', {
-					round: nextRoundState.round,
-					action,
-					participantId,
-				});
 
 				return;
 			}
@@ -1082,8 +1057,6 @@ export function InitiativeTrackerPage() {
 		const currentParticipantId = charactersOrder[0];
 
 		if (!currentParticipantId) {
-			logTrackerButton('Next Turn ignored because initiative queue is empty');
-
 			return;
 		}
 
@@ -1092,10 +1065,6 @@ export function InitiativeTrackerPage() {
 		const currentMeta = trackerMetaMap[currentParticipantId];
 
 		if (currentMeta?.reinforcementPending === true) {
-			logTrackerButton('Next Turn skipping pending reinforcement', {
-				participantId: currentParticipantId,
-			});
-
 			try {
 				const newOrder = charactersOrder
 					.filter((id) => id !== currentParticipantId)
@@ -1114,12 +1083,6 @@ export function InitiativeTrackerPage() {
 			const currentCharacter = charactersMap[currentParticipantId];
 
 			if (currentCharacter?.turnState === 'delayed') {
-				logTrackerButton(
-					'Next Turn opening return-to-initiative prompt for delaying participant',
-					{
-						participantId: currentParticipantId,
-					}
-				);
 				setReturnPrompt({
 					participantId: currentParticipantId,
 					action: 'end-turn',
@@ -1129,20 +1092,10 @@ export function InitiativeTrackerPage() {
 				return;
 			}
 
-			logTrackerButton(
-				'Next Turn ignored because current participant has no turn',
-				{
-					participantId: currentParticipantId,
-				}
-			);
-
 			return;
 		}
 
 		if (delayedSectionParticipants.length > 0) {
-			logTrackerButton('Next Turn paused for return-to-initiative prompt', {
-				participantId: currentParticipantId,
-			});
 			setReturnPrompt({
 				participantId: currentParticipantId,
 				action: 'end-turn',
@@ -1157,7 +1110,6 @@ export function InitiativeTrackerPage() {
 			action: 'end-turn',
 			focusCurrentOnSuccess: true,
 		});
-		logTrackerButton('Next Turn rotation queued after focus animation');
 	};
 
 	const resetReorderDraft = () => {
@@ -1278,9 +1230,6 @@ export function InitiativeTrackerPage() {
 		);
 
 		if (!orderDidChange) {
-			logTrackerButton(
-				'Manual reorder save ignored because order is unchanged'
-			);
 			handleReorderOpenChange(false);
 
 			return;
@@ -1288,9 +1237,6 @@ export function InitiativeTrackerPage() {
 
 		try {
 			executeCommand(new ReorderCharactersCommand({ newOrder }));
-			logTrackerButton('Manual reorder save applied', {
-				newOrderLength: newOrder.length,
-			});
 			handleReorderOpenChange(false);
 		} catch (error) {
 			console.error('Failed to save manual reorder', error);
@@ -1344,9 +1290,6 @@ export function InitiativeTrackerPage() {
 			try {
 				executeCommand(new ReactivateCharacterCommand({ uuid: participantId }));
 				queueFocusCurrentParticipant();
-				logTrackerButton('Participant reactivated via swipe action', {
-					participantId,
-				});
 			} catch (error) {
 				console.error('Failed to reactivate participant', error);
 			}
@@ -1357,9 +1300,6 @@ export function InitiativeTrackerPage() {
 		if (action === 'slay') {
 			try {
 				executeCommand(new RemoveCharacterCommand({ uuid: participantId }));
-				logTrackerButton('Participant slain via swipe action', {
-					participantId,
-				});
 			} catch (error) {
 				console.error('Failed to slay participant', error);
 			}
@@ -1372,10 +1312,6 @@ export function InitiativeTrackerPage() {
 			charactersWithTurn.has(participantId);
 
 		if (isCurrentActive && delayedSectionParticipants.length > 0) {
-			logTrackerButton('Swipe action paused for return-to-initiative prompt', {
-				participantId,
-				action,
-			});
 			setReturnPrompt({
 				participantId,
 				action,
@@ -1405,11 +1341,6 @@ export function InitiativeTrackerPage() {
 					action,
 				})
 			);
-			logTrackerButton('Return to initiative executed', {
-				participantId,
-				returningParticipantId,
-				action,
-			});
 			queueFocusCurrentParticipant();
 		} catch (error) {
 			console.error('Failed to return to initiative', error);
@@ -1425,17 +1356,12 @@ export function InitiativeTrackerPage() {
 		setReturnPrompt(null);
 
 		executeRoundAction({ participantId, action, focusCurrentOnSuccess });
-		logTrackerButton('Return to initiative skipped, normal round action', {
-			participantId,
-			action,
-		});
 	};
 
 	const triggerReinforcementEvent = (slotId: string) => {
 		try {
 			executeCommand(new TriggerReinforcementEventCommand({ slotId }));
 			queueFocusCurrentParticipant();
-			logTrackerButton('Reinforcement event triggered', { slotId });
 		} catch (error) {
 			console.error('Failed to trigger reinforcement event', error);
 		}
@@ -1604,7 +1530,6 @@ export function InitiativeTrackerPage() {
 											variant="secondary"
 											size="icon"
 											onClick={() => {
-												logTrackerButton('Next Turn button clicked');
 												handleNextTurn();
 											}}
 										>
@@ -1621,7 +1546,6 @@ export function InitiativeTrackerPage() {
 											size="icon"
 											className="border border-sky-500/50 bg-sky-500/15 text-sky-200 hover:bg-sky-500/25"
 											onClick={() => {
-												logTrackerButton('Focus Current button clicked');
 												focusCurrentParticipant();
 											}}
 										>
@@ -1637,9 +1561,6 @@ export function InitiativeTrackerPage() {
 											variant="secondary"
 											size="icon"
 											className="border border-amber-500/50 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25"
-											onClick={() =>
-												logTrackerButton('End Encounter button clicked')
-											}
 										>
 											<ArrowRight className="h-4 w-4" />
 										</Button>
@@ -1652,7 +1573,6 @@ export function InitiativeTrackerPage() {
 											aria-label="Manual Reorder"
 											size="icon"
 											onClick={() => {
-												logTrackerButton('Manual Reorder button clicked');
 												setReorderOpen(true);
 											}}
 										>
@@ -1671,7 +1591,6 @@ export function InitiativeTrackerPage() {
 												className="rounded-none border-0"
 												disabled={!canUndo}
 												onClick={() => {
-													logTrackerButton('Undo button clicked');
 													undo();
 												}}
 											>
@@ -1690,7 +1609,6 @@ export function InitiativeTrackerPage() {
 												className="rounded-none border-0"
 												disabled={!canRedo}
 												onClick={() => {
-													logTrackerButton('Redo button clicked');
 													redo();
 												}}
 											>
@@ -1763,7 +1681,6 @@ export function InitiativeTrackerPage() {
 													indicatorLabel={getParticipantIndicatorLabel(
 														item.participant
 													)}
-													logAction={logTrackerButton}
 												/>
 											)}
 										</CarouselItem>
@@ -1987,7 +1904,6 @@ export function InitiativeTrackerPage() {
 									variant="secondary"
 									size="icon"
 									onClick={() => {
-										logTrackerButton('Mobile Next Turn button clicked');
 										handleNextTurn();
 									}}
 								>
@@ -1999,7 +1915,6 @@ export function InitiativeTrackerPage() {
 									size="icon"
 									className="border border-sky-500/50 bg-sky-500/15 text-sky-200 hover:bg-sky-500/25"
 									onClick={() => {
-										logTrackerButton('Focus Current button clicked');
 										focusCurrentParticipant();
 									}}
 								>
@@ -2010,9 +1925,6 @@ export function InitiativeTrackerPage() {
 									variant="secondary"
 									size="icon"
 									className="border border-amber-500/50 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25"
-									onClick={() =>
-										logTrackerButton('End Encounter button clicked')
-									}
 								>
 									<ArrowRight className="h-4 w-4" />
 								</Button>
@@ -2022,7 +1934,6 @@ export function InitiativeTrackerPage() {
 									aria-label="Manual Reorder"
 									size="icon"
 									onClick={() => {
-										logTrackerButton('Mobile Reorder button clicked');
 										setReorderOpen(true);
 									}}
 								>
@@ -2036,7 +1947,6 @@ export function InitiativeTrackerPage() {
 										className="rounded-none border-0"
 										disabled={!canUndo}
 										onClick={() => {
-											logTrackerButton('Mobile Undo button clicked');
 											undo();
 										}}
 									>
@@ -2050,7 +1960,6 @@ export function InitiativeTrackerPage() {
 										className="rounded-none border-0"
 										disabled={!canRedo}
 										onClick={() => {
-											logTrackerButton('Mobile Redo button clicked');
 											redo();
 										}}
 									>
@@ -2217,7 +2126,6 @@ export function InitiativeTrackerPage() {
 													indicatorLabel={getParticipantIndicatorLabel(
 														item.participant
 													)}
-													logAction={logTrackerButton}
 												/>
 											)}
 										</CarouselItem>
@@ -2448,7 +2356,6 @@ export function InitiativeTrackerPage() {
 						<Button
 							variant="outline"
 							onClick={() => {
-								logTrackerButton('Manual reorder dialog cancel clicked');
 								handleReorderOpenChange(false);
 							}}
 						>
@@ -2457,7 +2364,6 @@ export function InitiativeTrackerPage() {
 						<Button
 							disabled={!hasReorderChanges}
 							onClick={() => {
-								logTrackerButton('Manual reorder save clicked');
 								handleReorderSave();
 							}}
 						>
