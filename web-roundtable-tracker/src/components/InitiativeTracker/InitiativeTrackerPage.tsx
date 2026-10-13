@@ -1,5 +1,4 @@
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { type TrackerParticipant } from './mockData';
 import Timeline from '@/components/InitiativeList/Timeline';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -49,6 +48,7 @@ import {
 	narrativeSlotsToTimeline,
 	encounterToTrackerHeader,
 	historyToPreviewLines,
+	type TrackerParticipant,
 } from '@/store/trackerMappers';
 import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
 import { type Command } from '@/CommandHistory/common';

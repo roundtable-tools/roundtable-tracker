@@ -5,7 +5,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { type TrackerParticipant } from './mockData';
+import { type TrackerParticipant } from '@/store/trackerMappers';
 
 export type SwipeAction = 'delay' | 'ko' | 'reactivate' | 'slay';
 
