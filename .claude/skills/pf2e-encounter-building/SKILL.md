@@ -61,7 +61,7 @@ For the full text of any linked rule, or to look up a creature's level, use the 
 - **Same XP, different fight:**
   - **Action advantage** (community term): more bodies means more actions. One PL+4 boss crits often and is rarely crit, but has 3 actions against the party's 12.
   - **Incapacitation:** spells lose a degree against creatures above twice the spell's rank, and other effects against higher-level creatures. Lone high-level bosses shrug off the party's fight-enders, while their own incapacitation effects land.
-  - **Power spikes:** PCs jump at levels 4, 7, 12, 15 and 19 (striking dice, weapon specialization, spell ranks), and at runes 2/5/8/10/11/16/18/20.
+  - **Power spikes:** PCs jump at levels 4, 7, 12, 15 and 19 (striking dice, weapon specialization, spell ranks), and at runes 2/5/8/10/11/14/16/18/20.
 - **Synergy and terrain:**
   - Officially, there is no XP modifier for synergy: "compare in advance and adjust".
   - For terrain, "pick an equivalent monster level… or assign extra XP".

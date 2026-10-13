@@ -23,7 +23,7 @@ AON="python3 -I $(git rev-parse --show-toplevel)/.claude/skills/pf2e-archive-of-
 | Full text of one entry | `$AON get Fireball` or `$AON get spell-1530` |
 | Several entries share a name | `get` lists them with ids and exits 2; rerun with an id, or `-c <category>`, or `--first` |
 | Keep AoN links in the output | `$AON get --links Frightened` |
-| All fields as JSON (stats, numbers) | `$AON get --json creature-232`, `$AON search ... --json` |
+| All fields as JSON (stats, numbers) | `$AON get --json creature-232`. `search --json` returns only the summary fields shown in search results (no saves, attacks or other full stats) |
 | Category names and counts | `$AON categories` |
 | Anything else (aggregations, custom sorts) | `$AON query '{"size":5,"query":{...}}'` or `$AON query @body.json` |
 

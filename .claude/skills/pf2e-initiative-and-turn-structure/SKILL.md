@@ -25,9 +25,9 @@ Read the section you need; both files have a table of contents or headings. For 
   - Bonuses follow the normal stacking rules (e.g. Scout +1 circumstance, Incredible Initiative +2 circumstance); penalties too (e.g. frightened).
   - After the start, **position matters, not the number**.
 - **Turn**:
-  - **Start:** effects you created tick down, then "turn begins" triggers, then the dying recovery check. **Last**, you regain 3 actions and 1 reaction, modified by stunned, slowed or quickened.
+  - **Start**, in any order: effects you created tick down, "turn begins" triggers, the dying recovery check, other start-of-turn effects. **Always last**, you regain 3 actions and 1 reaction, modified by stunned, slowed or quickened.
   - **Act.**
-  - **End:** "until end of turn" effects end. Persistent damage, then its flat check, then affliction saves; then frightened −1 and similar. Then "turn ends" triggers.
+  - **End**, in any order: "until end of turn" effects end; persistent damage, then its flat check, then affliction saves, then frightened −1 and similar (this sequence is fixed); "turn ends" triggers.
   - The multiple attack penalty resets at the end of the turn.
 - **Actions**: 3 per turn. One reaction per round, which comes back at the start of your turn. Free actions with a trigger work like reactions, but only one free action per trigger.
 - **Durations**:

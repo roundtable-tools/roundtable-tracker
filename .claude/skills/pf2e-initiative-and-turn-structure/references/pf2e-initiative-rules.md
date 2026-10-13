@@ -90,7 +90,7 @@ When to roll ([Starting the Encounter](https://2e.aonprd.com/Rules.aspx?ID=2539)
 An initiative roll is a check, so the normal bonus types apply:
 
 - Only the highest bonus of each type counts (circumstance, item, status).
-- All penalties of different types add up.
+- Only the worst penalty of each type counts; penalties of different types add up. Untyped penalties all add up.
 - Common penalties:
   - [frightened](https://2e.aonprd.com/Conditions.aspx?ID=76): status penalty to all checks
   - [unconscious](https://2e.aonprd.com/Conditions.aspx?ID=95): –4 status to Perception
@@ -176,7 +176,7 @@ When both tied creatures can win ties, the rules don't say who goes first; the G
 - "If you can't act, you can't use any actions, including reactions and free actions."
 - "You can choose to end your turn early, losing all remaining actions (but not your reaction)."
 
-**End your turn** ([Step 3](https://2e.aonprd.com/Rules.aspx?ID=2430)):
+**End your turn** ([Step 3](https://2e.aonprd.com/Rules.aspx?ID=2430)). The steps can happen in any order, but within step 2 the order is fixed: persistent damage, then its flat check, then affliction saves, then conditions that change at the end of the turn:
 
 1. Effects that last "until the end of your turn" end.
    - Sustained effects end unless you Sustained them this turn.
