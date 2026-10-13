@@ -118,7 +118,7 @@ const expandSlotParticipants = (
 				uuid,
 				name: baseName,
 				initiative,
-				turnState: 'normal',
+				turnState: slotParticipant.startingState ?? 'normal',
 				hasTurn: false,
 				health: slotParticipant.health ?? maxHealth,
 				maxHealth,
@@ -265,24 +265,40 @@ export class TriggerReinforcementEventCommand implements Command {
 			const charactersMap = { ...current.charactersMap };
 			const trackerMetaMap = { ...current.trackerMetaMap };
 			const charactersWithTurn = new Set(current.charactersWithTurn);
+			const spawned = (this.data.spawnedParticipants ?? []).map(
+				(participant) => participant.character
+			);
+			// Like the starting roster: participants that arrive delayed wait in
+			// the delayed list, everyone else joins the order and gets a turn.
+			const arrivingDelayed = spawned.filter(
+				(character) => character.turnState === 'delayed'
+			);
+			const arrivingInOrder = spawned.filter(
+				(character) => character.turnState !== 'delayed'
+			);
 
 			for (const participant of this.data.spawnedParticipants ?? []) {
 				charactersMap[participant.character.uuid] = participant.character;
 				trackerMetaMap[participant.character.uuid] = participant.meta;
-				charactersWithTurn.add(participant.character.uuid);
+			}
+
+			for (const character of arrivingInOrder) {
+				charactersWithTurn.add(character.uuid);
 			}
 
 			const charactersOrder = insertByInitiative(
 				current.charactersOrder,
 				charactersMap,
-				(this.data.spawnedParticipants ?? []).map(
-					(participant) => participant.character
-				)
+				arrivingInOrder
 			);
 
 			return {
 				charactersMap,
 				charactersOrder,
+				delayedOrder: [
+					...current.delayedOrder,
+					...arrivingDelayed.map((character) => character.uuid),
+				],
 				charactersWithTurn,
 				trackerMetaMap,
 			};

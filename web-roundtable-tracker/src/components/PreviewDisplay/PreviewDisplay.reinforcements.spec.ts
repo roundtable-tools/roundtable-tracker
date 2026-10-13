@@ -163,4 +163,80 @@ describe('reinforcements from preview to trigger', () => {
 			'Guard B',
 		]);
 	});
+
+	it('brings reinforcements in with their saved starting state', () => {
+		const encounterStore = createEncounterStore();
+		const prepared = [
+			{
+				uuid: 'bandit',
+				name: 'Bandit',
+				level: 3,
+				side: ALIGNMENT.Opponents,
+				tiePriority: 0,
+				initiative: 12,
+				health: 10,
+				maxHealth: 10,
+				tempHealth: 0,
+			},
+		] as CharacterConfig[];
+
+		encounterStore.getState().setEncounterData({
+			...encounter,
+			narrativeSlots: [
+				{
+					id: 'stragglers',
+					type: 'reinforcement',
+					trigger: { round: 2 },
+					participants: [
+						{
+							type: 'creature',
+							name: 'Lookout',
+							level: '+0',
+							side: ALIGNMENT.Opponents,
+							startingState: 'delayed',
+						},
+						{
+							type: 'creature',
+							name: 'Wounded Guard',
+							level: '+0',
+							side: ALIGNMENT.Opponents,
+							startingState: 'knocked-out',
+						},
+					],
+				},
+			],
+		});
+		encounterStore
+			.getState()
+			.startEncounter(participantsToEncounterCharacters(prepared));
+		encounterStore.getState().setTrackerMetaMap(buildTrackerMetaMap(prepared));
+
+		const command = new TriggerReinforcementEventCommand(
+			{ slotId: 'stragglers' },
+			{ encounterStore }
+		);
+
+		expect(command.execute()).toBe(STATUS.success);
+
+		const state = encounterStore.getState();
+		const byName = (name: string) =>
+			Object.values(state.charactersMap).find(
+				(character) => character.name === name
+			)!;
+		const lookout = byName('Lookout');
+		const guard = byName('Wounded Guard');
+
+		expect(lookout.turnState).toBe('delayed');
+		expect(state.delayedOrder).toEqual([lookout.uuid]);
+		expect(state.charactersOrder).not.toContain(lookout.uuid);
+		expect(state.charactersWithTurn.has(lookout.uuid)).toBe(false);
+
+		expect(guard.turnState).toBe('knocked-out');
+		expect(state.charactersOrder).toContain(guard.uuid);
+		expect(state.charactersWithTurn.has(guard.uuid)).toBe(true);
+
+		expect(command.undo()).toBe(STATUS.success);
+		expect(encounterStore.getState().delayedOrder).toEqual([]);
+		expect(encounterStore.getState().charactersOrder).toEqual(['bandit']);
+	});
 });
