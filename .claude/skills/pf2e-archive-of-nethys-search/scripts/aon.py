@@ -103,7 +103,7 @@ def version_tag(s):
     """[legacy] if a remastered version exists; [pre-remaster] if published before the remaster."""
     if s.get("remaster_id"):
         return " [legacy]"
-    if not s.get("legacy_id") and s.get("release_date", REMASTER_RELEASE) < REMASTER_RELEASE:
+    if not s.get("legacy_id") and (s.get("release_date") or REMASTER_RELEASE) < REMASTER_RELEASE:
         return " [pre-remaster]"
     return ""
 
