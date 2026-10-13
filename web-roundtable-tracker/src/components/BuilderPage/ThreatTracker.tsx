@@ -5,7 +5,7 @@ import {
 	HoverCardTrigger,
 } from '@/components/ui/hover-card';
 import { ExperienceBudget } from '@/models/utility/experienceBudget/ExperienceBudget';
-import { THREAT_TYPE, Threat } from '@/models/utility/threat/Threat.class';
+import { Threat } from '@/models/utility/threat/Threat.class';
 import type {
 	EncounterThreatSimulation,
 	EncounterWaveInteraction,
@@ -23,7 +23,6 @@ interface ThreatTrackerProps {
 }
 
 const ADDITIONAL_IMPOSSIBLE_UNITS = 3;
-const ADDITIONAL_TRIVIAL_UNITS = 1;
 
 type ThresholdGroup = {
 	keys: number[];
@@ -33,38 +32,16 @@ type ThresholdGroup = {
 	color: string;
 };
 
-const CHARACTER_ADJUSTMENT_BY_THREAT: Record<string, number> = {
-	Trivial: 10,
-	Low: 20,
-	Moderate: 20,
-	Severe: 30,
-	Extreme: 40,
-	Impossible: 40,
-};
-
-function getBaseXpFromThreatKey(key: number): number {
-	return 60 + key * 20;
+function stripThreatSuffix(label: string): string {
+	return label.replace(/(\+|-)+$/g, '').trim();
 }
 
-function getCharacterAdjustmentForThreat(baseLabel: string): number {
-	return CHARACTER_ADJUSTMENT_BY_THREAT[baseLabel] ?? 40;
-}
-
-function getAdjustedXpForThreat(
-	threatKey: number,
-	baseLabel: string,
-	partySize: number
-): number {
-	const baseXp = getBaseXpFromThreatKey(threatKey);
-	const adjustment = getCharacterAdjustmentForThreat(baseLabel);
-
-	return Math.max(0, baseXp + adjustment * (partySize - 4));
-}
-
-export function getMergedThresholds(
-	threatEntries: [number, string][],
-	partySize: number
-): ThresholdGroup[] {
+/**
+ * Groups the threat bands by base threat (Moderate and Moderate+ share one
+ * segment). Band edges come from `Threat.thresholds`, the same "at or above"
+ * rule the saved difficulty uses.
+ */
+export function getMergedThresholds(partySize: number): ThresholdGroup[] {
 	const colors = [
 		'bg-green-400',
 		'bg-lime-400',
@@ -74,59 +51,37 @@ export function getMergedThresholds(
 		'bg-gray-700',
 	];
 
-	type Group = { keys: number[]; baseLabel: string };
+	type Group = { keys: number[]; baseLabel: string; minXp: number };
 	const groups: Group[] = [];
 
-	threatEntries.forEach(([key, label]) => {
-		const base = label.replace(/(\+|-)+$/g, '').trim();
+	Threat.thresholds(partySize).forEach(({ threat, minXp }) => {
+		const base = stripThreatSuffix(threat.toLabel());
 		let group = groups.find((g) => g.baseLabel === base);
 
 		if (!group) {
-			group = { keys: [], baseLabel: base };
+			group = { keys: [], baseLabel: base, minXp: Math.max(0, minXp) };
 			groups.push(group);
 		}
 
-		group.keys.push(key);
+		group.keys.push(threat.threat);
 	});
 
-	let previousMaxXp = 0;
-	const merged = groups.map((group, i) => {
-		const computedMaxXp = Math.max(
-			...group.keys.map((key) =>
-				getAdjustedXpForThreat(key, group.baseLabel, partySize)
-			)
-		);
-		const maxXp = Math.max(computedMaxXp, previousMaxXp);
-		const threshold: ThresholdGroup = {
+	return groups.map((group, i) => {
+		const next = groups[i + 1];
+		const maxXp = next
+			? next.minXp
+			: group.minXp +
+				ExperienceBudget.budgetToCharacterAdjustment(
+					ExperienceBudget.Impossible
+				).valueOf() *
+					ADDITIONAL_IMPOSSIBLE_UNITS;
+
+		return {
 			...group,
-			minXp: previousMaxXp,
-			maxXp: maxXp,
+			maxXp,
 			color: colors[i % colors.length],
 		};
-
-		previousMaxXp = maxXp;
-
-		return threshold;
 	});
-
-	if (merged.length > 0) {
-		const firstThreshold = merged[0];
-		const lastThreshold = merged[merged.length - 1];
-		const firstAdjustment = getCharacterAdjustmentForThreat(
-			firstThreshold.baseLabel
-		);
-		const lastAdjustment = getCharacterAdjustmentForThreat(
-			lastThreshold.baseLabel
-		);
-
-		firstThreshold.minXp = Math.max(
-			0,
-			firstThreshold.minXp - firstAdjustment * ADDITIONAL_TRIVIAL_UNITS
-		);
-		lastThreshold.maxXp += lastAdjustment * ADDITIONAL_IMPOSSIBLE_UNITS;
-	}
-
-	return merged;
 }
 
 export function ThreatTracker({
@@ -138,51 +93,7 @@ export function ThreatTracker({
 	waveInteraction,
 	simulation,
 }: ThreatTrackerProps) {
-	const stripThreatSuffix = (label: string): string =>
-		label.replace(/(\+|-)+$/g, '').trim();
-
-	const getDisplayLabelForBudget = (targetBudget: ExperienceBudget): string => {
-		const targetBudgetXp = targetBudget.valueOf() ?? 0;
-		const thresholdIdx = Math.max(
-			0,
-			merged.findIndex((group, index) => {
-				const isLast = index === merged.length - 1;
-
-				if (isLast) {
-					return targetBudgetXp >= group.minXp;
-				}
-
-				return targetBudgetXp >= group.minXp && targetBudgetXp < group.maxXp;
-			})
-		);
-
-		const thresholdLabel = merged[thresholdIdx]?.baseLabel ?? 'Trivial';
-		const exactLabel = threatEntries
-			.map(([key, label]) => ({
-				label,
-				xp: new Threat({ threat: key as keyof typeof THREAT_TYPE })
-					.toExpBudget(partySize)
-					.valueOf(),
-			}))
-			.sort((a, b) => a.xp - b.xp)
-			.reduce<string>((activeLabel, threat) => {
-				if (targetBudgetXp >= threat.xp) {
-					return threat.label;
-				}
-
-				return activeLabel;
-			}, THREAT_TYPE[0]);
-
-		const exactBaseLabel = stripThreatSuffix(exactLabel);
-
-		return exactBaseLabel === thresholdLabel ? exactLabel : thresholdLabel;
-	};
-
-	const threatEntries = Object.entries(THREAT_TYPE).map(([key, label]) => [
-		parseInt(key),
-		label,
-	]) as [number, string][];
-	const merged = getMergedThresholds(threatEntries, partySize);
+	const merged = getMergedThresholds(partySize);
 
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [isSmall, setIsSmall] = useState(false);
@@ -201,44 +112,16 @@ export function ThreatTracker({
 	}, []);
 
 	const currentBudgetXp = budget.valueOf() ?? 0;
+	// Same function as the saved difficulty, so the bar and the saved encounter
+	// always agree.
+	const currentThreat = Threat.fromExperienceBudget(budget, partySize);
 	const currentThresholdIdx = Math.max(
 		0,
-		merged.findIndex((group, index) => {
-			const isLast = index === merged.length - 1;
-
-			if (isLast) {
-				return currentBudgetXp >= group.minXp;
-			}
-
-			return currentBudgetXp >= group.minXp && currentBudgetXp < group.maxXp;
-		})
+		merged.findIndex((group) => group.keys.includes(currentThreat.threat))
 	);
-	const currentThresholdLabel =
-		merged[currentThresholdIdx]?.baseLabel ?? 'Trivial';
-
-	const exactThreatLabel = threatEntries
-		.map(([key, label]) => ({
-			label,
-			xp: new Threat({ threat: key as keyof typeof THREAT_TYPE })
-				.toExpBudget(partySize)
-				.valueOf(),
-		}))
-		.sort((a, b) => a.xp - b.xp)
-		.reduce<string>((activeLabel, threat) => {
-			if (currentBudgetXp >= threat.xp) {
-				return threat.label;
-			}
-
-			return activeLabel;
-		}, THREAT_TYPE[0]);
-
-	const exactThreatBaseLabel = stripThreatSuffix(exactThreatLabel);
-	const currentDisplayLabel =
-		exactThreatBaseLabel === currentThresholdLabel
-			? exactThreatLabel
-			: currentThresholdLabel;
+	const currentDisplayLabel = currentThreat.toLabel();
 	const comparisonDisplayLabel = comparisonBudget
-		? getDisplayLabelForBudget(comparisonBudget)
+		? Threat.fromExperienceBudget(comparisonBudget, partySize).toLabel()
 		: undefined;
 
 	const distance = isSmall ? 1 : 3;
