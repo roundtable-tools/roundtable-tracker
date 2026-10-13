@@ -94,7 +94,7 @@ export function characterStateToTrackerState(
 
 	if (turnState === 'delayed') return 'delayed';
 
-	if (!inInitiative || turnState === 'on-hold') return 'inactive';
+	if (!inInitiative) return 'inactive';
 
 	return 'active';
 }

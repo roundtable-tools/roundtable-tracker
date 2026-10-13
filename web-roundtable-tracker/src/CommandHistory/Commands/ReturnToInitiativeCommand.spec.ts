@@ -17,11 +17,9 @@ describe('ReturnToInitiativeCommand', () => {
 				initiative: 20,
 				turnState: 'normal',
 				group: 'players',
-				wounded: 0,
 				health: 30,
 				maxHealth: 30,
 				tempHealth: 0,
-				hasTurn: false,
 			},
 			{
 				uuid: '00000000-0000-0000-0000-000000000002',
@@ -29,11 +27,9 @@ describe('ReturnToInitiativeCommand', () => {
 				initiative: 18,
 				turnState: 'delayed',
 				group: 'players',
-				wounded: 0,
 				health: 24,
 				maxHealth: 24,
 				tempHealth: 0,
-				hasTurn: false,
 			},
 			{
 				uuid: '00000000-0000-0000-0000-000000000003',
@@ -41,11 +37,9 @@ describe('ReturnToInitiativeCommand', () => {
 				initiative: 10,
 				turnState: 'normal',
 				group: 'enemies',
-				wounded: 0,
 				health: 12,
 				maxHealth: 12,
 				tempHealth: 0,
-				hasTurn: false,
 			},
 		];
 		theEncounterStarts();

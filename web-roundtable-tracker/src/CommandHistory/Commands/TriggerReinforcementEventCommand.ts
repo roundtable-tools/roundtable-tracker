@@ -118,7 +118,6 @@ const expandSlotParticipants = (
 				name: withSuffix,
 				initiative,
 				turnState: 'normal',
-				hasTurn: false,
 				health: slotParticipant.health ?? maxHealth,
 				maxHealth,
 				tempHealth: slotParticipant.tempHealth ?? 0,

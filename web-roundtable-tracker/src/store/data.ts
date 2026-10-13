@@ -1,13 +1,7 @@
 import { UUID } from '@/utils/uuid';
 import { z } from 'zod';
 
-export const STATE = [
-	'normal',
-	'active',
-	'on-hold',
-	'delayed',
-	'knocked-out',
-] as const;
+export const STATE = ['normal', 'delayed', 'knocked-out'] as const;
 type State = (typeof STATE)[number];
 export const indexToLetter = (index: number) => String.fromCharCode(97 + index);
 
@@ -34,7 +28,6 @@ export const characterConfigToCharacter = (
 		tempHealth,
 		turnState: participant.startingState ?? 'normal',
 		group: participant.side === ALIGNMENT.PCs ? 'players' : 'enemies',
-		hasTurn: false,
 	};
 };
 
@@ -43,14 +36,11 @@ export interface Character {
 	name: string;
 	initiative: number;
 	turnState: State;
-	hasTurn: boolean;
 	health: number;
 	maxHealth: number;
 	tempHealth: number;
 	tempHealthDescription?: string;
 	group?: 'players' | 'enemies';
-	wounded?: number;
-	knockedBy?: UUID;
 	level?: number; // Optional level property
 }
 
@@ -183,12 +173,6 @@ export const participantsToLevelRange: <T extends LevelRepresentation>(
 	];
 };
 
-export const INITIATIVE_STATE = {
-	Normal: 0,
-	Delayed: 1,
-	'Knocked-Out': 2,
-} as const;
-
 type ValueOf<T> = T[keyof T];
 type Difficulty = ValueOf<typeof DIFFICULTY>;
 type Alignment = ValueOf<typeof ALIGNMENT>;
@@ -215,8 +199,6 @@ export type CombatantParticipant<
 	hardness?: number;
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
-	// TEMP: Set state to @ostatni5's format until the types get unified
-	// startingState?: INITIATIVE_STATE.Normal,
 	startingState?: 'normal' | 'delayed' | 'knocked-out';
 	description?: string;
 	dcs?: ParticipantDcEntry[];
@@ -349,8 +331,6 @@ const combatantParticipantSchema = z.object({
 	hardness: z.number().optional(),
 	adjustmentDescription: z.string().optional(),
 	adjustmentLevelModifier: z.number().optional(),
-	// TEMP: Set state to @ostatni5's format until the types get unified
-	// startingState: z.nativeEnum(INITIATIVE_STATE).optional(),
 	startingState: z.enum(['normal', 'delayed', 'knocked-out']).optional(),
 	description: z.string().optional(),
 	dcs: dcsSchema.optional(),
