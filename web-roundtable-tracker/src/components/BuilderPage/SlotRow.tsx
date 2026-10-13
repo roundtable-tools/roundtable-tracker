@@ -363,7 +363,10 @@ export function SlotRow({
 	const availableSlotTypes = SLOT_TYPES.filter(({ value }) =>
 		allowedTypes.includes(value)
 	);
-	const reinforcementParticipants = slot.reinforcementParticipants ?? [];
+	const reinforcementParticipants = useMemo(
+		() => slot.reinforcementParticipants ?? [],
+		[slot.reinforcementParticipants]
+	);
 	const availableCombatTabs = useMemo(
 		() =>
 			COMBAT_TAB_ORDER.filter((tab) =>
@@ -379,7 +382,7 @@ export function SlotRow({
 					enabledBlocks.some((block) => getTabForBlock(block) === tab)
 				);
 			}),
-		[activeTabs, availableCombatTabs, enabledBlocks, isCombatSlot]
+		[activeTabs, availableCombatTabs, enabledBlocks]
 	);
 	const missingSuggestedBlocks = useMemo(
 		() =>
@@ -392,8 +395,11 @@ export function SlotRow({
 		[enabledBlocks, isSimpleHazard, slot, slotType, usedAdditionalDataBlocks]
 	);
 
+	// Re-infer the open tabs only when another slot is shown, not on every edit
+	// of the current one.
 	useEffect(() => {
 		setActiveTabs(inferEnabledTabsFromSlot(slot));
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [slot.id]);
 
 	useEffect(() => {

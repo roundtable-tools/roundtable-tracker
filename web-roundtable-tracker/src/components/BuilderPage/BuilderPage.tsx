@@ -223,7 +223,7 @@ export function BuilderPage({
 			basePartyOutputPerRound: Math.max(0, basePartyOutputPerRound),
 		}
 	);
-	const resolvedSlots = slots ?? [];
+	const resolvedSlots = useMemo(() => slots ?? [], [slots]);
 	const participantIndices = getSlotSectionIndices(
 		resolvedSlots,
 		'participants'
