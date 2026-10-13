@@ -6,9 +6,10 @@ import {
 	difficultyToString,
 	LEVEL_REPRESENTATION,
 } from './data';
-import type {
-	EncounterStore,
-	TrackerParticipantMeta,
+import {
+	isHazardDisabled,
+	type EncounterStore,
+	type TrackerParticipantMeta,
 } from './encounterRuntimeStore';
 import type {
 	TrackerParticipant,
@@ -196,7 +197,9 @@ export function runtimeToOutOfInitiativeData(
 	);
 
 	const hazards: TrackerParticipant[] = Object.entries(trackerMetaMap)
-		.filter(([, meta]) => meta.isSimpleHazard)
+		// Simple hazards never take turns; disabled complex hazards stop taking
+		// turns. Both are listed here instead of the initiative queue.
+		.filter(([, meta]) => meta.isSimpleHazard || isHazardDisabled(meta))
 		.map(([uuid, meta]) => {
 			const character = charactersMap[uuid];
 
