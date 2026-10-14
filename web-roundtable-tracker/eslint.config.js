@@ -3,7 +3,7 @@ import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
-import stylisticJs from '@stylistic/eslint-plugin-js';
+import stylistic from '@stylistic/eslint-plugin';
 
 export default tseslint.config(
 	{ ignores: ['dist'] },
@@ -22,15 +22,19 @@ export default tseslint.config(
 		plugins: {
 			'react-hooks': reactHooks,
 			'react-refresh': reactRefresh,
-			'@stylistic/js': stylisticJs,
+			'@stylistic': stylistic,
 		},
 		rules: {
 			...reactHooks.configs.recommended.rules,
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{ ignoreRestSiblings: true },
+			],
 			'react-refresh/only-export-components': [
 				'warn',
 				{ allowConstantExport: true },
 			],
-			'@stylistic/js/padding-line-between-statements': [
+			'@stylistic/padding-line-between-statements': [
 				'error',
 				{ blankLine: 'always', prev: ['case', 'default'], next: '*' },
 				{ blankLine: 'always', prev: '*', next: ['case', 'default'] },
