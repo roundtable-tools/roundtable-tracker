@@ -39,8 +39,6 @@ type RuntimeParticipantFields = {
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
 	traits?: string[];
-	reinforcementSlotId?: string;
-	reinforcementPending?: boolean;
 };
 
 function deriveRole(
@@ -98,12 +96,6 @@ export const buildTrackerMetaMap = (
 			adjustmentDescription: runtime.adjustmentDescription,
 			adjustmentLevelModifier: runtime.adjustmentLevelModifier,
 			traits: runtime.traits,
-			...(runtime.reinforcementSlotId !== undefined
-				? {
-						reinforcementSlotId: runtime.reinforcementSlotId,
-						reinforcementPending: runtime.reinforcementPending ?? false,
-					}
-				: {}),
 		};
 	}
 

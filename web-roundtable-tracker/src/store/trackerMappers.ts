@@ -10,10 +10,44 @@ import type {
 	EncounterStore,
 	TrackerParticipantMeta,
 } from './encounterRuntimeStore';
-import type {
-	TrackerParticipant,
-	TimelineEvent,
-} from '@/components/InitiativeTracker/mockData';
+
+export type TrackerParticipant = {
+	id: string;
+	name: string;
+	role: 'pc' | 'opponent' | 'neutral' | 'ally' | 'hazard' | 'reinforcement';
+	sideTheme?: 'pc' | 'opponent' | 'ally' | 'other' | 'neutral';
+	state: 'active' | 'delayed' | 'knocked-out' | 'inactive';
+	initiative?: number;
+	eventId?: string;
+	eventRound?: number;
+	currentHp?: number;
+	maxHp?: number;
+	tempHp?: number;
+	tempHpDescription?: string;
+	disableChecksSucceeded?: number;
+	disableChecksRequired?: number;
+	hardness?: number;
+	initiativeBonus?: number;
+	dcs?: Array<{
+		name?: string;
+		inline?: string;
+		value: number;
+		icon?: string;
+		disableSuccesses?: number;
+	}>;
+	adjustmentDescription?: string;
+	adjustmentLevelModifier?: number;
+	traits?: string[];
+	notes: string;
+};
+
+export type TimelineEvent = {
+	id?: string;
+	round: number;
+	title: string;
+	detail: string;
+	type?: 'default' | 'reinforcement' | 'ongoing';
+};
 
 export type TrackerHeader = {
 	encounterTitle: string;
@@ -57,7 +91,7 @@ export function characterStateToTrackerState(
 
 	if (turnState === 'delayed') return 'delayed';
 
-	if (!inInitiative || turnState === 'on-hold') return 'inactive';
+	if (!inInitiative) return 'inactive';
 
 	return 'active';
 }
@@ -113,8 +147,6 @@ export function runtimeToInitiativeQueue(
 
 		if (meta.isSimpleHazard) return false;
 
-		if (meta.reinforcementPending) return false;
-
 		return true;
 	});
 
@@ -126,41 +158,6 @@ export function runtimeToInitiativeQueue(
 			if (!character) return null;
 
 			return characterToTrackerParticipant(character, meta, true);
-		})
-		.filter((p): p is TrackerParticipant => p !== null);
-}
-
-export function runtimeToInitiativeQueueWithPending(
-	store: Pick<
-		EncounterStore,
-		'charactersOrder' | 'delayedOrder' | 'charactersMap' | 'trackerMetaMap'
-	>
-): TrackerParticipant[] {
-	const { charactersOrder, charactersMap, trackerMetaMap } = store;
-
-	const allIds = charactersOrder.filter((uuid) => {
-		const meta = trackerMetaMap[uuid];
-
-		return meta ? !meta.isSimpleHazard : true;
-	});
-
-	return allIds
-		.map((uuid) => {
-			const character = charactersMap[uuid];
-			const meta = trackerMetaMap[uuid] ?? DEFAULT_META;
-
-			if (!character) return null;
-
-			const participant = characterToTrackerParticipant(character, meta, true);
-
-			if (meta.reinforcementPending) {
-				return {
-					...participant,
-					state: 'pending-reinforcement' as TrackerParticipant['state'],
-				};
-			}
-
-			return participant;
 		})
 		.filter((p): p is TrackerParticipant => p !== null);
 }
@@ -190,9 +187,6 @@ export function runtimeToOutOfInitiativeData(
 
 	const triggeredReinforcementSlots = new Set(
 		Object.values(trackerMetaMap)
-			.filter(
-				(meta) => meta.reinforcementSlotId && meta.reinforcementPending !== true
-			)
 			.map((meta) => meta.reinforcementSlotId)
 			.filter((slotId): slotId is string => Boolean(slotId))
 	);

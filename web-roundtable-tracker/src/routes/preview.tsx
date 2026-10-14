@@ -6,5 +6,5 @@ export const Route = createFileRoute('/preview')({
 });
 
 function RouteComponent() {
-	return <PreviewDisplay setView={() => {}} />;
+	return <PreviewDisplay />;
 }
