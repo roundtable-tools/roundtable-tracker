@@ -127,16 +127,9 @@ export const generateParticipants = (
 ): InitiativeParticipant[][] => {
 	if (!encounterData) return [];
 
-	const reinforcementParticipants = (encounterData.narrativeSlots ?? [])
-		.filter((slot) => slot.type === 'reinforcement')
-		.flatMap((slot) => slot.participants ?? []);
-
-	const allParticipants = [
-		...(encounterData.participants ?? []),
-		...reinforcementParticipants,
-	];
-
-	const groupedBySide = allParticipants.reduce(
+	// Reinforcement slot participants are left out: they join the encounter
+	// only when their event is triggered (TriggerReinforcementEventCommand).
+	const groupedBySide = (encounterData.participants ?? []).reduce(
 		(acc, participant) => {
 			if (!acc[participant.side]) {
 				acc[participant.side] = [];

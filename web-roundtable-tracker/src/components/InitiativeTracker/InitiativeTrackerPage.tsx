@@ -43,7 +43,6 @@ import {
 } from '@/store/encounterRuntimeInstance';
 import {
 	runtimeToInitiativeQueue,
-	runtimeToInitiativeQueueWithPending,
 	runtimeToOutOfInitiativeData,
 	narrativeSlotsToTimeline,
 	encounterToTrackerHeader,
@@ -794,17 +793,6 @@ export function InitiativeTrackerPage() {
 		[charactersOrder, delayedOrder, charactersMap, trackerMetaMap]
 	);
 
-	const storeAllInitiativeParticipants = useMemo(
-		() =>
-			runtimeToInitiativeQueueWithPending({
-				charactersOrder,
-				delayedOrder,
-				charactersMap,
-				trackerMetaMap,
-			}),
-		[charactersOrder, delayedOrder, charactersMap, trackerMetaMap]
-	);
-
 	const outOfInitiative = useMemo(
 		() =>
 			runtimeToOutOfInitiativeData({
@@ -842,14 +830,6 @@ export function InitiativeTrackerPage() {
 		() =>
 			new Set(
 				Object.values(trackerMetaMap)
-					.filter(
-						(meta) =>
-							meta.reinforcementSlotId && meta.reinforcementPending !== true
-					)
-					.filter(
-						(meta) =>
-							meta.reinforcementSlotId && meta.reinforcementPending !== true
-					)
 					.map((meta) => meta.reinforcementSlotId)
 					.filter((slotId): slotId is string => Boolean(slotId))
 			),
@@ -941,8 +921,8 @@ export function InitiativeTrackerPage() {
 			return;
 		}
 
-		setReorderDraftParticipants(storeAllInitiativeParticipants);
-	}, [storeAllInitiativeParticipants, reorderOpen]);
+		setReorderDraftParticipants(storeInitiativeParticipants);
+	}, [storeInitiativeParticipants, reorderOpen]);
 
 	const focusCurrentParticipant = () => {
 		if (!initiativeCarouselApi) {
@@ -1060,25 +1040,6 @@ export function InitiativeTrackerPage() {
 			return;
 		}
 
-		// Auto-skip pending reinforcement participants — they are in the order but
-		// shouldn't take a turn until their slot is triggered.
-		const currentMeta = trackerMetaMap[currentParticipantId];
-
-		if (currentMeta?.reinforcementPending === true) {
-			try {
-				const newOrder = charactersOrder
-					.filter((id) => id !== currentParticipantId)
-					.concat(currentParticipantId);
-
-				executeCommand(new ReorderCharactersCommand({ newOrder }));
-				queueFocusCurrentParticipant();
-			} catch (error) {
-				console.error('Failed to skip pending reinforcement', error);
-			}
-
-			return;
-		}
-
 		if (!charactersWithTurn.has(currentParticipantId)) {
 			const currentCharacter = charactersMap[currentParticipantId];
 
@@ -1113,7 +1074,7 @@ export function InitiativeTrackerPage() {
 	};
 
 	const resetReorderDraft = () => {
-		setReorderDraftParticipants(storeAllInitiativeParticipants);
+		setReorderDraftParticipants(storeInitiativeParticipants);
 	};
 
 	const stopReorderAutoScroll = () => {
@@ -1196,16 +1157,16 @@ export function InitiativeTrackerPage() {
 
 	const hasReorderChanges = useMemo(() => {
 		if (
-			reorderDraftParticipants.length !== storeAllInitiativeParticipants.length
+			reorderDraftParticipants.length !== storeInitiativeParticipants.length
 		) {
 			return true;
 		}
 
 		return reorderDraftParticipants.some(
 			(participant, index) =>
-				participant.id !== storeAllInitiativeParticipants[index]?.id
+				participant.id !== storeInitiativeParticipants[index]?.id
 		);
-	}, [reorderDraftParticipants, storeAllInitiativeParticipants]);
+	}, [reorderDraftParticipants, storeInitiativeParticipants]);
 
 	const handleReorderSave = () => {
 		const draftOrderedIds = reorderDraftParticipants.map(
@@ -2335,19 +2296,9 @@ export function InitiativeTrackerPage() {
 									onDragEnd={() => {
 										stopReorderAutoScroll();
 									}}
-									className={[
-										'cursor-grab rounded-md border p-2 text-sm active:cursor-grabbing',
-										participant.state === 'pending-reinforcement'
-											? 'border-dashed border-amber-500/40 bg-amber-500/5 text-amber-300 opacity-70'
-											: '',
-									].join(' ')}
+									className="cursor-grab rounded-md border p-2 text-sm active:cursor-grabbing"
 								>
 									<span>{participant.name}</span>
-									{participant.state === 'pending-reinforcement' && (
-										<span className="ml-2 text-xs text-amber-400/70">
-											(pending reinforcement)
-										</span>
-									)}
 								</Reorder.Item>
 							))}
 						</Reorder.Group>
