@@ -6,6 +6,7 @@ import {
 } from '@/store/data';
 import { TrackerParticipantMeta } from '@/store/encounterRuntimeStore';
 import { generateUUID, UUID } from '@/utils/uuid';
+import { uniqueNames } from '@/utils/uniqueNames';
 import {
 	Command,
 	CommandDeps,
@@ -89,13 +90,14 @@ const normalizeParticipantInitiative = (
 
 const expandSlotParticipants = (
 	slot: NarrativeSlot,
-	partyLevel: number
+	partyLevel: number,
+	takenNames: string[]
 ): SpawnedParticipant[] => {
 	if (!slot.participants || slot.participants.length === 0) {
 		return [];
 	}
 
-	return slot.participants.flatMap((slotParticipant, slotIndex) => {
+	const spawned = slot.participants.flatMap((slotParticipant, slotIndex) => {
 		const count = Math.max(1, slotParticipant.count ?? 1);
 		const level = normalizeParticipantLevel(slotParticipant, partyLevel);
 		const maxHealth = slotParticipant.maxHealth ?? Math.max(1, level * 5);
@@ -109,16 +111,14 @@ const expandSlotParticipants = (
 				fallbackId
 			);
 			const baseName = slotParticipant.name.trim() || 'Reinforcement';
-			const withSuffix = count > 1 ? `${baseName} ${countIndex + 1}` : baseName;
 			const notes =
 				slot.description?.trim() || slotParticipant.description?.trim() || '';
 
 			const character: Character = {
 				uuid,
-				name: withSuffix,
+				name: baseName,
 				initiative,
-				turnState: 'normal',
-				hasTurn: false,
+				turnState: slotParticipant.startingState ?? 'normal',
 				health: slotParticipant.health ?? maxHealth,
 				maxHealth,
 				tempHealth: slotParticipant.tempHealth ?? 0,
@@ -153,6 +153,15 @@ const expandSlotParticipants = (
 			};
 		});
 	});
+	const names = uniqueNames(
+		spawned.map(({ character }) => character.name),
+		takenNames
+	);
+
+	return spawned.map((participant, index) => ({
+		...participant,
+		character: { ...participant.character, name: names[index] },
+	}));
 };
 
 function insertByInitiative(
@@ -218,7 +227,8 @@ export class TriggerReinforcementEventCommand implements Command {
 		if (!this.data.spawnedParticipants) {
 			this.data.spawnedParticipants = expandSlotParticipants(
 				slot,
-				state.partyLevel
+				state.partyLevel,
+				Object.values(state.charactersMap).map((character) => character.name)
 			);
 		}
 
@@ -230,21 +240,10 @@ export class TriggerReinforcementEventCommand implements Command {
 			return STATUS.failure;
 		}
 
-		const existingMetaValues = Object.entries(state.trackerMetaMap);
-
-		// Check if participants were pre-added as pending reinforcements for this slot
-		const preAddedUuids = existingMetaValues
-			.filter(
-				([, meta]) =>
-					meta.reinforcementSlotId === this.data.slotId &&
-					meta.reinforcementPending === true
-			)
-			.map(([uuid]) => uuid);
-
-		const alreadyTriggered = existingMetaValues.some(
-			([, meta]) =>
-				meta.reinforcementSlotId === this.data.slotId &&
-				meta.reinforcementPending === false
+		// Reinforcements are not in the starting roster; any participant tagged
+		// with this slot means the event has already been triggered.
+		const alreadyTriggered = Object.values(state.trackerMetaMap).some(
+			(meta) => meta.reinforcementSlotId === this.data.slotId
 		);
 
 		if (alreadyTriggered) {
@@ -261,86 +260,48 @@ export class TriggerReinforcementEventCommand implements Command {
 			trackerMetaMap: structuredClone(state.trackerMetaMap),
 		};
 
-		if (preAddedUuids.length > 0) {
-			// Activate pre-added pending participants
-			encounterStore.setState((current) => {
-				const trackerMetaMap = { ...current.trackerMetaMap };
-				const charactersWithTurn = new Set(current.charactersWithTurn);
-				// Re-insert by initiative relative to current queue (excluding themselves)
-				const orderWithoutPending = current.charactersOrder.filter(
-					(uuid) => !preAddedUuids.includes(uuid)
-				);
-				const pendingCharacters = preAddedUuids
-					.map((uuid) => current.charactersMap[uuid])
-					.filter((c): c is NonNullable<typeof c> => c != null);
+		encounterStore.setState((current) => {
+			const charactersMap = { ...current.charactersMap };
+			const trackerMetaMap = { ...current.trackerMetaMap };
+			const charactersWithTurn = new Set(current.charactersWithTurn);
+			const spawned = (this.data.spawnedParticipants ?? []).map(
+				(participant) => participant.character
+			);
+			// Like the starting roster: participants that arrive delayed wait in
+			// the delayed list, everyone else joins the order and gets a turn.
+			const arrivingDelayed = spawned.filter(
+				(character) => character.turnState === 'delayed'
+			);
+			const arrivingInOrder = spawned.filter(
+				(character) => character.turnState !== 'delayed'
+			);
 
-				const newCharactersOrder = insertByInitiative(
-					orderWithoutPending,
-					current.charactersMap,
-					pendingCharacters
-				);
-
-				for (const uuid of preAddedUuids) {
-					trackerMetaMap[uuid] = {
-						...trackerMetaMap[uuid],
-						reinforcementPending: false,
-					};
-					charactersWithTurn.add(uuid);
-				}
-
-				return {
-					charactersOrder: newCharactersOrder,
-					charactersWithTurn,
-					trackerMetaMap,
-				};
-			});
-		} else {
-			// No pre-added participants — spawn fresh
-			if (!this.data.spawnedParticipants) {
-				this.data.spawnedParticipants = expandSlotParticipants(
-					slot,
-					state.partyLevel
-				);
+			for (const participant of this.data.spawnedParticipants ?? []) {
+				charactersMap[participant.character.uuid] = participant.character;
+				trackerMetaMap[participant.character.uuid] = participant.meta;
 			}
 
-			if (this.data.spawnedParticipants.length === 0) {
-				console.error(
-					`Reinforcement slot ${this.data.slotId} has no participants`
-				);
-
-				return STATUS.failure;
+			for (const character of arrivingInOrder) {
+				charactersWithTurn.add(character.uuid);
 			}
 
-			encounterStore.setState((current) => {
-				const charactersMap = { ...current.charactersMap };
-				const trackerMetaMap = { ...current.trackerMetaMap };
-				const charactersWithTurn = new Set(current.charactersWithTurn);
+			const charactersOrder = insertByInitiative(
+				current.charactersOrder,
+				charactersMap,
+				arrivingInOrder
+			);
 
-				for (const participant of this.data.spawnedParticipants ?? []) {
-					charactersMap[participant.character.uuid] = participant.character;
-					trackerMetaMap[participant.character.uuid] = {
-						...participant.meta,
-						reinforcementPending: false,
-					};
-					charactersWithTurn.add(participant.character.uuid);
-				}
-
-				const charactersOrder = insertByInitiative(
-					current.charactersOrder,
-					charactersMap,
-					(this.data.spawnedParticipants ?? []).map(
-						(participant) => participant.character
-					)
-				);
-
-				return {
-					charactersMap,
-					charactersOrder,
-					charactersWithTurn,
-					trackerMetaMap,
-				};
-			});
-		}
+			return {
+				charactersMap,
+				charactersOrder,
+				delayedOrder: [
+					...current.delayedOrder,
+					...arrivingDelayed.map((character) => character.uuid),
+				],
+				charactersWithTurn,
+				trackerMetaMap,
+			};
+		});
 
 		return STATUS.success;
 	}

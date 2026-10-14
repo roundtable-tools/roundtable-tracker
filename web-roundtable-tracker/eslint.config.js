@@ -34,6 +34,7 @@ export default tseslint.config(
 				'warn',
 				{ allowConstantExport: true },
 			],
+			'no-console': ['error', { allow: ['warn', 'error'] }],
 			'@stylistic/padding-line-between-statements': [
 				'error',
 				{ blankLine: 'always', prev: ['case', 'default'], next: '*' },

@@ -45,10 +45,6 @@ import { EncounterDetailsModal } from './EncounterDetails/EncounterDetailsModal.
 import { EncounterImportModal } from './EncounterDetails/EncounterImportModal.tsx';
 import { useSavedEncountersStore } from '@/store/savedEncounterInstance.ts';
 
-type EncounterDirectoryProps = {
-	setView: (view: string) => void;
-};
-
 const PARTY_SIZE_OPTIONS = [3, 4, 5, 6] as const;
 
 const formatLevel = (level: EncounterDirectoryEntry['level']) => {
@@ -132,8 +128,7 @@ const partySizeFilter: FilterFn<EncounterDirectoryEntry> = (
 	return row.getValue<number>(columnId) === filterValue;
 };
 
-export const EncounterDirectory = (props: EncounterDirectoryProps) => {
-	const { setView } = props;
+export const EncounterDirectory = () => {
 	const navigate = useNavigate();
 	const setEncounterData = useEncounterStore((state) => state.setEncounterData);
 	const savedEncounters = useSavedEncountersStore(
@@ -259,12 +254,10 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 	}, []);
 
 	const openPreview = () => {
-		setView('preview');
 		navigate({ to: '/preview' });
 	};
 
 	const openBuilder = () => {
-		setView('builder');
 		const params: Record<string, string | null> = {};
 
 		if (
@@ -338,7 +331,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 
 	return (
 		<div className="flex min-h-screen flex-col bg-background">
-			<AppHeader setView={setView}>
+			<AppHeader>
 				<div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
 					<div className="flex items-center gap-2">
 						<Button
