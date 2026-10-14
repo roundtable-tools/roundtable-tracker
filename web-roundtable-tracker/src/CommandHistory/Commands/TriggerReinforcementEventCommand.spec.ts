@@ -24,11 +24,9 @@ const character = (
 	initiative,
 	turnState: 'normal',
 	group: 'enemies',
-	wounded: 0,
 	health: 10,
 	maxHealth: 10,
 	tempHealth: 0,
-	hasTurn: false,
 });
 
 const encounter: Encounter = {
