@@ -165,8 +165,6 @@ export const createDirectoryEntries = (
 
 export const toEncounter = (entry: EncounterDirectoryEntry): Encounter => {
 	const { directoryId, source, ...encounter } = entry;
-	void directoryId;
-	void source;
 
 	return encounter;
 };
