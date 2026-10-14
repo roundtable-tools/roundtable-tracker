@@ -7,8 +7,9 @@ const ACCOMPLISHMENT_LABELS = {
 	major: 'major',
 } as const;
 
-const PARTICIPANT_TYPES: SlotType[] = ['creature', 'hazard'];
-const EVENT_TYPES: SlotType[] = ['narrative', 'reinforcement'];
+export const PARTICIPANT_SLOT_TYPES: SlotType[] = ['creature', 'hazard'];
+
+export const EVENT_SLOT_TYPES: SlotType[] = ['narrative', 'reinforcement'];
 
 const PARTICIPANT_TYPE_LABELS: Record<SlotType, string> = {
 	creature: 'creatures',
@@ -61,11 +62,11 @@ function formatTierSummary(
 }
 
 export function isParticipantSlot(slot: BuilderSlot) {
-	return PARTICIPANT_TYPES.includes(slot.type);
+	return PARTICIPANT_SLOT_TYPES.includes(slot.type);
 }
 
 export function isEventSlot(slot: BuilderSlot) {
-	return EVENT_TYPES.includes(slot.type);
+	return EVENT_SLOT_TYPES.includes(slot.type);
 }
 
 export function getSlotSectionIndices(
