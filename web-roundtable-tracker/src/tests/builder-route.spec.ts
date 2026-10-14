@@ -1,6 +1,14 @@
 import { createElement, type ComponentType } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest';
 
 const mocks = vi.hoisted(() => ({
 	appHeaderSpy: vi.fn(),
@@ -8,7 +16,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/AppHeader', () => ({
-	AppHeader: (props: { setView: (view: string) => void }) => {
+	AppHeader: (props: Record<string, unknown>) => {
 		mocks.appHeaderSpy(props);
 
 		return createElement('div', { 'data-testid': 'app-header' });
@@ -23,10 +31,19 @@ vi.mock('@/components/BuilderPage/BuilderPage', () => ({
 	},
 }));
 
-import { validateBuilderSearch } from '@/routes/builder';
-import { BuilderRouteComponent, Route } from '@/routes/builder';
+import { validateBuilderSearch } from '@/components/BuilderPage/builderSearch';
+import { Route } from '@/routes/builder';
+
+// The route component is code-split (lazy), so load it before rendering.
+const BuilderRouteComponent = Route.options.component as ComponentType & {
+	preload?: () => Promise<void>;
+};
 
 describe('builder route search params', () => {
+	beforeAll(async () => {
+		await BuilderRouteComponent.preload?.();
+	});
+
 	beforeEach(() => {
 		mocks.appHeaderSpy.mockClear();
 		mocks.builderPageSpy.mockClear();
@@ -71,9 +88,7 @@ describe('builder route search params', () => {
 	});
 
 	it('renders expected builder route UI elements', () => {
-		const html = renderToStaticMarkup(
-			createElement(BuilderRouteComponent as ComponentType)
-		);
+		const html = renderToStaticMarkup(createElement(BuilderRouteComponent));
 
 		expect(html).toContain('data-testid="app-header"');
 		expect(html).toContain('data-testid="builder-page"');
@@ -81,19 +96,14 @@ describe('builder route search params', () => {
 		expect(mocks.builderPageSpy).toHaveBeenCalledTimes(1);
 	});
 
-	it('passes route-specific props to AppHeader and BuilderPage', () => {
-		renderToStaticMarkup(createElement(BuilderRouteComponent as ComponentType));
+	it('passes route-specific props to BuilderPage', () => {
+		renderToStaticMarkup(createElement(BuilderRouteComponent));
 
-		const appHeaderProps = mocks.appHeaderSpy.mock.calls[0]?.[0] as {
-			setView: (view: string) => void;
-		};
 		const builderPageProps = mocks.builderPageSpy.mock.calls[0]?.[0] as {
 			encounterId?: string;
 			importDraftId?: string;
 		};
 
-		expect(typeof appHeaderProps?.setView).toBe('function');
-		expect(() => appHeaderProps.setView('any-view')).not.toThrow();
 		expect(builderPageProps?.encounterId).toBeUndefined();
 		expect(builderPageProps?.importDraftId).toBeUndefined();
 	});
