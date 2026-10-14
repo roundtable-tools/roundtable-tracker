@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export const PARTY_ICON_MAP: Record<PartyIcon, LucideIcon> = {
+const PARTY_ICON_MAP: Record<PartyIcon, LucideIcon> = {
 	User,
 	Users,
 	Shield,
@@ -36,7 +36,7 @@ export const PARTY_ICON_MAP: Record<PartyIcon, LucideIcon> = {
 	Ghost,
 };
 
-export function partyLevelRange(party: Party): string {
+function partyLevelRange(party: Party): string {
 	if (party.members.length === 0) return '—';
 	const levels = party.members.map((m) => m.level);
 	const min = Math.min(...levels);

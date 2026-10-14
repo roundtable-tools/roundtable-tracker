@@ -4,12 +4,11 @@ import { ReactNode } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 
 type AppHeaderProps = {
-	setView: (view: string) => void;
 	children?: ReactNode;
 };
 
 export const AppHeader = (props: AppHeaderProps) => {
-	const { setView, children } = props;
+	const { children } = props;
 	const navigate = useNavigate();
 
 	return (
@@ -19,7 +18,6 @@ export const AppHeader = (props: AppHeaderProps) => {
 					variant="ghost"
 					className="-ml-2 text-white hover:bg-white/10 hover:text-white"
 					onClick={() => {
-						setView('landingPage');
 						navigate({ to: '/' });
 					}}
 				>
