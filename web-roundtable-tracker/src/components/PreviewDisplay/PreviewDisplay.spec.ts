@@ -40,7 +40,8 @@ vi.mock('@/store/encounterRuntimeInstance', () => ({
 		selector(mocks.storeState),
 }));
 
-import { generateParticipants, PreviewDisplay } from './PreviewDisplay';
+import { PreviewDisplay } from './PreviewDisplay';
+import { generateParticipants } from './generateParticipants';
 
 describe('PreviewDisplay form defaulting path', () => {
 	beforeEach(() => {

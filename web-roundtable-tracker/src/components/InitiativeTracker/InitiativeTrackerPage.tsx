@@ -1434,48 +1434,46 @@ export function InitiativeTrackerPage() {
 		[initiativeParticipants, nextRoundMarkerIndex, nextRound]
 	);
 
-	const timelineEvents = useMemo(
-		() =>
-			timeline.map((event) => {
-				if (event.type !== 'reinforcement' || !event.id) {
-					return {
-						round: event.round,
-						label: event.title,
-						description: event.detail,
-					};
-				}
+	// Not memoised: it calls triggerReinforcementEvent, which is recreated every
+	// render, and Timeline isn't memoised either.
+	const timelineEvents = timeline.map((event) => {
+		if (event.type !== 'reinforcement' || !event.id) {
+			return {
+				round: event.round,
+				label: event.title,
+				description: event.detail,
+			};
+		}
 
-				const isTriggered = triggeredReinforcementSlotIds.has(event.id);
-				const canTrigger = event.round <= round && !isTriggered;
-				const participantCount =
-					reinforcementEventsByRound[event.round]?.find(
-						(slot) => slot.id === event.id
-					)?.participants?.length ?? 0;
+		const isTriggered = triggeredReinforcementSlotIds.has(event.id);
+		const canTrigger = event.round <= round && !isTriggered;
+		const participantCount =
+			reinforcementEventsByRound[event.round]?.find(
+				(slot) => slot.id === event.id
+			)?.participants?.length ?? 0;
 
-				return {
-					id: event.id,
-					round: event.round,
-					label: event.title,
-					description:
-						event.detail ||
-						(participantCount > 0
-							? `${participantCount} reinforcement participant${
-									participantCount === 1 ? '' : 's'
-								}`
-							: undefined),
-					actionLabel: isTriggered
-						? 'Triggered'
-						: canTrigger
-							? 'Trigger Now'
-							: undefined,
-					actionDisabled: isTriggered,
-					onAction: canTrigger
-						? () => triggerReinforcementEvent(event.id as string)
-						: undefined,
-				};
-			}),
-		[timeline, triggeredReinforcementSlotIds, round, reinforcementEventsByRound]
-	);
+		return {
+			id: event.id,
+			round: event.round,
+			label: event.title,
+			description:
+				event.detail ||
+				(participantCount > 0
+					? `${participantCount} reinforcement participant${
+							participantCount === 1 ? '' : 's'
+						}`
+					: undefined),
+			actionLabel: isTriggered
+				? 'Triggered'
+				: canTrigger
+					? 'Trigger Now'
+					: undefined,
+			actionDisabled: isTriggered,
+			onAction: canTrigger
+				? () => triggerReinforcementEvent(event.id as string)
+				: undefined,
+		};
+	});
 
 	return (
 		<main className="mx-auto w-full max-w-7xl space-y-4 p-4 lg:p-6">
