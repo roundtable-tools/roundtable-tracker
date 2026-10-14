@@ -4,14 +4,12 @@ import {
 	DIFFICULTY,
 	difficultyToString,
 	Encounter,
-	indexToLetter,
 	InitiativeParticipant,
-	normalizeLevel,
-	Participant,
 	PRIORITY,
 } from '@/store/data';
 import { generateUUID } from '@/utils/uuid';
 import { PreviewCard } from './PreviewCard';
+import { generateParticipants } from './generateParticipants';
 import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { useEffect, useMemo, useState } from 'react';
 import { AppHeader } from '@/AppHeader';
@@ -41,10 +39,6 @@ import { Bot, Trees, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useSavedPartiesStore } from '@/store/savedPartiesInstance';
 import { Party } from '@/store/savedParties';
-
-type PreviewDisplayProps = {
-	setView: (view: string) => void;
-};
 
 type PreviewCharacterConfig = CharacterConfig & {
 	hasHealthData?: boolean;
@@ -105,84 +99,6 @@ function getTeamAppearance(side: number, isParty: boolean): TeamAppearance {
 	return TEAM_APPEARANCES.other;
 }
 
-function getDefaultParticipantName(participant: Participant<0 | 1>): string {
-	if (participant.type === 'hazard') {
-		return 'Hazard';
-	}
-
-	switch (participant.side) {
-		case ALIGNMENT.Opponents:
-			return 'Opponent';
-
-		case ALIGNMENT.Neutral:
-			return 'Other';
-
-		case ALIGNMENT.PCs:
-			return 'PC';
-
-		default:
-			return 'Combatant';
-	}
-}
-
-export const generateParticipants = (
-	encounterData: Encounter | undefined,
-	partyLevel: number
-): InitiativeParticipant[][] => {
-	if (!encounterData) return [];
-
-	const reinforcementParticipants = (encounterData.narrativeSlots ?? [])
-		.filter((slot) => slot.type === 'reinforcement')
-		.flatMap((slot) => slot.participants ?? []);
-
-	const allParticipants = [
-		...(encounterData.participants ?? []),
-		...reinforcementParticipants,
-	];
-
-	const groupedBySide = allParticipants.reduce(
-		(acc, participant) => {
-			if (!acc[participant.side]) {
-				acc[participant.side] = [];
-			}
-			acc[participant.side].push(participant);
-
-			return acc;
-		},
-		{} as Record<number, Participant<0 | 1>[]>
-	);
-
-	return Object.values(groupedBySide).map((participants) =>
-		participants.flatMap(({ level, name, count, ...participant }) => {
-			const trimmedName = name.trim();
-			const baseName =
-				trimmedName.length > 0
-					? trimmedName
-					: getDefaultParticipantName({ level, name, count, ...participant });
-			const initiativeBonus =
-				typeof participant.initiativeBonus === 'number' &&
-				Number.isFinite(participant.initiativeBonus)
-					? participant.initiativeBonus
-					: 0;
-			const isSimpleHazard =
-				participant.type === 'hazard' && !participant.isComplexHazard;
-
-			return Array.from({ length: count ?? 1 }).map((_, index, { length }) => ({
-				uuid: generateUUID(),
-				tiePriority: PRIORITY.NPC,
-				initiative: Math.floor(Math.random() * 20) + 1 + initiativeBonus,
-				...participant,
-				level: normalizeLevel(partyLevel, level),
-				name:
-					length > 1
-						? `${baseName} ${indexToLetter(index).toUpperCase()}`
-						: baseName,
-				isSimpleHazard: isSimpleHazard,
-			}));
-		})
-	);
-};
-
 const generateParty = (
 	encounterData: Encounter | undefined,
 	partyLevel: number
@@ -223,16 +139,12 @@ export type Inputs = {
 	}[];
 };
 
-export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
+export const PreviewDisplay = (): JSX.Element => {
 	const startEncounter = useEncounterStore((state) => state.startEncounter);
-	const setTrackerMetaMap = useEncounterStore(
-		(state) => state.setTrackerMetaMap
-	);
 	const navigate = useNavigate();
 
 	const encounterData = useEncounterStore((state) => state.encounterData);
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
-	const setView = props.setView;
 	const [showInitiativeChoice, setShowInitiativeChoice] = useState(false);
 	const [preparedParticipants, setPreparedParticipants] = useState<
 		PreviewCharacterConfig[]
@@ -313,80 +225,75 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 	}, [defaultTeams, reset]);
 
 	const onStartEncounter = () => {
-		handleSubmit(
-			(data) => {
-				const formParticipants = data.teams
-					.flatMap(({ characters }) => characters)
-					.map((participant) => {
-						const sourceParticipant = sourceParticipantsById.get(
-							participant.uuid
-						);
-						const mergedParticipant = {
-							...sourceParticipant,
-							...participant,
-						};
-						const hasHealthData = mergedParticipant.hasHealthData !== false;
-						const maxHealth =
-							typeof mergedParticipant.maxHealth === 'number' &&
-							Number.isFinite(mergedParticipant.maxHealth) &&
-							mergedParticipant.maxHealth >= 0
-								? mergedParticipant.maxHealth
-								: 1;
-						const health =
-							typeof mergedParticipant.health === 'number' &&
-							Number.isFinite(mergedParticipant.health) &&
-							mergedParticipant.health >= 0
-								? mergedParticipant.health
-								: maxHealth;
-						const tempHealth =
-							typeof mergedParticipant.tempHealth === 'number' &&
-							Number.isFinite(mergedParticipant.tempHealth) &&
-							mergedParticipant.tempHealth >= 0
-								? mergedParticipant.tempHealth
-								: 0;
-						const initiative =
-							typeof mergedParticipant.initiative === 'number' &&
-							Number.isFinite(mergedParticipant.initiative)
-								? mergedParticipant.initiative
-								: (mergedParticipant.initiative ?? 0);
+		handleSubmit((data) => {
+			const formParticipants = data.teams
+				.flatMap(({ characters }) => characters)
+				.map((participant) => {
+					const sourceParticipant = sourceParticipantsById.get(
+						participant.uuid
+					);
+					const mergedParticipant = {
+						...sourceParticipant,
+						...participant,
+					};
+					const hasHealthData = mergedParticipant.hasHealthData !== false;
+					const maxHealth =
+						typeof mergedParticipant.maxHealth === 'number' &&
+						Number.isFinite(mergedParticipant.maxHealth) &&
+						mergedParticipant.maxHealth >= 0
+							? mergedParticipant.maxHealth
+							: 1;
+					const health =
+						typeof mergedParticipant.health === 'number' &&
+						Number.isFinite(mergedParticipant.health) &&
+						mergedParticipant.health >= 0
+							? mergedParticipant.health
+							: maxHealth;
+					const tempHealth =
+						typeof mergedParticipant.tempHealth === 'number' &&
+						Number.isFinite(mergedParticipant.tempHealth) &&
+						mergedParticipant.tempHealth >= 0
+							? mergedParticipant.tempHealth
+							: 0;
+					const initiative =
+						typeof mergedParticipant.initiative === 'number' &&
+						Number.isFinite(mergedParticipant.initiative)
+							? mergedParticipant.initiative
+							: (mergedParticipant.initiative ?? 0);
 
-						if (!hasHealthData) {
-							return {
-								...mergedParticipant,
-								hasHealthData: false,
-								initiative,
-								maxHealth: 1,
-								health: 1,
-								tempHealth: 0,
-							};
-						}
-
+					if (!hasHealthData) {
 						return {
 							...mergedParticipant,
-							hasHealthData: true,
+							hasHealthData: false,
 							initiative,
-							maxHealth,
-							health,
-							tempHealth,
+							maxHealth: 1,
+							health: 1,
+							tempHealth: 0,
 						};
-					});
-				console.log('Prepared participants for encounter:', formParticipants);
-				setPreparedParticipants(formParticipants);
-				setShowInitiativeChoice(true);
-			},
-			(errors) => {
-				console.log(errors);
-			}
-		)();
+					}
+
+					return {
+						...mergedParticipant,
+						hasHealthData: true,
+						initiative,
+						maxHealth,
+						health,
+						tempHealth,
+					};
+				});
+			setPreparedParticipants(formParticipants);
+			setShowInitiativeChoice(true);
+		})();
 	};
 
 	const onSelectInitiativeView = (
 		view: 'initiativeTracker' | 'initiativePlayer'
 	) => {
-		startEncounter(participantsToEncounterCharacters(preparedParticipants));
-		setTrackerMetaMap(buildTrackerMetaMap(preparedParticipants));
+		startEncounter(
+			participantsToEncounterCharacters(preparedParticipants),
+			buildTrackerMetaMap(preparedParticipants)
+		);
 		setShowInitiativeChoice(false);
-		setView(view);
 
 		if (view === 'initiativeTracker') {
 			navigate({ to: '/initiative_tracker' });
@@ -446,7 +353,7 @@ export const PreviewDisplay = (props: PreviewDisplayProps): JSX.Element => {
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
-			<AppHeader setView={setView} />
+			<AppHeader />
 			<div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
 				<header className="flex flex-col gap-3 rounded-2xl border bg-card px-5 py-5 shadow-sm sm:flex-row sm:items-end sm:justify-between">
 					<div className="space-y-1">
