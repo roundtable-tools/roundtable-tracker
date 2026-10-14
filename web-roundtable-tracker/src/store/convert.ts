@@ -15,7 +15,11 @@ export const participantsToEncounterCharacters = (
 ): Character[] => {
 	return participants
 		.sort(
-			(a, b) => b.initiative! - a.initiative! || b.tiePriority - a.tiePriority
+			// Simple hazards have no initiative; treat it as 0 so the comparator
+			// never returns NaN and scrambles the others.
+			(a, b) =>
+				(b.initiative ?? 0) - (a.initiative ?? 0) ||
+				b.tiePriority - a.tiePriority
 		)
 		.map(characterConfigToCharacter);
 };
@@ -38,8 +42,6 @@ type RuntimeParticipantFields = {
 	}>;
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
-	reinforcementSlotId?: string;
-	reinforcementPending?: boolean;
 };
 
 function deriveRole(
@@ -96,12 +98,6 @@ export const buildTrackerMetaMap = (
 			dcs: runtime.dcs,
 			adjustmentDescription: runtime.adjustmentDescription,
 			adjustmentLevelModifier: runtime.adjustmentLevelModifier,
-			...(runtime.reinforcementSlotId !== undefined
-				? {
-						reinforcementSlotId: runtime.reinforcementSlotId,
-						reinforcementPending: runtime.reinforcementPending ?? false,
-					}
-				: {}),
 		};
 	}
 

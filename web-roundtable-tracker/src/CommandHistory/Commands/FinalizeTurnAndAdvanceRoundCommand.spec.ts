@@ -17,11 +17,9 @@ describe('FinalizeTurnAndAdvanceRoundCommand', () => {
 				initiative: 18,
 				turnState: 'normal',
 				group: 'players',
-				wounded: 0,
 				health: 20,
 				maxHealth: 20,
 				tempHealth: 0,
-				hasTurn: false,
 			},
 			{
 				uuid: '00000000-0000-0000-0000-000000000002',
@@ -29,11 +27,9 @@ describe('FinalizeTurnAndAdvanceRoundCommand', () => {
 				initiative: 12,
 				turnState: 'normal',
 				group: 'enemies',
-				wounded: 0,
 				health: 10,
 				maxHealth: 10,
 				tempHealth: 0,
-				hasTurn: false,
 			},
 		];
 		encounterStore.getState().startEncounter(characters);

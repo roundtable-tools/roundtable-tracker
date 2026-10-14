@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Threat } from '@/models/utility/threat/Threat.class';
 import { ExperienceBudget } from '@/models/utility/experienceBudget/ExperienceBudget';
-import { getMergedThresholds } from '@/components/BuilderPage/ThreatTracker';
+import { getMergedThresholds } from '@/components/BuilderPage/threatThresholds';
 import {
 	defaultFormValues,
 	toConcreteEncounter,
