@@ -395,13 +395,6 @@ export function SlotRow({
 		[enabledBlocks, isSimpleHazard, slot, slotType, usedAdditionalDataBlocks]
 	);
 
-	// Re-infer the open tabs only when another slot is shown, not on every edit
-	// of the current one.
-	useEffect(() => {
-		setActiveTabs(inferEnabledTabsFromSlot(slot));
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [slot.id]);
-
 	useEffect(() => {
 		const ids = new Set(
 			reinforcementParticipants.map((participant) => participant.id)
