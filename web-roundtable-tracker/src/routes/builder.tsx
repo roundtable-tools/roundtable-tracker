@@ -34,7 +34,7 @@ export function BuilderRouteComponent() {
 
 	return (
 		<>
-			<AppHeader setView={() => {}} />
+			<AppHeader />
 			<BuilderPage
 				encounterId={encounterId}
 				importDraftId={importDraftId}

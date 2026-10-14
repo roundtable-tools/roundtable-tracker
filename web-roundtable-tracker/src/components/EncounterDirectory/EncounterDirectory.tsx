@@ -48,10 +48,6 @@ import { EncounterImportModal } from './EncounterDetails/EncounterImportModal.ts
 import { SavedConcreteEncounter } from '@/store/savedEncounters.ts';
 import { useSavedEncountersStore } from '@/store/savedEncounterInstance.ts';
 
-type EncounterDirectoryProps = {
-	setView: (view: string) => void;
-};
-
 type EncounterDirectoryEntry = Encounter & {
 	directoryId: string;
 	source: 'template' | 'saved';
@@ -295,8 +291,7 @@ export const toEncounter = (entry: EncounterDirectoryEntry): Encounter => {
 	return encounter;
 };
 
-export const EncounterDirectory = (props: EncounterDirectoryProps) => {
-	const { setView } = props;
+export const EncounterDirectory = () => {
 	const navigate = useNavigate();
 	const setEncounterData = useEncounterStore((state) => state.setEncounterData);
 	const savedEncounters = useSavedEncountersStore(
@@ -422,12 +417,10 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 	}, []);
 
 	const openPreview = () => {
-		setView('preview');
 		navigate({ to: '/preview' });
 	};
 
 	const openBuilder = () => {
-		setView('builder');
 		const params: Record<string, string | null> = {};
 
 		if (
@@ -501,7 +494,7 @@ export const EncounterDirectory = (props: EncounterDirectoryProps) => {
 
 	return (
 		<div className="flex min-h-screen flex-col bg-background">
-			<AppHeader setView={setView}>
+			<AppHeader>
 				<div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
 					<div className="flex items-center gap-2">
 						<Button

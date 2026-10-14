@@ -198,9 +198,7 @@ describe('PreviewDisplay form defaulting path', () => {
 			],
 		};
 
-		const html = renderToStaticMarkup(
-			createElement(PreviewDisplay, { setView: vi.fn() })
-		);
+		const html = renderToStaticMarkup(createElement(PreviewDisplay));
 
 		expect(html).toContain('Encounter Preview');
 		expect(html).toContain('Boss and Lackeys');
@@ -246,9 +244,7 @@ describe('PreviewDisplay form defaulting path', () => {
 	});
 
 	it('renders nothing when encounter data is absent', () => {
-		const html = renderToStaticMarkup(
-			createElement(PreviewDisplay, { setView: vi.fn() })
-		);
+		const html = renderToStaticMarkup(createElement(PreviewDisplay));
 
 		expect(html).toBe('');
 	});
