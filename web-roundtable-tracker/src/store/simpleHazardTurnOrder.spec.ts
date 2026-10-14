@@ -187,28 +187,4 @@ describe('encounter with a simple hazard', () => {
 			undefined
 		);
 	});
-
-	it('keeps a pre-added pending simple hazard out of the turn order when its slot triggers', () => {
-		const pendingHazard = {
-			...hazard,
-			reinforcementSlotId: 'slot-1',
-			reinforcementPending: true,
-		} as CharacterConfig;
-
-		startEncounter(encounterStore, [goblin, pendingHazard]);
-		encounterStore.getState().setEncounterData(reinforcementEncounter);
-
-		expect(
-			new TriggerReinforcementEventCommand(
-				{ slotId: 'slot-1' },
-				{ encounterStore }
-			).execute()
-		).toBe(STATUS.success);
-
-		const state = encounterStore.getState();
-
-		expect(state.trackerMetaMap[HAZARD].reinforcementPending).toBe(false);
-		expect(state.charactersOrder).toEqual([GOBLIN]);
-		expect(state.charactersWithTurn).toEqual(new Set([GOBLIN]));
-	});
 });

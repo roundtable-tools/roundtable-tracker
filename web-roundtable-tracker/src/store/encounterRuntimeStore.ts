@@ -26,7 +26,6 @@ export type TrackerParticipantMeta = {
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
 	reinforcementSlotId?: string;
-	reinforcementPending?: boolean;
 };
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Encounter } from './data';
