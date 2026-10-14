@@ -6,5 +6,5 @@ export const Route = createFileRoute('/encounters')({
 });
 
 function RouteComponent() {
-	return <EncounterDirectory setView={() => {}} />;
+	return <EncounterDirectory />;
 }

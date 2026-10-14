@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/AppHeader', () => ({
-	AppHeader: (props: { setView: (view: string) => void }) => {
+	AppHeader: (props: Record<string, unknown>) => {
 		mocks.appHeaderSpy(props);
 
 		return createElement('div', { 'data-testid': 'app-header' });
@@ -96,19 +96,14 @@ describe('builder route search params', () => {
 		expect(mocks.builderPageSpy).toHaveBeenCalledTimes(1);
 	});
 
-	it('passes route-specific props to AppHeader and BuilderPage', () => {
+	it('passes route-specific props to BuilderPage', () => {
 		renderToStaticMarkup(createElement(BuilderRouteComponent));
 
-		const appHeaderProps = mocks.appHeaderSpy.mock.calls[0]?.[0] as {
-			setView: (view: string) => void;
-		};
 		const builderPageProps = mocks.builderPageSpy.mock.calls[0]?.[0] as {
 			encounterId?: string;
 			importDraftId?: string;
 		};
 
-		expect(typeof appHeaderProps?.setView).toBe('function');
-		expect(() => appHeaderProps.setView('any-view')).not.toThrow();
 		expect(builderPageProps?.encounterId).toBeUndefined();
 		expect(builderPageProps?.importDraftId).toBeUndefined();
 	});
