@@ -107,6 +107,7 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
   - `CompositeCommand` runs its children in order and undoes them in reverse.
 - History is persisted, and commands are revived by type from `CommandHistory/commandRegistry.ts`. **Every command the UI runs, directly or nested, must be registered.**
   - The class `UpdateCharacterDataCommand` is registered under the type `UpdateCharacterCommand`.
+  - A revived command is rebuilt with `new CommandClass(storedData)`, so the constructor must keep everything `undo()` needs from `data` (the `original` snapshot, or the nested `command` it built on execute).
   - `commandRegistry.spec.ts` fails when a command class in `CommandHistory/Commands/` is not registered under its `type`.
   - Loading skips a stored command of an unknown type with a console warning. It keeps the undo history after the last unknown command and the redo stack before the first one, so undo and redo never step past it.
 - New turn-flow behaviour belongs in a command, so undo, redo and reload keep working. Add a `*.spec.ts` next to it; most commands have one.
