@@ -76,6 +76,6 @@ For the full text of any linked rule, or to look up a creature's level, use the 
 
 ## When working on the tracker
 
-- Check the implementation file's "Known quirks" list before assuming a behaviour is intended. Several XP paths disagree with each other, such as the threat tracker bands vs the saved difficulty.
+- Check the implementation file's "Known quirks" list before assuming a behaviour is intended. Several XP paths disagree with each other, such as `elite-offense` XP vs its displayed level.
 - Accomplishment XP in the budget, ally subtraction, partial adjustments and extrapolation past +4 are **deliberate house rules**, not bugs. Keep them, and say so in tickets and code comments.
 - When changing XP math, update the specs listed in the implementation file. Keep the two XP formula copies and the two adjusted-level functions in agreement.
