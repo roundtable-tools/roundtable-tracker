@@ -18,9 +18,6 @@ export const Route = createFileRoute('/initiative_tracker')({
 			throw redirect({ to: '/preview' });
 		}
 	},
-	loader: () => ({
-		crumb: 'Initiative Tracker',
-	}),
 });
 
 function RouteComponent() {

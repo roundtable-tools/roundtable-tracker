@@ -1,4 +1,5 @@
 import { AppSidebar } from '@/components/app-sidebar';
+import { getRouteTitle } from '@/components/appNavigation';
 import { ThemeProvider } from '@/components/theme-provider';
 import {
 	Breadcrumb,
@@ -33,12 +34,11 @@ const TanStackRouterDevtools = import.meta.env.DEV
 function BreadCrumbs() {
 	const matches = useMatches();
 
-	const breadcrumbItems = matches
-		.filter((match) => match.loaderData?.crumb)
-		.map(({ pathname, loaderData }) => ({
-			href: pathname,
-			label: loaderData?.crumb,
-		}));
+	const breadcrumbItems = matches.flatMap(({ pathname, routeId }) => {
+		const label = getRouteTitle(routeId);
+
+		return label ? [{ href: pathname, label }] : [];
+	});
 
 	return (
 		<Breadcrumb>
