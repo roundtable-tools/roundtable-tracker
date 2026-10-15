@@ -269,8 +269,11 @@ export class TriggerReinforcementEventCommand implements Command {
 			const turnTakers = (this.data.spawnedParticipants ?? [])
 				.filter((participant) => !participant.meta.isSimpleHazard)
 				.map((participant) => participant.character);
-			// Like the starting roster: participants that arrive delayed wait in
-			// the delayed list, everyone else joins the order and gets a turn.
+			// Participants that arrive delayed wait in the delayed list, everyone
+			// else joins the order and gets a turn. Unlike the starting roster,
+			// arriving delayers get no turn this round; returning from Delay
+			// still lets them act. The rules don't cover reinforcements, so this
+			// is a house rule.
 			const arrivingDelayed = turnTakers.filter(
 				(character) => character.turnState === 'delayed'
 			);
