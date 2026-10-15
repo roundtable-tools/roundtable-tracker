@@ -67,6 +67,7 @@ import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/Reactivate
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 import { Input } from '@/components/ui/input';
 import { type SwipeAction } from './InitiativeActionCarouselCard';
+import { isFinalActiveParticipant as isFinalActiveParticipantInRound } from './isFinalActiveParticipant';
 
 const HAZARD_DISABLE_CHECK_NAMES = [
 	'Disrupted',
@@ -1020,7 +1021,11 @@ export function InitiativeTrackerPage() {
 	};
 
 	const isFinalActiveParticipant = (participantId: string) =>
-		activeParticipantCount === 1 && charactersWithTurn.has(participantId);
+		isFinalActiveParticipantInRound(participantId, {
+			activeParticipantCount,
+			charactersWithTurn,
+			charactersMap,
+		});
 
 	const isNextParticipantDelayed = () => {
 		return (

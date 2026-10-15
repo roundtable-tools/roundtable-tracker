@@ -92,7 +92,8 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
   - Without a fixed `initiative`, a participant rolls d20 + `initiativeBonus`. The roll is stored in the command data, so redo and reload replay it.
   - It places them with `insertByInitiative` among the participants still to act this round, never before index 0. They act this round (house rule); one whose initiative is above everyone still to act goes right after the current turn.
   - Placement compares against `effectiveInitiatives`: values derived from the current order, because a reorder or a return from Delay doesn't update the stored numbers.
-  - Ties: an opposing arrival goes before a PC it ties with; other ties go after the participants already there.
+  - Ties (`arrivalActsBefore`): an opposing arrival goes before a PC it ties with; other ties go after the participants already there.
+  - Participants that arrive delayed go to `delayedOrder`. They keep a turn this round only when their initiative puts them after the current actor (`charactersOrder[0]` with a turn left, compared by its effective initiative); otherwise their spot has passed and they wait for the next round (house rule). With no current actor they get no turn. Participants that start the encounter delayed keep their round-1 turn.
   - The UI allows triggering only once `trigger.round <= round`.
 - **Simple hazards** (`meta.isSimpleHazard`):
   - They are hidden from the visible queue and shown in a hazards panel.
@@ -118,7 +119,6 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 
 Check whether each is still open before relying on it.
 
-- Participants that start delayed get no turn in round 1 (#48).
 - Returning from Delay after the last turn of a round advances the round first. The returner then acts as the first turn of the next round, not the last turn of the current one (#93).
 - Delaying through a whole round doesn't send the participant back to their old spot (#35).
 - Simple hazards stay in the turn bookkeeping. The final-turn checks in the commands count them, while the UI doesn't (#92).

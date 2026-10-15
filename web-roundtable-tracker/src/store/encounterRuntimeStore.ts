@@ -148,7 +148,9 @@ const startEncounter = (
 		delayedOrder,
 		trackerMetaMap,
 		round: 1,
-		charactersWithTurn: new Set(charactersOrder),
+		// Starting out delayed doesn't cost the round-1 turn: a delaying
+		// participant can still return to the order and act this round.
+		charactersWithTurn: new Set(delayedOrder.concat(charactersOrder)),
 		...resetHistory(),
 	};
 };
