@@ -60,8 +60,8 @@ export const EncounterImportModal = (props: EncounterImportModalProps) => {
 						) : null}
 						<EncounterCard
 							selectedEncounter={importedEncounter}
-							submit={() => {
-								submit(importedEncounter);
+							submit={(variantEncounter) => {
+								submit(variantEncounter ?? importedEncounter);
 								setImportedEncounter(null);
 								closeLayer();
 							}}
