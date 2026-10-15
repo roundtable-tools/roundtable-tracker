@@ -40,7 +40,8 @@ vi.mock('@/store/encounterRuntimeInstance', () => ({
 		selector(mocks.storeState),
 }));
 
-import { generateParticipants, PreviewDisplay } from './PreviewDisplay';
+import { PreviewDisplay } from './PreviewDisplay';
+import { generateParticipants } from './generateParticipants';
 
 describe('PreviewDisplay form defaulting path', () => {
 	beforeEach(() => {
@@ -198,9 +199,7 @@ describe('PreviewDisplay form defaulting path', () => {
 			],
 		};
 
-		const html = renderToStaticMarkup(
-			createElement(PreviewDisplay, { setView: vi.fn() })
-		);
+		const html = renderToStaticMarkup(createElement(PreviewDisplay));
 
 		expect(html).toContain('Encounter Preview');
 		expect(html).toContain('Boss and Lackeys');
@@ -246,9 +245,7 @@ describe('PreviewDisplay form defaulting path', () => {
 	});
 
 	it('renders nothing when encounter data is absent', () => {
-		const html = renderToStaticMarkup(
-			createElement(PreviewDisplay, { setView: vi.fn() })
-		);
+		const html = renderToStaticMarkup(createElement(PreviewDisplay));
 
 		expect(html).toBe('');
 	});

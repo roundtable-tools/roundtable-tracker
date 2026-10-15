@@ -10,7 +10,7 @@ import {
 	createDirectoryEntries,
 	getDefaultShowTemplates,
 	toEncounter,
-} from './EncounterDirectory';
+} from './encounterDirectoryEntries';
 import type { SavedConcreteEncounter } from '@/store/savedEncounters';
 import { LevelDifference } from '@/models/utility/level/LevelDifference';
 

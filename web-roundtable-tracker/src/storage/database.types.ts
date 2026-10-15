@@ -33,33 +33,6 @@ export type Database = {
 				};
 				Relationships: [];
 			};
-			todos: {
-				Row: {
-					completed: boolean | null;
-					created_at: string | null;
-					deleted: boolean | null;
-					id: string;
-					text: string | null;
-					updated_at: string | null;
-				};
-				Insert: {
-					completed?: boolean | null;
-					created_at?: string | null;
-					deleted?: boolean | null;
-					id?: string;
-					text?: string | null;
-					updated_at?: string | null;
-				};
-				Update: {
-					completed?: boolean | null;
-					created_at?: string | null;
-					deleted?: boolean | null;
-					id?: string;
-					text?: string | null;
-					updated_at?: string | null;
-				};
-				Relationships: [];
-			};
 		};
 		Views: {
 			[_ in never]: never;
