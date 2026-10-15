@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import encounterTemplates from '@/store/Encounters/migratedEncounterTemplates';
 import type { EncounterVariant } from '@/models/encounters/encounter.types';
 import { saveImportedEncounterDraft } from '@/store/importedEncounterDraft';
+import { buildSavedVariantEncounter } from './savedVariantEncounter';
 
 function buildTemplateVariantParticipants(
 	variant: EncounterVariant
@@ -173,30 +174,7 @@ export const EncounterCard = (props: EncounterCardProps) => {
 		}
 
 		if (source !== 'template' && activeSavedVariant) {
-			return {
-				...selectedEncounter,
-				partySize: activeSavedVariant.partySize ?? selectedEncounter.partySize,
-				level: activeSavedVariant.level ?? selectedEncounter.level,
-				difficulty:
-					activeSavedVariant.difficulty ?? selectedEncounter.difficulty,
-				description:
-					activeSavedVariant.description ?? selectedEncounter.description,
-				participants: activeSavedVariant.participants,
-				// Imported template variants carry their own events and notes
-				...(selectedEncounter.levelRepresentation ===
-				LEVEL_REPRESENTATION.Relative
-					? {
-							narrativeSlots:
-								'narrativeSlots' in activeSavedVariant
-									? activeSavedVariant.narrativeSlots
-									: undefined,
-							notes:
-								'notes' in activeSavedVariant
-									? activeSavedVariant.notes
-									: undefined,
-						}
-					: {}),
-			} as Encounter;
+			return buildSavedVariantEncounter(selectedEncounter, activeSavedVariant);
 		}
 
 		return undefined;

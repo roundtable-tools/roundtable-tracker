@@ -151,7 +151,9 @@ function toStoreVariant(
 		narrativeSlots: variant.events.map((event) =>
 			toNarrativeSlot(event, participantsById, variantLabel, warnings)
 		),
-		notes: variant.notes === undefined ? undefined : { gm: variant.notes },
+		// An empty object marks "no notes", so the variant never inherits the
+		// default variant's notes
+		notes: variant.notes === undefined ? {} : { gm: variant.notes },
 	};
 }
 
