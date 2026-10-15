@@ -11,7 +11,7 @@ when the turn flow changes.
   - Whether a participant has its turn left is held in the store's `charactersWithTurn` Set, not on `Character`.
 - **Tie priority** `PRIORITY = { PC: 0, NPC: 1, SPECIAL: 2 }`. Higher goes first on a tie, so by default enemies (`NPC`) win ties against PCs, as the rules say. The party form's "Initiative tie advantage" checkbox is ticked by default and maps ticked to `PC`, unticked to `NPC`.
 - **Sides** `ALIGNMENT = { PCs: 0, Opponents: 1, Neutral: 2 }`.
-- **Template participant** (`CombatantParticipant`): `initiativeBonus?`, `tiePriority?`, `startingState?` (`normal` | `delayed` | `knocked-out`), `count?`. Hazards add `successesToDisable` and `isComplexHazard?`.
+- **Template participant** (`CombatantParticipant`): `initiativeBonus?`, `tiePriority?`, `startingState?` (`normal` | `delayed` | `knocked-out`), `hiddenFromPlayers?`, `initiativeDescription?`, `count?`. The builder's combat-ready state maps to `startingState` (Active → `normal`, Delayed → `delayed`, Defeated → `knocked-out`). Hazards add `successesToDisable` and `isComplexHazard?`.
 - **Narrative slots** (`NarrativeSlot`): `type` is `default`, `reinforcement` or `ongoing`. `trigger: { round, frequency? }`, plus `participants`. Reinforcements are slots of type `reinforcement`.
 - **Runtime store** (`store/encounterRuntimeStore.ts`, persisted to localStorage as `encounter-store`):
 
@@ -36,7 +36,7 @@ when the turn flow changes.
 - `participantsToEncounterCharacters` (`store/convert.ts`) sorts once, when the encounter starts: by initiative, highest first, then by `tiePriority`, highest first.
 - After that the **queue position is what counts**. The stored `initiative` number is not updated by a reorder or a return from Delay. That matches the rules ("usually not necessary to track the original initiative numbers").
 - `ReorderCharactersCommand {newOrder, oldOrder?, type?: 'initiative' | 'delay'}` replaces `charactersOrder` or `delayedOrder` wholesale. The UI has a drag-and-drop dialog for it.
-- No PC initiative modifier is stored. There is no skill choice (Perception or Stealth) and no reroll support. The builder's "Initiative Description" field is not saved.
+- No PC initiative modifier is stored. There is no skill choice (Perception or Stealth) and no reroll support. The builder's "Initiative Description" field is saved, but the tracker doesn't use it.
 
 ## Turn and round flow
 
@@ -120,4 +120,3 @@ Check whether each is still open before relying on it.
 - Reinforcement-slot participants are also put in the starting roster, so triggering the slot adds copies (#90).
 - A triggered reinforcement's initiative ignores `initiativeBonus`. Its placement compares stored numbers that a reorder doesn't update (#91).
 - Simple hazards stay in the turn bookkeeping. The final-turn checks in the commands count them, while the UI doesn't (#92).
-- The builder's combat-ready state (delayed or defeated), hidden-from-players and initiative description aren't saved into the encounter (#94).
