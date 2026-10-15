@@ -1,3 +1,61 @@
-import sharedConfig from '../eslint.config.mjs';
+import js from '@eslint/js';
+import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import tseslint from 'typescript-eslint';
+import stylistic from '@stylistic/eslint-plugin';
 
-export default [...sharedConfig];
+export default tseslint.config(
+	{ ignores: ['dist'] },
+	{
+		extends: [js.configs.recommended, ...tseslint.configs.recommended],
+		files: ['**/*.{ts,tsx}'],
+		languageOptions: {
+			ecmaVersion: 2020,
+			globals: Object.fromEntries(
+				Object.entries(globals.browser).map(([key, value]) => [
+					key.trim(),
+					value,
+				])
+			),
+		},
+		plugins: {
+			'react-hooks': reactHooks,
+			'react-refresh': reactRefresh,
+			'@stylistic': stylistic,
+		},
+		rules: {
+			...reactHooks.configs.recommended.rules,
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{ ignoreRestSiblings: true },
+			],
+			'react-refresh/only-export-components': [
+				'warn',
+				{ allowConstantExport: true },
+			],
+			'no-console': ['error', { allow: ['warn', 'error'] }],
+			'@stylistic/padding-line-between-statements': [
+				'error',
+				{ blankLine: 'always', prev: ['case', 'default'], next: '*' },
+				{ blankLine: 'always', prev: '*', next: ['case', 'default'] },
+				{ blankLine: 'any', prev: 'case', next: ['case', 'default'] },
+				{
+					blankLine: 'any',
+					prev: ['const', 'let', 'var'],
+					next: ['const', 'let', 'var'],
+				},
+				{ blankLine: 'any', prev: ['import'], next: ['import'] },
+				{ blankLine: 'always', prev: ['export'], next: ['export'] },
+				{ blankLine: 'always', prev: ['*'], next: ['return'] },
+				{ blankLine: 'always', prev: '*', next: 'if' },
+				{ blankLine: 'always', prev: '*', next: 'for' },
+				{ blankLine: 'always', prev: '*', next: 'while' },
+				{ blankLine: 'always', prev: '*', next: 'switch' },
+				{ blankLine: 'always', prev: '*', next: 'try' },
+				{ blankLine: 'always', prev: '*', next: 'function' },
+				{ blankLine: 'always', prev: '*', next: 'class' },
+			],
+		},
+	}
+);

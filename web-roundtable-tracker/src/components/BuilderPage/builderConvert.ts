@@ -169,7 +169,7 @@ export function fromEncounterTemplate(
 	};
 }
 
-function threatToDifficulty(
+export function threatToDifficulty(
 	threatKey: number
 ): ConcreteEncounter['difficulty'] {
 	if (threatKey <= 0) return DIFFICULTY.Trivial;
