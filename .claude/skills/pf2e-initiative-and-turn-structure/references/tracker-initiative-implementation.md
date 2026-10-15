@@ -22,7 +22,7 @@ when the turn flow changes.
   | `charactersWithTurn: Set<UUID>` | Who still has a turn this round |
   | `round` | Starts at 1 |
   | `charactersMap` | Characters by uuid |
-  | `trackerMetaMap` | Role (pc / opponent / neutral / ally / hazard / reinforcement), `isSimpleHazard`, `initiativeBonus`, `reinforcementSlotId`, `reinforcementPending`, … |
+  | `trackerMetaMap` | Role (pc / opponent / neutral / ally / hazard / reinforcement), `isSimpleHazard`, `initiativeBonus`, `reinforcementSlotId`, … |
   | `history`, `redoStack` | Command history |
 
 ## Rolling and ordering
@@ -87,10 +87,11 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 ## Reinforcements and hazards
 
 - **Triggering reinforcements.** `TriggerReinforcementEventCommand {slotId}`:
-  - It spawns the slot's participants, expanded by `count`, with `role: 'reinforcement'`.
-  - It places them with `insertByInitiative`: sorted by initiative, never before index 0. They act this round.
-  - Without a fixed `initiative`, a participant gets a deterministic pseudo-roll from a hash of the slot id. `initiativeBonus` is not added.
-  - It also supports pre-added participants with `reinforcementPending: true`, which it activates instead.
+  - It spawns the slot's participants, expanded by `count`, with `role: 'reinforcement'`. Reinforcements are not in the starting roster; a slot whose participants are already in `trackerMetaMap` (by `reinforcementSlotId`) counts as triggered, and triggering it again fails.
+  - Without a fixed `initiative`, a participant rolls d20 + `initiativeBonus`. The roll is stored in the command data, so redo and reload replay it.
+  - It places them with `insertByInitiative` among the participants still to act this round, never before index 0. They act this round (house rule); one whose initiative is above everyone still to act goes right after the current turn.
+  - Placement compares against `effectiveInitiatives`: values derived from the current order, because a reorder or a return from Delay doesn't update the stored numbers.
+  - Ties: an opposing arrival goes before a PC it ties with; other ties go after the participants already there.
   - The UI allows triggering only once `trigger.round <= round`.
 - **Simple hazards** (`meta.isSimpleHazard`):
   - They are hidden from the visible queue and shown in a hazards panel.
@@ -117,7 +118,5 @@ Check whether each is still open before relying on it.
 - `ReturnToInitiativeCommand` isn't registered, so reloading after a return from Delay can break the store (#87).
 - Returning from Delay after the last turn of a round advances the round first. The returner then acts as the first turn of the next round, not the last turn of the current one (#93).
 - Delaying through a whole round doesn't send the participant back to their old spot (#35).
-- Reinforcement-slot participants are also put in the starting roster, so triggering the slot adds copies (#90).
-- A triggered reinforcement's initiative ignores `initiativeBonus`. Its placement compares stored numbers that a reorder doesn't update (#91).
 - Simple hazards stay in the turn bookkeeping. The final-turn checks in the commands count them, while the UI doesn't (#92).
 - The builder's combat-ready state (delayed or defeated), hidden-from-players and initiative description aren't saved into the encounter (#94).
