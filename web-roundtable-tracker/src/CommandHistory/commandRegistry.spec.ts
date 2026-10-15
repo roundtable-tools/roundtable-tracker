@@ -4,9 +4,6 @@ import { Command } from './common';
 
 type CommandClass = new (data: Command['data']) => Command;
 
-// Commands that are never stored in the history, so they need no registration.
-const notSerializable = new Set(['RandomIntCommand']);
-
 const sources = import.meta.glob<string>(
 	['./Commands/**/*Command.ts', '!./Commands/**/*.spec.ts'],
 	{ query: '?raw', import: 'default', eager: true }
@@ -43,7 +40,7 @@ describe('commandRegistry', () => {
 		);
 	});
 
-	it.each(commandClasses.filter(({ name }) => !notSerializable.has(name)))(
+	it.each(commandClasses)(
 		'registers $name under its type',
 		({ type, commandClass }) => {
 			expect(type).toBeDefined();
