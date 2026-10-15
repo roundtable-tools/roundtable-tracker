@@ -1,6 +1,7 @@
 import { UUID } from '@/utils/uuid';
 import { Command, CommandDeps, getDeps, STATUS } from '../common';
 import { EncounterStore } from '@/store/encounterRuntimeStore';
+import { skipParticipantsWithoutTurn } from '@/store/operations';
 
 type CommandProps = {
 	newOrder: UUID[];
@@ -24,8 +25,20 @@ export class ReorderCharactersCommand implements Command {
 		getDeps(this.deps).encounterStore.setState((state) => {
 			this.data.oldOrder = structuredClone(getOrder(this.data, state));
 
+			const orderName = getOrderName(this.data);
+
+			if (orderName === 'charactersOrder') {
+				return {
+					charactersOrder: skipParticipantsWithoutTurn({
+						charactersOrder: structuredClone(this.data.newOrder),
+						charactersWithTurn: state.charactersWithTurn,
+						delayedOrder: state.delayedOrder,
+					}),
+				};
+			}
+
 			return {
-				[getOrderName(this.data)]: structuredClone(this.data.newOrder),
+				[orderName]: structuredClone(this.data.newOrder),
 			};
 		});
 

@@ -36,6 +36,7 @@ when the turn flow changes.
 - `participantsToEncounterCharacters` (`store/convert.ts`) sorts once, when the encounter starts: by initiative, highest first, then by `tiePriority`, highest first.
 - After that the **queue position is what counts**. The stored `initiative` number is not updated by a reorder or a return from Delay. That matches the rules ("usually not necessary to track the original initiative numbers").
 - `ReorderCharactersCommand {newOrder, oldOrder?, type?: 'initiative' | 'delay'}` replaces `charactersOrder` or `delayedOrder` wholesale. The UI has a drag-and-drop dialog for it.
+- `skipParticipantsWithoutTurn` (`store/operations.ts`) runs after a reorder of `charactersOrder` and after `EndTurnCommand`: it rotates the queue until a participant with a turn, or a delaying one, is at the front, so someone moved up after acting doesn't act twice. When nobody has a turn left (the round's last turn), the order stays as it is.
 - No PC initiative modifier is stored. There is no skill choice (Perception or Stealth) and no reroll support. The builder's "Initiative Description" field is not saved.
 
 ## Turn and round flow
@@ -44,11 +45,11 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 
 | Command | Effect |
 |---|---|
-| `EndTurnCommand {uuid}` | Removes the turn and moves the participant to the end of `charactersOrder`. Fails if it has no turn |
+| `EndTurnCommand {uuid}` | Removes the turn, moves the participant to the end of `charactersOrder` and skips participants without a turn. Fails if it has no turn |
 | `EndRoundCommand` | `round + 1`. Every participant in `charactersOrder` and `delayedOrder` gets a turn again, including knocked-out ones. No reordering |
 | `FinalizeTurnAndAdvanceRoundCommand {uuid, action: 'end-turn' \| 'delay' \| 'ko'}` | One undo step: the action plus `EndRoundCommand`. Valid only when `uuid` is the last participant with a turn |
 | `FinalizeTurnAndReturnToInitiativeCommand {activeUuid, returningUuid, action}` | One undo step: `ReturnToInitiativeCommand` plus `EndRoundCommand` (see quirks) |
-| `GiveAdditionalTurnCommand {uuid}` | Gives the turn back. No UI |
+| `GiveAdditionalTurnCommand {uuid}` | Gives the turn back. "Give Turn Back" in the selected-participant panel, for a participant that already acted |
 
 - Before a turn ends while someone is delaying, the UI asks whether a delayed participant returns.
 - After a round advances, a "Round N" dialog lists that round's narrative and reinforcement slots.
