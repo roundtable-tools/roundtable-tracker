@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { Character } from './data';
+import {
+	ALIGNMENT,
+	DIFFICULTY,
+	LEVEL_REPRESENTATION,
+	type Character,
+} from './data';
 import {
 	runtimeToInitiativeQueue,
 	runtimeToOutOfInitiativeData,
@@ -176,6 +181,7 @@ describe('trackerMappers', () => {
 				],
 				adjustmentDescription: 'Custom elite skew',
 				adjustmentLevelModifier: 0.5,
+				traits: ['Goblin', 'Small'],
 			}),
 		};
 
@@ -191,11 +197,53 @@ describe('trackerMappers', () => {
 			hardness: 8,
 			adjustmentDescription: 'Custom elite skew',
 			adjustmentLevelModifier: 0.5,
+			traits: ['Goblin', 'Small'],
 		});
 		expect(queue[0].dcs?.[0]).toMatchObject({
 			name: 'Disable',
 			value: 24,
 			disableSuccesses: 2,
 		});
+	});
+
+	it('shows the traits of reinforcements that have not arrived yet', () => {
+		const outOfInitiative = runtimeToOutOfInitiativeData({
+			charactersOrder: [],
+			delayedOrder: [],
+			charactersMap: {},
+			trackerMetaMap: {},
+			encounterData: {
+				id: 'ambush',
+				name: 'Ambush',
+				description: '',
+				difficulty: DIFFICULTY.Moderate,
+				partySize: 4,
+				levelRepresentation: LEVEL_REPRESENTATION.Exact,
+				level: 3,
+				participants: [],
+				narrativeSlots: [
+					{
+						id: 'guard-arrives',
+						type: 'reinforcement',
+						trigger: { round: 2 },
+						participants: [
+							{
+								type: 'creature',
+								name: 'Guard',
+								level: '+0',
+								side: ALIGNMENT.Opponents,
+								traits: ['Human', 'Medium'],
+							},
+						],
+					},
+				],
+			},
+			partyLevel: 3,
+		});
+
+		expect(outOfInitiative.reinforcements[0]?.traits).toEqual([
+			'Human',
+			'Medium',
+		]);
 	});
 });

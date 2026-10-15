@@ -43,6 +43,7 @@ const encounter: Encounter = {
 					name: 'Guard',
 					level: '+0',
 					side: ALIGNMENT.Opponents,
+					traits: ['Human', 'Medium'],
 				},
 			],
 		},
@@ -100,6 +101,7 @@ describe('reinforcements from preview to trigger', () => {
 		expect(state.trackerMetaMap[guards[0].uuid]).toMatchObject({
 			role: 'reinforcement',
 			reinforcementSlotId: 'guard-arrives',
+			traits: ['Human', 'Medium'],
 		});
 
 		// A second trigger of the same event adds nothing
