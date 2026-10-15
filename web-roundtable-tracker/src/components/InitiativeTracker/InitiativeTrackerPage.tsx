@@ -1,5 +1,4 @@
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { type TrackerParticipant } from './mockData';
 import Timeline from '@/components/InitiativeList/Timeline';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -37,6 +36,7 @@ import {
 	Undo2,
 } from 'lucide-react';
 import { Reorder } from 'motion/react';
+import { useNavigate } from '@tanstack/react-router';
 import { InitiativeActionCarouselCard } from './InitiativeActionCarouselCard';
 import {
 	getEncounterStore,
@@ -44,11 +44,11 @@ import {
 } from '@/store/encounterRuntimeInstance';
 import {
 	runtimeToInitiativeQueue,
-	runtimeToInitiativeQueueWithPending,
 	runtimeToOutOfInitiativeData,
 	narrativeSlotsToTimeline,
 	encounterToTrackerHeader,
 	historyToPreviewLines,
+	type TrackerParticipant,
 } from '@/store/trackerMappers';
 import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
 import { type Command } from '@/CommandHistory/common';
@@ -66,16 +66,6 @@ import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/Reactivate
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 import { Input } from '@/components/ui/input';
 import { type SwipeAction } from './InitiativeActionCarouselCard';
-
-function logTrackerButton(action: string, details?: Record<string, unknown>) {
-	if (details) {
-		console.log('[InitiativeTrackerPage]', action, details);
-
-		return;
-	}
-
-	console.log('[InitiativeTrackerPage]', action);
-}
 
 const HAZARD_DISABLE_CHECK_NAMES = [
 	'Disrupted',
@@ -342,10 +332,6 @@ function ParticipantRow({
 		<button
 			type="button"
 			onClick={() => {
-				logTrackerButton('Participant row selected', {
-					participantId: participant.id,
-					participantName: participant.name,
-				});
 				onSelect(participant.id);
 			}}
 			className={[
@@ -796,21 +782,21 @@ export function InitiativeTrackerPage() {
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
 	const round = useEncounterStore((state) => state.round);
 	const history = useEncounterStore((state) => state.history);
+	const startEncounter = useEncounterStore((state) => state.startEncounter);
+	const navigate = useNavigate();
+	const [endEncounterOpen, setEndEncounterOpen] = useState(false);
+
+	// Clears the running initiative but keeps the loaded encounter, so it can
+	// be started again from its preview. Clearing after leaving the page keeps
+	// the tracker from rendering an empty order.
+	const endEncounter = () => {
+		setEndEncounterOpen(false);
+		void navigate({ to: '/encounters' }).then(() => startEncounter([]));
+	};
 
 	const storeInitiativeParticipants = useMemo(
 		() =>
 			runtimeToInitiativeQueue({
-				charactersOrder,
-				delayedOrder,
-				charactersMap,
-				trackerMetaMap,
-			}),
-		[charactersOrder, delayedOrder, charactersMap, trackerMetaMap]
-	);
-
-	const storeAllInitiativeParticipants = useMemo(
-		() =>
-			runtimeToInitiativeQueueWithPending({
 				charactersOrder,
 				delayedOrder,
 				charactersMap,
@@ -856,14 +842,6 @@ export function InitiativeTrackerPage() {
 		() =>
 			new Set(
 				Object.values(trackerMetaMap)
-					.filter(
-						(meta) =>
-							meta.reinforcementSlotId && meta.reinforcementPending !== true
-					)
-					.filter(
-						(meta) =>
-							meta.reinforcementSlotId && meta.reinforcementPending !== true
-					)
 					.map((meta) => meta.reinforcementSlotId)
 					.filter((slotId): slotId is string => Boolean(slotId))
 			),
@@ -955,18 +933,15 @@ export function InitiativeTrackerPage() {
 			return;
 		}
 
-		setReorderDraftParticipants(storeAllInitiativeParticipants);
-	}, [storeAllInitiativeParticipants, reorderOpen]);
+		setReorderDraftParticipants(storeInitiativeParticipants);
+	}, [storeInitiativeParticipants, reorderOpen]);
 
 	const focusCurrentParticipant = () => {
 		if (!initiativeCarouselApi) {
-			logTrackerButton('Focus Current attempted before carousel API ready');
-
 			return;
 		}
 
 		initiativeCarouselApi.scrollTo(0);
-		logTrackerButton('Focus Current scrolled to top initiative element');
 	};
 
 	const queueFocusCurrentParticipant = () => {
@@ -988,9 +963,6 @@ export function InitiativeTrackerPage() {
 		const announcement = nextRoundAnnouncement;
 
 		setNextRoundAnnouncement(null);
-		logTrackerButton('Next Round announcement closed', {
-			round: announcement.round,
-		});
 
 		if (announcement.focusCurrentOnClose) {
 			queueFocusCurrentParticipant();
@@ -1061,11 +1033,6 @@ export function InitiativeTrackerPage() {
 					round: nextRoundState.round,
 					focusCurrentOnClose: true,
 				});
-				logTrackerButton('Next Round announcement opened', {
-					round: nextRoundState.round,
-					action,
-					participantId,
-				});
 
 				return;
 			}
@@ -1082,31 +1049,6 @@ export function InitiativeTrackerPage() {
 		const currentParticipantId = charactersOrder[0];
 
 		if (!currentParticipantId) {
-			logTrackerButton('Next Turn ignored because initiative queue is empty');
-
-			return;
-		}
-
-		// Auto-skip pending reinforcement participants — they are in the order but
-		// shouldn't take a turn until their slot is triggered.
-		const currentMeta = trackerMetaMap[currentParticipantId];
-
-		if (currentMeta?.reinforcementPending === true) {
-			logTrackerButton('Next Turn skipping pending reinforcement', {
-				participantId: currentParticipantId,
-			});
-
-			try {
-				const newOrder = charactersOrder
-					.filter((id) => id !== currentParticipantId)
-					.concat(currentParticipantId);
-
-				executeCommand(new ReorderCharactersCommand({ newOrder }));
-				queueFocusCurrentParticipant();
-			} catch (error) {
-				console.error('Failed to skip pending reinforcement', error);
-			}
-
 			return;
 		}
 
@@ -1114,12 +1056,6 @@ export function InitiativeTrackerPage() {
 			const currentCharacter = charactersMap[currentParticipantId];
 
 			if (currentCharacter?.turnState === 'delayed') {
-				logTrackerButton(
-					'Next Turn opening return-to-initiative prompt for delaying participant',
-					{
-						participantId: currentParticipantId,
-					}
-				);
 				setReturnPrompt({
 					participantId: currentParticipantId,
 					action: 'end-turn',
@@ -1129,20 +1065,10 @@ export function InitiativeTrackerPage() {
 				return;
 			}
 
-			logTrackerButton(
-				'Next Turn ignored because current participant has no turn',
-				{
-					participantId: currentParticipantId,
-				}
-			);
-
 			return;
 		}
 
 		if (delayedSectionParticipants.length > 0) {
-			logTrackerButton('Next Turn paused for return-to-initiative prompt', {
-				participantId: currentParticipantId,
-			});
 			setReturnPrompt({
 				participantId: currentParticipantId,
 				action: 'end-turn',
@@ -1157,11 +1083,10 @@ export function InitiativeTrackerPage() {
 			action: 'end-turn',
 			focusCurrentOnSuccess: true,
 		});
-		logTrackerButton('Next Turn rotation queued after focus animation');
 	};
 
 	const resetReorderDraft = () => {
-		setReorderDraftParticipants(storeAllInitiativeParticipants);
+		setReorderDraftParticipants(storeInitiativeParticipants);
 	};
 
 	const stopReorderAutoScroll = () => {
@@ -1244,16 +1169,16 @@ export function InitiativeTrackerPage() {
 
 	const hasReorderChanges = useMemo(() => {
 		if (
-			reorderDraftParticipants.length !== storeAllInitiativeParticipants.length
+			reorderDraftParticipants.length !== storeInitiativeParticipants.length
 		) {
 			return true;
 		}
 
 		return reorderDraftParticipants.some(
 			(participant, index) =>
-				participant.id !== storeAllInitiativeParticipants[index]?.id
+				participant.id !== storeInitiativeParticipants[index]?.id
 		);
-	}, [reorderDraftParticipants, storeAllInitiativeParticipants]);
+	}, [reorderDraftParticipants, storeInitiativeParticipants]);
 
 	const handleReorderSave = () => {
 		const draftOrderedIds = reorderDraftParticipants.map(
@@ -1278,9 +1203,6 @@ export function InitiativeTrackerPage() {
 		);
 
 		if (!orderDidChange) {
-			logTrackerButton(
-				'Manual reorder save ignored because order is unchanged'
-			);
 			handleReorderOpenChange(false);
 
 			return;
@@ -1288,9 +1210,6 @@ export function InitiativeTrackerPage() {
 
 		try {
 			executeCommand(new ReorderCharactersCommand({ newOrder }));
-			logTrackerButton('Manual reorder save applied', {
-				newOrderLength: newOrder.length,
-			});
 			handleReorderOpenChange(false);
 		} catch (error) {
 			console.error('Failed to save manual reorder', error);
@@ -1344,9 +1263,6 @@ export function InitiativeTrackerPage() {
 			try {
 				executeCommand(new ReactivateCharacterCommand({ uuid: participantId }));
 				queueFocusCurrentParticipant();
-				logTrackerButton('Participant reactivated via swipe action', {
-					participantId,
-				});
 			} catch (error) {
 				console.error('Failed to reactivate participant', error);
 			}
@@ -1357,9 +1273,6 @@ export function InitiativeTrackerPage() {
 		if (action === 'slay') {
 			try {
 				executeCommand(new RemoveCharacterCommand({ uuid: participantId }));
-				logTrackerButton('Participant slain via swipe action', {
-					participantId,
-				});
 			} catch (error) {
 				console.error('Failed to slay participant', error);
 			}
@@ -1372,10 +1285,6 @@ export function InitiativeTrackerPage() {
 			charactersWithTurn.has(participantId);
 
 		if (isCurrentActive && delayedSectionParticipants.length > 0) {
-			logTrackerButton('Swipe action paused for return-to-initiative prompt', {
-				participantId,
-				action,
-			});
 			setReturnPrompt({
 				participantId,
 				action,
@@ -1405,11 +1314,6 @@ export function InitiativeTrackerPage() {
 					action,
 				})
 			);
-			logTrackerButton('Return to initiative executed', {
-				participantId,
-				returningParticipantId,
-				action,
-			});
 			queueFocusCurrentParticipant();
 		} catch (error) {
 			console.error('Failed to return to initiative', error);
@@ -1425,17 +1329,12 @@ export function InitiativeTrackerPage() {
 		setReturnPrompt(null);
 
 		executeRoundAction({ participantId, action, focusCurrentOnSuccess });
-		logTrackerButton('Return to initiative skipped, normal round action', {
-			participantId,
-			action,
-		});
 	};
 
 	const triggerReinforcementEvent = (slotId: string) => {
 		try {
 			executeCommand(new TriggerReinforcementEventCommand({ slotId }));
 			queueFocusCurrentParticipant();
-			logTrackerButton('Reinforcement event triggered', { slotId });
 		} catch (error) {
 			console.error('Failed to trigger reinforcement event', error);
 		}
@@ -1547,48 +1446,46 @@ export function InitiativeTrackerPage() {
 		[initiativeParticipants, nextRoundMarkerIndex, nextRound]
 	);
 
-	const timelineEvents = useMemo(
-		() =>
-			timeline.map((event) => {
-				if (event.type !== 'reinforcement' || !event.id) {
-					return {
-						round: event.round,
-						label: event.title,
-						description: event.detail,
-					};
-				}
+	// Not memoised: it calls triggerReinforcementEvent, which is recreated every
+	// render, and Timeline isn't memoised either.
+	const timelineEvents = timeline.map((event) => {
+		if (event.type !== 'reinforcement' || !event.id) {
+			return {
+				round: event.round,
+				label: event.title,
+				description: event.detail,
+			};
+		}
 
-				const isTriggered = triggeredReinforcementSlotIds.has(event.id);
-				const canTrigger = event.round <= round && !isTriggered;
-				const participantCount =
-					reinforcementEventsByRound[event.round]?.find(
-						(slot) => slot.id === event.id
-					)?.participants?.length ?? 0;
+		const isTriggered = triggeredReinforcementSlotIds.has(event.id);
+		const canTrigger = event.round <= round && !isTriggered;
+		const participantCount =
+			reinforcementEventsByRound[event.round]?.find(
+				(slot) => slot.id === event.id
+			)?.participants?.length ?? 0;
 
-				return {
-					id: event.id,
-					round: event.round,
-					label: event.title,
-					description:
-						event.detail ||
-						(participantCount > 0
-							? `${participantCount} reinforcement participant${
-									participantCount === 1 ? '' : 's'
-								}`
-							: undefined),
-					actionLabel: isTriggered
-						? 'Triggered'
-						: canTrigger
-							? 'Trigger Now'
-							: undefined,
-					actionDisabled: isTriggered,
-					onAction: canTrigger
-						? () => triggerReinforcementEvent(event.id as string)
-						: undefined,
-				};
-			}),
-		[timeline, triggeredReinforcementSlotIds, round, reinforcementEventsByRound]
-	);
+		return {
+			id: event.id,
+			round: event.round,
+			label: event.title,
+			description:
+				event.detail ||
+				(participantCount > 0
+					? `${participantCount} reinforcement participant${
+							participantCount === 1 ? '' : 's'
+						}`
+					: undefined),
+			actionLabel: isTriggered
+				? 'Triggered'
+				: canTrigger
+					? 'Trigger Now'
+					: undefined,
+			actionDisabled: isTriggered,
+			onAction: canTrigger
+				? () => triggerReinforcementEvent(event.id as string)
+				: undefined,
+		};
+	});
 
 	return (
 		<main className="mx-auto w-full max-w-7xl space-y-4 p-4 lg:p-6">
@@ -1604,7 +1501,6 @@ export function InitiativeTrackerPage() {
 											variant="secondary"
 											size="icon"
 											onClick={() => {
-												logTrackerButton('Next Turn button clicked');
 												handleNextTurn();
 											}}
 										>
@@ -1621,7 +1517,6 @@ export function InitiativeTrackerPage() {
 											size="icon"
 											className="border border-sky-500/50 bg-sky-500/15 text-sky-200 hover:bg-sky-500/25"
 											onClick={() => {
-												logTrackerButton('Focus Current button clicked');
 												focusCurrentParticipant();
 											}}
 										>
@@ -1637,9 +1532,7 @@ export function InitiativeTrackerPage() {
 											variant="secondary"
 											size="icon"
 											className="border border-amber-500/50 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25"
-											onClick={() =>
-												logTrackerButton('End Encounter button clicked')
-											}
+											onClick={() => setEndEncounterOpen(true)}
 										>
 											<ArrowRight className="h-4 w-4" />
 										</Button>
@@ -1652,7 +1545,6 @@ export function InitiativeTrackerPage() {
 											aria-label="Manual Reorder"
 											size="icon"
 											onClick={() => {
-												logTrackerButton('Manual Reorder button clicked');
 												setReorderOpen(true);
 											}}
 										>
@@ -1671,7 +1563,6 @@ export function InitiativeTrackerPage() {
 												className="rounded-none border-0"
 												disabled={!canUndo}
 												onClick={() => {
-													logTrackerButton('Undo button clicked');
 													undo();
 												}}
 											>
@@ -1690,7 +1581,6 @@ export function InitiativeTrackerPage() {
 												className="rounded-none border-0"
 												disabled={!canRedo}
 												onClick={() => {
-													logTrackerButton('Redo button clicked');
 													redo();
 												}}
 											>
@@ -1763,7 +1653,6 @@ export function InitiativeTrackerPage() {
 													indicatorLabel={getParticipantIndicatorLabel(
 														item.participant
 													)}
-													logAction={logTrackerButton}
 												/>
 											)}
 										</CarouselItem>
@@ -1987,7 +1876,6 @@ export function InitiativeTrackerPage() {
 									variant="secondary"
 									size="icon"
 									onClick={() => {
-										logTrackerButton('Mobile Next Turn button clicked');
 										handleNextTurn();
 									}}
 								>
@@ -1999,7 +1887,6 @@ export function InitiativeTrackerPage() {
 									size="icon"
 									className="border border-sky-500/50 bg-sky-500/15 text-sky-200 hover:bg-sky-500/25"
 									onClick={() => {
-										logTrackerButton('Focus Current button clicked');
 										focusCurrentParticipant();
 									}}
 								>
@@ -2010,9 +1897,7 @@ export function InitiativeTrackerPage() {
 									variant="secondary"
 									size="icon"
 									className="border border-amber-500/50 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25"
-									onClick={() =>
-										logTrackerButton('End Encounter button clicked')
-									}
+									onClick={() => setEndEncounterOpen(true)}
 								>
 									<ArrowRight className="h-4 w-4" />
 								</Button>
@@ -2022,7 +1907,6 @@ export function InitiativeTrackerPage() {
 									aria-label="Manual Reorder"
 									size="icon"
 									onClick={() => {
-										logTrackerButton('Mobile Reorder button clicked');
 										setReorderOpen(true);
 									}}
 								>
@@ -2036,7 +1920,6 @@ export function InitiativeTrackerPage() {
 										className="rounded-none border-0"
 										disabled={!canUndo}
 										onClick={() => {
-											logTrackerButton('Mobile Undo button clicked');
 											undo();
 										}}
 									>
@@ -2050,7 +1933,6 @@ export function InitiativeTrackerPage() {
 										className="rounded-none border-0"
 										disabled={!canRedo}
 										onClick={() => {
-											logTrackerButton('Mobile Redo button clicked');
 											redo();
 										}}
 									>
@@ -2217,7 +2099,6 @@ export function InitiativeTrackerPage() {
 													indicatorLabel={getParticipantIndicatorLabel(
 														item.participant
 													)}
-													logAction={logTrackerButton}
 												/>
 											)}
 										</CarouselItem>
@@ -2348,6 +2229,29 @@ export function InitiativeTrackerPage() {
 				</DialogContent>
 			</Dialog>
 
+			<Dialog open={endEncounterOpen} onOpenChange={setEndEncounterOpen}>
+				<DialogContent className="sm:max-w-sm">
+					<DialogHeader>
+						<DialogTitle>End Encounter?</DialogTitle>
+						<DialogDescription>
+							This clears the initiative order, health changes and undo history,
+							and returns to Encounters.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => setEndEncounterOpen(false)}
+						>
+							Cancel
+						</Button>
+						<Button variant="destructive" onClick={endEncounter}>
+							End Encounter
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
 			<Dialog
 				open={returnPrompt !== null}
 				onOpenChange={(open) => {
@@ -2427,19 +2331,9 @@ export function InitiativeTrackerPage() {
 									onDragEnd={() => {
 										stopReorderAutoScroll();
 									}}
-									className={[
-										'cursor-grab rounded-md border p-2 text-sm active:cursor-grabbing',
-										participant.state === 'pending-reinforcement'
-											? 'border-dashed border-amber-500/40 bg-amber-500/5 text-amber-300 opacity-70'
-											: '',
-									].join(' ')}
+									className="cursor-grab rounded-md border p-2 text-sm active:cursor-grabbing"
 								>
 									<span>{participant.name}</span>
-									{participant.state === 'pending-reinforcement' && (
-										<span className="ml-2 text-xs text-amber-400/70">
-											(pending reinforcement)
-										</span>
-									)}
 								</Reorder.Item>
 							))}
 						</Reorder.Group>
@@ -2448,7 +2342,6 @@ export function InitiativeTrackerPage() {
 						<Button
 							variant="outline"
 							onClick={() => {
-								logTrackerButton('Manual reorder dialog cancel clicked');
 								handleReorderOpenChange(false);
 							}}
 						>
@@ -2457,7 +2350,6 @@ export function InitiativeTrackerPage() {
 						<Button
 							disabled={!hasReorderChanges}
 							onClick={() => {
-								logTrackerButton('Manual reorder save clicked');
 								handleReorderSave();
 							}}
 						>

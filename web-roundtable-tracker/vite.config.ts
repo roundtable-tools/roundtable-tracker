@@ -3,7 +3,6 @@ import { defineConfig } from 'vite';
 import type { UserConfig } from 'vite';
 import type { InlineConfig } from 'vitest/node';
 import react from '@vitejs/plugin-react';
-import tsconfigPaths from 'vite-tsconfig-paths';
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite';
 import tailwindcss from '@tailwindcss/vite';
 
@@ -12,11 +11,13 @@ const config: UserConfig & { test: InlineConfig } = {
 	base: '/roundtable-tracker/',
 	plugins: [
 		tailwindcss(),
-		tsconfigPaths(),
 		// Please make sure that '@tanstack/router-plugin' is passed before '@vitejs/plugin-react'
 		TanStackRouterVite({ target: 'react', autoCodeSplitting: true }),
 		react(),
 	],
+	resolve: {
+		tsconfigPaths: true,
+	},
 	build: {
 		sourcemap: true,
 		modulePreload: {

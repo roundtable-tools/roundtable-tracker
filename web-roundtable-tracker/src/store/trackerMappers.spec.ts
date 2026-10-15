@@ -12,7 +12,6 @@ const createCharacter = (overrides: Partial<Character>): Character => ({
 	name: 'Character',
 	initiative: 0,
 	turnState: 'normal',
-	hasTurn: false,
 	health: 10,
 	maxHealth: 10,
 	tempHealth: 0,

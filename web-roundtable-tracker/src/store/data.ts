@@ -1,14 +1,11 @@
 import { UUID } from '@/utils/uuid';
 import { z } from 'zod';
-import { getAdjustedLevel } from '@/models/utility/level/Level';
+import {
+	formatAdjustedLevel,
+	getAdjustedLevel,
+} from '@/models/utility/level/Level';
 
-export const STATE = [
-	'normal',
-	'active',
-	'on-hold',
-	'delayed',
-	'knocked-out',
-] as const;
+export const STATE = ['normal', 'delayed', 'knocked-out'] as const;
 type State = (typeof STATE)[number];
 export const indexToLetter = (index: number) => String.fromCharCode(97 + index);
 
@@ -35,7 +32,6 @@ export const characterConfigToCharacter = (
 		tempHealth,
 		turnState: participant.startingState ?? 'normal',
 		group: participant.side === ALIGNMENT.PCs ? 'players' : 'enemies',
-		hasTurn: false,
 	};
 };
 
@@ -44,14 +40,11 @@ export interface Character {
 	name: string;
 	initiative: number;
 	turnState: State;
-	hasTurn: boolean;
 	health: number;
 	maxHealth: number;
 	tempHealth: number;
 	tempHealthDescription?: string;
 	group?: 'players' | 'enemies';
-	wounded?: number;
-	knockedBy?: UUID;
 	level?: number; // Optional level property
 }
 
@@ -128,17 +121,7 @@ export const adjustedLevel = (
 ): number =>
 	getAdjustedLevel(baseLevel, adjustment, customAdjustmentLevelModifier);
 
-export const formatAdjustedLevel = (level: number): string => {
-	if (Number.isInteger(level)) {
-		return `${level}`;
-	}
-
-	const lower = Math.floor(level);
-	const upper = Math.ceil(level);
-	const midpoint = (lower + upper) / 2;
-
-	return level <= midpoint ? `${lower}(+)` : `${upper}(-)`;
-};
+export { formatAdjustedLevel };
 
 export const participantsToLevelRange: <T extends LevelRepresentation>(
 	participants: Participant<T>[]
@@ -159,12 +142,6 @@ export const participantsToLevelRange: <T extends LevelRepresentation>(
 	];
 };
 
-export const INITIATIVE_STATE = {
-	Normal: 0,
-	Delayed: 1,
-	'Knocked-Out': 2,
-} as const;
-
 type ValueOf<T> = T[keyof T];
 type Difficulty = ValueOf<typeof DIFFICULTY>;
 type Alignment = ValueOf<typeof ALIGNMENT>;
@@ -183,6 +160,10 @@ export type CombatantParticipant<
 	level: LevelFormat[IsAbstract];
 	side: Alignment;
 	count?: number;
+	// Template identity kept so an imported template loses no data
+	id?: string;
+	tag?: string;
+	role?: string;
 	tiePriority?: Priority;
 	maxHealth?: number;
 	health?: number;
@@ -191,8 +172,6 @@ export type CombatantParticipant<
 	hardness?: number;
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
-	// TEMP: Set state to @ostatni5's format until the types get unified
-	// startingState?: INITIATIVE_STATE.Normal,
 	startingState?: 'normal' | 'delayed' | 'knocked-out';
 	description?: string;
 	dcs?: ParticipantDcEntry[];
@@ -235,11 +214,14 @@ export type ConcreteEncounterVariant = {
 	participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[];
 };
 type EncounterTemplateVariant = {
+	id?: string;
 	difficulty?: Difficulty;
 	partySize?: number;
 	level?: number;
-	description: string; // Description of external conditions that trigger the variant
+	description?: string; // Description of external conditions that trigger the variant
 	participants: Participant<typeof LEVEL_REPRESENTATION.Relative>[];
+	narrativeSlots?: NarrativeSlot[];
+	notes?: EncounterNotes;
 };
 
 export type AuraElement = {
@@ -252,6 +234,7 @@ export type AuraElement = {
 
 export type NarrativeSlot = {
 	id: string;
+	tag?: string;
 	type: 'default' | 'reinforcement' | 'ongoing';
 	description?: string;
 	accomplishmentLevel?: 'story' | 'minor' | 'moderate' | 'major';
@@ -276,6 +259,10 @@ export type EncounterTemplate = {
 	auras?: AuraElement[];
 	narrativeSlots?: NarrativeSlot[];
 	variants?: EncounterTemplateVariant[];
+	defaultVariantId?: string;
+	tags?: string[];
+	createdAt?: Date;
+	updatedAt?: Date;
 };
 
 export type AbstractEncounter = EncounterTemplate;
@@ -317,6 +304,9 @@ const combatantParticipantSchema = z.object({
 	level: z.number(),
 	side: z.nativeEnum(ALIGNMENT),
 	count: z.number().optional(),
+	id: z.string().optional(),
+	tag: z.string().optional(),
+	role: z.string().optional(),
 	tiePriority: z.nativeEnum(PRIORITY).optional(),
 	maxHealth: z.number().optional(),
 	health: z.number().optional(),
@@ -325,8 +315,6 @@ const combatantParticipantSchema = z.object({
 	hardness: z.number().optional(),
 	adjustmentDescription: z.string().optional(),
 	adjustmentLevelModifier: z.number().optional(),
-	// TEMP: Set state to @ostatni5's format until the types get unified
-	// startingState: z.nativeEnum(INITIATIVE_STATE).optional(),
 	startingState: z.enum(['normal', 'delayed', 'knocked-out']).optional(),
 	description: z.string().optional(),
 	dcs: dcsSchema.optional(),
@@ -350,6 +338,7 @@ const participantSchema = z.union([creatureSchema, hazardSchema]);
 
 const narrativeSlotSchema = z.object({
 	id: z.string(),
+	tag: z.string().optional(),
 	type: z.enum(['default', 'reinforcement', 'ongoing']),
 	description: z.string().optional(),
 	accomplishmentLevel: z
@@ -400,71 +389,3 @@ export const ConcreteEncounterSchema = z.object({
 });
 
 export type Encounter = EncounterTemplate | ConcreteEncounter;
-// Example usage
-
-export const exampleEncounter: Encounter = {
-	id: 'encounter-001',
-	name: 'Goblin Ambush',
-	level: 2,
-	difficulty: DIFFICULTY.Moderate,
-	description: 'A group of goblins ambush the party',
-	partySize: 4,
-	levelRepresentation: LEVEL_REPRESENTATION.Exact,
-	participants: [
-		{
-			name: 'Goblin',
-			level: -1,
-			side: ALIGNMENT.Opponents,
-			type: 'creature',
-			count: 4,
-		},
-	],
-	variants: [
-		{
-			level: 1,
-			description: 'PCs found the goblins before level up',
-			participants: [
-				{
-					name: 'Weak Goblin',
-					level: -2,
-					side: ALIGNMENT.Opponents,
-					type: 'creature',
-					count: 4,
-				},
-			],
-		},
-		{
-			difficulty: DIFFICULTY.Low,
-			description: 'Scout did not report back to the main group',
-			participants: [
-				{
-					name: 'Goblin',
-					level: -1,
-					side: ALIGNMENT.Opponents,
-					type: 'creature',
-					count: 3,
-				},
-			],
-		},
-		{
-			partySize: 5,
-			description: 'Bigger party size',
-			participants: [
-				{
-					name: 'Goblin',
-					level: -1,
-					side: ALIGNMENT.Opponents,
-					type: 'creature',
-					count: 2,
-				},
-				{
-					name: 'Elite Goblin',
-					level: 0,
-					side: ALIGNMENT.Opponents,
-					type: 'creature',
-					count: 2,
-				},
-			],
-		},
-	],
-};
