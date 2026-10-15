@@ -93,32 +93,26 @@ export class ExperienceBudget extends Number {
 		);
 	}
 
+	/**
+	 * XP added or removed per PC above or below 4 (GM Core, Table 10-1):
+	 * Trivial 10, Low 20, Moderate 20, Severe 30, Extreme 40.
+	 * The app's in-between grades (Moderate+, Severe+, Extreme+…, Impossible)
+	 * use the adjustment of the official threat below them.
+	 */
 	private static resolveCharacterAdjustmentValue(baseReward: number): number {
 		if (baseReward <= 40) {
 			return Math.max(0, Math.round(baseReward / 4));
 		}
 
-		if (baseReward <= 80) {
+		if (baseReward < 120) {
 			return 20;
 		}
 
-		if (baseReward <= 120) {
+		if (baseReward < 160) {
 			return 30;
 		}
 
-		if (baseReward <= 160) {
-			return 40;
-		}
-
-		if (baseReward <= 200) {
-			return 50;
-		}
-
-		if (baseReward <= 240) {
-			return 60;
-		}
-
-		return 60 + Math.floor((baseReward - 241) / 40 + 1) * 10;
+		return 40;
 	}
 
 	static budgetToBaseReward = (

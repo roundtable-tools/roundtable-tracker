@@ -5,6 +5,7 @@ import {
 	DIFFICULTY,
 	Encounter,
 	LEVEL_REPRESENTATION,
+	Participant,
 } from '@/store/data';
 import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import {
@@ -43,6 +44,7 @@ const encounter: Encounter = {
 					name: 'Guard',
 					level: '+0',
 					side: ALIGNMENT.Opponents,
+					traits: ['Human', 'Medium'],
 				},
 			],
 		},
@@ -100,6 +102,7 @@ describe('reinforcements from preview to trigger', () => {
 		expect(state.trackerMetaMap[guards[0].uuid]).toMatchObject({
 			role: 'reinforcement',
 			reinforcementSlotId: 'guard-arrives',
+			traits: ['Human', 'Medium'],
 		});
 
 		// A second trigger of the same event adds nothing
@@ -188,13 +191,16 @@ describe('reinforcements from preview to trigger', () => {
 					type: 'reinforcement',
 					trigger: { round: 2 },
 					participants: [
+						// Its fixed initiative puts it before the Bandit, who is up,
+						// so its turn has passed this round.
 						{
 							type: 'creature',
 							name: 'Lookout',
 							level: '+0',
 							side: ALIGNMENT.Opponents,
 							startingState: 'delayed',
-						},
+							initiative: 15,
+						} as Participant<typeof LEVEL_REPRESENTATION.Relative>,
 						{
 							type: 'creature',
 							name: 'Wounded Guard',

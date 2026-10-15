@@ -40,17 +40,62 @@ describe('Threat', () => {
 		expect(budget).toBeInstanceOf(ExperienceBudget);
 	});
 
-	it('fromExpBudget should return correct Threat instance', () => {
-		const budget = new ExperienceBudget(40);
-		expect(Threat.fromExperienceBudget(budget, 4).threat).toBe(0); // Trivial
-		expect(
-			Threat.fromExperienceBudget(new ExperienceBudget(100), 4).threat
-		).toBe(3); // ModeratePlus
-		expect(
-			Threat.fromExperienceBudget(new ExperienceBudget(220), 4).threat
-		).toBe(9); // Extreme3Plus
-		expect(
-			Threat.fromExperienceBudget(new ExperienceBudget(300), 4).threat
-		).toBe(10); // Impossible
+	it('fromExpBudget should return the highest threat reached', () => {
+		const threatFor = (xp: number, partySize = 4) =>
+			Threat.fromExperienceBudget(new ExperienceBudget(xp), partySize).threat;
+
+		expect(threatFor(0)).toBe(0); // Trivial
+		expect(threatFor(40)).toBe(0); // Trivial
+		expect(threatFor(59)).toBe(0); // Trivial, below the Low budget
+		expect(threatFor(60)).toBe(1); // Low
+		expect(threatFor(100)).toBe(3); // ModeratePlus
+		expect(threatFor(110)).toBe(3); // ModeratePlus, Severe needs 120
+		expect(threatFor(220)).toBe(9); // Extreme3Plus
+		expect(threatFor(300)).toBe(10); // Impossible
+		expect(threatFor(-40)).toBe(0); // allies outweigh enemies
+	});
+
+	it('fromExpBudget should scale the bands with party size', () => {
+		const threatFor = (xp: number, partySize: number) =>
+			Threat.fromExperienceBudget(
+				new ExperienceBudget(xp),
+				partySize
+			).toLabel();
+
+		// 3 PCs: Low 40, Moderate 60, Severe 90, Extreme 120
+		expect(threatFor(39, 3)).toBe('Trivial');
+		expect(threatFor(40, 3)).toBe('Low');
+		expect(threatFor(60, 3)).toBe('Moderate');
+		expect(threatFor(90, 3)).toBe('Severe');
+		expect(threatFor(120, 3)).toBe('Extreme');
+		// 6 PCs: Low 100, Moderate 120, Severe 180, Extreme 240
+		expect(threatFor(99, 6)).toBe('Trivial');
+		expect(threatFor(100, 6)).toBe('Low');
+		expect(threatFor(120, 6)).toBe('Moderate');
+		expect(threatFor(180, 6)).toBe('Severe');
+		expect(threatFor(240, 6)).toBe('Extreme');
+	});
+
+	it('an empty encounter is Trivial for any party size', () => {
+		for (const partySize of [1, 2, 3, 4, 5, 6, 8]) {
+			expect(
+				Threat.fromExperienceBudget(
+					new ExperienceBudget(0),
+					partySize
+				).toLabel()
+			).toBe('Trivial');
+		}
+	});
+
+	it('thresholds never decrease, even for tiny parties', () => {
+		for (const partySize of [1, 2, 3, 4, 5, 6, 8]) {
+			const thresholds = Threat.thresholds(partySize);
+
+			for (let i = 1; i < thresholds.length; i++) {
+				expect(thresholds[i].minXp).toBeGreaterThanOrEqual(
+					thresholds[i - 1].minXp
+				);
+			}
+		}
 	});
 });

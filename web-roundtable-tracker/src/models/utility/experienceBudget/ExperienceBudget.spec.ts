@@ -9,27 +9,27 @@ describe('ExpreirenceBudget', () => {
 		{
 			name: 'ModeratePlus',
 			budget: ExperienceBudget.ModeratePlus,
-			adjustment: 30,
+			adjustment: 20,
 		},
 		{ name: 'Severe', budget: ExperienceBudget.Severe, adjustment: 30 },
-		{ name: 'SeverePlus', budget: ExperienceBudget.SeverePlus, adjustment: 40 },
+		{ name: 'SeverePlus', budget: ExperienceBudget.SeverePlus, adjustment: 30 },
 		{ name: 'Extreme', budget: ExperienceBudget.Extreme, adjustment: 40 },
 		{
 			name: 'ExtremePlus',
 			budget: ExperienceBudget.ExtremePlus,
-			adjustment: 50,
+			adjustment: 40,
 		},
 		{
 			name: 'Extreme2Plus',
 			budget: ExperienceBudget.Extreme2Plus,
-			adjustment: 50,
+			adjustment: 40,
 		},
 		{
 			name: 'Extreme3Plus',
 			budget: ExperienceBudget.Extreme3Plus,
-			adjustment: 60,
+			adjustment: 40,
 		},
-		{ name: 'Impossible', budget: ExperienceBudget.Impossible, adjustment: 60 },
+		{ name: 'Impossible', budget: ExperienceBudget.Impossible, adjustment: 40 },
 	];
 
 	it('should construct and round value', () => {
@@ -63,7 +63,9 @@ describe('ExpreirenceBudget', () => {
 	});
 
 	it('budgetToBaseReward should preserve base reward where adjusted values are uniquely invertible', () => {
-		for (let partySize = 1; partySize <= 8; partySize += 1) {
+		// A party of 1 is left out: with the GM Core adjustments its budgets aren't
+		// increasing (Severe 30 XP < Moderate+ 40 XP), so they can't be inverted.
+		for (let partySize = 2; partySize <= 8; partySize += 1) {
 			const scenarios = threatLevels.map((threat) => ({
 				...threat,
 				adjustedBudget:
@@ -104,7 +106,7 @@ describe('ExpreirenceBudget', () => {
 		).toBe(40);
 	});
 
-	it('budgetToCharacterAdjustment should match table ranges', () => {
+	it('budgetToCharacterAdjustment should match GM Core, with in-between grades using the threat below', () => {
 		expect(
 			ExperienceBudget.budgetToCharacterAdjustment(
 				new ExperienceBudget(20)
@@ -129,7 +131,7 @@ describe('ExpreirenceBudget', () => {
 			ExperienceBudget.budgetToCharacterAdjustment(
 				ExperienceBudget.ModeratePlus
 			).valueOf()
-		).toBe(30);
+		).toBe(20);
 		expect(
 			ExperienceBudget.budgetToCharacterAdjustment(
 				ExperienceBudget.Severe
@@ -139,7 +141,7 @@ describe('ExpreirenceBudget', () => {
 			ExperienceBudget.budgetToCharacterAdjustment(
 				ExperienceBudget.SeverePlus
 			).valueOf()
-		).toBe(40);
+		).toBe(30);
 		expect(
 			ExperienceBudget.budgetToCharacterAdjustment(
 				ExperienceBudget.Extreme
@@ -149,22 +151,22 @@ describe('ExpreirenceBudget', () => {
 			ExperienceBudget.budgetToCharacterAdjustment(
 				ExperienceBudget.ExtremePlus
 			).valueOf()
-		).toBe(50);
+		).toBe(40);
 		expect(
 			ExperienceBudget.budgetToCharacterAdjustment(
 				ExperienceBudget.Extreme2Plus
 			).valueOf()
-		).toBe(50);
+		).toBe(40);
 		expect(
 			ExperienceBudget.budgetToCharacterAdjustment(
 				ExperienceBudget.Extreme3Plus
 			).valueOf()
-		).toBe(60);
+		).toBe(40);
 		expect(
 			ExperienceBudget.budgetToCharacterAdjustment(
 				ExperienceBudget.Impossible
 			).valueOf()
-		).toBe(60);
+		).toBe(40);
 	});
 
 	it('static getters should return correct values', () => {

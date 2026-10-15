@@ -137,7 +137,7 @@ const ADDITIONAL_BLOCKS: Array<{
 		key: 'traits',
 		label: 'Traits',
 		description:
-			'Add traits to this participant, which can be used for filtering and recall knowledge.',
+			'Add traits to this participant. They are saved with the encounter and shown in the tracker.',
 	},
 	{
 		key: 'combat-ready',
@@ -167,7 +167,10 @@ function hasAdditionalBlock(
 	}
 
 	if (key === 'initiative') {
-		return typeof slot.initiativeBonus === 'number';
+		return (
+			typeof slot.initiativeBonus === 'number' ||
+			(slot.initiativeDescription?.trim().length ?? 0) > 0
+		);
 	}
 
 	if (key === 'adjustment') {
@@ -212,7 +215,10 @@ function hasReinforcementAdditionalBlock(
 	}
 
 	if (key === 'initiative') {
-		return typeof participant.initiativeBonus === 'number';
+		return (
+			typeof participant.initiativeBonus === 'number' ||
+			(participant.initiativeDescription?.trim().length ?? 0) > 0
+		);
 	}
 
 	if (key === 'adjustment') {
