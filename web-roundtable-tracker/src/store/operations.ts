@@ -22,8 +22,9 @@ export const nextRound = (state: {
  * reorder) must not act again, so it is skipped: the queue is rotated until a
  * participant with a turn, or a delaying participant (who is asked whether to
  * return), is at the front. Rotating keeps the cyclic order, so the skipped
- * participants keep their place for the next round. If nobody qualifies, the
- * order is returned unchanged.
+ * participants keep their place for the next round. If nobody has a turn left
+ * (the round's last turn just ended), the order is returned unchanged, so a
+ * delaying participant isn't moved to the top of the next round.
  */
 export const skipParticipantsWithoutTurn = (state: {
 	charactersOrder: UUID[];
@@ -31,6 +32,11 @@ export const skipParticipantsWithoutTurn = (state: {
 	delayedOrder: UUID[];
 }) => {
 	const { charactersOrder, charactersWithTurn, delayedOrder } = state;
+
+	if (!charactersOrder.some((uuid) => charactersWithTurn.has(uuid))) {
+		return charactersOrder;
+	}
+
 	const firstActorIndex = charactersOrder.findIndex(
 		(uuid) => charactersWithTurn.has(uuid) || delayedOrder.includes(uuid)
 	);
