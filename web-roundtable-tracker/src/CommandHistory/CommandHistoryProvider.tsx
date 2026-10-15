@@ -18,14 +18,9 @@ export const CommandHistoryProvider: FC<{ children: ReactNode }> = ({
 	const setHistory = useEncounterStore((state) => state.setHistory);
 
 	const executeCommand = (command: Command) => {
-		const result = command.execute();
-
-		if (result === 'FAILURE') {
-			const result = command.undo();
-
-			if (result === 'FAILURE') {
-				throw new Error('Failed to undo command');
-			}
+		// A command that fails leaves the state unchanged, so there is nothing
+		// to roll back here (CompositeCommand rolls back its own parts).
+		if (command.execute() === STATUS.failure) {
 			throw new Error('Failed to execute command');
 		}
 

@@ -5,6 +5,7 @@ import { getEncounterStore } from '@/store/encounterRuntimeInstance';
 import { CommandHistoryProvider } from './CommandHistoryProvider';
 import { CommandHistory, CommandHistoryContext } from './CommandHistoryContext';
 import { Command, STATUS } from './common';
+import { CompositeCommand } from './Commands/CompositeCommand';
 
 type Status = (typeof STATUS)[keyof typeof STATUS];
 
@@ -90,6 +91,21 @@ describe('CommandHistoryProvider', () => {
 			expect(state().history).toEqual([]);
 			expect(state().redoStack).toEqual([previous]);
 		});
+
+		it('leaves the state unchanged when a part of a composite command fails', () => {
+			const failing = new NextRoundCommand();
+			failing.executeStatus = STATUS.failure;
+			const command = new CompositeCommand({
+				commands: [new NextRoundCommand(), failing],
+			});
+
+			expect(() => commandHistory.executeCommand(command)).toThrow(
+				'Failed to execute command'
+			);
+
+			expect(state().round).toBe(1);
+			expect(state().history).toEqual([]);
+		});
 	});
 
 	describe('undo', () => {
@@ -121,6 +137,20 @@ describe('CommandHistoryProvider', () => {
 			expect(consoleError).toHaveBeenCalledWith(
 				'Failed to undo command: Next Round Command'
 			);
+		});
+
+		it('leaves both stacks and the state unchanged when a part of a composite undo fails', () => {
+			const first = new NextRoundCommand();
+			const second = new NextRoundCommand();
+			const command = new CompositeCommand({ commands: [first, second] });
+			commandHistory.executeCommand(command);
+			first.undoStatus = STATUS.failure;
+
+			commandHistory.undo();
+
+			expect(state().round).toBe(3);
+			expect(state().history).toEqual([command]);
+			expect(state().redoStack).toEqual([]);
 		});
 
 		it('does nothing with an empty history', () => {
@@ -164,6 +194,21 @@ describe('CommandHistoryProvider', () => {
 			expect(consoleError).toHaveBeenCalledWith(
 				'Failed to redo command: Next Round Command'
 			);
+		});
+
+		it('leaves both stacks and the state unchanged when a part of a composite redo fails', () => {
+			const first = new NextRoundCommand();
+			const second = new NextRoundCommand();
+			const command = new CompositeCommand({ commands: [first, second] });
+			commandHistory.executeCommand(command);
+			commandHistory.undo();
+			second.executeStatus = STATUS.failure;
+
+			commandHistory.redo();
+
+			expect(state().round).toBe(1);
+			expect(state().history).toEqual([]);
+			expect(state().redoStack).toEqual([command]);
 		});
 
 		it('does nothing with an empty redo stack', () => {
