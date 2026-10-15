@@ -104,7 +104,9 @@ describe('ReactivateCharacterCommand', () => {
 		);
 
 		expect(command.execute()).toBe(STATUS.success);
-		expect(encounterStore.getState().charactersOrder).toEqual([hero, goblin]);
+		// The hero used its turn by delaying, so the goblin, who still has one,
+		// stays in front (#26). The hero appears once (#28).
+		expect(encounterStore.getState().charactersOrder).toEqual([goblin, hero]);
 		expect(encounterStore.getState().delayedOrder).toEqual([]);
 	});
 });
