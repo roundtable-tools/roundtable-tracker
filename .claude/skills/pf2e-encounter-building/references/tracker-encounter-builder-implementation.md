@@ -40,7 +40,7 @@ math changes.
 
 ## Adjustments
 
-`getAdjustedLevel` (`models/utility/level/Level.ts`) is used for XP:
+`getAdjustedLevel` (`models/utility/level/Level.ts`) is the only implementation, used for both XP and display (`adjustedLevel` in `store/data.ts` delegates to it):
 
 | Adjustment | Level change |
 |---|---|
@@ -49,9 +49,8 @@ math changes.
 | `elite-offense` | +1.5 if base ≤ 0, else +0.75 (partial adjustment) |
 | `elite-defense` | +1 if base ≤ 0, else +0.5 (partial adjustment) |
 
-- `adjustedLevel` (`store/data.ts`) is used for display. It gives **both** partial adjustments +1 / +0.5, and also adds `customAdjustmentLevelModifier`.
 - `formatAdjustedLevel` shows fractional levels as `10(+)` or `11(-)`.
-- **Custom adjustment** (`SlotRowTabs/AdjustmentTab.tsx`): `adjustmentDescription` plus a numeric `adjustmentLevelModifier` (step 0.1) that is added to the level for XP (`builderXp.resolveCombatValuesBaseXp`).
+- **Custom adjustment** (`SlotRowTabs/AdjustmentTab.tsx`): `adjustmentDescription` plus a numeric `adjustmentLevelModifier` (step 0.1) that `getAdjustedLevel` adds to the level, once, for both XP and display.
 - **No elite or weak HP or stat changes are applied.** The HP tab is a manual `maxHealth` override, plus `hardness` for hazards.
 
 ## Relative levels
@@ -131,9 +130,8 @@ math changes.
 
 Check the code before relying on these.
 
-- `elite-offense` is +0.75 level for XP but +0.5 for display (#98).
 - `Math.trunc` on fractional level differences rounds toward zero: positive fractions round down, negative ones round up. Partial adjustments therefore often change nothing, and a –1.25 difference costs like –1 (#99).
-- Several reinforcement waves collapse into one, at the earliest round, and the saved difficulty ignores reinforcements (#100).
+- Several reinforcement waves collapse into one, at the earliest round, and the saved difficulty ignores reinforcements. Tracked as a missing feature in #139.
 - Weak on a level 0 or –1 creature gives –1 or –2. The rules don't cover weak at those levels.
 - The default template "Lieutenant and Lackeys" variant texts say "(-3) lackeys" or "Weak Lackey", where the data is –4.
 - `migrateOldTemplate` drops adjustments and events. It isn't used at runtime.

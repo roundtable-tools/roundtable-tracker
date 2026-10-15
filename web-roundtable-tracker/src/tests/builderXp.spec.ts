@@ -131,6 +131,15 @@ describe('computeBuilderXP', () => {
 		expect(weak).toBeLessThan(base);
 	});
 
+	it('counts the custom level modifier once', () => {
+		// +2 custom modifier at party level → +2 difference → 80 XP
+		const xp = computeBuilderXP(
+			[creature({ level: 5, adjustmentLevelModifier: 2 })],
+			5
+		).valueOf();
+		expect(xp).toBe(80);
+	});
+
 	it('sums multiple creature slots with mixed sides', () => {
 		const slots = [
 			creature({ level: 5, count: 2 }), // 2 enemies at party level: 80

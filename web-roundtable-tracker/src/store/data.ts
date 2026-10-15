@@ -1,5 +1,9 @@
 import { UUID } from '@/utils/uuid';
 import { z } from 'zod';
+import {
+	formatAdjustedLevel,
+	getAdjustedLevel,
+} from '@/models/utility/level/Level';
 
 export const STATE = ['normal', 'delayed', 'knocked-out'] as const;
 type State = (typeof STATE)[number];
@@ -114,45 +118,10 @@ export const adjustedLevel = (
 	baseLevel: number,
 	adjustment?: ParticipantAdjustment,
 	customAdjustmentLevelModifier?: number
-): number => {
-	const levelWithPreset = (() => {
-		switch (adjustment) {
-			case 'elite':
-				return baseLevel + (baseLevel <= 0 ? 2 : 1);
+): number =>
+	getAdjustedLevel(baseLevel, adjustment, customAdjustmentLevelModifier);
 
-			case 'weak':
-				return baseLevel - (baseLevel === 1 ? 2 : 1);
-
-			case 'elite-offense':
-			case 'elite-defense':
-				return baseLevel + (baseLevel <= 0 ? 1 : 0.5);
-
-			default:
-				return baseLevel;
-		}
-	})();
-
-	if (
-		typeof customAdjustmentLevelModifier === 'number' &&
-		Number.isFinite(customAdjustmentLevelModifier)
-	) {
-		return levelWithPreset + customAdjustmentLevelModifier;
-	}
-
-	return levelWithPreset;
-};
-
-export const formatAdjustedLevel = (level: number): string => {
-	if (Number.isInteger(level)) {
-		return `${level}`;
-	}
-
-	const lower = Math.floor(level);
-	const upper = Math.ceil(level);
-	const midpoint = (lower + upper) / 2;
-
-	return level <= midpoint ? `${lower}(+)` : `${upper}(-)`;
-};
+export { formatAdjustedLevel };
 
 export const participantsToLevelRange: <T extends LevelRepresentation>(
 	participants: Participant<T>[]

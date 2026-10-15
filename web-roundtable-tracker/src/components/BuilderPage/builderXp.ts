@@ -223,13 +223,12 @@ function resolveCombatValuesBaseXp(
 			? undefined
 			: values.adjustment;
 
-	const adjustedLevel = getAdjustedLevel(values.level, adjustment);
-	const levelWithCustomAdjustment =
-		typeof values.adjustmentLevelModifier === 'number' &&
-		Number.isFinite(values.adjustmentLevelModifier)
-			? adjustedLevel + values.adjustmentLevelModifier
-			: adjustedLevel;
-	const diff = new LevelDifference(levelWithCustomAdjustment - partyLevel);
+	const adjustedLevel = getAdjustedLevel(
+		values.level,
+		adjustment,
+		values.adjustmentLevelModifier
+	);
+	const diff = new LevelDifference(adjustedLevel - partyLevel);
 	const xp = diff.toExperience(!values.isSimpleHazard);
 	const contribution =
 		side === 'ally' ? -xp.valueOf() * count : xp.valueOf() * count;
