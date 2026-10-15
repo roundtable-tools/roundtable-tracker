@@ -19,8 +19,16 @@ import {
 	Outlet,
 	useMatches,
 } from '@tanstack/react-router';
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import React from 'react';
+
+// Devtools load only in dev, so they stay out of the production bundle.
+const TanStackRouterDevtools = import.meta.env.DEV
+	? React.lazy(() =>
+			import('@tanstack/react-router-devtools').then((module) => ({
+				default: module.TanStackRouterDevtools,
+			}))
+		)
+	: () => null;
 
 function BreadCrumbs() {
 	const matches = useMatches();
@@ -65,7 +73,9 @@ export const Route = createRootRoute({
 						<Outlet />
 					</SidebarInset>
 				</SidebarProvider>
-				<TanStackRouterDevtools />
+				<React.Suspense fallback={null}>
+					<TanStackRouterDevtools />
+				</React.Suspense>
 			</ThemeProvider>
 		);
 	},
