@@ -1,6 +1,14 @@
 import { createElement, type ComponentType } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest';
 
 const mocks = vi.hoisted(() => ({
 	appHeaderSpy: vi.fn(),
@@ -23,10 +31,19 @@ vi.mock('@/components/BuilderPage/BuilderPage', () => ({
 	},
 }));
 
-import { validateBuilderSearch } from '@/routes/builder';
-import { BuilderRouteComponent, Route } from '@/routes/builder';
+import { validateBuilderSearch } from '@/components/BuilderPage/builderSearch';
+import { Route } from '@/routes/builder';
+
+// The route component is code-split (lazy), so load it before rendering.
+const BuilderRouteComponent = Route.options.component as ComponentType & {
+	preload?: () => Promise<void>;
+};
 
 describe('builder route search params', () => {
+	beforeAll(async () => {
+		await BuilderRouteComponent.preload?.();
+	});
+
 	beforeEach(() => {
 		mocks.appHeaderSpy.mockClear();
 		mocks.builderPageSpy.mockClear();
@@ -71,9 +88,7 @@ describe('builder route search params', () => {
 	});
 
 	it('renders expected builder route UI elements', () => {
-		const html = renderToStaticMarkup(
-			createElement(BuilderRouteComponent as ComponentType)
-		);
+		const html = renderToStaticMarkup(createElement(BuilderRouteComponent));
 
 		expect(html).toContain('data-testid="app-header"');
 		expect(html).toContain('data-testid="builder-page"');
@@ -82,7 +97,7 @@ describe('builder route search params', () => {
 	});
 
 	it('passes route-specific props to BuilderPage', () => {
-		renderToStaticMarkup(createElement(BuilderRouteComponent as ComponentType));
+		renderToStaticMarkup(createElement(BuilderRouteComponent));
 
 		const builderPageProps = mocks.builderPageSpy.mock.calls[0]?.[0] as {
 			encounterId?: string;

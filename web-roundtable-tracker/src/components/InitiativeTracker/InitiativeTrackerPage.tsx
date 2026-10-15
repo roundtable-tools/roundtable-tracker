@@ -36,6 +36,7 @@ import {
 	Undo2,
 } from 'lucide-react';
 import { Reorder } from 'motion/react';
+import { useNavigate } from '@tanstack/react-router';
 import { InitiativeActionCarouselCard } from './InitiativeActionCarouselCard';
 import {
 	getEncounterStore,
@@ -781,6 +782,17 @@ export function InitiativeTrackerPage() {
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
 	const round = useEncounterStore((state) => state.round);
 	const history = useEncounterStore((state) => state.history);
+	const startEncounter = useEncounterStore((state) => state.startEncounter);
+	const navigate = useNavigate();
+	const [endEncounterOpen, setEndEncounterOpen] = useState(false);
+
+	// Clears the running initiative but keeps the loaded encounter, so it can
+	// be started again from its preview. Clearing after leaving the page keeps
+	// the tracker from rendering an empty order.
+	const endEncounter = () => {
+		setEndEncounterOpen(false);
+		void navigate({ to: '/encounters' }).then(() => startEncounter([]));
+	};
 
 	const storeInitiativeParticipants = useMemo(
 		() =>
@@ -1434,48 +1446,46 @@ export function InitiativeTrackerPage() {
 		[initiativeParticipants, nextRoundMarkerIndex, nextRound]
 	);
 
-	const timelineEvents = useMemo(
-		() =>
-			timeline.map((event) => {
-				if (event.type !== 'reinforcement' || !event.id) {
-					return {
-						round: event.round,
-						label: event.title,
-						description: event.detail,
-					};
-				}
+	// Not memoised: it calls triggerReinforcementEvent, which is recreated every
+	// render, and Timeline isn't memoised either.
+	const timelineEvents = timeline.map((event) => {
+		if (event.type !== 'reinforcement' || !event.id) {
+			return {
+				round: event.round,
+				label: event.title,
+				description: event.detail,
+			};
+		}
 
-				const isTriggered = triggeredReinforcementSlotIds.has(event.id);
-				const canTrigger = event.round <= round && !isTriggered;
-				const participantCount =
-					reinforcementEventsByRound[event.round]?.find(
-						(slot) => slot.id === event.id
-					)?.participants?.length ?? 0;
+		const isTriggered = triggeredReinforcementSlotIds.has(event.id);
+		const canTrigger = event.round <= round && !isTriggered;
+		const participantCount =
+			reinforcementEventsByRound[event.round]?.find(
+				(slot) => slot.id === event.id
+			)?.participants?.length ?? 0;
 
-				return {
-					id: event.id,
-					round: event.round,
-					label: event.title,
-					description:
-						event.detail ||
-						(participantCount > 0
-							? `${participantCount} reinforcement participant${
-									participantCount === 1 ? '' : 's'
-								}`
-							: undefined),
-					actionLabel: isTriggered
-						? 'Triggered'
-						: canTrigger
-							? 'Trigger Now'
-							: undefined,
-					actionDisabled: isTriggered,
-					onAction: canTrigger
-						? () => triggerReinforcementEvent(event.id as string)
-						: undefined,
-				};
-			}),
-		[timeline, triggeredReinforcementSlotIds, round, reinforcementEventsByRound]
-	);
+		return {
+			id: event.id,
+			round: event.round,
+			label: event.title,
+			description:
+				event.detail ||
+				(participantCount > 0
+					? `${participantCount} reinforcement participant${
+							participantCount === 1 ? '' : 's'
+						}`
+					: undefined),
+			actionLabel: isTriggered
+				? 'Triggered'
+				: canTrigger
+					? 'Trigger Now'
+					: undefined,
+			actionDisabled: isTriggered,
+			onAction: canTrigger
+				? () => triggerReinforcementEvent(event.id as string)
+				: undefined,
+		};
+	});
 
 	return (
 		<main className="mx-auto w-full max-w-7xl space-y-4 p-4 lg:p-6">
@@ -1522,6 +1532,7 @@ export function InitiativeTrackerPage() {
 											variant="secondary"
 											size="icon"
 											className="border border-amber-500/50 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25"
+											onClick={() => setEndEncounterOpen(true)}
 										>
 											<ArrowRight className="h-4 w-4" />
 										</Button>
@@ -1886,6 +1897,7 @@ export function InitiativeTrackerPage() {
 									variant="secondary"
 									size="icon"
 									className="border border-amber-500/50 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25"
+									onClick={() => setEndEncounterOpen(true)}
 								>
 									<ArrowRight className="h-4 w-4" />
 								</Button>
@@ -2212,6 +2224,29 @@ export function InitiativeTrackerPage() {
 					<DialogFooter>
 						<Button onClick={() => handleNextRoundAnnouncementChange(false)}>
 							Continue
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			<Dialog open={endEncounterOpen} onOpenChange={setEndEncounterOpen}>
+				<DialogContent className="sm:max-w-sm">
+					<DialogHeader>
+						<DialogTitle>End Encounter?</DialogTitle>
+						<DialogDescription>
+							This clears the initiative order, health changes and undo history,
+							and returns to Encounters.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => setEndEncounterOpen(false)}
+						>
+							Cancel
+						</Button>
+						<Button variant="destructive" onClick={endEncounter}>
+							End Encounter
 						</Button>
 					</DialogFooter>
 				</DialogContent>
