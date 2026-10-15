@@ -27,16 +27,14 @@ math changes.
   | Base budget | Adjustment per PC |
   |---|---|
   | ≤ 40 | base ÷ 4 |
-  | ≤ 80 | 20 |
-  | ≤ 120 | 30 |
-  | ≤ 160 | 40 |
-  | ≤ 200 | 50 |
-  | ≤ 240 | 60 |
+  | < 120 | 20 |
+  | < 160 | 30 |
+  | ≥ 160 | 40 |
 
-  Low = 20 matches GM Core.
+  Matches GM Core (Trivial 10, Low 20, Moderate 20, Severe 30, Extreme 40). The in-between grades (Moderate+, Severe+, Extreme+…, Impossible) use the adjustment of the official threat below them.
 - **`Threat.toExpBudget(partySize)`** = `base + adjustment × (partySize – 4)`.
-- **`Threat.fromExperienceBudget(xp, partySize)`** inverts that. It uses "at or below" bands: ≤ 40 is Trivial, ≤ 60 is Low, and so on.
-  - Quirk: an empty encounter for a party of 1 reads as Low.
+- **`Threat.thresholds(partySize)`** gives each threat's minimum XP: its `toExpBudget`, raised to the previous threshold where tiny parties would make a higher threat cheaper than a lower one (for 1 PC, Severe 30 < Moderate+ 40).
+- **`Threat.fromExperienceBudget(xp, partySize)`** returns the highest threat whose threshold the XP reaches ("at or above"): for 4 PCs, < 60 is Trivial, 60–79 Low, 80–99 Moderate, 100–119 Moderate+, and so on. XP ≤ 0 is always Trivial.
 - **Party level and size:** a single `partyLevel` (1–20) and `partySize` (default 4) in the builder (`BuilderPage.tsx`, defaults in `builderConvert.defaultFormValues`). There is no mixed-level party handling.
 - **Allowed level range for a template:** `participantsToLevelRange` (`store/data.ts`) clamps it so that every creature stays within levels –1..25.
 
@@ -105,10 +103,7 @@ math changes.
     - Attrition adds 5 % of (current threat + accumulated attrition) to the threat each round, so it compounds upwards; at most 20 rounds.
     - `effectiveXp` is the peak simultaneous XP. The display rounds it up to a multiple of 5.
   - All reinforcement slots are merged into one wave, at the earliest `reinforcementRound`.
-- **`ThreatTracker.tsx`** shows effective vs raw XP, a per-round chart and the threat bands. It uses its own thresholds:
-  - `getBaseXpFromThreatKey` = 60 + 20 × key.
-  - `CHARACTER_ADJUSTMENT_BY_THREAT` = {Trivial 10, Low 20, Moderate 20, Severe 30, Extreme 40, Impossible 40}.
-  - "At or above" bands.
+- **`ThreatTracker.tsx`** shows effective vs raw XP, a per-round chart and the threat bands. Its label comes from `Threat.fromExperienceBudget`, and its bands from `getMergedThresholds` (`threatThresholds.ts`), which groups `Threat.thresholds` by base threat. The bar and the saved difficulty therefore always agree for the same XP.
 - **Saved difficulty** (`components/BuilderPage/builderConvert.ts`, `toConcreteEncounter`): `Threat.fromExperienceBudget(computeBuilderXP)`, with the "+" grades collapsed to their base threat. It ignores reinforcements.
 
 ## Not modelled
@@ -129,14 +124,13 @@ math changes.
 | `models/utility/experienceBudget/ExperienceBudget.spec.ts` | budgets, party-size adjustments, inversion |
 | `models/utility/threat/Threat.spec.ts` | XP → threat |
 | `tests/builderXp.spec.ts` | allies, accomplishments, reinforcement simulation |
-| `tests/ThreatTracker.spec.ts` | band layout |
+| `tests/ThreatTracker.spec.ts` | band layout; bar and saved difficulty agree |
 | `models/encounters/EncounterTemplate.spec.ts` | template XP |
 
 ## Known quirks
 
 Check the code before relying on these.
 
-- The threat tracker and the saved difficulty use different band rules ("at or above" vs "at or below") and different Moderate+ adjustments. For example, 50 XP shows Trivial in the builder but is saved as Low; 110 XP shows Moderate but is saved as Severe (#97).
 - `elite-offense` is +0.75 level for XP but +0.5 for display (#98).
 - `Math.trunc` on fractional level differences rounds toward zero: positive fractions round down, negative ones round up. Partial adjustments therefore often change nothing, and a –1.25 difference costs like –1 (#99).
 - Several reinforcement waves collapse into one, at the earliest round, and the saved difficulty ignores reinforcements (#100).
