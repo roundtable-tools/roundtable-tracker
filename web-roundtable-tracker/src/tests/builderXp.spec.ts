@@ -140,6 +140,26 @@ describe('computeBuilderXP', () => {
 		expect(xp).toBe(80);
 	});
 
+	it('interpolates XP for partial adjustments', () => {
+		const xpFor = (adjustment: BuilderSlot['adjustment']) =>
+			computeBuilderXP([creature({ level: 5, adjustment })], 5).valueOf();
+
+		expect(xpFor('elite-offense')).toBe(55); // +0.75
+		expect(xpFor('elite-defense')).toBe(50); // +0.5
+	});
+
+	it('interpolates XP for a fractional custom level modifier', () => {
+		const xpFor = (adjustmentLevelModifier: number) =>
+			computeBuilderXP(
+				[creature({ level: 5, adjustmentLevelModifier })],
+				5
+			).valueOf();
+
+		expect(xpFor(0.3)).toBe(46); // 40 + 20 × 0.3
+		expect(xpFor(-1.25)).toBe(28); // between 30 and 20
+		expect(xpFor(-0.1)).toBeLessThan(40);
+	});
+
 	it('sums multiple creature slots with mixed sides', () => {
 		const slots = [
 			creature({ level: 5, count: 2 }), // 2 enemies at party level: 80
