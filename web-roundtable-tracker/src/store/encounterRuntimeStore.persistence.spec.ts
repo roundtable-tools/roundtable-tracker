@@ -6,6 +6,8 @@ import { STATUS } from '@/CommandHistory/common';
 import { ReturnToInitiativeCommand } from '@/CommandHistory/Commands/ReturnToInitiativeCommand';
 import { GiveAdditionalTurnCommand } from '@/CommandHistory/Commands/GiveAdditionalTurnCommand';
 import { CompositeCommand } from '@/CommandHistory/Commands/CompositeCommand';
+import { EndTurnCommand } from '@/CommandHistory/Commands/EndTurnCommand';
+import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 
 const characters: Character[] = [
 	{
@@ -29,6 +31,23 @@ const characters: Character[] = [
 		tempHealth: 0,
 	},
 ];
+
+const giveTurn = (uuid: string) =>
+	new GiveAdditionalTurnCommand({ uuid: uuid as Character['uuid'] });
+
+/**
+ * Rewrites the stored GiveAdditionalTurnCommand for the uuid 'removed' as a
+ * command type that is no longer registered.
+ */
+const storeUnknownCommandInPlaceOfRemoved = () => {
+	const stored = localStorage.getItem('encounter-store')!;
+	const withUnknown = stored.replace(
+		/"type":"Command\.GiveAdditionalTurnCommand"(,"description":"[^"]*")?,"data":\{"uuid":"removed"/g,
+		'"type":"Command.RemovedCommand","data":{"uuid":"removed"'
+	);
+	expect(withUnknown).not.toBe(stored);
+	localStorage.setItem('encounter-store', withUnknown);
+};
 
 describe('encounter store persistence', () => {
 	beforeAll(() => {
@@ -61,12 +80,10 @@ describe('encounter store persistence', () => {
 		);
 	});
 
-	it('drops an unknown stored command and the history after it', () => {
+	it('drops an unknown stored command and the commands undo or redo cannot reach past it', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const store = createEncounterStore();
 		store.getState().startEncounter(characters);
-		const giveTurn = (uuid: string) =>
-			new GiveAdditionalTurnCommand({ uuid: uuid as Character['uuid'] });
 		store
 			.getState()
 			.setHistory([
@@ -81,21 +98,17 @@ describe('encounter store persistence', () => {
 				new CompositeCommand({ commands: [giveTurn('removed')] }),
 				giveTurn(characters[1].uuid),
 			]);
-		const stored = localStorage.getItem('encounter-store')!;
-		const withUnknown = stored.replace(
-			/"type":"Command\.GiveAdditionalTurnCommand"(,"description":"[^"]*")?,"data":\{"uuid":"removed"/g,
-			'"type":"Command.RemovedCommand","data":{"uuid":"removed"'
-		);
-		expect(withUnknown).not.toBe(stored);
-		localStorage.setItem('encounter-store', withUnknown);
+		storeUnknownCommandInPlaceOfRemoved();
 
 		const reloaded = createEncounterStore();
 
 		const { charactersOrder, history, redoStack } = reloaded.getState();
 		expect(charactersOrder).toEqual(store.getState().charactersOrder);
+		// Undo pops from the end, so only the commands after the unknown one stay.
 		expect(history.map((command) => command.data.uuid)).toEqual([
-			characters[0].uuid,
+			characters[1].uuid,
 		]);
+		// Redo takes from the front, so only the commands before the unknown one stay.
 		expect(redoStack.map((command) => command.data.uuid)).toEqual([
 			characters[0].uuid,
 		]);
@@ -103,6 +116,43 @@ describe('encounter store persistence', () => {
 			expect.stringContaining('RemovedCommand'),
 			expect.any(Error)
 		);
+		warn.mockRestore();
+	});
+
+	it('undoes the newest command after reloading a history with an unknown command', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		// Restored commands act on the app's store, so this test uses it too.
+		const store = getEncounterStore();
+		const wizard: Character = {
+			...characters[0],
+			uuid: '00000000-0000-0000-0000-000000000003',
+			name: 'Wizard',
+			initiative: 15,
+		};
+		const [hero, rogue] = characters;
+		store
+			.getState()
+			.startEncounter([hero, { ...rogue, turnState: 'normal' }, wizard]);
+		const endTurn = new EndTurnCommand({ uuid: hero.uuid });
+		expect(endTurn.execute()).toBe(STATUS.success);
+		const beforeRemove = store.getState();
+		const removeRogue = new RemoveCharacterCommand({ uuid: rogue.uuid });
+		expect(removeRogue.execute()).toBe(STATUS.success);
+		store.getState().setHistory([endTurn, giveTurn('removed'), removeRogue]);
+		storeUnknownCommandInPlaceOfRemoved();
+
+		await store.persist.rehydrate();
+		const { history } = store.getState();
+		expect(history).toHaveLength(1);
+		expect(history[0]).toBeInstanceOf(RemoveCharacterCommand);
+		expect(history[0].undo()).toBe(STATUS.success);
+
+		const { charactersMap, charactersOrder } = store.getState();
+		expect(charactersOrder).toEqual(beforeRemove.charactersOrder);
+		expect(Object.keys(charactersMap)).toEqual(
+			Object.keys(beforeRemove.charactersMap)
+		);
+		expect(charactersOrder.every((uuid) => uuid in charactersMap)).toBe(true);
 		warn.mockRestore();
 	});
 });

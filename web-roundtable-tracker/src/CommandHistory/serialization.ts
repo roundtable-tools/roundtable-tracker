@@ -38,7 +38,7 @@ export const commandFromJSON = (json: Record<string, unknown>) => {
 		CommandClass = getCommand(commandType);
 	} catch (error) {
 		console.warn(
-			`Skipping stored command of unknown type ${commandType} and the history after it`,
+			`Skipping stored command of unknown type ${commandType}; undo and redo stop at it`,
 			error
 		);
 
@@ -53,7 +53,8 @@ export const commandFromJSON = (json: Record<string, unknown>) => {
 
 /**
  * Placeholder for a stored command whose type is not registered.
- * `keepRestorableCommands` drops it, and everything that depends on it, after loading.
+ * `keepUndoableCommands` and `keepRedoableCommands` drop it, and the commands
+ * that cannot be replayed past it, after loading.
  */
 export class UnknownCommand {
 	constructor(readonly commandType: string) {}
@@ -73,11 +74,23 @@ const containsUnknownCommand = (value: unknown): boolean => {
 };
 
 /**
- * Returns the commands before the first one that is, or contains, an unknown command.
- * Later commands depend on the unknown one, so they cannot be undone or redone either.
+ * Returns the undo history (oldest first, `undo()` pops from the end) after the
+ * last command that is, or contains, an unknown command. Undo cannot step back
+ * past the unknown command, so the older commands cannot be undone either.
  */
-export const keepRestorableCommands = (commands: Command[]) => {
-	const firstUnknown = commands.findIndex(containsUnknownCommand);
+export const keepUndoableCommands = (history: Command[]) => {
+	const lastUnknown = history.findLastIndex(containsUnknownCommand);
 
-	return firstUnknown === -1 ? commands : commands.slice(0, firstUnknown);
+	return history.slice(lastUnknown + 1);
+};
+
+/**
+ * Returns the redo stack (next first, `redo()` takes from the front) before the
+ * first command that is, or contains, an unknown command. Redo cannot step past
+ * the unknown command, so the later commands cannot be redone either.
+ */
+export const keepRedoableCommands = (redoStack: Command[]) => {
+	const firstUnknown = redoStack.findIndex(containsUnknownCommand);
+
+	return firstUnknown === -1 ? redoStack : redoStack.slice(0, firstUnknown);
 };

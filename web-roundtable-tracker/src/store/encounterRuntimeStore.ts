@@ -33,7 +33,8 @@ import { Command } from '@/CommandHistory/common';
 import { jsonConfiguration } from './serializer';
 import {
 	CommandJSON,
-	keepRestorableCommands,
+	keepRedoableCommands,
+	keepUndoableCommands,
 } from '@/CommandHistory/serialization';
 import { splitArray } from '@/utils/array';
 
@@ -214,8 +215,8 @@ export const createEncounterStore = () =>
 					return {
 						...currentState,
 						...persisted,
-						history: keepRestorableCommands(persisted?.history ?? []),
-						redoStack: keepRestorableCommands(persisted?.redoStack ?? []),
+						history: keepUndoableCommands(persisted?.history ?? []),
+						redoStack: keepRedoableCommands(persisted?.redoStack ?? []),
 					};
 				},
 			}
