@@ -35,7 +35,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { Bot, Trees, User } from 'lucide-react';
+import { Bot, FolderOpen, Trees, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useSavedPartiesStore } from '@/store/savedPartiesInstance';
 import { Party } from '@/store/savedParties';
@@ -320,7 +320,25 @@ export const PreviewDisplay = (): JSX.Element => {
 		name: 'teams',
 	});
 
-	if (!encounterData) return <></>;
+	if (!encounterData) {
+		return (
+			<>
+				<AppHeader />
+				<div className="mx-auto flex w-full max-w-xl flex-col items-center gap-4 px-4 py-16 text-center">
+					<FolderOpen className="h-12 w-12 text-muted-foreground" />
+					<h1 className="text-2xl font-semibold tracking-tight">
+						No encounter loaded
+					</h1>
+					<p className="text-muted-foreground">
+						Pick an encounter to preview it and start initiative.
+					</p>
+					<Button onClick={() => navigate({ to: '/encounters' })}>
+						Go to Encounters
+					</Button>
+				</div>
+			</>
+		);
+	}
 
 	return (
 		<>
@@ -347,13 +365,13 @@ export const PreviewDisplay = (): JSX.Element => {
 							variant="secondary"
 							onClick={() => onSelectInitiativeView('initiativeTracker')}
 						>
-							Initiative Tracker (PoC)
+							Initiative Tracker
 						</Button>
 						<Button
 							variant="secondary"
 							onClick={() => onSelectInitiativeView('initiativePlayer')}
 						>
-							Player View (PoC)
+							Player View
 						</Button>
 					</DialogFooter>
 				</DialogContent>

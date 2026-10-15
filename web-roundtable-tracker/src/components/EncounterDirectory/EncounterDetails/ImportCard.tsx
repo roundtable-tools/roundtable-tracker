@@ -13,7 +13,7 @@ import { useState } from 'react';
 import { validateImportedEncounter } from './importEncounter';
 
 type ImportCardProps = {
-	submit: (encounterData: Encounter) => void;
+	submit: (encounterData: Encounter, warnings: string[]) => void;
 	close: () => void;
 };
 
@@ -62,12 +62,12 @@ export const ImportCard = (props: ImportCardProps) => {
 				</Button>
 				<Button
 					onClick={() => {
-						const [encounterData, validationError] =
+						const [encounterData, validationError, warnings] =
 							validateImportedEncounter(value);
 
 						if (encounterData) {
 							setError(null);
-							submit(encounterData);
+							submit(encounterData, warnings);
 						} else {
 							setError(validationError);
 						}
