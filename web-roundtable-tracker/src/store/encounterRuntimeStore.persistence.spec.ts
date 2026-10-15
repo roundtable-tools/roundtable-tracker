@@ -2,12 +2,17 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { createEncounterStore } from './encounterRuntimeStore';
 import { getEncounterStore } from './encounterRuntimeInstance';
 import { Character } from './data';
-import { STATUS } from '@/CommandHistory/common';
+import { Command, STATUS } from '@/CommandHistory/common';
 import { ReturnToInitiativeCommand } from '@/CommandHistory/Commands/ReturnToInitiativeCommand';
 import { GiveAdditionalTurnCommand } from '@/CommandHistory/Commands/GiveAdditionalTurnCommand';
 import { CompositeCommand } from '@/CommandHistory/Commands/CompositeCommand';
 import { EndTurnCommand } from '@/CommandHistory/Commands/EndTurnCommand';
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
+import { DelayCharacterCommand } from '@/CommandHistory/Commands/DelayCharacterCommand';
+import { KnockOutCharacterCommand } from '@/CommandHistory/Commands/KnockOutCharacterCommand';
+import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/ReactivateCharacterCommand';
+import { FinalizeTurnAndAdvanceRoundCommand } from '@/CommandHistory/Commands/FinalizeTurnAndAdvanceRoundCommand';
+import { FinalizeTurnAndReturnToInitiativeCommand } from '@/CommandHistory/Commands/FinalizeTurnAndReturnToInitiativeCommand';
 
 const characters: Character[] = [
 	{
@@ -154,5 +159,86 @@ describe('encounter store persistence', () => {
 		);
 		expect(charactersOrder.every((uuid) => uuid in charactersMap)).toBe(true);
 		warn.mockRestore();
+	});
+
+	describe('undoes a command restored after a reload', () => {
+		const [hero, rogue] = characters;
+		const bothNormal = () => [hero, { ...rogue, turnState: 'normal' as const }];
+		const turnState = () => {
+			const state = getEncounterStore().getState();
+
+			return {
+				round: state.round,
+				charactersOrder: state.charactersOrder,
+				delayedOrder: state.delayedOrder,
+				charactersWithTurn: [...state.charactersWithTurn],
+				turnStates: Object.values(state.charactersMap).map(
+					(character) => character.turnState
+				),
+			};
+		};
+
+		it.each<{
+			name: string;
+			start: () => Character[];
+			setUp?: () => void;
+			command: () => Command;
+		}>([
+			{
+				name: 'DelayCharacterCommand',
+				start: bothNormal,
+				command: () => new DelayCharacterCommand({ uuid: hero.uuid }),
+			},
+			{
+				name: 'KnockOutCharacterCommand',
+				start: bothNormal,
+				command: () => new KnockOutCharacterCommand({ uuid: hero.uuid }),
+			},
+			{
+				name: 'ReactivateCharacterCommand',
+				start: () => characters,
+				command: () => new ReactivateCharacterCommand({ uuid: rogue.uuid }),
+			},
+			{
+				name: 'FinalizeTurnAndAdvanceRoundCommand',
+				start: bothNormal,
+				setUp: () =>
+					expect(new EndTurnCommand({ uuid: hero.uuid }).execute()).toBe(
+						STATUS.success
+					),
+				command: () =>
+					new FinalizeTurnAndAdvanceRoundCommand({
+						uuid: rogue.uuid,
+						action: 'end-turn',
+					}),
+			},
+			{
+				name: 'FinalizeTurnAndReturnToInitiativeCommand',
+				start: () => characters,
+				command: () =>
+					new FinalizeTurnAndReturnToInitiativeCommand({
+						activeUuid: hero.uuid,
+						returningUuid: rogue.uuid,
+						action: 'end-turn',
+					}),
+			},
+		])('$name', async ({ start, setUp, command }) => {
+			// Restored commands act on the app's store, so this test uses it too.
+			const store = getEncounterStore();
+			store.getState().startEncounter(start());
+			setUp?.();
+			const before = turnState();
+			const executed = command();
+			expect(executed.execute()).toBe(STATUS.success);
+			expect(turnState()).not.toEqual(before);
+			store.getState().setHistory([executed]);
+
+			await store.persist.rehydrate();
+			const [restored] = store.getState().history;
+			expect(restored).not.toBe(executed);
+			expect(restored.undo()).toBe(STATUS.success);
+
+			expect(turnState()).toEqual(before);
+		});
 	});
 });
