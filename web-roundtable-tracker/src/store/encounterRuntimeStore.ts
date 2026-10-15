@@ -26,7 +26,6 @@ export type TrackerParticipantMeta = {
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
 	reinforcementSlotId?: string;
-	reinforcementPending?: boolean;
 };
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Encounter } from './data';
@@ -63,7 +62,10 @@ export interface EncounterStore {
 	charactersWithTurn: Set<UUID>;
 	history: Command[];
 	redoStack: Command[];
-	startEncounter: (characters: Character[]) => void;
+	startEncounter: (
+		characters: Character[],
+		trackerMetaMap?: Record<UUID, TrackerParticipantMeta>
+	) => void;
 	setEncounterData: (encounterData: Encounter) => void;
 	updateCharacter: (uuid: UUID, character: ValueOrFunction<Character>) => void;
 	setCharacters: (characters: Character[]) => void;
@@ -93,7 +95,17 @@ function simpleSet<
 	};
 }
 
-const parseCharacters = (characters: Character[]) => {
+// Simple hazards never take turns, so they stay out of the turn order and the
+// turn bookkeeping. They live only in charactersMap (and the hazards panel).
+export const isSimpleHazardId = (
+	trackerMetaMap: Record<UUID, TrackerParticipantMeta>,
+	uuid: UUID
+) => trackerMetaMap[uuid]?.isSimpleHazard === true;
+
+const parseCharacters = (
+	characters: Character[],
+	trackerMetaMap: Record<UUID, TrackerParticipantMeta> = {}
+) => {
 	const charactersMap = characters.reduce(
 		(acc, character) => {
 			acc[character.uuid] = character;
@@ -103,7 +115,9 @@ const parseCharacters = (characters: Character[]) => {
 		{} as Record<UUID, Character>
 	);
 
-	const charactersId = characters.map((character) => character.uuid);
+	const charactersId = characters
+		.map((character) => character.uuid)
+		.filter((uuid) => !isSimpleHazardId(trackerMetaMap, uuid));
 	const [delayedOrder, charactersOrder] = splitArray(
 		charactersId,
 		(uuid) => charactersMap[uuid].turnState === 'delayed'
@@ -118,15 +132,20 @@ const parseCharacters = (characters: Character[]) => {
 
 const resetHistory = () => ({ history: [], redoStack: [] });
 
-const startEncounter = (characters: Character[]): Partial<EncounterStore> => {
-	const { charactersMap, charactersOrder, delayedOrder } =
-		parseCharacters(characters);
+const startEncounter = (
+	characters: Character[],
+	trackerMetaMap: Record<UUID, TrackerParticipantMeta> = {}
+): Partial<EncounterStore> => {
+	const { charactersMap, charactersOrder, delayedOrder } = parseCharacters(
+		characters,
+		trackerMetaMap
+	);
 
 	return {
 		charactersMap,
 		charactersOrder,
 		delayedOrder,
-		trackerMetaMap: {},
+		trackerMetaMap,
 		round: 1,
 		charactersWithTurn: new Set(charactersOrder),
 		...resetHistory(),
@@ -168,8 +187,10 @@ export const createEncounterStore = () =>
 				redoStack: [],
 				partyLevel: 1,
 				encounterData: undefined,
-				startEncounter: (characters: Character[]) =>
-					set(() => startEncounter(characters)),
+				startEncounter: (
+					characters: Character[],
+					trackerMetaMap?: Record<UUID, TrackerParticipantMeta>
+				) => set(() => startEncounter(characters, trackerMetaMap)),
 				setCharacters: (characters: Character[]) =>
 					set(() => parseCharacters(characters)),
 				updateCharacter: updateCharacter(set),

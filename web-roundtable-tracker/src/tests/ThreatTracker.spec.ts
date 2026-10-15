@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { THREAT_TYPE } from '@/models/utility/threat/Threat.class';
-import { getMergedThresholds } from '@/components/BuilderPage/ThreatTracker';
+import { getMergedThresholds } from '@/components/BuilderPage/threatThresholds';
 
 function threatEntries(): [number, string][] {
 	const entries = Object.entries(THREAT_TYPE).map(([key, label]) => [
