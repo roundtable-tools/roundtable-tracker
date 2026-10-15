@@ -88,6 +88,7 @@ const reconcileWithCurrentOrder = (newOrder: UUID[], currentOrder: UUID[]) => {
 	currentOrder.forEach((uuid, index) => {
 		if (!included.has(uuid)) {
 			reconciled.splice(index, 0, uuid);
+			included.add(uuid);
 		}
 	});
 

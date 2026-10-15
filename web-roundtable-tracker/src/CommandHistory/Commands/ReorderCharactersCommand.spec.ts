@@ -174,5 +174,17 @@ describe('ReorderCharactersCommand', () => {
 				alice,
 			]);
 		});
+
+		it('drops a duplicate already in the queue that the new order misses', () => {
+			// A queue saved before the #28 fix can already hold a participant twice.
+			encounterStore.setState({ charactersOrder: [alice, bob, alice] });
+
+			new ReorderCharactersCommand(
+				{ newOrder: [bob] },
+				{ encounterStore }
+			).execute();
+
+			expect(encounterStore.getState().charactersOrder).toEqual([alice, bob]);
+		});
 	});
 });
