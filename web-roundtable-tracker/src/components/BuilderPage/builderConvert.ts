@@ -210,6 +210,59 @@ function toSavedTraits(traits: string[] | undefined): string[] | undefined {
 	return traits && traits.length > 0 ? [...traits] : undefined;
 }
 
+type CombatReadyState = NonNullable<BuilderSlot['combatReadyState']>;
+type StartingState = NonNullable<Participant['startingState']>;
+type CombatReadyFields = Pick<
+	BuilderSlot,
+	'combatReadyState' | 'hiddenFromPlayers' | 'initiativeDescription'
+>;
+type SavedCombatReadyFields = Pick<
+	Participant,
+	'startingState' | 'hiddenFromPlayers' | 'initiativeDescription'
+>;
+
+function combatReadyStateToStartingState(
+	state: BuilderSlot['combatReadyState']
+): StartingState {
+	if (state === 'delayed') return 'delayed';
+
+	if (state === 'knocked-out') return 'knocked-out';
+
+	return 'normal';
+}
+
+function startingStateToCombatReadyState(
+	state: Participant['startingState']
+): CombatReadyState {
+	if (state === 'delayed') return 'delayed';
+
+	if (state === 'knocked-out') return 'knocked-out';
+
+	return 'active';
+}
+
+function toSavedCombatReadyFields(
+	source: CombatReadyFields
+): SavedCombatReadyFields {
+	return {
+		startingState: combatReadyStateToStartingState(source.combatReadyState),
+		hiddenFromPlayers: source.hiddenFromPlayers || undefined,
+		initiativeDescription: source.initiativeDescription || undefined,
+	};
+}
+
+function fromSavedCombatReadyFields(
+	participant: SavedCombatReadyFields
+): CombatReadyFields {
+	return {
+		combatReadyState: startingStateToCombatReadyState(
+			participant.startingState
+		),
+		hiddenFromPlayers: participant.hiddenFromPlayers ?? false,
+		initiativeDescription: participant.initiativeDescription,
+	};
+}
+
 export function toConcreteEncounter(
 	values: BuilderFormValues,
 	existingId?: string
@@ -230,6 +283,7 @@ export function toConcreteEncounter(
 						type: 'hazard' as const,
 						name: s.name,
 						traits: toSavedTraits(s.traits),
+						...toSavedCombatReadyFields(s),
 						level: s.level,
 						side,
 						count: s.count,
@@ -263,6 +317,7 @@ export function toConcreteEncounter(
 					type: 'creature' as const,
 					name: s.name,
 					traits: toSavedTraits(s.traits),
+					...toSavedCombatReadyFields(s),
 					level: s.level,
 					side,
 					count: s.count,
@@ -324,6 +379,7 @@ export function toConcreteEncounter(
 									type: 'hazard' as const,
 									name: participant.name,
 									traits: toSavedTraits(participant.traits),
+									...toSavedCombatReadyFields(participant),
 									level: toRelativeLevelString(
 										participant.level,
 										values.partyLevel
@@ -361,6 +417,7 @@ export function toConcreteEncounter(
 								type: 'creature' as const,
 								name: participant.name,
 								traits: toSavedTraits(participant.traits),
+								...toSavedCombatReadyFields(participant),
 								level: toRelativeLevelString(
 									participant.level,
 									values.partyLevel
@@ -416,6 +473,7 @@ export function toConcreteEncounter(
 									type: 'hazard' as const,
 									name: s.name,
 									traits: toSavedTraits(s.traits),
+									...toSavedCombatReadyFields(s),
 									level: s.level,
 									side,
 									count: s.count,
@@ -439,6 +497,7 @@ export function toConcreteEncounter(
 								type: 'creature' as const,
 								name: s.name,
 								traits: toSavedTraits(s.traits),
+								...toSavedCombatReadyFields(s),
 								level: s.level,
 								side,
 								count: s.count,
@@ -501,6 +560,7 @@ export function fromConcreteEncounter(
 				type: 'creature',
 				name: p.name,
 				traits: p.traits ?? [],
+				...fromSavedCombatReadyFields(p),
 				description: p.description ?? '',
 				side: alignmentToBuilderSide(p.side),
 				level: p.level,
@@ -528,6 +588,7 @@ export function fromConcreteEncounter(
 			type: 'hazard',
 			name: p.name,
 			traits: p.traits ?? [],
+			...fromSavedCombatReadyFields(p),
 			description: p.description ?? '',
 			side: alignmentToBuilderSide(p.side),
 			level: p.level,
@@ -571,6 +632,7 @@ export function fromConcreteEncounter(
 						type: participant.type,
 						name: participant.name,
 						traits: participant.traits ?? [],
+						...fromSavedCombatReadyFields(participant),
 						side: alignmentToBuilderSide(participant.side),
 						level: fromRelativeLevelString(participant.level, encounter.level),
 						count: participant.count ?? 1,
@@ -632,6 +694,7 @@ function participantsToBuilderSlots(
 				type: 'creature' as const,
 				name: p.name,
 				traits: p.traits ?? [],
+				...fromSavedCombatReadyFields(p),
 				description: p.description ?? '',
 				side: alignmentToBuilderSide(p.side),
 				level: p.level,
@@ -658,6 +721,7 @@ function participantsToBuilderSlots(
 			type: 'hazard' as const,
 			name: p.name,
 			traits: p.traits ?? [],
+			...fromSavedCombatReadyFields(p),
 			description: p.description ?? '',
 			side: alignmentToBuilderSide(p.side),
 			level: p.level,

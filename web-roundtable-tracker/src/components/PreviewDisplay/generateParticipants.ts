@@ -1,12 +1,12 @@
 import {
 	ALIGNMENT,
 	Encounter,
-	indexToLetter,
 	InitiativeParticipant,
 	normalizeLevel,
 	Participant,
 	PRIORITY,
 } from '@/store/data';
+import { uniqueNames } from '@/utils/uniqueNames';
 import { generateUUID } from '@/utils/uuid';
 
 function getDefaultParticipantName(participant: Participant<0 | 1>): string {
@@ -29,9 +29,31 @@ function getDefaultParticipantName(participant: Participant<0 | 1>): string {
 	}
 }
 
+/**
+ * Gives every participant in the roster a unique name. A name used more than
+ * once across all teams gets a letter suffix (A, B, C…) on each use, skipping
+ * letters that would clash with a name already in the roster. Reserved names
+ * (the party's) are never renamed, but count as taken.
+ */
+const withUniqueNames = (
+	teams: InitiativeParticipant[][],
+	reservedNames: string[]
+): InitiativeParticipant[][] => {
+	const names = uniqueNames(
+		teams.flat().map((participant) => participant.name),
+		reservedNames
+	);
+	let index = 0;
+
+	return teams.map((team) =>
+		team.map((participant) => ({ ...participant, name: names[index++] }))
+	);
+};
+
 export const generateParticipants = (
 	encounterData: Encounter | undefined,
-	partyLevel: number
+	partyLevel: number,
+	reservedNames: string[] = []
 ): InitiativeParticipant[][] => {
 	if (!encounterData) return [];
 
@@ -49,7 +71,7 @@ export const generateParticipants = (
 		{} as Record<number, Participant<0 | 1>[]>
 	);
 
-	return Object.values(groupedBySide).map((participants) =>
+	const teams = Object.values(groupedBySide).map((participants) =>
 		participants.flatMap(({ level, name, count, ...participant }) => {
 			const trimmedName = name.trim();
 			const baseName =
@@ -64,18 +86,17 @@ export const generateParticipants = (
 			const isSimpleHazard =
 				participant.type === 'hazard' && !participant.isComplexHazard;
 
-			return Array.from({ length: count ?? 1 }).map((_, index, { length }) => ({
+			return Array.from({ length: count ?? 1 }).map(() => ({
 				uuid: generateUUID(),
 				tiePriority: PRIORITY.NPC,
 				initiative: Math.floor(Math.random() * 20) + 1 + initiativeBonus,
 				...participant,
 				level: normalizeLevel(partyLevel, level),
-				name:
-					length > 1
-						? `${baseName} ${indexToLetter(index).toUpperCase()}`
-						: baseName,
+				name: baseName,
 				isSimpleHazard: isSimpleHazard,
 			}));
 		})
 	);
+
+	return withUniqueNames(teams, reservedNames);
 };
