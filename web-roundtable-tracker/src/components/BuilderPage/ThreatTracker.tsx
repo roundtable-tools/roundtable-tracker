@@ -5,7 +5,7 @@ import {
 	HoverCardTrigger,
 } from '@/components/ui/hover-card';
 import { ExperienceBudget } from '@/models/utility/experienceBudget/ExperienceBudget';
-import { THREAT_TYPE, Threat } from '@/models/utility/threat/Threat.class';
+import { Threat } from '@/models/utility/threat/Threat.class';
 import type {
 	EncounterThreatSimulation,
 	EncounterWaveInteraction,
@@ -32,51 +32,7 @@ export function ThreatTracker({
 	waveInteraction,
 	simulation,
 }: ThreatTrackerProps) {
-	const stripThreatSuffix = (label: string): string =>
-		label.replace(/(\+|-)+$/g, '').trim();
-
-	const getDisplayLabelForBudget = (targetBudget: ExperienceBudget): string => {
-		const targetBudgetXp = targetBudget.valueOf() ?? 0;
-		const thresholdIdx = Math.max(
-			0,
-			merged.findIndex((group, index) => {
-				const isLast = index === merged.length - 1;
-
-				if (isLast) {
-					return targetBudgetXp >= group.minXp;
-				}
-
-				return targetBudgetXp >= group.minXp && targetBudgetXp < group.maxXp;
-			})
-		);
-
-		const thresholdLabel = merged[thresholdIdx]?.baseLabel ?? 'Trivial';
-		const exactLabel = threatEntries
-			.map(([key, label]) => ({
-				label,
-				xp: new Threat({ threat: key as keyof typeof THREAT_TYPE })
-					.toExpBudget(partySize)
-					.valueOf(),
-			}))
-			.sort((a, b) => a.xp - b.xp)
-			.reduce<string>((activeLabel, threat) => {
-				if (targetBudgetXp >= threat.xp) {
-					return threat.label;
-				}
-
-				return activeLabel;
-			}, THREAT_TYPE[0]);
-
-		const exactBaseLabel = stripThreatSuffix(exactLabel);
-
-		return exactBaseLabel === thresholdLabel ? exactLabel : thresholdLabel;
-	};
-
-	const threatEntries = Object.entries(THREAT_TYPE).map(([key, label]) => [
-		parseInt(key),
-		label,
-	]) as [number, string][];
-	const merged = getMergedThresholds(threatEntries, partySize);
+	const merged = getMergedThresholds(partySize);
 
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [isSmall, setIsSmall] = useState(false);
@@ -95,44 +51,16 @@ export function ThreatTracker({
 	}, []);
 
 	const currentBudgetXp = budget.valueOf() ?? 0;
+	// Same function as the saved difficulty, so the bar and the saved encounter
+	// always agree.
+	const currentThreat = Threat.fromExperienceBudget(budget, partySize);
 	const currentThresholdIdx = Math.max(
 		0,
-		merged.findIndex((group, index) => {
-			const isLast = index === merged.length - 1;
-
-			if (isLast) {
-				return currentBudgetXp >= group.minXp;
-			}
-
-			return currentBudgetXp >= group.minXp && currentBudgetXp < group.maxXp;
-		})
+		merged.findIndex((group) => group.keys.includes(currentThreat.threat))
 	);
-	const currentThresholdLabel =
-		merged[currentThresholdIdx]?.baseLabel ?? 'Trivial';
-
-	const exactThreatLabel = threatEntries
-		.map(([key, label]) => ({
-			label,
-			xp: new Threat({ threat: key as keyof typeof THREAT_TYPE })
-				.toExpBudget(partySize)
-				.valueOf(),
-		}))
-		.sort((a, b) => a.xp - b.xp)
-		.reduce<string>((activeLabel, threat) => {
-			if (currentBudgetXp >= threat.xp) {
-				return threat.label;
-			}
-
-			return activeLabel;
-		}, THREAT_TYPE[0]);
-
-	const exactThreatBaseLabel = stripThreatSuffix(exactThreatLabel);
-	const currentDisplayLabel =
-		exactThreatBaseLabel === currentThresholdLabel
-			? exactThreatLabel
-			: currentThresholdLabel;
+	const currentDisplayLabel = currentThreat.toLabel();
 	const comparisonDisplayLabel = comparisonBudget
-		? getDisplayLabelForBudget(comparisonBudget)
+		? Threat.fromExperienceBudget(comparisonBudget, partySize).toLabel()
 		: undefined;
 
 	const distance = isSmall ? 1 : 3;

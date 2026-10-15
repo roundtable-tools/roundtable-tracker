@@ -57,46 +57,55 @@ export class Threat {
 			baseReward.valueOf() + characterAdjustment.valueOf() * (partySize - 4)
 		);
 	}
+	/**
+	 * Minimum XP for each threat at the given party size, in threat order.
+	 * Each value is the threat's budget (`toExpBudget`), raised to the previous
+	 * one where small parties would make a higher threat cheaper than a lower one.
+	 * Trivial has no minimum: anything below the Low budget is Trivial.
+	 */
+	static thresholds(
+		partySize: number = 4
+	): { threat: Threat; minXp: number }[] {
+		const keys = Object.keys(THREAT_TYPE)
+			.map(Number)
+			.sort((a, b) => a - b) as (keyof ThreatID)[];
+		let previousMinXp = Number.NEGATIVE_INFINITY;
+
+		return keys.map((key) => {
+			const threat = new Threat({ threat: key });
+
+			if (key === 0) {
+				return { threat, minXp: Number.NEGATIVE_INFINITY };
+			}
+
+			const minXp = Math.max(
+				threat.toExpBudget(partySize).valueOf(),
+				previousMinXp
+			);
+			previousMinXp = minXp;
+
+			return { threat, minXp };
+		});
+	}
+	/**
+	 * The highest threat whose budget the XP reaches ("at or above"):
+	 * for 4 PCs, 60–79 XP is Low, 80–99 Moderate, 100–119 Moderate+, and so on.
+	 * An encounter worth no XP is always Trivial.
+	 */
 	static fromExperienceBudget(
 		budget: ExperienceBudget,
 		partySize: number = 4
 	): Threat {
-		const baseReward = ExperienceBudget.budgetToBaseReward(budget, partySize);
+		const xp = budget.valueOf();
 
-		switch (true) {
-			case baseReward.valueOf() <= 40:
-				return Threat.Trivial;
-
-			case baseReward.valueOf() <= 60:
-				return Threat.Low;
-
-			case baseReward.valueOf() <= 80:
-				return Threat.Moderate;
-
-			case baseReward.valueOf() <= 100:
-				return Threat.ModeratePlus;
-
-			case baseReward.valueOf() <= 120:
-				return Threat.Severe;
-
-			case baseReward.valueOf() <= 140:
-				return Threat.SeverePlus;
-
-			case baseReward.valueOf() <= 160:
-				return Threat.Extreme;
-
-			case baseReward.valueOf() <= 180:
-				return Threat.ExtremePlus;
-
-			case baseReward.valueOf() <= 200:
-				return Threat.Extreme2Plus;
-
-			case baseReward.valueOf() <= 220:
-				return Threat.Extreme3Plus;
-
-			default:
-				return Threat.Impossible;
+		if (xp <= 0) {
+			return Threat.Trivial;
 		}
+
+		return Threat.thresholds(partySize).reduce(
+			(reached, { threat, minXp }) => (xp >= minXp ? threat : reached),
+			Threat.Trivial
+		);
 	}
 	static get Trivial(): Threat {
 		return new Threat({ threat: 0 });

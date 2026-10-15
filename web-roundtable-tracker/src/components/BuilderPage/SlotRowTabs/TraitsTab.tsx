@@ -6,52 +6,7 @@ import { Trash2 } from 'lucide-react';
 import type { BuilderSlot } from '../builderXp';
 import type { UseFormSetValue } from 'react-hook-form';
 import type { BuilderFormValues } from '../builderConvert';
-
-interface TraitCategory {
-	color: 'blue' | 'orange' | 'purple' | 'green' | 'red';
-	traits: string[];
-}
-
-const TRAIT_CATEGORIES: TraitCategory[] = [
-	{
-		color: 'blue',
-		traits: ['Uncommon'],
-	},
-	{
-		color: 'orange',
-		traits: ['Rare'],
-	},
-	{
-		color: 'purple',
-		traits: ['Unique'],
-	},
-	{
-		color: 'green',
-		traits: ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'],
-	},
-	{
-		color: 'red',
-		traits: [], // General traits default to red
-	},
-];
-
-function getTraitColor(trait: string): TraitCategory['color'] {
-	for (const category of TRAIT_CATEGORIES) {
-		if (category.traits.includes(trait)) {
-			return category.color;
-		}
-	}
-
-	return 'red';
-}
-
-const TRAIT_COLOR_CLASSES: Record<TraitCategory['color'], string> = {
-	blue: 'bg-blue-500 text-white',
-	orange: 'bg-orange-500 text-white',
-	purple: 'bg-purple-500 text-white',
-	green: 'bg-green-500 text-white',
-	red: 'bg-red-500 text-white',
-};
+import { getTraitBadgeClassName } from '@/utils/traitColors';
 
 interface TraitsTabProps {
 	index: number;
@@ -99,7 +54,7 @@ export function TraitsTab({ index, slot, setValue, onRemove }: TraitsTabProps) {
 						<Badge
 							key={`trait-${index}-${traitIndex}`}
 							variant="outline"
-							className={`cursor-pointer ${TRAIT_COLOR_CLASSES[getTraitColor(trait)]}`}
+							className={`cursor-pointer ${getTraitBadgeClassName(trait)}`}
 							onClick={() => {
 								const nextTraits = (slot.traits ?? []).filter(
 									(_, idx) => idx !== traitIndex

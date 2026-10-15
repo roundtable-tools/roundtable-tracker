@@ -23,13 +23,17 @@ export class FinalizeTurnAndReturnToInitiativeCommand implements Command {
 	data: CommandData;
 
 	constructor(
-		data: Pick<CommandData, 'activeUuid' | 'returningUuid' | 'action'>,
+		data: Pick<
+			CommandData,
+			'activeUuid' | 'returningUuid' | 'action' | 'command'
+		>,
 		private deps?: CommandDeps
 	) {
 		this.data = {
 			activeUuid: data.activeUuid,
 			returningUuid: data.returningUuid,
 			action: data.action,
+			command: data.command,
 		};
 	}
 
