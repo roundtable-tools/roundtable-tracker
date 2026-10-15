@@ -160,10 +160,13 @@ describe('validateImportedEncounter', () => {
 		expect(error).toBe('');
 		expect(encounter).not.toBeNull();
 		expect(encounter?.levelRepresentation).toBe(LEVEL_REPRESENTATION.Relative);
-		expect(encounter?.description).toBe('Default variant');
+		expect(encounter?.description).toBe('Template entry');
 		expect(encounter?.participants).toHaveLength(1);
 		expect(encounter?.variants).toHaveLength(2);
 		expect(encounter?.variants?.[1]?.description).toBe('Large party variant');
-		expect(encounter?.difficulty).toBe(DIFFICULTY.Severe);
+		// Derived from each variant's XP budget, not from the template's tags
+		expect(encounter?.difficulty).toBe(DIFFICULTY.Moderate);
+		expect(encounter?.variants?.[0]?.difficulty).toBe(DIFFICULTY.Moderate);
+		expect(encounter?.variants?.[1]?.difficulty).toBe(DIFFICULTY.Trivial);
 	});
 });

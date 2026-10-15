@@ -265,15 +265,17 @@ export class TriggerReinforcementEventCommand implements Command {
 			const charactersMap = { ...current.charactersMap };
 			const trackerMetaMap = { ...current.trackerMetaMap };
 			const charactersWithTurn = new Set(current.charactersWithTurn);
-			const spawned = (this.data.spawnedParticipants ?? []).map(
-				(participant) => participant.character
-			);
+			// Simple hazards never take turns, so they stay out of the order,
+			// the delayed list and the turn bookkeeping.
+			const turnTakers = (this.data.spawnedParticipants ?? [])
+				.filter((participant) => !participant.meta.isSimpleHazard)
+				.map((participant) => participant.character);
 			// Like the starting roster: participants that arrive delayed wait in
 			// the delayed list, everyone else joins the order and gets a turn.
-			const arrivingDelayed = spawned.filter(
+			const arrivingDelayed = turnTakers.filter(
 				(character) => character.turnState === 'delayed'
 			);
-			const arrivingInOrder = spawned.filter(
+			const arrivingInOrder = turnTakers.filter(
 				(character) => character.turnState !== 'delayed'
 			);
 

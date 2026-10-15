@@ -13,7 +13,7 @@ import {
 } from '@/store/convert';
 import { STATUS } from '@/CommandHistory/common';
 import { TriggerReinforcementEventCommand } from '@/CommandHistory/Commands/TriggerReinforcementEventCommand';
-import { generateParticipants } from './PreviewDisplay';
+import { generateParticipants } from './generateParticipants';
 
 const encounter: Encounter = {
 	id: 'ambush',
