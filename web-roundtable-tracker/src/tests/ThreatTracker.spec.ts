@@ -53,7 +53,7 @@ describe('getMergedThresholds', () => {
 	it('Trivial maxXp equals expected adjusted value for party of 4', () => {
 		const groups = getMergedThresholds(4);
 		const trivial = groups.find((g) => g.baseLabel === 'Trivial')!;
-		// key baseline starts at 60 for Trivial
+		// Trivial ends where Low starts: the 60 XP Low budget
 		expect(trivial.maxXp).toBe(60);
 	});
 

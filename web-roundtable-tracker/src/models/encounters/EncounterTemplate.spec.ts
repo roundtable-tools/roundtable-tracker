@@ -8,6 +8,7 @@ import {
 } from './encounter.types';
 import { ALIGNMENT } from '@/store/data';
 import { LevelDifference } from '../utility/level/LevelDifference';
+import defaultTemplates from './defaultTemplates';
 
 type RelativeLevelInput = LevelDifference | number;
 
@@ -630,4 +631,20 @@ describe('EncounterTemplate Business Logic', () => {
 			expect(instance.data.name).toBe('Original');
 		});
 	});
+});
+
+describe('default templates', () => {
+	// Each hand-made variant sums exactly to its threat's budget for its party
+	// size, so the computed threat must match the template's difficulty tag.
+	for (const template of defaultTemplates) {
+		for (const variant of template.variants) {
+			it(`${template.name} for ${variant.partySize} PCs is ${template.tags?.[0]}`, () => {
+				const threat = new EncounterTemplate(template).calculateThreatLevel(
+					variant.id
+				);
+
+				expect(threat.toLabel()).toBe(template.tags?.[0]);
+			});
+		}
+	}
 });
