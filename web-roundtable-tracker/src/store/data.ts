@@ -191,6 +191,10 @@ export type CombatantParticipant<
 	level: LevelFormat[IsAbstract];
 	side: Alignment;
 	count?: number;
+	// Template identity kept so an imported template loses no data
+	id?: string;
+	tag?: string;
+	role?: string;
 	tiePriority?: Priority;
 	maxHealth?: number;
 	health?: number;
@@ -241,11 +245,14 @@ export type ConcreteEncounterVariant = {
 	participants: Participant<typeof LEVEL_REPRESENTATION.Exact>[];
 };
 type EncounterTemplateVariant = {
+	id?: string;
 	difficulty?: Difficulty;
 	partySize?: number;
 	level?: number;
-	description: string; // Description of external conditions that trigger the variant
+	description?: string; // Description of external conditions that trigger the variant
 	participants: Participant<typeof LEVEL_REPRESENTATION.Relative>[];
+	narrativeSlots?: NarrativeSlot[];
+	notes?: EncounterNotes;
 };
 
 export type AuraElement = {
@@ -258,6 +265,7 @@ export type AuraElement = {
 
 export type NarrativeSlot = {
 	id: string;
+	tag?: string;
 	type: 'default' | 'reinforcement' | 'ongoing';
 	description?: string;
 	accomplishmentLevel?: 'story' | 'minor' | 'moderate' | 'major';
@@ -282,6 +290,10 @@ export type EncounterTemplate = {
 	auras?: AuraElement[];
 	narrativeSlots?: NarrativeSlot[];
 	variants?: EncounterTemplateVariant[];
+	defaultVariantId?: string;
+	tags?: string[];
+	createdAt?: Date;
+	updatedAt?: Date;
 };
 
 export type AbstractEncounter = EncounterTemplate;
@@ -323,6 +335,9 @@ const combatantParticipantSchema = z.object({
 	level: z.number(),
 	side: z.nativeEnum(ALIGNMENT),
 	count: z.number().optional(),
+	id: z.string().optional(),
+	tag: z.string().optional(),
+	role: z.string().optional(),
 	tiePriority: z.nativeEnum(PRIORITY).optional(),
 	maxHealth: z.number().optional(),
 	health: z.number().optional(),
@@ -354,6 +369,7 @@ const participantSchema = z.union([creatureSchema, hazardSchema]);
 
 const narrativeSlotSchema = z.object({
 	id: z.string(),
+	tag: z.string().optional(),
 	type: z.enum(['default', 'reinforcement', 'ongoing']),
 	description: z.string().optional(),
 	accomplishmentLevel: z

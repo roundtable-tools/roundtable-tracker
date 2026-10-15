@@ -4,9 +4,11 @@
     "web-roundtable-tracker"
   ],
   "packageManager": "yarn@4.9.0",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "yarn workspace web-roundtable-tracker dev",
-    "start": "yarn workspace web-roundtable-tracker start",
     "test": "yarn workspace web-roundtable-tracker test",
     "verify:types": "yarn workspace web-roundtable-tracker typecheck && yarn workspace web-roundtable-tracker test --run"
   },

@@ -125,6 +125,19 @@ export const EncounterVariantSchema = z.object({
 }) as z.ZodSchema<EncounterVariant>;
 
 // ============================================================================
+// Timestamp Schema
+// ============================================================================
+
+/**
+ * JSON.stringify turns dates into ISO strings, so accept those as well as
+ * Date objects. Anything else (numbers, null, unparsable strings) still fails.
+ */
+const TimestampSchema = z.preprocess(
+	(value) => (typeof value === 'string' ? new Date(value) : value),
+	z.date()
+);
+
+// ============================================================================
 // Template Schema with Custom Validation
 // ============================================================================
 
@@ -136,8 +149,8 @@ export const EncounterTemplateDataSchema = z
 		defaultVariantId: z.string().uuid(),
 		variants: z.array(EncounterVariantSchema).nonempty(),
 		tags: z.array(z.string()).optional(),
-		createdAt: z.date().optional(),
-		updatedAt: z.date().optional(),
+		createdAt: TimestampSchema.optional(),
+		updatedAt: TimestampSchema.optional(),
 	})
 	.refine(
 		(data) => {
