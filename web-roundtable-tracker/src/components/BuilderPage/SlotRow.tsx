@@ -137,7 +137,7 @@ const ADDITIONAL_BLOCKS: Array<{
 		key: 'traits',
 		label: 'Traits',
 		description:
-			'Add traits to this participant, which can be used for filtering and recall knowledge.',
+			'Add traits to this participant. They are saved with the encounter and shown in the tracker.',
 	},
 	{
 		key: 'combat-ready',
