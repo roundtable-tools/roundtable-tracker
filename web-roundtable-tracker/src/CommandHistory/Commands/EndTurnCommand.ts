@@ -1,4 +1,5 @@
 import { UUID } from '@/utils/uuid';
+import { skipParticipantsWithoutTurn } from '@/store/operations';
 import {
 	Command,
 	CommandDeps,
@@ -48,9 +49,13 @@ export class EndTurnCommand implements Command {
 
 		encounterStore.setState((state) => {
 			state.charactersWithTurn.delete(this.data.uuid);
-			const charactersOrder = state.charactersOrder
-				.filter((id) => id !== this.data.uuid)
-				.concat(this.data.uuid);
+			const charactersOrder = skipParticipantsWithoutTurn({
+				charactersOrder: state.charactersOrder
+					.filter((id) => id !== this.data.uuid)
+					.concat(this.data.uuid),
+				charactersWithTurn: state.charactersWithTurn,
+				delayedOrder: state.delayedOrder,
+			});
 
 			return {
 				charactersWithTurn: new Set(state.charactersWithTurn),

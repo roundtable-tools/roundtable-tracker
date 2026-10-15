@@ -22,20 +22,21 @@ when the turn flow changes.
   | `charactersWithTurn: Set<UUID>` | Who still has a turn this round |
   | `round` | Starts at 1 |
   | `charactersMap` | Characters by uuid |
-  | `trackerMetaMap` | Role (pc / opponent / neutral / ally / hazard / reinforcement), `isSimpleHazard`, `initiativeBonus`, `reinforcementSlotId`, `reinforcementPending`, … |
+  | `trackerMetaMap` | Role (pc / opponent / neutral / ally / hazard / reinforcement), `isSimpleHazard`, `initiativeBonus`, `reinforcementSlotId`, … |
   | `history`, `redoStack` | Command history |
 
 ## Rolling and ordering
 
 - Rolling happens in the preview (`components/PreviewDisplay/PreviewDisplay.tsx`), not in a command:
-  - Encounter creatures roll d20 + `initiativeBonus`, with tie priority `NPC`. Groups with `count` are expanded and suffixed A, B, …
+  - Encounter creatures roll d20 + `initiativeBonus`, with tie priority `NPC`. Groups with `count` are expanded. A name used more than once across the whole roster (any side, any entry) gets a letter suffix A, B, … on each use, skipping letters already taken; party names count as taken but are never renamed (`utils/uniqueNames.ts`).
   - A generic party (no saved party) rolls a plain d20 with priority `PC`.
   - Saved party members start at initiative 0. The GM types in the players' real results.
   - The GM can edit every value in the preview form.
   - Simple hazards have no initiative field.
 - `participantsToEncounterCharacters` (`store/convert.ts`) sorts once, when the encounter starts: by initiative, highest first, then by `tiePriority`, highest first.
 - After that the **queue position is what counts**. The stored `initiative` number is not updated by a reorder or a return from Delay. That matches the rules ("usually not necessary to track the original initiative numbers").
-- `ReorderCharactersCommand {newOrder, oldOrder?, type?: 'initiative' | 'delay'}` replaces `charactersOrder` or `delayedOrder` wholesale. The UI has a drag-and-drop dialog for it.
+- `ReorderCharactersCommand {newOrder, oldOrder?, type?: 'initiative' | 'delay'}` replaces `charactersOrder` or `delayedOrder`, dropping duplicates. For `charactersOrder` it treats `newOrder` as a reshuffle of the current queue: participants no longer in the queue are dropped, and ones `newOrder` misses keep their current index (#28). The UI has a drag-and-drop dialog for it.
+- `skipParticipantsWithoutTurn` (`store/operations.ts`) runs after a reorder of `charactersOrder` and after `EndTurnCommand`: it rotates the queue until a participant with a turn, or a delaying one, is at the front, so someone moved up after acting doesn't act twice. When nobody has a turn left (the round's last turn), the order stays as it is.
 - No PC initiative modifier is stored. There is no skill choice (Perception or Stealth) and no reroll support. The builder's "Initiative Description" field is saved, but the tracker doesn't use it.
 
 ## Turn and round flow
@@ -44,11 +45,11 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 
 | Command | Effect |
 |---|---|
-| `EndTurnCommand {uuid}` | Removes the turn and moves the participant to the end of `charactersOrder`. Fails if it has no turn |
+| `EndTurnCommand {uuid}` | Removes the turn, moves the participant to the end of `charactersOrder` and skips participants without a turn. Fails if it has no turn |
 | `EndRoundCommand` | `round + 1`. Every participant in `charactersOrder` and `delayedOrder` gets a turn again, including knocked-out ones. No reordering |
 | `FinalizeTurnAndAdvanceRoundCommand {uuid, action: 'end-turn' \| 'delay' \| 'ko'}` | One undo step: the action plus `EndRoundCommand`. Valid only when `uuid` is the last participant with a turn |
 | `FinalizeTurnAndReturnToInitiativeCommand {activeUuid, returningUuid, action}` | One undo step: `ReturnToInitiativeCommand` plus `EndRoundCommand` (see quirks) |
-| `GiveAdditionalTurnCommand {uuid}` | Gives the turn back. No UI and not registered |
+| `GiveAdditionalTurnCommand {uuid}` | Gives the turn back. "Give Turn Back" in the selected-participant panel, for a participant that already acted |
 
 - Before a turn ends while someone is delaying, the UI asks whether a delayed participant returns.
 - After a round advances, a "Round N" dialog lists that round's narrative and reinforcement slots.
@@ -68,7 +69,7 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 |---|---|
 | normal → delayed (`DelayCharacterCommand`) | `EndTurnCommand` (to the end of the queue) + added to `delayedOrder`. Only allowed while the participant still has its turn |
 | normal → knocked-out (`KnockOutCharacterCommand`) | `EndTurnCommand` if it still has a turn, otherwise a move to the end of the queue |
-| delayed → normal (also `ReactivateCharacterCommand` on a delayed participant) | Removed from `delayedOrder`, put at the front of the queue. Known bug: `[uuid].concat(charactersOrder)` doesn't remove the uuid first, and `EndTurnCommand` left it at the end, so it appears twice (#28; a fix is proposed in PR #123, so duplicates stay possible until it merges). New code should use `ReturnToInitiativeCommand`, which filters first |
+| delayed → normal (also `ReactivateCharacterCommand` on a delayed participant) | Removed from `delayedOrder`, moved to the front of the queue |
 | delayed → knocked-out | Removed from `delayedOrder`, then the knock-out step |
 | knocked-out → delayed | Moved to the end of the queue and added to `delayedOrder` |
 | knocked-out → normal (`ReactivateCharacterCommand`) | Turn state only. The participant doesn't get its turn back |
@@ -87,10 +88,12 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 ## Reinforcements and hazards
 
 - **Triggering reinforcements.** `TriggerReinforcementEventCommand {slotId}`:
-  - It spawns the slot's participants, expanded by `count`, with `role: 'reinforcement'`.
-  - It places them with `insertByInitiative`: sorted by initiative, never before index 0. They act this round.
-  - Without a fixed `initiative`, a participant gets a deterministic pseudo-roll from a hash of the slot id. `initiativeBonus` is not added.
-  - It also supports pre-added participants with `reinforcementPending: true`, which it activates instead.
+  - It spawns the slot's participants, expanded by `count`, with `role: 'reinforcement'`. Reinforcements are not in the starting roster; a slot whose participants are already in `trackerMetaMap` (by `reinforcementSlotId`) counts as triggered, and triggering it again fails.
+  - Without a fixed `initiative`, a participant rolls d20 + `initiativeBonus`. The roll is stored in the command data, so redo and reload replay it.
+  - It places them with `insertByInitiative` among the participants still to act this round, never before index 0. They act this round (house rule); one whose initiative is above everyone still to act goes right after the current turn.
+  - Placement compares against `effectiveInitiatives`: values derived from the current order, because a reorder or a return from Delay doesn't update the stored numbers.
+  - Ties (`arrivalActsBefore`): an opposing arrival goes before a PC it ties with; other ties go after the participants already there.
+  - Participants that arrive delayed go to `delayedOrder`. They keep a turn this round only when their initiative puts them after the current actor (`charactersOrder[0]` with a turn left, compared by its effective initiative); otherwise their spot has passed and they wait for the next round (house rule). With no current actor they get no turn. Participants that start the encounter delayed keep their round-1 turn.
   - The UI allows triggering only once `trigger.round <= round`.
 - **Simple hazards** (`meta.isSimpleHazard`):
   - They are hidden from the visible queue and shown in a hazards panel.
@@ -107,16 +110,15 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
   - `CompositeCommand` runs its children in order and undoes them in reverse.
 - History is persisted, and commands are revived by type from `CommandHistory/commandRegistry.ts`. **Every command the UI runs, directly or nested, must be registered.**
   - The class `UpdateCharacterDataCommand` is registered under the type `UpdateCharacterCommand`.
+  - A revived command is rebuilt with `new CommandClass(storedData)`, so the constructor must keep everything `undo()` needs from `data` (the `original` snapshot, or the nested `command` it built on execute).
+  - `commandRegistry.spec.ts` fails when a command class in `CommandHistory/Commands/` is not registered under its `type`.
+  - Loading skips a stored command of an unknown type with a console warning. It keeps the undo history after the last unknown command and the redo stack before the first one, so undo and redo never step past it.
 - New turn-flow behaviour belongs in a command, so undo, redo and reload keep working. Add a `*.spec.ts` next to it; most commands have one.
 
 ## Known quirks (open bugs)
 
 Check whether each is still open before relying on it.
 
-- Participants that start delayed get no turn in round 1 (#48).
-- `ReturnToInitiativeCommand` isn't registered, so reloading after a return from Delay can break the store (#87).
 - Returning from Delay after the last turn of a round advances the round first. The returner then acts as the first turn of the next round, not the last turn of the current one (#93).
 - Delaying through a whole round doesn't send the participant back to their old spot (#35).
-- Reinforcement-slot participants are also put in the starting roster, so triggering the slot adds copies (#90).
-- A triggered reinforcement's initiative ignores `initiativeBonus`. Its placement compares stored numbers that a reorder doesn't update (#91).
 - Simple hazards stay in the turn bookkeeping. The final-turn checks in the commands count them, while the UI doesn't (#92).
