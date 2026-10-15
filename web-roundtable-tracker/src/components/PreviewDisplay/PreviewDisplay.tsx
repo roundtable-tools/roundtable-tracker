@@ -141,9 +141,6 @@ export type Inputs = {
 
 export const PreviewDisplay = (): JSX.Element => {
 	const startEncounter = useEncounterStore((state) => state.startEncounter);
-	const setTrackerMetaMap = useEncounterStore(
-		(state) => state.setTrackerMetaMap
-	);
 	const navigate = useNavigate();
 
 	const encounterData = useEncounterStore((state) => state.encounterData);
@@ -292,8 +289,10 @@ export const PreviewDisplay = (): JSX.Element => {
 	const onSelectInitiativeView = (
 		view: 'initiativeTracker' | 'initiativePlayer'
 	) => {
-		startEncounter(participantsToEncounterCharacters(preparedParticipants));
-		setTrackerMetaMap(buildTrackerMetaMap(preparedParticipants));
+		startEncounter(
+			participantsToEncounterCharacters(preparedParticipants),
+			buildTrackerMetaMap(preparedParticipants)
+		);
 		setShowInitiativeChoice(false);
 
 		if (view === 'initiativeTracker') {
