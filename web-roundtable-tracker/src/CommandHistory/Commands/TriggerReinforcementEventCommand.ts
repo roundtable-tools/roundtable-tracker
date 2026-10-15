@@ -53,17 +53,6 @@ const sideThemeFromAlignment = (
 	return 'opponent';
 };
 
-const stableInitiativeFromId = (id: string): number => {
-	let hash = 0;
-
-	for (let i = 0; i < id.length; i += 1) {
-		hash = (hash << 5) - hash + id.charCodeAt(i);
-		hash |= 0;
-	}
-
-	return (Math.abs(hash) % 20) + 1;
-};
-
 const normalizeParticipantLevel = (
 	slotParticipant: ReinforcementSlotParticipant,
 	partyLevel: number
@@ -75,9 +64,11 @@ const normalizeParticipantLevel = (
 	return normalizeLevel(partyLevel, slotParticipant.level);
 };
 
-const normalizeParticipantInitiative = (
-	slotParticipant: ReinforcementSlotParticipant,
-	fallbackId: string
+// Arrivals roll when they arrive: d20 + initiative bonus, unless the slot
+// fixes the initiative. The result is stored in the command data, so redo and
+// reload replay it instead of rolling again.
+const rollParticipantInitiative = (
+	slotParticipant: ReinforcementSlotParticipant
 ): number => {
 	const initiative = (slotParticipant as { initiative?: unknown }).initiative;
 
@@ -85,7 +76,13 @@ const normalizeParticipantInitiative = (
 		return initiative;
 	}
 
-	return stableInitiativeFromId(fallbackId);
+	const initiativeBonus =
+		typeof slotParticipant.initiativeBonus === 'number' &&
+		Number.isFinite(slotParticipant.initiativeBonus)
+			? slotParticipant.initiativeBonus
+			: 0;
+
+	return Math.floor(Math.random() * 20) + 1 + initiativeBonus;
 };
 
 const expandSlotParticipants = (
@@ -97,19 +94,15 @@ const expandSlotParticipants = (
 		return [];
 	}
 
-	const spawned = slot.participants.flatMap((slotParticipant, slotIndex) => {
+	const spawned = slot.participants.flatMap((slotParticipant) => {
 		const count = Math.max(1, slotParticipant.count ?? 1);
 		const level = normalizeParticipantLevel(slotParticipant, partyLevel);
 		const maxHealth = slotParticipant.maxHealth ?? Math.max(1, level * 5);
 		const sideTheme = sideThemeFromAlignment(slotParticipant.side);
 
-		return Array.from({ length: count }).map((_, countIndex) => {
+		return Array.from({ length: count }).map(() => {
 			const uuid = generateUUID();
-			const fallbackId = `${slot.id}-${slotIndex}-${countIndex}`;
-			const initiative = normalizeParticipantInitiative(
-				slotParticipant,
-				fallbackId
-			);
+			const initiative = rollParticipantInitiative(slotParticipant);
 			const baseName = slotParticipant.name.trim() || 'Reinforcement';
 			const notes =
 				slot.description?.trim() || slotParticipant.description?.trim() || '';
@@ -164,35 +157,130 @@ const expandSlotParticipants = (
 	}));
 };
 
+/**
+ * Initiative values that follow the current order. A reorder or a return from
+ * Delay changes positions but not the stored numbers, so the stored numbers
+ * can contradict the order. The longest run of participants whose stored
+ * numbers still fall in order keep them; everyone else takes the value of the
+ * nearest such participant above them (below, if there is none above). When
+ * a change reads two ways (two neighbours swapped: one moved up, or the other
+ * moved down), the participant now higher keeps its number.
+ *
+ * `roundOrder` is the order of one round, from its first turn to its last.
+ */
+export function effectiveInitiatives(
+	roundOrder: UUID[],
+	charactersMap: Record<UUID, Character>
+): Map<UUID, number> {
+	const stored = roundOrder.map((uuid) => charactersMap[uuid]?.initiative ?? 0);
+	// Longest non-increasing subsequence, O(n²): rosters are small.
+	const runLength = stored.map(() => 1);
+	const previous = stored.map(() => -1);
+
+	for (let i = 0; i < stored.length; i += 1) {
+		for (let j = 0; j < i; j += 1) {
+			if (stored[j] >= stored[i] && runLength[j] + 1 > runLength[i]) {
+				runLength[i] = runLength[j] + 1;
+				previous[i] = j;
+			}
+		}
+	}
+
+	const anchors = new Set<number>();
+	let last = runLength.indexOf(Math.max(0, ...runLength));
+
+	while (last !== -1) {
+		anchors.add(last);
+		last = previous[last];
+	}
+
+	const effective = new Map<UUID, number>();
+	let valueAbove: number | undefined;
+
+	roundOrder.forEach((uuid, index) => {
+		if (anchors.has(index)) {
+			valueAbove = stored[index];
+		}
+
+		if (valueAbove !== undefined) {
+			effective.set(uuid, valueAbove);
+		}
+	});
+
+	const firstAnchorValue = anchors.size > 0 ? stored[Math.min(...anchors)] : 0;
+
+	for (const uuid of roundOrder) {
+		if (!effective.has(uuid)) {
+			effective.set(uuid, firstAnchorValue);
+		}
+	}
+
+	return effective;
+}
+
+/**
+ * Places arrivals among the participants still to act this round, by their
+ * initiative against the current order (see `effectiveInitiatives`), never
+ * before the current turn. On a tie with a PC, an opposing arrival goes first
+ * ("If your result is tied with an enemy's result, the enemy goes first");
+ * other ties go after the participants already there.
+ *
+ * House rule (the rules have no procedure for reinforcements): arrivals act
+ * this round. One whose initiative is above everyone still to act goes right
+ * after the current turn and keeps that spot in later rounds.
+ */
 function insertByInitiative(
 	currentOrder: UUID[],
+	charactersWithTurn: Set<UUID>,
+	delayedOrder: UUID[],
 	charactersMap: Record<UUID, Character>,
+	trackerMetaMap: Record<UUID, TrackerParticipantMeta>,
 	spawned: Character[]
 ): UUID[] {
 	const nextOrder = [...currentOrder];
-	const currentTurnOffset = nextOrder.length > 0 ? 1 : 0;
+	const delayed = new Set(delayedOrder);
+	const arrivals = new Set<UUID>();
+	const isStillToAct = (uuid: UUID) =>
+		arrivals.has(uuid) || (charactersWithTurn.has(uuid) && !delayed.has(uuid));
+
+	// The rotating queue holds the participants still to act first and the
+	// ones that already acted after them, so a round runs from the first one
+	// that acted to the last one still to act.
+	const inRound = currentOrder.filter((uuid) => !delayed.has(uuid));
+	const roundOrder = [
+		...inRound.filter((uuid) => !isStillToAct(uuid)),
+		...inRound.filter(isStillToAct),
+	];
+	const effective = effectiveInitiatives(roundOrder, charactersMap);
 
 	const sortedSpawned = [...spawned].sort(
 		(a, b) => b.initiative - a.initiative
 	);
 
 	for (const character of sortedSpawned) {
-		let insertionIndex = nextOrder.length;
+		const stillToAct = nextOrder
+			.map((uuid, index) => ({ uuid, index }))
+			.filter(({ uuid, index }) => index > 0 && isStillToAct(uuid));
+		const winsTies = trackerMetaMap[character.uuid]?.sideTheme === 'opponent';
+		const before = stillToAct.find(({ uuid }) => {
+			const initiative = effective.get(uuid) ?? 0;
 
-		for (let i = currentTurnOffset; i < nextOrder.length; i += 1) {
-			const candidate = charactersMap[nextOrder[i]];
-
-			if (!candidate) {
-				continue;
-			}
-
-			if (character.initiative > candidate.initiative) {
-				insertionIndex = i;
-				break;
-			}
-		}
+			return (
+				character.initiative > initiative ||
+				(character.initiative === initiative &&
+					winsTies &&
+					charactersMap[uuid]?.group === 'players')
+			);
+		});
+		const insertionIndex =
+			before?.index ??
+			(stillToAct.length > 0
+				? stillToAct[stillToAct.length - 1].index + 1
+				: Math.min(1, nextOrder.length));
 
 		nextOrder.splice(insertionIndex, 0, character.uuid);
+		arrivals.add(character.uuid);
+		effective.set(character.uuid, character.initiative);
 	}
 
 	return nextOrder;
@@ -289,7 +377,10 @@ export class TriggerReinforcementEventCommand implements Command {
 
 			const charactersOrder = insertByInitiative(
 				current.charactersOrder,
+				current.charactersWithTurn,
+				current.delayedOrder,
 				charactersMap,
+				trackerMetaMap,
 				arrivingInOrder
 			);
 
