@@ -6,14 +6,13 @@ math changes.
 
 ## XP per creature and hazard
 
-- **Two copies of the same formula:**
-  - `LevelDifference.toExperience(isComplexHazard = true)` in `models/utility/level/LevelDifference.ts`
-  - `ExperienceBudget.fromLevel(relativeLevel)` in `models/utility/experienceBudget/ExperienceBudget.ts`
+- **One formula:** `ExperienceBudget.fromLevel(relativeLevel, isComplexHazard = true)` in `models/utility/experienceBudget/ExperienceBudget.ts`. `LevelDifference.toExperience(isComplexHazard = true)` (`models/utility/level/LevelDifference.ts`) delegates to it.
 - **The formula:**
-  - Base cost 40; `difference = Math.trunc(levelDifference)`; below –4 gives 0 XP.
+  - Base cost 40; below –4 gives 0 XP.
   - Even difference: 40 × 2^(d/2). Odd difference: 40 × 1.5 × 2^((d–1)/2). Negatives use the mirror (0.75 / 2^…).
   - Result for –4..+4: 10, 15, 20, 30, 40, 60, 80, 120, 160 (pinned in `models/utility/level/Level.spec.ts`).
   - Above +4 it keeps going: +5 = 240, +6 = 320. This is the stepped 1/1.5/2/3/4 scale extended, not √2.
+  - Fractional differences (partial or custom adjustments) interpolate linearly between the two neighbouring whole levels: +0.5 = 50, +0.75 = 55, –1.25 = 27.5. `ExperienceBudget` rounds each creature's XP to a whole number.
 - **Simple hazards** cost `complex / 5` (2…32). The flag is `isSimpleHazard` in the builder, `isComplexHazard` in the store, and `role: 'complex' | 'simple'` in the template model.
 - `EncounterTemplate.calculateParticipantXp` multiplies XP by `count`.
 
@@ -136,7 +135,6 @@ math changes.
 Check the code before relying on these.
 
 - The threat tracker and the saved difficulty use different band rules ("at or above" vs "at or below") and different Moderate+ adjustments. For example, 50 XP shows Trivial in the builder but is saved as Low; 110 XP shows Moderate but is saved as Severe (#97).
-- `Math.trunc` on fractional level differences rounds toward zero: positive fractions round down, negative ones round up. Partial adjustments therefore often change nothing, and a –1.25 difference costs like –1 (#99).
 - Several reinforcement waves collapse into one, at the earliest round, and the saved difficulty ignores reinforcements (#100).
 - Weak on a level 0 or –1 creature gives –1 or –2. The rules don't cover weak at those levels.
 - The default template "Lieutenant and Lackeys" variant texts say "(-3) lackeys" or "Weak Lackey", where the data is –4.
