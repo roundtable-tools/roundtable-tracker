@@ -142,5 +142,5 @@ Check the code before relying on these.
 - Several reinforcement waves collapse into one, at the earliest round, and the saved difficulty ignores reinforcements (#100).
 - Weak on a level 0 or –1 creature gives –1 or –2. The rules don't cover weak at those levels.
 - The default template "Lieutenant and Lackeys" variant texts say "(-3) lackeys" or "Weak Lackey", where the data is –4.
-- Builder traits aren't saved (#101). Combat-ready state, hidden-from-players and initiative description aren't saved either (#94).
+- Builder traits aren't saved (#101).
 - `migrateOldTemplate` drops adjustments and events. It isn't used at runtime.

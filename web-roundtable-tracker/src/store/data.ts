@@ -204,6 +204,8 @@ export type CombatantParticipant<
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
 	startingState?: 'normal' | 'delayed' | 'knocked-out';
+	hiddenFromPlayers?: boolean;
+	initiativeDescription?: string;
 	description?: string;
 	dcs?: ParticipantDcEntry[];
 };
@@ -347,6 +349,8 @@ const combatantParticipantSchema = z.object({
 	adjustmentDescription: z.string().optional(),
 	adjustmentLevelModifier: z.number().optional(),
 	startingState: z.enum(['normal', 'delayed', 'knocked-out']).optional(),
+	hiddenFromPlayers: z.boolean().optional(),
+	initiativeDescription: z.string().optional(),
 	description: z.string().optional(),
 	dcs: dcsSchema.optional(),
 });
