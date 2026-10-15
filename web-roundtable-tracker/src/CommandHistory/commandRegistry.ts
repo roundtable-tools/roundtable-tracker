@@ -5,11 +5,12 @@ import { EndRoundCommand } from './Commands/EndRoundCommand';
 import { EndTurnCommand } from './Commands/EndTurnCommand';
 import { FinalizeTurnAndAdvanceRoundCommand } from './Commands/FinalizeTurnAndAdvanceRoundCommand';
 import { FinalizeTurnAndReturnToInitiativeCommand } from './Commands/FinalizeTurnAndReturnToInitiativeCommand';
-import { GiveAdditionalTurnCommand } from './Commands/GiveAdditionalTurnCommand';
 import { KnockOutCharacterCommand } from './Commands/KnockOutCharacterCommand';
 import { ReactivateCharacterCommand } from './Commands/ReactivateCharacterCommand';
+import { GiveAdditionalTurnCommand } from './Commands/GiveAdditionalTurnCommand';
 import { RemoveCharacterCommand } from './Commands/RemoveCharacterCommand';
 import { ReorderCharactersCommand } from './Commands/ReorderCharactersCommand';
+import { ReturnToInitiativeCommand } from './Commands/ReturnToInitiativeCommand';
 import { TriggerReinforcementEventCommand } from './Commands/TriggerReinforcementEventCommand';
 import { UpdateCharacterDataCommand } from './Commands/UpdateCharacterDataCommand';
 import { SetTempHealthCommand } from './Commands/SetTempHealthCommand';
@@ -37,44 +38,35 @@ export const registerSerializableCommand = <T extends Command>(
 	classesMap[type] = command;
 };
 
-export const registerSerializableCommands = () => {
-	registerSerializableCommand(CompositeCommand, 'CompositeCommand');
-	registerSerializableCommand(
-		UpdateCharacterDataCommand,
-		'UpdateCharacterCommand'
-	);
-	registerSerializableCommand(RemoveCharacterCommand, 'RemoveCharacterCommand');
-	registerSerializableCommand(
-		ReorderCharactersCommand,
-		'ReorderCharactersCommand'
-	);
-	registerSerializableCommand(EndTurnCommand, 'EndTurnCommand');
-	registerSerializableCommand(EndRoundCommand, 'EndRoundCommand');
-	registerSerializableCommand(
+export const registerSerializableCommands = (classesMap = commandMap) => {
+	const register = <T extends Command>(
+		command: new (data: T['data']) => T,
+		type: T['type']
+	) => registerSerializableCommand(command, type, classesMap);
+
+	register(CompositeCommand, 'CompositeCommand');
+	register(UpdateCharacterDataCommand, 'UpdateCharacterCommand');
+	register(RemoveCharacterCommand, 'RemoveCharacterCommand');
+	register(ReorderCharactersCommand, 'ReorderCharactersCommand');
+	register(EndTurnCommand, 'EndTurnCommand');
+	register(EndRoundCommand, 'EndRoundCommand');
+	register(
 		FinalizeTurnAndAdvanceRoundCommand,
 		'FinalizeTurnAndAdvanceRoundCommand'
 	);
-	registerSerializableCommand(
+	register(
 		FinalizeTurnAndReturnToInitiativeCommand,
 		'FinalizeTurnAndReturnToInitiativeCommand'
 	);
-	registerSerializableCommand(
-		GiveAdditionalTurnCommand,
-		'GiveAdditionalTurnCommand'
-	);
-	registerSerializableCommand(DelayCharacterCommand, 'DelayCharacterCommand');
-	registerSerializableCommand(
-		KnockOutCharacterCommand,
-		'KnockOutCharacterCommand'
-	);
-	registerSerializableCommand(
-		ReactivateCharacterCommand,
-		'ReactivateCharacterCommand'
-	);
-	registerSerializableCommand(
+	register(DelayCharacterCommand, 'DelayCharacterCommand');
+	register(KnockOutCharacterCommand, 'KnockOutCharacterCommand');
+	register(ReactivateCharacterCommand, 'ReactivateCharacterCommand');
+	register(
 		TriggerReinforcementEventCommand,
 		'TriggerReinforcementEventCommand'
 	);
-	registerSerializableCommand(ChangeHealthCommand, 'ChangeHealthCommand');
-	registerSerializableCommand(SetTempHealthCommand, 'SetTempHealthCommand');
+	register(ChangeHealthCommand, 'ChangeHealthCommand');
+	register(SetTempHealthCommand, 'SetTempHealthCommand');
+	register(ReturnToInitiativeCommand, 'ReturnToInitiativeCommand');
+	register(GiveAdditionalTurnCommand, 'GiveAdditionalTurnCommand');
 };
