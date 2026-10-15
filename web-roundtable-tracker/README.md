@@ -31,13 +31,13 @@ The app uses hash history (`src/main.tsx`), so URLs look like `/roundtable-track
 
 ## State: zustand stores
 
-Each store is a vanilla zustand store created lazily by a `get…Store()` getter, with a `use…Store(selector)` hook for components:
+Each store is a vanilla zustand store defined by a `create…Store()` factory in its store file. The matching `*Instance.ts` file creates it lazily in a `get…Store()` getter and exports a `use…Store(selector)` hook for components:
 
-| Store                                            | Holds                                                                                                    | localStorage key         |
-| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `encounterRuntimeStore.ts` (`getEncounterStore`) | The running encounter: participants, turn order, delayed list, tracker metadata, round, undo/redo stacks | `encounter-store`        |
-| `savedEncounters.ts` (`getSavedEncountersStore`) | Encounters saved from the builder                                                                        | `saved-encounters-store` |
-| `savedParties.ts` (`getSavedPartiesStore`)       | Saved parties and the last used party                                                                    | `saved-parties-store`    |
+| Store file                 | Instance file (getter, hook)                                                       | Holds                                                                                                    | localStorage key         |
+| -------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `encounterRuntimeStore.ts` | `encounterRuntimeInstance.ts` (`getEncounterStore`, `useEncounterStore`)           | The running encounter: participants, turn order, delayed list, tracker metadata, round, undo/redo stacks | `encounter-store`        |
+| `savedEncounters.ts`       | `savedEncounterInstance.ts` (`getSavedEncountersStore`, `useSavedEncountersStore`) | Encounters saved from the builder                                                                        | `saved-encounters-store` |
+| `savedParties.ts`          | `savedPartiesInstance.ts` (`getSavedPartiesStore`, `useSavedPartiesStore`)         | Saved parties and the last used party                                                                    | `saved-parties-store`    |
 
 All three use zustand's `persist` middleware with `localStorage`, so data stays in the browser it was created in. There is no server-side storage. The theme choice is stored separately under `vite-ui-theme`. Imported encounters waiting to be opened in the builder are kept only in memory (`importedEncounterDraft.ts`).
 
