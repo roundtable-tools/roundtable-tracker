@@ -132,6 +132,40 @@ describe('TriggerReinforcementEventCommand', () => {
 		expect(guard()).toMatchObject({ uuid, initiative });
 	});
 
+	it('puts an opposing arrival before a PC it ties with', () => {
+		encounterStore.setState((state) => ({
+			charactersMap: {
+				...state.charactersMap,
+				rogue: { ...state.charactersMap.rogue, group: 'players' },
+			},
+		}));
+		nextD20(11);
+		trigger();
+
+		expect(guard().initiative).toBe(15);
+		expect(encounterStore.getState().charactersOrder).toEqual([
+			'hero',
+			guard().uuid,
+			'rogue',
+			'goblin',
+			'orc',
+		]);
+	});
+
+	it('puts an arrival after a participant on the same side it ties with', () => {
+		nextD20(6);
+		trigger();
+
+		expect(guard().initiative).toBe(10);
+		expect(encounterStore.getState().charactersOrder).toEqual([
+			'hero',
+			'rogue',
+			'goblin',
+			guard().uuid,
+			'orc',
+		]);
+	});
+
 	it('places the arrival by the current order after a reorder', () => {
 		// Orc moves up between Hero and Rogue; its stored 5 stays
 		new ReorderCharactersCommand(

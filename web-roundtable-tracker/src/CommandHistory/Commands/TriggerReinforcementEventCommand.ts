@@ -221,7 +221,9 @@ export function effectiveInitiatives(
 /**
  * Places arrivals among the participants still to act this round, by their
  * initiative against the current order (see `effectiveInitiatives`), never
- * before the current turn. Ties go after the participants already there.
+ * before the current turn. On a tie with a PC, an opposing arrival goes first
+ * ("If your result is tied with an enemy's result, the enemy goes first");
+ * other ties go after the participants already there.
  *
  * House rule (the rules have no procedure for reinforcements): arrivals act
  * this round. One whose initiative is above everyone still to act goes right
@@ -232,6 +234,7 @@ function insertByInitiative(
 	charactersWithTurn: Set<UUID>,
 	delayedOrder: UUID[],
 	charactersMap: Record<UUID, Character>,
+	trackerMetaMap: Record<UUID, TrackerParticipantMeta>,
 	spawned: Character[]
 ): UUID[] {
 	const nextOrder = [...currentOrder];
@@ -258,9 +261,17 @@ function insertByInitiative(
 		const stillToAct = nextOrder
 			.map((uuid, index) => ({ uuid, index }))
 			.filter(({ uuid, index }) => index > 0 && isStillToAct(uuid));
-		const before = stillToAct.find(
-			({ uuid }) => character.initiative > (effective.get(uuid) ?? 0)
-		);
+		const winsTies = trackerMetaMap[character.uuid]?.sideTheme === 'opponent';
+		const before = stillToAct.find(({ uuid }) => {
+			const initiative = effective.get(uuid) ?? 0;
+
+			return (
+				character.initiative > initiative ||
+				(character.initiative === initiative &&
+					winsTies &&
+					charactersMap[uuid]?.group === 'players')
+			);
+		});
 		const insertionIndex =
 			before?.index ??
 			(stillToAct.length > 0
@@ -369,6 +380,7 @@ export class TriggerReinforcementEventCommand implements Command {
 				current.charactersWithTurn,
 				current.delayedOrder,
 				charactersMap,
+				trackerMetaMap,
 				arrivingInOrder
 			);
 
