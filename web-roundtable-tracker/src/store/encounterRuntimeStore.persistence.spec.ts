@@ -14,11 +14,9 @@ const characters: Character[] = [
 		initiative: 20,
 		turnState: 'normal',
 		group: 'players',
-		wounded: 0,
 		health: 30,
 		maxHealth: 30,
 		tempHealth: 0,
-		hasTurn: false,
 	},
 	{
 		uuid: '00000000-0000-0000-0000-000000000002',
@@ -26,11 +24,9 @@ const characters: Character[] = [
 		initiative: 18,
 		turnState: 'delayed',
 		group: 'players',
-		wounded: 0,
 		health: 24,
 		maxHealth: 24,
 		tempHealth: 0,
-		hasTurn: false,
 	},
 ];
 
