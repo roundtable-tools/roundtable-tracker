@@ -167,14 +167,21 @@ export const PreviewDisplay = (): JSX.Element => {
 		[selectedParty, encounterData, partyLevel]
 	);
 
+	// Keyed by the party's names, not the party itself, so picking another
+	// party with the same names keeps the creatures and their initiative rolls
+	const partyNamesKey = useMemo(
+		() => JSON.stringify(party.map((member) => member.name)),
+		[party]
+	);
+
 	const participants = useMemo(
 		() =>
 			generateParticipants(
 				encounterData,
 				partyLevel,
-				party.map((member) => member.name)
+				JSON.parse(partyNamesKey) as string[]
 			),
-		[encounterData, partyLevel, party]
+		[encounterData, partyLevel, partyNamesKey]
 	);
 
 	const fullParty = useMemo(
