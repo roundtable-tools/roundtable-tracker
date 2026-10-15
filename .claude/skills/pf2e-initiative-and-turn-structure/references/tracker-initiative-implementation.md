@@ -89,6 +89,7 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 - **Triggering reinforcements.** `TriggerReinforcementEventCommand {slotId}`:
   - It spawns the slot's participants, expanded by `count`, with `role: 'reinforcement'`.
   - It places them with `insertByInitiative`: sorted by initiative, never before index 0. They act this round.
+  - Participants that arrive delayed go to `delayedOrder` without a turn this round (house rule). Participants that start the encounter delayed keep their round-1 turn.
   - Without a fixed `initiative`, a participant gets a deterministic pseudo-roll from a hash of the slot id. `initiativeBonus` is not added.
   - It also supports pre-added participants with `reinforcementPending: true`, which it activates instead.
   - The UI allows triggering only once `trigger.round <= round`.
@@ -113,7 +114,6 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 
 Check whether each is still open before relying on it.
 
-- Participants that start delayed get no turn in round 1 (#48).
 - `ReturnToInitiativeCommand` isn't registered, so reloading after a return from Delay can break the store (#87).
 - Returning from Delay after the last turn of a round advances the round first. The returner then acts as the first turn of the next round, not the last turn of the current one (#93).
 - Delaying through a whole round doesn't send the participant back to their old spot (#35).
