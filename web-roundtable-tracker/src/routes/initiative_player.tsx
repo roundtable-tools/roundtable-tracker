@@ -18,9 +18,6 @@ export const Route = createFileRoute('/initiative_player')({
 			throw redirect({ to: '/preview' });
 		}
 	},
-	loader: () => ({
-		crumb: 'Initiative Player',
-	}),
 });
 
 function RouteComponent() {
