@@ -21,6 +21,7 @@ import {
 	DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { getTraitBadgeClassName } from '@/utils/traitColors';
 import {
 	Tooltip,
 	TooltipContent,
@@ -317,6 +318,18 @@ function getParticipantAccent(participant: TrackerParticipant) {
 	};
 }
 
+function TraitBadges({ participant }: { participant: TrackerParticipant }) {
+	return participant.traits?.map((trait, index) => (
+		<Badge
+			key={`${participant.id}-trait-${index}`}
+			variant="outline"
+			className={`text-[10px] ${getTraitBadgeClassName(trait)}`}
+		>
+			{trait}
+		</Badge>
+	));
+}
+
 function ParticipantRow({
 	participant,
 	onSelect,
@@ -367,6 +380,7 @@ function ParticipantRow({
 							{participant.dcs?.length} DCs
 						</Badge>
 					)}
+					<TraitBadges participant={participant} />
 				</div>
 			</div>
 			<div className="flex items-center gap-2">
@@ -443,6 +457,11 @@ function ParticipantDetails({
 				<Badge>{getParticipantRoleLabel(participant)}</Badge>
 				<Badge variant="secondary">{participant.state}</Badge>
 			</div>
+			{(participant.traits?.length ?? 0) > 0 && (
+				<div className="flex flex-wrap gap-1">
+					<TraitBadges participant={participant} />
+				</div>
+			)}
 			{onGiveTurnBack && (
 				<div className="flex items-center justify-between gap-2 rounded-md border p-3">
 					<p className="text-sm text-muted-foreground">

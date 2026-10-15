@@ -206,6 +206,10 @@ function fromRelativeLevelString(
 	return partyLevel + parsed;
 }
 
+function toSavedTraits(traits: string[] | undefined): string[] | undefined {
+	return traits && traits.length > 0 ? [...traits] : undefined;
+}
+
 type CombatReadyState = NonNullable<BuilderSlot['combatReadyState']>;
 type StartingState = NonNullable<Participant['startingState']>;
 type CombatReadyFields = Pick<
@@ -278,6 +282,7 @@ export function toConcreteEncounter(
 					return {
 						type: 'hazard' as const,
 						name: s.name,
+						traits: toSavedTraits(s.traits),
 						...toSavedCombatReadyFields(s),
 						level: s.level,
 						side,
@@ -311,6 +316,7 @@ export function toConcreteEncounter(
 				return {
 					type: 'creature' as const,
 					name: s.name,
+					traits: toSavedTraits(s.traits),
 					...toSavedCombatReadyFields(s),
 					level: s.level,
 					side,
@@ -372,6 +378,7 @@ export function toConcreteEncounter(
 								return {
 									type: 'hazard' as const,
 									name: participant.name,
+									traits: toSavedTraits(participant.traits),
 									...toSavedCombatReadyFields(participant),
 									level: toRelativeLevelString(
 										participant.level,
@@ -409,6 +416,7 @@ export function toConcreteEncounter(
 							return {
 								type: 'creature' as const,
 								name: participant.name,
+								traits: toSavedTraits(participant.traits),
 								...toSavedCombatReadyFields(participant),
 								level: toRelativeLevelString(
 									participant.level,
@@ -464,6 +472,7 @@ export function toConcreteEncounter(
 								return {
 									type: 'hazard' as const,
 									name: s.name,
+									traits: toSavedTraits(s.traits),
 									...toSavedCombatReadyFields(s),
 									level: s.level,
 									side,
@@ -487,6 +496,7 @@ export function toConcreteEncounter(
 							return {
 								type: 'creature' as const,
 								name: s.name,
+								traits: toSavedTraits(s.traits),
 								...toSavedCombatReadyFields(s),
 								level: s.level,
 								side,
@@ -549,6 +559,7 @@ export function fromConcreteEncounter(
 				id: uuidv4(),
 				type: 'creature',
 				name: p.name,
+				traits: p.traits ?? [],
 				...fromSavedCombatReadyFields(p),
 				description: p.description ?? '',
 				side: alignmentToBuilderSide(p.side),
@@ -576,6 +587,7 @@ export function fromConcreteEncounter(
 			id: uuidv4(),
 			type: 'hazard',
 			name: p.name,
+			traits: p.traits ?? [],
 			...fromSavedCombatReadyFields(p),
 			description: p.description ?? '',
 			side: alignmentToBuilderSide(p.side),
@@ -619,6 +631,7 @@ export function fromConcreteEncounter(
 						id: uuidv4(),
 						type: participant.type,
 						name: participant.name,
+						traits: participant.traits ?? [],
 						...fromSavedCombatReadyFields(participant),
 						side: alignmentToBuilderSide(participant.side),
 						level: fromRelativeLevelString(participant.level, encounter.level),
@@ -680,6 +693,7 @@ function participantsToBuilderSlots(
 				id: uuidv4(),
 				type: 'creature' as const,
 				name: p.name,
+				traits: p.traits ?? [],
 				...fromSavedCombatReadyFields(p),
 				description: p.description ?? '',
 				side: alignmentToBuilderSide(p.side),
@@ -706,6 +720,7 @@ function participantsToBuilderSlots(
 			id: uuidv4(),
 			type: 'hazard' as const,
 			name: p.name,
+			traits: p.traits ?? [],
 			...fromSavedCombatReadyFields(p),
 			description: p.description ?? '',
 			side: alignmentToBuilderSide(p.side),

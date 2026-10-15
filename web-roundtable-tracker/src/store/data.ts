@@ -204,6 +204,7 @@ export type CombatantParticipant<
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
 	startingState?: 'normal' | 'delayed' | 'knocked-out';
+	traits?: string[];
 	hiddenFromPlayers?: boolean;
 	initiativeDescription?: string;
 	description?: string;
@@ -349,6 +350,7 @@ const combatantParticipantSchema = z.object({
 	adjustmentDescription: z.string().optional(),
 	adjustmentLevelModifier: z.number().optional(),
 	startingState: z.enum(['normal', 'delayed', 'knocked-out']).optional(),
+	traits: z.array(z.string()).optional(),
 	hiddenFromPlayers: z.boolean().optional(),
 	initiativeDescription: z.string().optional(),
 	description: z.string().optional(),
