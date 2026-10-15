@@ -89,7 +89,7 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 - **Triggering reinforcements.** `TriggerReinforcementEventCommand {slotId}`:
   - It spawns the slot's participants, expanded by `count`, with `role: 'reinforcement'`.
   - It places them with `insertByInitiative`: sorted by initiative, never before index 0. They act this round.
-  - Participants that arrive delayed go to `delayedOrder` without a turn this round (house rule). Participants that start the encounter delayed keep their round-1 turn.
+  - Participants that arrive delayed go to `delayedOrder`. They keep a turn this round only when their initiative puts them after the current actor (`charactersOrder[0]` with a turn left); otherwise their spot has passed and they wait for the next round (house rule). Ties are compared with `arrivalActsBefore`: an opposing arrival goes before a PC it ties with, other ties go after. With no current actor they get no turn. Participants that start the encounter delayed keep their round-1 turn.
   - Without a fixed `initiative`, a participant gets a deterministic pseudo-roll from a hash of the slot id. `initiativeBonus` is not added.
   - It also supports pre-added participants with `reinforcementPending: true`, which it activates instead.
   - The UI allows triggering only once `trigger.round <= round`.
