@@ -41,12 +41,13 @@ export class FinalizeTurnAndAdvanceRoundCommand implements Command {
 	data: CommandData;
 
 	constructor(
-		data: Pick<CommandData, 'uuid' | 'action'>,
+		data: Pick<CommandData, 'uuid' | 'action' | 'command'>,
 		private deps?: CommandDeps
 	) {
 		this.data = {
 			uuid: data.uuid,
 			action: data.action,
+			command: data.command,
 		};
 	}
 
