@@ -13,11 +13,12 @@ export class ReactivateCharacterCommand implements Command {
 	data: CommandData;
 
 	constructor(
-		data: Pick<CommandData, 'uuid'>,
+		data: Pick<CommandData, 'uuid' | 'command'>,
 		private deps?: CommandDeps
 	) {
 		this.data = {
 			uuid: data.uuid,
+			command: data.command,
 		};
 	}
 

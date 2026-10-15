@@ -4,6 +4,7 @@ import { Character } from '@/store/data';
 import { STATUS } from '../common';
 import { ReactivateCharacterCommand } from './ReactivateCharacterCommand';
 import { KnockOutCharacterCommand } from './KnockOutCharacterCommand';
+import { DelayCharacterCommand } from './DelayCharacterCommand';
 
 describe('ReactivateCharacterCommand', () => {
 	let encounterStore: ReturnType<typeof createEncounterStore>;
@@ -88,5 +89,24 @@ describe('ReactivateCharacterCommand', () => {
 		const status = command.execute();
 
 		expect(status).toBe(STATUS.failure);
+	});
+
+	it('does not duplicate a delayed participant that goes back to normal', () => {
+		const [hero, goblin] = characters.map((character) => character.uuid);
+
+		expect(
+			new DelayCharacterCommand({ uuid: hero }, { encounterStore }).execute()
+		).toBe(STATUS.success);
+
+		const command = new ReactivateCharacterCommand(
+			{ uuid: hero },
+			{ encounterStore }
+		);
+
+		expect(command.execute()).toBe(STATUS.success);
+		// The hero used its turn by delaying, so the goblin, who still has one,
+		// stays in front (#26). The hero appears once (#28).
+		expect(encounterStore.getState().charactersOrder).toEqual([goblin, hero]);
+		expect(encounterStore.getState().delayedOrder).toEqual([]);
 	});
 });
