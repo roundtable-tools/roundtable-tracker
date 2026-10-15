@@ -101,7 +101,9 @@ export const getChangeCharacterState = (
 				removeFromDelayed,
 				new ReorderCharactersCommand(
 					{
-						newOrder: [character.uuid].concat(deps.charactersOrder),
+						newOrder: [character.uuid].concat(
+							deps.charactersOrder.filter((id) => id !== character.uuid)
+						),
 					},
 					commandDeps
 				),

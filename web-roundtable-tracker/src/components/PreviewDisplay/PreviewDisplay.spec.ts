@@ -42,6 +42,7 @@ vi.mock('@/store/encounterRuntimeInstance', () => ({
 
 import { PreviewDisplay } from './PreviewDisplay';
 import { generateParticipants } from './generateParticipants';
+import { validateImportedEncounter } from '@/components/EncounterDirectory/EncounterDetails/importEncounter';
 
 describe('PreviewDisplay form defaulting path', () => {
 	beforeEach(() => {
@@ -241,6 +242,120 @@ describe('PreviewDisplay form defaulting path', () => {
 		expect(participants[0]).toHaveLength(2);
 		expect(participants[0][0]?.name).toBe('Opponent A');
 		expect(participants[0][1]?.name).toBe('Opponent B');
+	});
+
+	it('suffixes repeated names across all participant entries (#49)', () => {
+		// The ticket's JSON, plus the `type` field the import schema now requires
+		const [encounter, error] = validateImportedEncounter(
+			JSON.stringify({
+				name: '',
+				description: '',
+				difficulty: 1,
+				level: 1,
+				partySize: 1,
+				participants: [
+					{
+						type: 'creature',
+						name: 'John',
+						level: 1,
+						side: 1,
+						count: 2,
+						startingState: 'delayed',
+						maxHealth: 2,
+						health: 1,
+					},
+					{
+						type: 'creature',
+						name: 'John',
+						level: 1,
+						side: 1,
+						count: 2,
+						maxHealth: 2,
+					},
+				],
+			})
+		);
+
+		expect(error).toBe('');
+
+		const participants = generateParticipants(encounter!, 1);
+
+		expect(participants.flat().map((p) => p.name)).toEqual([
+			'John A',
+			'John B',
+			'John C',
+			'John D',
+		]);
+		expect(participants.flat().map((p) => p.startingState)).toEqual([
+			'delayed',
+			'delayed',
+			undefined,
+			undefined,
+		]);
+	});
+
+	it('keeps names unique across sides, party names and existing letter suffixes', () => {
+		const participants = generateParticipants(
+			{
+				id: 'test-encounter',
+				name: 'Name clashes',
+				description: '',
+				difficulty: DIFFICULTY.Low,
+				partySize: 1,
+				levelRepresentation: LEVEL_REPRESENTATION.Exact,
+				level: 1,
+				participants: [
+					{
+						type: 'creature',
+						name: 'Goblin A',
+						level: 1,
+						side: ALIGNMENT.Opponents,
+						count: 1,
+						adjustment: 'none',
+					},
+					{
+						type: 'creature',
+						name: 'Goblin',
+						level: 1,
+						side: ALIGNMENT.Opponents,
+						count: 1,
+						adjustment: 'none',
+					},
+					{
+						type: 'creature',
+						name: 'Goblin',
+						level: 1,
+						side: ALIGNMENT.Neutral,
+						count: 1,
+						adjustment: 'none',
+					},
+					{
+						type: 'creature',
+						name: 'Valeros',
+						level: 1,
+						side: ALIGNMENT.PCs,
+						count: 1,
+						adjustment: 'none',
+					},
+					{
+						type: 'creature',
+						name: 'Kyra',
+						level: 1,
+						side: ALIGNMENT.Opponents,
+						count: 1,
+						adjustment: 'none',
+					},
+				],
+			},
+			1,
+			['Valeros']
+		);
+
+		expect(participants.map((team) => team.map((p) => p.name))).toEqual([
+			['Valeros A'],
+			['Goblin A', 'Goblin B', 'Kyra'],
+			['Goblin C'],
+		]);
 	});
 
 	it('renders an empty state pointing to Encounters when encounter data is absent', () => {

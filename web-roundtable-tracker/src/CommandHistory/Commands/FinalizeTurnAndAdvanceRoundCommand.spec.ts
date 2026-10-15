@@ -3,6 +3,8 @@ import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import { Character } from '@/store/data';
 import { STATUS } from '../common';
 import { FinalizeTurnAndAdvanceRoundCommand } from './FinalizeTurnAndAdvanceRoundCommand';
+import { EndTurnCommand } from './EndTurnCommand';
+import { DelayCharacterCommand } from './DelayCharacterCommand';
 
 describe('FinalizeTurnAndAdvanceRoundCommand', () => {
 	let encounterStore: ReturnType<typeof createEncounterStore>;
@@ -110,6 +112,48 @@ describe('FinalizeTurnAndAdvanceRoundCommand', () => {
 		).toBe('normal');
 		expect(encounterStore.getState().delayedOrder).toEqual([
 			characters[0].uuid,
+		]);
+	});
+
+	it('keeps the initiative order when a participant delays through the round', () => {
+		const [alice, bob, charlie, dana] = [
+			'00000000-0000-0000-0000-00000000000a',
+			'00000000-0000-0000-0000-00000000000b',
+			'00000000-0000-0000-0000-00000000000c',
+			'00000000-0000-0000-0000-00000000000d',
+		];
+		encounterStore.getState().startEncounter(
+			[alice, bob, charlie, dana].map((uuid, index) => ({
+				...characters[0],
+				uuid,
+				name: uuid,
+				initiative: 20 - index,
+			}))
+		);
+		const deps = { encounterStore };
+
+		expect(new EndTurnCommand({ uuid: alice }, deps).execute()).toBe(
+			STATUS.success
+		);
+		expect(new DelayCharacterCommand({ uuid: bob }, deps).execute()).toBe(
+			STATUS.success
+		);
+		expect(new EndTurnCommand({ uuid: charlie }, deps).execute()).toBe(
+			STATUS.success
+		);
+		expect(
+			new FinalizeTurnAndAdvanceRoundCommand(
+				{ uuid: dana, action: 'end-turn' },
+				deps
+			).execute()
+		).toBe(STATUS.success);
+
+		expect(encounterStore.getState().round).toBe(2);
+		expect(encounterStore.getState().charactersOrder).toEqual([
+			alice,
+			bob,
+			charlie,
+			dana,
 		]);
 	});
 

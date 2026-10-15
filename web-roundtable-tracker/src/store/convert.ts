@@ -42,6 +42,7 @@ type RuntimeParticipantFields = {
 	}>;
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
+	traits?: string[];
 };
 
 function deriveRole(
@@ -98,6 +99,7 @@ export const buildTrackerMetaMap = (
 			dcs: runtime.dcs,
 			adjustmentDescription: runtime.adjustmentDescription,
 			adjustmentLevelModifier: runtime.adjustmentLevelModifier,
+			traits: runtime.traits,
 		};
 	}
 

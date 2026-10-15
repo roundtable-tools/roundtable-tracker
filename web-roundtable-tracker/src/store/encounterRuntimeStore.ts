@@ -25,13 +25,18 @@ export type TrackerParticipantMeta = {
 	dcs?: ParticipantDcEntry[];
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
+	traits?: string[];
 	reinforcementSlotId?: string;
 };
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Encounter } from './data';
 import { Command } from '@/CommandHistory/common';
 import { jsonConfiguration } from './serializer';
-import { CommandJSON } from '@/CommandHistory/serialization';
+import {
+	CommandJSON,
+	keepRedoableCommands,
+	keepUndoableCommands,
+} from '@/CommandHistory/serialization';
 import { splitArray } from '@/utils/array';
 
 type ValueOrFunction<T> = T | ((prev: T) => T);
@@ -144,7 +149,9 @@ const startEncounter = (
 		delayedOrder,
 		trackerMetaMap,
 		round: 1,
-		charactersWithTurn: new Set(charactersOrder),
+		// Starting out delayed doesn't cost the round-1 turn: a delaying
+		// participant can still return to the order and act this round.
+		charactersWithTurn: new Set(delayedOrder.concat(charactersOrder)),
 		...resetHistory(),
 	};
 };
@@ -205,6 +212,16 @@ export const createEncounterStore = () =>
 					() => localStorage,
 					jsonConfiguration
 				),
+				merge: (persistedState, currentState) => {
+					const persisted = persistedState as Partial<EncounterStore>;
+
+					return {
+						...currentState,
+						...persisted,
+						history: keepUndoableCommands(persisted?.history ?? []),
+						redoStack: keepRedoableCommands(persisted?.redoStack ?? []),
+					};
+				},
 			}
 		)
 	);
