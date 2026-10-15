@@ -1,7 +1,7 @@
-import { useRouter, Link, useMatchRoute } from '@tanstack/react-router';
+import { Link, useMatchRoute } from '@tanstack/react-router';
 import * as React from 'react';
 
-import { FileRoutesByFullPath } from '@/routeTree.gen';
+import { NAV_GROUPS, type NavItem } from '@/components/appNavigation';
 
 import {
 	Sidebar,
@@ -16,55 +16,38 @@ import {
 	SidebarRail,
 } from '@/components/ui/sidebar';
 
-function MenuItem({
-	item,
-}: {
-	item: { title: string; url: keyof FileRoutesByFullPath };
-}) {
+function MenuItem({ item }: { item: NavItem }) {
 	const matchRoute = useMatchRoute();
 	const isActive = !!matchRoute({ to: item.url });
 
 	return (
-		<SidebarMenuItem key={item.title}>
-			<SidebarMenuButton asChild isActive={isActive}>
-				<Link to={item.url}>{item.title}</Link>
+		<SidebarMenuItem>
+			<SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
+				<Link to={item.url}>
+					<item.icon />
+					<span>{item.title}</span>
+				</Link>
 			</SidebarMenuButton>
 		</SidebarMenuItem>
 	);
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-	const { routesByPath, state } = useRouter();
-
-	const data = {
-		navMain: [
-			{
-				title: 'Routes',
-				items: Object.keys(routesByPath as FileRoutesByFullPath).map(
-					(path) => ({
-						title: path,
-						url: path as keyof FileRoutesByFullPath,
-						isActive: state.location.pathname === path,
-					})
-				),
-			},
-		],
-	};
-
 	return (
 		<Sidebar {...props}>
 			<SidebarHeader>
-				<h1> RoundTable Tracker</h1>
+				<Link to="/" className="px-2 text-lg font-semibold">
+					RoundTable Tracker
+				</Link>
 			</SidebarHeader>
 			<SidebarContent>
-				{/* We create a SidebarGroup for each parent. */}
-				{data.navMain.map((item) => (
-					<SidebarGroup key={item.title}>
-						<SidebarGroupLabel>{item.title}</SidebarGroupLabel>
+				{NAV_GROUPS.map((group) => (
+					<SidebarGroup key={group.title}>
+						<SidebarGroupLabel>{group.title}</SidebarGroupLabel>
 						<SidebarGroupContent>
 							<SidebarMenu>
-								{item.items.map((item) => (
-									<MenuItem key={item.title} item={item} />
+								{group.items.map((item) => (
+									<MenuItem key={item.url} item={item} />
 								))}
 							</SidebarMenu>
 						</SidebarGroupContent>
