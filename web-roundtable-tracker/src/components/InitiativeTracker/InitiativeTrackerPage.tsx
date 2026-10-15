@@ -66,6 +66,7 @@ import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/Reactivate
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 import { Input } from '@/components/ui/input';
 import { type SwipeAction } from './InitiativeActionCarouselCard';
+import { isFinalActiveParticipant as isFinalActiveParticipantInRound } from './isFinalActiveParticipant';
 
 const HAZARD_DISABLE_CHECK_NAMES = [
 	'Disrupted',
@@ -975,12 +976,12 @@ export function InitiativeTrackerPage() {
 		}
 	};
 
-	// Delaying participants keep their turn but aren't in the active part of the
-	// round, so acting on one (e.g. a K.O.) never closes the round.
 	const isFinalActiveParticipant = (participantId: string) =>
-		activeRoundBoundaryIndex === 1 &&
-		charactersWithTurn.has(participantId) &&
-		charactersMap[participantId]?.turnState !== 'delayed';
+		isFinalActiveParticipantInRound(participantId, {
+			activeParticipantCount: activeRoundBoundaryIndex,
+			charactersWithTurn,
+			charactersMap,
+		});
 
 	const isNextParticipantDelayed = () => {
 		return (
