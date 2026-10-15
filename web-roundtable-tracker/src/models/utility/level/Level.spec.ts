@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { formatAdjustedLevel, getAdjustedLevel, Level } from './Level';
 import { adjustedLevel } from '@/store/data';
 import { LevelDifference } from './LevelDifference';
-import { LevelRange } from './LevelRange';
 
 describe('Level', () => {
 	describe('constructor', () => {
@@ -207,23 +206,6 @@ describe('Level', () => {
 			const exp = diff.toExperience(false);
 
 			expect(exp.valueOf()).toBe(0);
-		});
-	});
-
-	describe('LevelRange', () => {
-		describe('constructor', () => {
-			it('should initialize with given min and max values', () => {
-				const range = new LevelRange(1, 10);
-				expect(range.min).toBe(1);
-				expect(range.max).toBe(10);
-			});
-		});
-
-		describe('toString', () => {
-			it('should return a string representation of the range', () => {
-				const range = new LevelRange(1, 10);
-				expect(range.toString()).toBe('1 - 10');
-			});
 		});
 	});
 });

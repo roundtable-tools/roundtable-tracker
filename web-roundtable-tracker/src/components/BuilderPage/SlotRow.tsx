@@ -65,10 +65,6 @@ const SLOT_TYPES: { value: SlotType; label: string; Icon: LucideIcon }[] = [
 	{ value: 'narrative', label: 'Narrative Event', Icon: ScrollText },
 ];
 
-export const PARTICIPANT_SLOT_TYPES: SlotType[] = ['creature', 'hazard'];
-
-export const EVENT_SLOT_TYPES: SlotType[] = ['narrative', 'reinforcement'];
-
 const SIDE_OPTIONS: { value: SideType; label: string }[] = [
 	{ value: 'opponent', label: 'Opponents' },
 	{ value: 'ally', label: 'Allies' },
@@ -367,7 +363,10 @@ export function SlotRow({
 	const availableSlotTypes = SLOT_TYPES.filter(({ value }) =>
 		allowedTypes.includes(value)
 	);
-	const reinforcementParticipants = slot.reinforcementParticipants ?? [];
+	const reinforcementParticipants = useMemo(
+		() => slot.reinforcementParticipants ?? [],
+		[slot.reinforcementParticipants]
+	);
 	const availableCombatTabs = useMemo(
 		() =>
 			COMBAT_TAB_ORDER.filter((tab) =>
@@ -383,7 +382,7 @@ export function SlotRow({
 					enabledBlocks.some((block) => getTabForBlock(block) === tab)
 				);
 			}),
-		[activeTabs, availableCombatTabs, enabledBlocks, isCombatSlot]
+		[activeTabs, availableCombatTabs, enabledBlocks]
 	);
 	const missingSuggestedBlocks = useMemo(
 		() =>
@@ -395,10 +394,6 @@ export function SlotRow({
 			),
 		[enabledBlocks, isSimpleHazard, slot, slotType, usedAdditionalDataBlocks]
 	);
-
-	useEffect(() => {
-		setActiveTabs(inferEnabledTabsFromSlot(slot));
-	}, [slot.id]);
 
 	useEffect(() => {
 		const ids = new Set(

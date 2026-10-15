@@ -17,8 +17,6 @@ describe('UpdateCharacterCommand', () => {
 			initiative: 0,
 			turnState: 'normal',
 			group: 'players',
-			wounded: 0,
-			hasTurn: false,
 			health: 100,
 			maxHealth: 100,
 			tempHealth: 0,
