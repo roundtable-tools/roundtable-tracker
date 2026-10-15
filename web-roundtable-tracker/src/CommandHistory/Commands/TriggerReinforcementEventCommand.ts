@@ -164,6 +164,62 @@ const expandSlotParticipants = (
 	}));
 };
 
+/**
+ * Whether an arrival acts before a participant already in the order, given
+ * that participant's initiative. Higher initiative goes first. On a tie with a
+ * PC, an opposing arrival goes first ("If your result is tied with an enemy's
+ * result, the enemy goes first"); other ties go after the participant already
+ * there.
+ */
+export function arrivalActsBefore(
+	arrival: Pick<Character, 'initiative'>,
+	arrivalMeta: Pick<TrackerParticipantMeta, 'sideTheme'> | undefined,
+	participant: Pick<Character, 'group'> | undefined,
+	participantInitiative: number
+): boolean {
+	if (arrival.initiative !== participantInitiative) {
+		return arrival.initiative > participantInitiative;
+	}
+
+	return (
+		arrivalMeta?.sideTheme === 'opponent' && participant?.group === 'players'
+	);
+}
+
+/**
+ * Whether an arrival that comes in delayed still has its turn this round: only
+ * when its initiative puts it after the current actor, among the participants
+ * still to act. If its spot is before the current actor, its turn has already
+ * passed. Without a current actor (an empty queue, or a head with no turn
+ * left), nobody in the order is still to act, so it gets no turn either.
+ */
+function delayedArrivalKeepsTurn(
+	arrival: SpawnedParticipant,
+	currentOrder: UUID[],
+	charactersWithTurn: Set<UUID>,
+	delayedOrder: UUID[],
+	charactersMap: Record<UUID, Character>
+): boolean {
+	const currentUuid = currentOrder[0];
+
+	if (
+		currentUuid === undefined ||
+		!charactersWithTurn.has(currentUuid) ||
+		delayedOrder.includes(currentUuid)
+	) {
+		return false;
+	}
+
+	const currentActor = charactersMap[currentUuid];
+
+	return !arrivalActsBefore(
+		arrival.character,
+		arrival.meta,
+		currentActor,
+		currentActor?.initiative ?? 0
+	);
+}
+
 function insertByInitiative(
 	currentOrder: UUID[],
 	charactersMap: Record<UUID, Character>,
@@ -266,20 +322,20 @@ export class TriggerReinforcementEventCommand implements Command {
 			const charactersWithTurn = new Set(current.charactersWithTurn);
 			// Simple hazards never take turns, so they stay out of the order,
 			// the delayed list and the turn bookkeeping.
-			const turnTakers = (this.data.spawnedParticipants ?? [])
-				.filter((participant) => !participant.meta.isSimpleHazard)
-				.map((participant) => participant.character);
+			const turnTakers = (this.data.spawnedParticipants ?? []).filter(
+				(participant) => !participant.meta.isSimpleHazard
+			);
 			// Participants that arrive delayed wait in the delayed list, everyone
-			// else joins the order and gets a turn. Unlike the starting roster,
-			// arriving delayers get no turn this round; returning from Delay
-			// still lets them act. The rules don't cover reinforcements, so this
-			// is a house rule.
+			// else joins the order and gets a turn. An arriving delayer keeps its
+			// turn this round only if its initiative puts it after the current
+			// actor; if its spot has already passed, it waits for the next round.
+			// The rules don't cover reinforcements, so this is a house rule.
 			const arrivingDelayed = turnTakers.filter(
-				(character) => character.turnState === 'delayed'
+				(participant) => participant.character.turnState === 'delayed'
 			);
-			const arrivingInOrder = turnTakers.filter(
-				(character) => character.turnState !== 'delayed'
-			);
+			const arrivingInOrder = turnTakers
+				.filter((participant) => participant.character.turnState !== 'delayed')
+				.map((participant) => participant.character);
 
 			for (const participant of this.data.spawnedParticipants ?? []) {
 				charactersMap[participant.character.uuid] = participant.character;
@@ -288,6 +344,20 @@ export class TriggerReinforcementEventCommand implements Command {
 
 			for (const character of arrivingInOrder) {
 				charactersWithTurn.add(character.uuid);
+			}
+
+			for (const participant of arrivingDelayed) {
+				if (
+					delayedArrivalKeepsTurn(
+						participant,
+						current.charactersOrder,
+						current.charactersWithTurn,
+						current.delayedOrder,
+						current.charactersMap
+					)
+				) {
+					charactersWithTurn.add(participant.character.uuid);
+				}
 			}
 
 			const charactersOrder = insertByInitiative(
@@ -301,7 +371,7 @@ export class TriggerReinforcementEventCommand implements Command {
 				charactersOrder,
 				delayedOrder: [
 					...current.delayedOrder,
-					...arrivingDelayed.map((character) => character.uuid),
+					...arrivingDelayed.map(({ character }) => character.uuid),
 				],
 				charactersWithTurn,
 				trackerMetaMap,
