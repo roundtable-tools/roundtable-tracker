@@ -16,11 +16,8 @@ import { useSavedEncountersStore } from '@/store/savedEncounterInstance';
 import type { ConcreteEncounter } from '@/store/data';
 import encounterTemplates from '@/store/Encounters/migratedEncounterTemplates';
 import { ThreatTracker } from './ThreatTracker';
-import {
-	EVENT_SLOT_TYPES,
-	PARTICIPANT_SLOT_TYPES,
-	SlotRow,
-} from './SlotRow.tsx';
+import { SlotRow } from './SlotRow.tsx';
+import { EVENT_SLOT_TYPES, PARTICIPANT_SLOT_TYPES } from './slotSections';
 import type { AdditionalDataBlockKey } from './SlotRow.tsx';
 import { SaveSuccessModal } from './SaveSuccessModal';
 import { computeEncounterXpUsage, type SlotType } from './builderXp';
@@ -226,7 +223,7 @@ export function BuilderPage({
 			basePartyOutputPerRound: Math.max(0, basePartyOutputPerRound),
 		}
 	);
-	const resolvedSlots = slots ?? [];
+	const resolvedSlots = useMemo(() => slots ?? [], [slots]);
 	const participantIndices = getSlotSectionIndices(
 		resolvedSlots,
 		'participants'
