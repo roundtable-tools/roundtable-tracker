@@ -28,7 +28,7 @@ when the turn flow changes.
 ## Rolling and ordering
 
 - Rolling happens in the preview (`components/PreviewDisplay/PreviewDisplay.tsx`), not in a command:
-  - Encounter creatures roll d20 + `initiativeBonus`, with tie priority `NPC`. Groups with `count` are expanded and suffixed A, B, …
+  - Encounter creatures roll d20 + `initiativeBonus`, with tie priority `NPC`. Groups with `count` are expanded. A name used more than once across the whole roster (any side, any entry) gets a letter suffix A, B, … on each use, skipping letters already taken; party names count as taken but are never renamed (`utils/uniqueNames.ts`).
   - A generic party (no saved party) rolls a plain d20 with priority `PC`.
   - Saved party members start at initiative 0. The GM types in the players' real results.
   - The GM can edit every value in the preview form.
