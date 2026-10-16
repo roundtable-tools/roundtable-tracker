@@ -78,32 +78,48 @@ const HP_SEGMENT_COLORS: Record<number, string> = {
 	1: 'bg-red-500',
 };
 
-// Colour of the filled disable-check segments, from the same scale: closer
-// to green as the hazard gets closer to disabled.
+const STEEL_BLUE = [70, 130, 180] as const;
+const BROWN = [139, 90, 43] as const;
+
+// Colour of the filled disable-check segments: steel blue after the first
+// check, turning brown as the share of checks made grows.
 const getDisableSegmentColor = ({
 	succeeded,
 	required,
-}: PlayerDisableProgress) =>
-	succeeded >= required
-		? 'bg-green-500'
-		: succeeded * 2 >= required
-			? 'bg-lime-500'
-			: 'bg-yellow-400';
+}: PlayerDisableProgress) => {
+	const share = required > 1 ? (succeeded - 1) / (required - 1) : 1;
+	const [red, green, blue] = STEEL_BLUE.map((from, index) =>
+		Math.round(from + (BROWN[index] - from) * share)
+	);
 
-/** A bar of equal segments, the first `filled` in one colour, with a label centred under it. */
+	return `rgb(${red} ${green} ${blue})`;
+};
+
+/**
+ * A bar of equal segments with a label centred under it. `filled` segments
+ * take the fill colour (a class or a CSS colour), counted from the left or,
+ * with `fillFrom="right"`, from the right.
+ */
 function SegmentedBar({
 	name,
 	total,
 	filled,
-	fillClassName,
+	fillClassName = '',
+	fillColor,
+	fillFrom = 'left',
 	label,
 }: {
 	name: string;
 	total: number;
 	filled: number;
-	fillClassName: string;
+	fillClassName?: string;
+	fillColor?: string;
+	fillFrom?: 'left' | 'right';
 	label: string;
 }) {
+	const isFilled = (index: number) =>
+		fillFrom === 'left' ? index < filled : index >= total - filled;
+
 	return (
 		<div className="flex w-24 flex-col items-center gap-1">
 			<div
@@ -118,7 +134,12 @@ function SegmentedBar({
 				{Array.from({ length: total }, (_, index) => (
 					<span
 						key={index}
-						className={`h-2 flex-1 rounded-sm ${index < filled ? fillClassName : 'bg-muted'}`}
+						className={`h-2 flex-1 rounded-sm ${isFilled(index) ? fillClassName : 'bg-muted'}`}
+						style={
+							isFilled(index) && fillColor
+								? { backgroundColor: fillColor }
+								: undefined
+						}
 					/>
 				))}
 			</div>
@@ -144,7 +165,8 @@ function PlayerProgressBar({
 				name="Disable checks"
 				total={disableProgress.required}
 				filled={disableProgress.succeeded}
-				fillClassName={getDisableSegmentColor(disableProgress)}
+				fillColor={getDisableSegmentColor(disableProgress)}
+				fillFrom="right"
 				label={disableProgress.label}
 			/>
 		);
