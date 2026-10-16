@@ -40,12 +40,17 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isStringArray = (value: unknown): value is string[] =>
 	Array.isArray(value) && value.every((item) => typeof item === 'string');
 
-/** A stored timer with the times the player view counts up from. */
+/** A stored timer with every field of its stored type. */
 const isStoredTimer = (value: unknown) =>
 	isRecord(value) &&
+	typeof value.round === 'number' &&
 	typeof value.roundStartedAt === 'number' &&
+	(value.turnParticipantId === null ||
+		typeof value.turnParticipantId === 'string') &&
 	typeof value.turnStartedAt === 'number' &&
-	(value.pausedAt === null || typeof value.pausedAt === 'number');
+	(value.pausedAt === null || typeof value.pausedAt === 'number') &&
+	Array.isArray(value.turnLog) &&
+	Array.isArray(value.roundLog);
 
 /** Each field the player view reads is either missing or of its stored type. */
 const isStoredStateShape = (state: unknown): state is Partial<EncounterStore> =>

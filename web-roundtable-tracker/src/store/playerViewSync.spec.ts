@@ -12,6 +12,7 @@ import {
 	type PlayerViewChannel,
 } from './playerViewSync';
 import { runtimeToPlayerInitiativeQueue } from './trackerMappers';
+import { startTimer } from './encounterTimer';
 
 const character = (uuid: string, name: string, initiative: number) =>
 	({
@@ -202,6 +203,16 @@ describe('player view sync', () => {
 			expect(parsePlayerViewSnapshot('{"version":0}')).toBeNull();
 		});
 
+		const timer = startTimer({ participantId: 'hero', round: 1 }, 0);
+
+		it('reads a stored timer', () => {
+			expect(
+				parsePlayerViewSnapshot(
+					JSON.stringify({ state: { encounterData: encounter, timer } })
+				)?.timer
+			).toEqual(timer);
+		});
+
 		it('returns null when a stored field has the wrong type', () => {
 			const stored = (state: object) =>
 				parsePlayerViewSnapshot(
@@ -215,9 +226,8 @@ describe('player view sync', () => {
 			expect(stored({ charactersWithTurn: ['hero'] })).toBeNull();
 			expect(stored({ encounterData: 'Bridge Fight' })).toBeNull();
 			expect(stored({ timer: 'running' })).toBeNull();
-			expect(
-				stored({ timer: { roundStartedAt: '0', turnStartedAt: 0 } })
-			).toBeNull();
+			expect(stored({ timer: { ...timer, roundStartedAt: '0' } })).toBeNull();
+			expect(stored({ timer: { ...timer, turnLog: undefined } })).toBeNull();
 			expect(parsePlayerViewSnapshot('{"state":[]}')).toBeNull();
 		});
 
