@@ -347,7 +347,7 @@ export function InitiativePlayerViewPage() {
 										'flex items-center justify-between rounded-md border',
 										isCurrent
 											? `px-4 py-4 ${accent.activeCard}`
-											: `px-3 py-2 ${accent.inactiveMarker}`,
+											: `mx-4 px-3 py-2 ${accent.inactiveMarker}`,
 										participant.isHazard
 											? getHazardStripe(participant.sideTheme)
 											: '',
