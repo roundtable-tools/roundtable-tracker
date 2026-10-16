@@ -35,9 +35,9 @@ const PLAYER_STATUS_OPTIONS = [
 
 /**
  * What a row's status group and bar sit on: the current participant's
- * coloured card, a hazard's stripes, or a plain row. On stripes they get a
- * solid backing; on the coloured card they take the card's text colour, like
- * the chips on the tracker's current card.
+ * coloured card, a hazard's stripes, or a plain row. On the coloured card
+ * they get a see-through dark backing, so segment colours stay readable on
+ * any side colour; on stripes a solid one.
  */
 type RowSurface = 'current' | 'current-striped' | 'striped' | 'plain';
 
@@ -46,16 +46,16 @@ const SURFACE_STYLES: Record<
 	{ box: string; idle: string; empty: string; label: string }
 > = {
 	current: {
-		box: 'border-current/30',
-		idle: 'text-current/50',
-		empty: 'bg-current/20',
-		label: 'text-current/85',
+		box: 'border-white/25 bg-black/50',
+		idle: 'text-white/60',
+		empty: 'bg-neutral-700',
+		label: 'text-white',
 	},
 	'current-striped': {
-		box: 'border-current/30 bg-black/30',
-		idle: 'text-current/50',
-		empty: 'bg-current/20',
-		label: 'text-current/85',
+		box: 'border-white/25 bg-black/60',
+		idle: 'text-white/60',
+		empty: 'bg-neutral-700',
+		label: 'text-white',
 	},
 	striped: {
 		box: 'border-input bg-card',
@@ -167,7 +167,7 @@ function SegmentedBar({
 
 	return (
 		<div
-			className={`flex w-28 flex-col items-center gap-1 rounded-md px-2 py-1 ${surface === 'plain' || surface === 'current' ? '' : styles.box}`}
+			className={`flex w-28 flex-col items-center gap-1 rounded-md px-2 py-1 ${surface === 'plain' ? '' : styles.box}`}
 		>
 			<div
 				role="meter"
