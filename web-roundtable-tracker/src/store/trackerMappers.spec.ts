@@ -125,9 +125,9 @@ describe('trackerMappers', () => {
 			}),
 		};
 		const trackerMetaMap = {
-			healthy: createMeta({ role: 'pc' }),
-			wounded: createMeta({ role: 'opponent' }),
-			defeated: createMeta({ role: 'ally' }),
+			healthy: createMeta({ role: 'pc', sideTheme: 'pc' }),
+			wounded: createMeta({ role: 'opponent', sideTheme: 'opponent' }),
+			defeated: createMeta({ role: 'ally', sideTheme: 'ally' }),
 		};
 
 		const queue = runtimeToPlayerInitiativeQueue({
@@ -143,19 +143,56 @@ describe('trackerMappers', () => {
 				name: 'Healthy',
 				status: 'Ready',
 				hpLabel: 'Healthy',
+				sideTheme: 'pc',
 			},
 			{
 				id: 'wounded',
 				name: 'Wounded',
 				status: 'Delayed',
 				hpLabel: 'Wounded',
+				sideTheme: 'opponent',
 			},
 			{
 				id: 'defeated',
 				name: 'Defeated',
 				status: 'Knocked Out',
 				hpLabel: 'Defeated',
+				sideTheme: 'ally',
 			},
+		]);
+	});
+
+	it('lists delayed participants after the order in the player queue', () => {
+		const charactersMap = {
+			hero: createCharacter({ uuid: 'hero', name: 'Hero' }),
+			rogue: createCharacter({
+				uuid: 'rogue',
+				name: 'Rogue',
+				turnState: 'delayed',
+			}),
+			trap: createCharacter({
+				uuid: 'trap',
+				name: 'Trap',
+				turnState: 'delayed',
+			}),
+		};
+
+		const queue = runtimeToPlayerInitiativeQueue({
+			charactersOrder: ['hero'],
+			delayedOrder: ['rogue', 'trap'],
+			charactersMap,
+			trackerMetaMap: {
+				hero: createMeta({ role: 'pc', sideTheme: 'pc' }),
+				rogue: createMeta({ role: 'pc', sideTheme: 'pc' }),
+				trap: createMeta({ role: 'hazard', isSimpleHazard: true }),
+			},
+		});
+
+		expect(
+			queue.map(({ id, status, sideTheme }) => ({ id, status, sideTheme }))
+		).toEqual([
+			{ id: 'hero', status: 'Ready', sideTheme: 'pc' },
+			{ id: 'rogue', status: 'Delayed', sideTheme: 'pc' },
 		]);
 	});
 

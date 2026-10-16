@@ -58,25 +58,43 @@ function BreadCrumbs() {
 	);
 }
 
-export const Route = createRootRoute({
-	component: () => {
+// Pages shown to players, without the GM's sidebar and breadcrumbs.
+const STANDALONE_ROUTE_IDS = new Set<string>(['/initiative_player']);
+
+function RootLayout() {
+	const matches = useMatches();
+	const isStandalone = matches.some(({ routeId }) =>
+		STANDALONE_ROUTE_IDS.has(routeId)
+	);
+
+	if (isStandalone) {
 		return (
 			<ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-				<SidebarProvider>
-					<AppSidebar />
-					<SidebarInset>
-						<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-							<SidebarTrigger className="-ml-1" />
-							<Separator orientation="vertical" className="mr-2 h-4" />
-							<BreadCrumbs />
-						</header>
-						<Outlet />
-					</SidebarInset>
-				</SidebarProvider>
-				<React.Suspense fallback={null}>
-					<TanStackRouterDevtools />
-				</React.Suspense>
+				<Outlet />
 			</ThemeProvider>
 		);
-	},
+	}
+
+	return (
+		<ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+			<SidebarProvider>
+				<AppSidebar />
+				<SidebarInset>
+					<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+						<SidebarTrigger className="-ml-1" />
+						<Separator orientation="vertical" className="mr-2 h-4" />
+						<BreadCrumbs />
+					</header>
+					<Outlet />
+				</SidebarInset>
+			</SidebarProvider>
+			<React.Suspense fallback={null}>
+				<TanStackRouterDevtools />
+			</React.Suspense>
+		</ThemeProvider>
+	);
+}
+
+export const Route = createRootRoute({
+	component: RootLayout,
 });

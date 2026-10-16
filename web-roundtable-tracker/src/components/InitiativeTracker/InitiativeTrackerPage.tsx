@@ -40,6 +40,7 @@ import { Reorder } from 'motion/react';
 import { useNavigate } from '@tanstack/react-router';
 import { InitiativeActionCarouselCard } from './InitiativeActionCarouselCard';
 import { OpenPlayerViewButton } from './OpenPlayerViewButton';
+import { getSideAccent } from './sideAccent';
 import {
 	getEncounterStore,
 	useEncounterStore,
@@ -50,6 +51,8 @@ import {
 	narrativeSlotsToTimeline,
 	encounterToTrackerHeader,
 	historyToPreviewLines,
+	resolveParticipantSideTheme,
+	type ParticipantSideTheme,
 	type TrackerParticipant,
 } from '@/store/trackerMappers';
 import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
@@ -200,98 +203,6 @@ function getDcName(dc: NonNullable<TrackerParticipant['dcs']>[number]) {
 	return dc.name ?? dc.inline ?? 'DC';
 }
 
-type SideTheme = 'pc' | 'opponent' | 'ally' | 'other';
-
-function resolveParticipantSideTheme(
-	participant: TrackerParticipant
-): SideTheme {
-	if (participant.sideTheme === 'pc') {
-		return 'pc';
-	}
-
-	if (participant.sideTheme === 'ally') {
-		return 'ally';
-	}
-
-	if (
-		participant.sideTheme === 'other' ||
-		participant.sideTheme === 'neutral'
-	) {
-		return 'other';
-	}
-
-	if (participant.sideTheme === 'opponent') {
-		return 'opponent';
-	}
-
-	if (participant.role === 'pc') {
-		return 'pc';
-	}
-
-	if (participant.role === 'ally') {
-		return 'ally';
-	}
-
-	if (participant.role === 'neutral') {
-		return 'other';
-	}
-
-	return 'opponent';
-}
-
-function getSideAccent(sideTheme: SideTheme) {
-	switch (sideTheme) {
-		case 'pc':
-			return {
-				badge: 'bg-sky-500/15 text-sky-200 ring-1 ring-sky-400/40',
-				inactiveCard:
-					'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-sky-500/60 hover:bg-slate-900/95',
-				inactiveMarker: 'border-l-4 border-l-sky-400',
-				name: 'text-sky-200',
-				activeCard:
-					'border-sky-300 bg-sky-600 text-sky-50 shadow-lg shadow-sky-950/30',
-				delayedCard: 'border-sky-500/50 bg-sky-500/10 text-sky-200',
-			};
-
-		case 'opponent':
-			return {
-				badge: 'bg-rose-500/15 text-rose-200 ring-1 ring-rose-400/40',
-				inactiveCard:
-					'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-rose-500/60 hover:bg-slate-900/95',
-				inactiveMarker: 'border-l-4 border-l-rose-400',
-				name: 'text-rose-200',
-				activeCard:
-					'border-rose-300 bg-rose-700 text-rose-50 shadow-lg shadow-rose-950/30',
-				delayedCard: 'border-rose-500/50 bg-rose-500/10 text-rose-200',
-			};
-
-		case 'other':
-			return {
-				badge: 'bg-violet-500/15 text-violet-200 ring-1 ring-violet-400/40',
-				inactiveCard:
-					'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-violet-500/60 hover:bg-slate-900/95',
-				inactiveMarker: 'border-l-4 border-l-violet-400',
-				name: 'text-violet-200',
-				activeCard:
-					'border-violet-300 bg-violet-700 text-violet-50 shadow-lg shadow-violet-950/30',
-				delayedCard: 'border-violet-500/50 bg-violet-500/10 text-violet-200',
-			};
-
-		case 'ally':
-		default:
-			return {
-				badge: 'bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/40',
-				inactiveCard:
-					'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-emerald-500/60 hover:bg-slate-900/95',
-				inactiveMarker: 'border-l-4 border-l-emerald-400',
-				name: 'text-emerald-200',
-				activeCard:
-					'border-emerald-300 bg-emerald-600 text-emerald-50 shadow-lg shadow-emerald-950/30',
-				delayedCard: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-200',
-			};
-	}
-}
-
 function getParticipantAccent(participant: TrackerParticipant) {
 	const sideTheme = resolveParticipantSideTheme(participant);
 	const baseAccent = getSideAccent(sideTheme);
@@ -300,7 +211,7 @@ function getParticipantAccent(participant: TrackerParticipant) {
 		return baseAccent;
 	}
 
-	const hazardStripeBySide: Record<SideTheme, string> = {
+	const hazardStripeBySide: Record<ParticipantSideTheme, string> = {
 		pc: 'bg-[repeating-linear-gradient(135deg,rgba(56,189,248,0.14)_0_6px,rgba(56,189,248,0)_6px_12px)]',
 		opponent:
 			'bg-[repeating-linear-gradient(135deg,rgba(251,113,133,0.14)_0_6px,rgba(251,113,133,0)_6px_12px)]',

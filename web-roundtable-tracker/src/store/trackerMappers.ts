@@ -65,7 +65,48 @@ export type PlayerTrackerParticipant = {
 	name: string;
 	status: 'Ready' | 'Delayed' | 'Knocked Out' | 'Inactive';
 	hpLabel: string;
+	sideTheme: ParticipantSideTheme;
 };
+
+/** The colour group a participant is shown in. */
+export type ParticipantSideTheme = 'pc' | 'opponent' | 'ally' | 'other';
+
+export function resolveParticipantSideTheme(
+	participant: Pick<TrackerParticipant, 'role' | 'sideTheme'>
+): ParticipantSideTheme {
+	if (participant.sideTheme === 'pc') {
+		return 'pc';
+	}
+
+	if (participant.sideTheme === 'ally') {
+		return 'ally';
+	}
+
+	if (
+		participant.sideTheme === 'other' ||
+		participant.sideTheme === 'neutral'
+	) {
+		return 'other';
+	}
+
+	if (participant.sideTheme === 'opponent') {
+		return 'opponent';
+	}
+
+	if (participant.role === 'pc') {
+		return 'pc';
+	}
+
+	if (participant.role === 'ally') {
+		return 'ally';
+	}
+
+	if (participant.role === 'neutral') {
+		return 'other';
+	}
+
+	return 'opponent';
+}
 
 const DEFAULT_META: TrackerParticipantMeta = {
 	role: 'opponent',
@@ -245,7 +286,25 @@ export function runtimeToOutOfInitiativeData(
 			})
 		);
 
-	const delayed: TrackerParticipant[] = delayedOrder
+	const delayed = runtimeToDelayedParticipants({
+		delayedOrder,
+		charactersMap,
+		trackerMetaMap,
+	});
+
+	return { reinforcements, delayed, hazards };
+}
+
+/** Participants that delayed out of the order, in the order they delayed. */
+function runtimeToDelayedParticipants(
+	store: Pick<
+		EncounterStore,
+		'delayedOrder' | 'charactersMap' | 'trackerMetaMap'
+	>
+): TrackerParticipant[] {
+	const { delayedOrder, charactersMap, trackerMetaMap } = store;
+
+	return delayedOrder
 		.filter((uuid) => {
 			const meta = trackerMetaMap[uuid];
 
@@ -262,8 +321,6 @@ export function runtimeToOutOfInitiativeData(
 		.filter(
 			(participant): participant is TrackerParticipant => participant !== null
 		);
-
-	return { reinforcements, delayed, hazards };
 }
 
 const toPlayerStatus = (
@@ -306,17 +363,22 @@ const toCoarseHpLabel = (participant: TrackerParticipant): string => {
 	return 'Critical';
 };
 
+/** The initiative order, then the delayed participants, with only what players may see. */
 export function runtimeToPlayerInitiativeQueue(
 	store: Pick<
 		EncounterStore,
 		'charactersOrder' | 'delayedOrder' | 'charactersMap' | 'trackerMetaMap'
 	>
 ): PlayerTrackerParticipant[] {
-	return runtimeToInitiativeQueue(store).map((participant) => ({
+	return [
+		...runtimeToInitiativeQueue(store),
+		...runtimeToDelayedParticipants(store),
+	].map((participant) => ({
 		id: participant.id,
 		name: participant.name,
 		status: toPlayerStatus(participant.state),
 		hpLabel: toCoarseHpLabel(participant),
+		sideTheme: resolveParticipantSideTheme(participant),
 	}));
 }
 
