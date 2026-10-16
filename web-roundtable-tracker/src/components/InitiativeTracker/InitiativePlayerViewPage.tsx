@@ -103,11 +103,34 @@ export function InitiativePlayerViewPage() {
 
 	return (
 		<main className="mx-auto w-full max-w-4xl space-y-4 p-4 lg:p-6">
-			<header className="rounded-xl border bg-card p-4">
-				<h1 className="text-2xl font-semibold tracking-tight">
-					{trackerHeader?.encounterTitle ?? 'Initiative Tracker'}
-				</h1>
-				<p className="text-sm text-muted-foreground">Player Initiative View</p>
+			<header className="flex items-center justify-between gap-4 rounded-xl border bg-card p-4">
+				<div className="min-w-0">
+					<h1 className="truncate text-2xl font-semibold tracking-tight">
+						{trackerHeader?.encounterTitle ?? 'Initiative Tracker'}
+					</h1>
+					<p className="text-sm text-muted-foreground">
+						Player Initiative View
+					</p>
+				</div>
+				<dl className="flex shrink-0 gap-4 text-center">
+					<div>
+						<dt className="text-xs uppercase tracking-wide text-muted-foreground">
+							Round
+						</dt>
+						<dd className="text-2xl font-semibold tabular-nums">
+							{encounter.round}
+						</dd>
+					</div>
+					{/* Placeholder until the timer exists; it shows no time yet. */}
+					<div>
+						<dt className="text-xs uppercase tracking-wide text-muted-foreground">
+							Timer
+						</dt>
+						<dd className="text-2xl font-semibold tabular-nums text-muted-foreground">
+							--:--
+						</dd>
+					</div>
+				</dl>
 			</header>
 
 			<Card className="p-4">
