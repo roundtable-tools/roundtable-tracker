@@ -54,6 +54,7 @@ import {
 	narrativeSlotsToTimeline,
 	encounterToTrackerHeader,
 	historyToPreviewLines,
+	getHazardDisableLabel,
 	getHealthLabelFromPercentage,
 	resolveParticipantSideTheme,
 	type ParticipantSideTheme,
@@ -70,60 +71,6 @@ import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/Reactivate
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 import { Input } from '@/components/ui/input';
 import { type SwipeAction } from './InitiativeActionCarouselCard';
-
-const HAZARD_DISABLE_CHECK_NAMES = [
-	'Disrupted',
-	'Compromised',
-	'Fracturing',
-	'Critical',
-	'Disabled',
-] as const;
-
-function getHazardDisableStageNames(requiredChecks: number) {
-	const clampedRequiredChecks = Math.min(Math.max(requiredChecks, 1), 5);
-
-	if (clampedRequiredChecks === 5) {
-		return [...HAZARD_DISABLE_CHECK_NAMES];
-	}
-
-	if (clampedRequiredChecks === 4) {
-		return [
-			HAZARD_DISABLE_CHECK_NAMES[0],
-			HAZARD_DISABLE_CHECK_NAMES[1],
-			HAZARD_DISABLE_CHECK_NAMES[3],
-			HAZARD_DISABLE_CHECK_NAMES[4],
-		];
-	}
-
-	if (clampedRequiredChecks === 3) {
-		return [
-			HAZARD_DISABLE_CHECK_NAMES[0],
-			HAZARD_DISABLE_CHECK_NAMES[2],
-			HAZARD_DISABLE_CHECK_NAMES[4],
-		];
-	}
-
-	if (clampedRequiredChecks === 2) {
-		return [HAZARD_DISABLE_CHECK_NAMES[0], HAZARD_DISABLE_CHECK_NAMES[4]];
-	}
-
-	return [HAZARD_DISABLE_CHECK_NAMES[4]];
-}
-
-function getHazardDisableLabel(participant: TrackerParticipant) {
-	const requiredChecks = participant.disableChecksRequired ?? 5;
-	const successfulChecks = participant.disableChecksSucceeded ?? 0;
-
-	if (successfulChecks <= 0) {
-		return 'Stable';
-	}
-
-	const stageNames = getHazardDisableStageNames(requiredChecks);
-	const stageIndex =
-		Math.min(Math.max(successfulChecks, 1), requiredChecks) - 1;
-
-	return stageNames[Math.min(stageIndex, stageNames.length - 1)] ?? 'Disabled';
-}
 
 function getParticipantIndicatorLabel(participant: TrackerParticipant) {
 	if (participant.role === 'hazard') {

@@ -80,12 +80,15 @@ const HP_SEGMENT_COLORS: Record<number, string> = {
 
 // Colour of the filled disable-check segments, from the same scale: closer
 // to green as the hazard gets closer to disabled.
-const DISABLE_SEGMENT_COLORS: Record<PlayerDisableProgress['label'], string> = {
-	Stable: '',
-	Disrupted: 'bg-yellow-400',
-	Fracturing: 'bg-lime-500',
-	Disabled: 'bg-green-500',
-};
+const getDisableSegmentColor = ({
+	succeeded,
+	required,
+}: PlayerDisableProgress) =>
+	succeeded >= required
+		? 'bg-green-500'
+		: succeeded * 2 >= required
+			? 'bg-lime-500'
+			: 'bg-yellow-400';
 
 /** A bar of equal segments, the first `filled` in one colour, with a label centred under it. */
 function SegmentedBar({
@@ -141,7 +144,7 @@ function PlayerProgressBar({
 				name="Disable checks"
 				total={disableProgress.required}
 				filled={disableProgress.succeeded}
-				fillClassName={DISABLE_SEGMENT_COLORS[disableProgress.label]}
+				fillClassName={getDisableSegmentColor(disableProgress)}
 				label={disableProgress.label}
 			/>
 		);

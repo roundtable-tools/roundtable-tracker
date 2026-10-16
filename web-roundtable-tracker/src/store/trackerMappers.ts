@@ -75,7 +75,7 @@ export type PlayerTrackerParticipant = {
 export type PlayerDisableProgress = {
 	succeeded: number;
 	required: number;
-	label: 'Stable' | 'Disrupted' | 'Fracturing' | 'Disabled';
+	label: string;
 };
 
 /** HP tiers above 0 HP, from worst to best. */
@@ -408,10 +408,70 @@ const toPlayerHealth = (
 	};
 };
 
+const HAZARD_DISABLE_CHECK_NAMES = [
+	'Disrupted',
+	'Compromised',
+	'Fracturing',
+	'Critical',
+	'Disabled',
+] as const;
+
+function getHazardDisableStageNames(requiredChecks: number) {
+	const clampedRequiredChecks = Math.min(Math.max(requiredChecks, 1), 5);
+
+	if (clampedRequiredChecks === 5) {
+		return [...HAZARD_DISABLE_CHECK_NAMES];
+	}
+
+	if (clampedRequiredChecks === 4) {
+		return [
+			HAZARD_DISABLE_CHECK_NAMES[0],
+			HAZARD_DISABLE_CHECK_NAMES[1],
+			HAZARD_DISABLE_CHECK_NAMES[3],
+			HAZARD_DISABLE_CHECK_NAMES[4],
+		];
+	}
+
+	if (clampedRequiredChecks === 3) {
+		return [
+			HAZARD_DISABLE_CHECK_NAMES[0],
+			HAZARD_DISABLE_CHECK_NAMES[2],
+			HAZARD_DISABLE_CHECK_NAMES[4],
+		];
+	}
+
+	if (clampedRequiredChecks === 2) {
+		return [HAZARD_DISABLE_CHECK_NAMES[0], HAZARD_DISABLE_CHECK_NAMES[4]];
+	}
+
+	return [HAZARD_DISABLE_CHECK_NAMES[4]];
+}
+
 /**
- * A hazard's disable checks as players see them: Stable with none, Disrupted
- * under half, Fracturing from half on, Disabled with all of them.
+ * The tracker's label for a hazard's disable checks: Stable before the first
+ * success, then one stage name per success, ending at Disabled.
  */
+export function getHazardDisableLabel(
+	participant: Pick<
+		TrackerParticipant,
+		'disableChecksRequired' | 'disableChecksSucceeded'
+	>
+) {
+	const requiredChecks = participant.disableChecksRequired ?? 5;
+	const successfulChecks = participant.disableChecksSucceeded ?? 0;
+
+	if (successfulChecks <= 0) {
+		return 'Stable';
+	}
+
+	const stageNames = getHazardDisableStageNames(requiredChecks);
+	const stageIndex =
+		Math.min(Math.max(successfulChecks, 1), requiredChecks) - 1;
+
+	return stageNames[Math.min(stageIndex, stageNames.length - 1)] ?? 'Disabled';
+}
+
+/** A hazard's disable checks as players see them, with the tracker's label. */
 const toPlayerDisableProgress = (
 	participant: TrackerParticipant
 ): PlayerDisableProgress | null => {
@@ -425,16 +485,8 @@ const toPlayerDisableProgress = (
 		Math.max(participant.disableChecksSucceeded ?? 0, 0),
 		required
 	);
-	const label =
-		succeeded === 0
-			? 'Stable'
-			: succeeded === required
-				? 'Disabled'
-				: succeeded * 2 < required
-					? 'Disrupted'
-					: 'Fracturing';
 
-	return { succeeded, required, label };
+	return { succeeded, required, label: getHazardDisableLabel(participant) };
 };
 
 export function runtimeToPlayerInitiativeQueue(

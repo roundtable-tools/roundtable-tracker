@@ -203,12 +203,14 @@ describe('trackerMappers', () => {
 		]);
 	});
 
-	it('shows hazard disable checks in four bands instead of HP', () => {
+	it('shows hazard disable checks with the tracker labels instead of HP', () => {
 		const hazards = [
 			['none', 0, 4],
 			['under-half', 1, 4],
 			['half', 2, 4],
 			['over-half', 2, 3],
+			['three-of-four', 3, 4],
+			['one-of-two', 1, 2],
 			['all', 4, 4],
 		] as const;
 		const charactersMap = Object.fromEntries(
@@ -237,8 +239,10 @@ describe('trackerMappers', () => {
 		).toEqual([
 			['none', { succeeded: 0, required: 4, label: 'Stable' }],
 			['under-half', { succeeded: 1, required: 4, label: 'Disrupted' }],
-			['half', { succeeded: 2, required: 4, label: 'Fracturing' }],
+			['half', { succeeded: 2, required: 4, label: 'Compromised' }],
 			['over-half', { succeeded: 2, required: 3, label: 'Fracturing' }],
+			['three-of-four', { succeeded: 3, required: 4, label: 'Critical' }],
+			['one-of-two', { succeeded: 1, required: 2, label: 'Disrupted' }],
 			['all', { succeeded: 4, required: 4, label: 'Disabled' }],
 		]);
 	});
