@@ -613,6 +613,7 @@ export function InitiativeTrackerPage() {
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
 	const round = useEncounterStore((state) => state.round);
 	const history = useEncounterStore((state) => state.history);
+	const redoStack = useEncounterStore((state) => state.redoStack);
 	const startEncounter = useEncounterStore((state) => state.startEncounter);
 	const navigate = useNavigate();
 	const [endEncounterOpen, setEndEncounterOpen] = useState(false);
@@ -723,28 +724,35 @@ export function InitiativeTrackerPage() {
 		null
 	);
 	// Whose turn and which round the timer is on; when a new command (not an
-	// undo) moves it on while the timer is paused, the GM is asked whether to
-	// resume it.
+	// undo or redo) moves it on while the timer is paused, the GM is asked
+	// whether to resume it.
 	const timerPosition = timer
 		? `${timer.round}:${timer.turnParticipantId ?? ''}`
 		: null;
 	const isTimerPaused = timer?.pausedAt != null;
 	const lastTimerPositionRef = useRef(timerPosition);
-	const lastHistoryLengthRef = useRef(history.length);
+	const lastCommand = history.at(-1);
+	const lastCommandRef = useRef(lastCommand);
+	// A redo moves the head of the redo stack back to the history.
+	const redoHeadRef = useRef(redoStack[0]);
 	const [resumePrompt, setResumePrompt] = useState<string | null>(null);
 
 	useEffect(() => {
-		const movedOn = history.length > lastHistoryLengthRef.current;
-		lastHistoryLengthRef.current = history.length;
+		const isNewCommand =
+			lastCommand !== undefined &&
+			lastCommand !== lastCommandRef.current &&
+			lastCommand !== redoHeadRef.current;
+		lastCommandRef.current = lastCommand;
+		redoHeadRef.current = redoStack[0];
 
 		if (timerPosition === lastTimerPositionRef.current) return;
 
 		lastTimerPositionRef.current = timerPosition;
 
-		if (movedOn && isTimerPaused && timerPosition) {
+		if (isNewCommand && isTimerPaused && timerPosition) {
 			setResumePrompt(timerPosition);
 		}
-	}, [timerPosition, isTimerPaused, history.length]);
+	}, [timerPosition, isTimerPaused, lastCommand, redoStack]);
 
 	// A timer resumed some other way (e.g. the toolbar) answers the prompt.
 	useEffect(() => {
