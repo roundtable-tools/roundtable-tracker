@@ -22,3 +22,12 @@ export function getRoundBoundaryIndex(
 		) + 1
 	);
 }
+
+export function countParticipantsWithTurn(
+	participants: Pick<TrackerParticipant, 'id' | 'state'>[],
+	charactersWithTurn: Set<string>
+) {
+	return participants.filter((participant) =>
+		hasTurnLeft(participant, charactersWithTurn)
+	).length;
+}

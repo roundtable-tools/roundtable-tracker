@@ -42,7 +42,8 @@ import { InitiativeActionCarouselCard } from './InitiativeActionCarouselCard';
 import { OpenPlayerViewButton } from './OpenPlayerViewButton';
 import { getSideAccent } from './sideAccent';
 import { NextRoundMarkerCard } from './NextRoundMarkerCard';
-import { getRoundBoundaryIndex, hasTurnLeft } from './roundBoundary';
+import { getRoundBoundaryIndex } from './roundBoundary';
+import { closesRound, getRoundActionCommand } from './roundActionCommand';
 import {
 	getEncounterStore,
 	useEncounterStore,
@@ -58,13 +59,7 @@ import {
 	type TrackerParticipant,
 } from '@/store/trackerMappers';
 import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
-import { type Command } from '@/CommandHistory/common';
-import { DelayCharacterCommand } from '@/CommandHistory/Commands/DelayCharacterCommand';
-import { EndTurnCommand } from '@/CommandHistory/Commands/EndTurnCommand';
 import { GiveAdditionalTurnCommand } from '@/CommandHistory/Commands/GiveAdditionalTurnCommand';
-import { FinalizeTurnAndAdvanceRoundCommand } from '@/CommandHistory/Commands/FinalizeTurnAndAdvanceRoundCommand';
-import { FinalizeTurnAndReturnToInitiativeCommand } from '@/CommandHistory/Commands/FinalizeTurnAndReturnToInitiativeCommand';
-import { KnockOutCharacterCommand } from '@/CommandHistory/Commands/KnockOutCharacterCommand';
 import { TriggerReinforcementEventCommand } from '@/CommandHistory/Commands/TriggerReinforcementEventCommand';
 import { ReturnToInitiativeCommand } from '@/CommandHistory/Commands/ReturnToInitiativeCommand';
 import { ReorderCharactersCommand } from '@/CommandHistory/Commands/ReorderCharactersCommand';
@@ -74,7 +69,6 @@ import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/Reactivate
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 import { Input } from '@/components/ui/input';
 import { type SwipeAction } from './InitiativeActionCarouselCard';
-import { isFinalActiveParticipant as isFinalActiveParticipantInRound } from './isFinalActiveParticipant';
 
 const HAZARD_DISABLE_CHECK_NAMES = [
 	'Disrupted',
@@ -627,15 +621,6 @@ function DelayedMarkerCard({
 	);
 }
 
-function countParticipantsWithTurn(
-	participants: TrackerParticipant[],
-	charactersWithTurn: Set<string>
-) {
-	return participants.filter((participant) =>
-		hasTurnLeft(participant, charactersWithTurn)
-	).length;
-}
-
 type InitiativeCarouselItemData =
 	| {
 			key: string;
@@ -839,10 +824,6 @@ export function InitiativeTrackerPage() {
 		() => getRoundBoundaryIndex(initiativeParticipants, charactersWithTurn),
 		[initiativeParticipants, charactersWithTurn]
 	);
-	const activeParticipantCount = useMemo(
-		() => countParticipantsWithTurn(initiativeParticipants, charactersWithTurn),
-		[initiativeParticipants, charactersWithTurn]
-	);
 
 	useEffect(() => {
 		return () => {
@@ -904,18 +885,6 @@ export function InitiativeTrackerPage() {
 		}
 	};
 
-	const isFinalActiveParticipant = (participantId: string) =>
-		isFinalActiveParticipantInRound(participantId, {
-			activeParticipantCount,
-			charactersWithTurn,
-			charactersMap,
-		});
-
-	const isNextParticipantDelayed = () => {
-		return (
-			charactersOrder.length > 1 && delayedOrder.includes(charactersOrder[1])
-		);
-	};
 	const executeRoundAction = ({
 		participantId,
 		action,
@@ -927,33 +896,15 @@ export function InitiativeTrackerPage() {
 	}) => {
 		clearPinnedMarkerForCurrentRound();
 
-		const shouldReturnToInitiative = isNextParticipantDelayed();
-		const shouldAdvanceRound = isFinalActiveParticipant(participantId);
-		const returningParticipantId = charactersOrder[1];
-
-		const command: Command =
-			shouldAdvanceRound && shouldReturnToInitiative && returningParticipantId
-				? new FinalizeTurnAndReturnToInitiativeCommand({
-						activeUuid: participantId,
-						returningUuid: returningParticipantId,
-						action,
-					})
-				: shouldAdvanceRound
-					? new FinalizeTurnAndAdvanceRoundCommand({
-							uuid: participantId,
-							action,
-						})
-					: shouldReturnToInitiative && returningParticipantId
-						? new ReturnToInitiativeCommand({
-								activeUuid: participantId,
-								returningUuid: returningParticipantId,
-								action,
-							})
-						: action === 'delay'
-							? new DelayCharacterCommand({ uuid: participantId })
-							: action === 'ko'
-								? new KnockOutCharacterCommand({ uuid: participantId })
-								: new EndTurnCommand({ uuid: participantId });
+		const roundState = {
+			charactersOrder,
+			delayedOrder,
+			charactersMap,
+			trackerMetaMap,
+			charactersWithTurn,
+		};
+		const shouldAdvanceRound = closesRound(participantId, roundState);
+		const command = getRoundActionCommand(participantId, action, roundState);
 
 		try {
 			executeCommand(command);
