@@ -41,6 +41,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { InitiativeActionCarouselCard } from './InitiativeActionCarouselCard';
 import { OpenPlayerViewButton } from './OpenPlayerViewButton';
 import { getSideAccent } from './sideAccent';
+import { NextRoundMarkerCard } from './NextRoundMarkerCard';
+import { getRoundBoundaryIndex, hasTurnLeft } from './roundBoundary';
 import {
 	getEncounterStore,
 	useEncounterStore,
@@ -573,32 +575,6 @@ function TrackerDescriptionSections({
 	);
 }
 
-function NextRoundMarkerCard({
-	nextRound,
-	compact = false,
-}: {
-	nextRound: number;
-	compact?: boolean;
-}) {
-	return (
-		<div
-			className={[
-				'flex w-full min-w-0 items-center justify-center rounded-xl text-center',
-				compact ? 'h-full min-h-0 px-3 py-4' : 'min-h-15 px-4 py-4',
-			].join(' ')}
-		>
-			<div className="space-y-1">
-				<p className="text-xs font-medium uppercase tracking-[0.24em] text-primary/80">
-					Next Round
-				</p>
-				<p className="text-xl font-semibold tabular-nums text-primary">
-					{nextRound}
-				</p>
-			</div>
-		</div>
-	);
-}
-
 function DelayedMarkerCard({
 	participant,
 	compact = false,
@@ -651,15 +627,6 @@ function DelayedMarkerCard({
 	);
 }
 
-function hasTurnLeft(
-	participant: TrackerParticipant,
-	charactersWithTurn: Set<string>
-) {
-	return (
-		participant.state !== 'delayed' && charactersWithTurn.has(participant.id)
-	);
-}
-
 function countParticipantsWithTurn(
 	participants: TrackerParticipant[],
 	charactersWithTurn: Set<string>
@@ -667,20 +634,6 @@ function countParticipantsWithTurn(
 	return participants.filter((participant) =>
 		hasTurnLeft(participant, charactersWithTurn)
 	).length;
-}
-
-// The round ends after the last participant that still has a turn. After a
-// manual reorder, participants that already acted can sit before it; they are
-// skipped when the turn passes to them.
-function getRoundBoundaryIndex(
-	participants: TrackerParticipant[],
-	charactersWithTurn: Set<string>
-) {
-	return (
-		participants.findLastIndex((participant) =>
-			hasTurnLeft(participant, charactersWithTurn)
-		) + 1
-	);
 }
 
 type InitiativeCarouselItemData =

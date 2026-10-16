@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Toggle } from '@/components/ui/toggle';
@@ -9,10 +9,13 @@ import {
 } from '@/store/playerViewSync';
 import {
 	encounterToTrackerHeader,
+	runtimeToInitiativeQueue,
 	runtimeToPlayerInitiativeQueue,
 	type PlayerTrackerParticipant,
 } from '@/store/trackerMappers';
 import { getSideAccent } from './sideAccent';
+import { NextRoundMarkerCard } from './NextRoundMarkerCard';
+import { getRoundBoundaryIndex } from './roundBoundary';
 
 const PLAYER_STATUS_OPTIONS = [
 	{
@@ -72,6 +75,19 @@ export function InitiativePlayerViewPage() {
 
 	const initiativeParticipants = useMemo(
 		() => (encounter ? runtimeToPlayerInitiativeQueue(encounter) : []),
+		[encounter]
+	);
+
+	// The player queue keeps the tracker's order, so the tracker's round
+	// boundary applies to it unchanged.
+	const roundBoundaryIndex = useMemo(
+		() =>
+			encounter
+				? getRoundBoundaryIndex(
+						runtimeToInitiativeQueue(encounter),
+						encounter.charactersWithTurn
+					)
+				: 0,
 		[encounter]
 	);
 
@@ -137,23 +153,34 @@ export function InitiativePlayerViewPage() {
 				<h2 className="mb-3 text-base font-semibold">Initiative Order</h2>
 				<div className="space-y-2">
 					{initiativeParticipants.map((participant, index) => (
-						<div
-							key={participant.id}
-							className={`flex items-center justify-between rounded-md border px-3 py-2 ${getSideAccent(participant.sideTheme).inactiveMarker}`}
-						>
-							<p
-								className={`text-sm font-medium ${getSideAccent(participant.sideTheme).name}`}
+						<Fragment key={participant.id}>
+							{index === roundBoundaryIndex && (
+								<NextRoundMarkerCard nextRound={encounter.round + 1} />
+							)}
+							<div
+								className={`flex items-center justify-between rounded-md border px-3 py-2 ${getSideAccent(participant.sideTheme).inactiveMarker}`}
 							>
-								{index + 1}. {participant.name}
-							</p>
-							<div className="flex items-center gap-2">
-								<PlayerStatusGroup status={participant.status} />
-								<Badge variant="secondary" className="min-w-20 justify-center">
-									{participant.hpLabel}
-								</Badge>
+								<p
+									className={`text-sm font-medium ${getSideAccent(participant.sideTheme).name}`}
+								>
+									{participant.name}
+								</p>
+								<div className="flex items-center gap-2">
+									<PlayerStatusGroup status={participant.status} />
+									<Badge
+										variant="secondary"
+										className="min-w-20 justify-center"
+									>
+										{participant.hpLabel}
+									</Badge>
+								</div>
 							</div>
-						</div>
+						</Fragment>
 					))}
+					{initiativeParticipants.length > 0 &&
+						roundBoundaryIndex === initiativeParticipants.length && (
+							<NextRoundMarkerCard nextRound={encounter.round + 1} />
+						)}
 					{initiativeParticipants.length === 0 ? (
 						<p className="text-sm text-muted-foreground">
 							No visible participants in initiative.
