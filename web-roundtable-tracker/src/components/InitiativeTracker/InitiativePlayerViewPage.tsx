@@ -47,7 +47,7 @@ function PlayerStatusGroup({
 		<div
 			role="group"
 			aria-label="Status"
-			className="inline-flex items-center overflow-hidden rounded-md border border-input"
+			className="inline-flex items-center overflow-hidden rounded-md border border-input bg-card"
 		>
 			{PLAYER_STATUS_OPTIONS.map(
 				({ status: option, Icon, pressedClassName }) => (
@@ -121,7 +121,7 @@ function SegmentedBar({
 		fillFrom === 'left' ? index < filled : index >= total - filled;
 
 	return (
-		<div className="flex w-24 flex-col items-center gap-1">
+		<div className="flex w-28 flex-col items-center gap-1 rounded-md bg-card px-2 py-1">
 			<div
 				role="meter"
 				aria-label={name}
