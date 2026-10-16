@@ -12,7 +12,7 @@
 		"test": "vitest run",
 		"prettier": "prettier --check .",
 		"coverage": "vitest run --coverage.enabled true",
-		"typecheck": "tsc --noEmit",
+		"typecheck": "tsc -b",
 		"deploy": "gh-pages -d dist"
 	},
 	"dependencies": {

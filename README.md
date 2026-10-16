@@ -68,7 +68,7 @@ Everything else runs in the web workspace, either with `yarn workspace web-round
 | ----------- | ---------------------------------------------------- |
 | `lint`      | ESLint                                               |
 | `prettier`  | Check formatting with Prettier                       |
-| `typecheck` | TypeScript check (`tsc --noEmit`)                    |
+| `typecheck` | TypeScript check of both projects (`tsc -b`)         |
 | `test`      | Unit tests (Vitest)                                  |
 | `coverage`  | Unit tests with a coverage report                    |
 | `build`     | TypeScript build, then a production build to `dist/` |
