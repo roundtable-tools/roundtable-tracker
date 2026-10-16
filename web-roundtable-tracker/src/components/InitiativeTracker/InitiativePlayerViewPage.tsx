@@ -272,26 +272,47 @@ export function InitiativePlayerViewPage() {
 			<Card className="p-4">
 				<h2 className="mb-3 text-base font-semibold">Initiative Order</h2>
 				<div className="space-y-2">
-					{initiativeParticipants.map((participant, index) => (
-						<Fragment key={participant.id}>
-							{index === roundBoundaryIndex && (
-								<NextRoundMarkerCard nextRound={encounter.round + 1} />
-							)}
-							<div
-								className={`flex items-center justify-between rounded-md border px-3 py-2 ${getSideAccent(participant.sideTheme).inactiveMarker} ${participant.isHazard ? getHazardStripe(participant.sideTheme) : ''}`}
-							>
-								<p
-									className={`text-sm font-medium ${getSideAccent(participant.sideTheme).name}`}
+					{initiativeParticipants.map((participant, index) => {
+						const accent = getSideAccent(participant.sideTheme);
+						// The tracker's current participant is the first in the order.
+						const isCurrent = participant.id === encounter.charactersOrder[0];
+
+						return (
+							<Fragment key={participant.id}>
+								{index === roundBoundaryIndex && (
+									<NextRoundMarkerCard nextRound={encounter.round + 1} />
+								)}
+								<div
+									data-slot="player-participant"
+									aria-current={isCurrent ? 'step' : undefined}
+									className={[
+										'flex items-center justify-between rounded-md border',
+										isCurrent
+											? `px-4 py-4 ${accent.activeCard}`
+											: `px-3 py-2 ${accent.inactiveMarker}`,
+										participant.isHazard
+											? getHazardStripe(participant.sideTheme)
+											: '',
+									].join(' ')}
 								>
-									{participant.name}
-								</p>
-								<div className="flex items-center gap-2">
-									<PlayerStatusGroup status={participant.status} />
-									<PlayerProgressBar participant={participant} />
+									<p
+										data-slot="player-participant-name"
+										className={
+											isCurrent
+												? 'text-lg font-semibold'
+												: `text-sm font-medium ${accent.name}`
+										}
+									>
+										{participant.name}
+									</p>
+									<div className="flex items-center gap-2">
+										<PlayerStatusGroup status={participant.status} />
+										<PlayerProgressBar participant={participant} />
+									</div>
 								</div>
-							</div>
-						</Fragment>
-					))}
+							</Fragment>
+						);
+					})}
 					{initiativeParticipants.length > 0 &&
 						roundBoundaryIndex === initiativeParticipants.length && (
 							<NextRoundMarkerCard nextRound={encounter.round + 1} />
