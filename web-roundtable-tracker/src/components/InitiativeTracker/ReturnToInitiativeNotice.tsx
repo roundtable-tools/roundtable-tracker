@@ -58,15 +58,21 @@ export function ReturnToInitiativeNotice({
 				capture: true,
 				once: true,
 			});
-			// A press that ends without a click (a drag) leaves no listener.
-			document.addEventListener(
-				'pointerup',
-				() =>
-					window.setTimeout(() =>
-						document.removeEventListener('click', swallowClick, true)
-					),
-				{ once: true }
-			);
+			// A press that ends without a click (a drag, a touch that turns into
+			// a scroll, a release outside the window) leaves no listener. These
+			// listeners outlive the notice, which closes on this press.
+			const releasePress = () => {
+				document.removeEventListener('pointerup', releasePress);
+				document.removeEventListener('pointercancel', releasePress);
+				window.removeEventListener('blur', releasePress);
+				window.setTimeout(() =>
+					document.removeEventListener('click', swallowClick, true)
+				);
+			};
+
+			document.addEventListener('pointerup', releasePress);
+			document.addEventListener('pointercancel', releasePress);
+			window.addEventListener('blur', releasePress);
 			dismiss();
 		};
 		const onKeyDown = (event: KeyboardEvent) => {
