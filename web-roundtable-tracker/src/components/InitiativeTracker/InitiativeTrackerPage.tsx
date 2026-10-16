@@ -39,6 +39,7 @@ import {
 import { Reorder } from 'motion/react';
 import { useNavigate } from '@tanstack/react-router';
 import { InitiativeActionCarouselCard } from './InitiativeActionCarouselCard';
+import { OpenPlayerViewButton } from './OpenPlayerViewButton';
 import {
 	getEncounterStore,
 	useEncounterStore,
@@ -1652,6 +1653,7 @@ export function InitiativeTrackerPage() {
 									</TooltipTrigger>
 									<TooltipContent side="bottom">Manual Reorder</TooltipContent>
 								</Tooltip>
+								<OpenPlayerViewButton />
 								<div className="inline-flex items-center overflow-hidden rounded-md border border-input">
 									<Tooltip>
 										<TooltipTrigger asChild>
@@ -2003,6 +2005,7 @@ export function InitiativeTrackerPage() {
 								</Button>
 							</div>
 							<div className="flex items-right gap-2 pr-1">
+								<OpenPlayerViewButton />
 								<Button
 									aria-label="Manual Reorder"
 									size="icon"

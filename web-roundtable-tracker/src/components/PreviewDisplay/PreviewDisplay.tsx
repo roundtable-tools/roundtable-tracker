@@ -19,6 +19,7 @@ import {
 } from '@/store/convert';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate } from '@tanstack/react-router';
+import { useOpenPlayerView } from '@/components/InitiativeTracker/useOpenPlayerView';
 import { Button } from '@/components/ui/button';
 import {
 	Dialog,
@@ -142,6 +143,7 @@ export type Inputs = {
 export const PreviewDisplay = (): JSX.Element => {
 	const startEncounter = useEncounterStore((state) => state.startEncounter);
 	const navigate = useNavigate();
+	const openPlayerView = useOpenPlayerView();
 
 	const encounterData = useEncounterStore((state) => state.encounterData);
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
@@ -307,16 +309,9 @@ export const PreviewDisplay = (): JSX.Element => {
 		);
 		setShowInitiativeChoice(false);
 
-		if (view === 'initiativeTracker') {
-			navigate({ to: '/initiative_tracker' });
-
-			return;
-		}
-
+		// The player view opens in its own window, so the tracker stays here.
 		if (view === 'initiativePlayer') {
-			navigate({ to: '/initiative_player' });
-
-			return;
+			openPlayerView();
 		}
 
 		navigate({ to: '/initiative_tracker' });
@@ -378,7 +373,7 @@ export const PreviewDisplay = (): JSX.Element => {
 							variant="secondary"
 							onClick={() => onSelectInitiativeView('initiativePlayer')}
 						>
-							Player View
+							Tracker and Player View
 						</Button>
 					</DialogFooter>
 				</DialogContent>

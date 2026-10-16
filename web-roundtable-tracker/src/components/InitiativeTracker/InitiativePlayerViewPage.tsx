@@ -1,47 +1,51 @@
 import { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useEncounterStore } from '@/store/encounterRuntimeInstance';
+import {
+	isEncounterRunning,
+	usePlayerViewSnapshot,
+} from '@/store/playerViewSync';
 import {
 	encounterToTrackerHeader,
 	runtimeToPlayerInitiativeQueue,
 } from '@/store/trackerMappers';
 
+// Reads the encounter only through the player view channel, so this page
+// never writes to the GM's encounter store.
 export function InitiativePlayerViewPage() {
-	const charactersOrder = useEncounterStore((state) => state.charactersOrder);
-	const delayedOrder = useEncounterStore((state) => state.delayedOrder);
-	const charactersMap = useEncounterStore((state) => state.charactersMap);
-	const trackerMetaMap = useEncounterStore((state) => state.trackerMetaMap);
-	const encounterData = useEncounterStore((state) => state.encounterData);
-	const partyLevel = useEncounterStore((state) => state.partyLevel);
-	const round = useEncounterStore((state) => state.round);
+	const snapshot = usePlayerViewSnapshot();
+	const encounter = isEncounterRunning(snapshot) ? snapshot : null;
 
 	const initiativeParticipants = useMemo(
-		() =>
-			runtimeToPlayerInitiativeQueue({
-				charactersOrder,
-				delayedOrder,
-				charactersMap,
-				trackerMetaMap,
-			}),
-		[charactersOrder, delayedOrder, charactersMap, trackerMetaMap]
+		() => (encounter ? runtimeToPlayerInitiativeQueue(encounter) : []),
+		[encounter]
 	);
 
 	const trackerHeader = useMemo(
 		() =>
-			encounterData
-				? encounterToTrackerHeader(encounterData, partyLevel, round)
+			encounter?.encounterData
+				? encounterToTrackerHeader(
+						encounter.encounterData,
+						encounter.partyLevel,
+						encounter.round
+					)
 				: null,
-		[encounterData, partyLevel, round]
+		[encounter]
 	);
 
-	const encounterDescription = useMemo(() => {
-		if (!encounterData) {
-			return '';
-		}
+	if (!encounter) {
+		return (
+			<main className="mx-auto w-full max-w-4xl p-4 lg:p-6">
+				<Card className="p-8 text-center">
+					<p className="text-lg text-muted-foreground">
+						Waiting for the GM to start an encounter
+					</p>
+				</Card>
+			</main>
+		);
+	}
 
-		return encounterData.description;
-	}, [encounterData]);
+	const encounterDescription = encounter.encounterData?.description ?? '';
 
 	return (
 		<main className="mx-auto w-full max-w-4xl space-y-4 p-4 lg:p-6">

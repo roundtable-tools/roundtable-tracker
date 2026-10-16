@@ -19,15 +19,15 @@ Specs (`*.spec.ts`, Vitest) sit next to the code they test; cross-cutting ones a
 
 The app uses hash history (`src/main.tsx`), so URLs look like `/roundtable-tracker/#/builder`. Vite serves it under the `/roundtable-tracker/` base, as on GitHub Pages.
 
-| Route                 | Page                                                                                            |
-| --------------------- | ----------------------------------------------------------------------------------------------- |
-| `/`                   | Start page with links to the other views                                                        |
-| `/encounters`         | Encounter directory: saved encounters, bundled templates, import                                |
-| `/builder`            | Encounter builder; search params open a saved encounter, a template or an imported draft        |
-| `/party_setup`        | Party directory                                                                                 |
-| `/preview`            | Encounter preview: pick the party, set initiative and HP, then start the tracker or player view |
-| `/initiative_tracker` | GM initiative tracker; redirects to `/preview` when no encounter is running                     |
-| `/initiative_player`  | Read-only player view (proof of concept); redirects to `/preview` when no encounter is running  |
+| Route                 | Page                                                                                              |
+| --------------------- | ------------------------------------------------------------------------------------------------- |
+| `/`                   | Start page with links to the other views                                                          |
+| `/encounters`         | Encounter directory: saved encounters, bundled templates, import                                  |
+| `/builder`            | Encounter builder; search params open a saved encounter, a template or an imported draft          |
+| `/party_setup`        | Party directory                                                                                   |
+| `/preview`            | Encounter preview: pick the party, set initiative and HP, then start the tracker or player view   |
+| `/initiative_tracker` | GM initiative tracker; redirects to `/preview` when no encounter is running                       |
+| `/initiative_player`  | Read-only player view; follows the tracker live from another window, waits when no encounter runs |
 
 ## State: zustand stores
 
@@ -40,6 +40,8 @@ Each store is a vanilla zustand store defined by a `create…Store()` factory in
 | `savedParties.ts`          | `savedPartiesInstance.ts` (`getSavedPartiesStore`, `useSavedPartiesStore`)         | Saved parties and the last used party                                                                    | `saved-parties-store`    |
 
 All three use zustand's `persist` middleware with `localStorage`, so data stays in the browser it was created in. There is no server-side storage. The theme choice is stored separately under `vite-ui-theme`. Imported encounters waiting to be opened in the builder are kept only in memory (`importedEncounterDraft.ts`).
+
+The player view doesn't use the encounter store. It reads `encounter-store` through `playerViewSync.ts`, a read-only channel that follows the tracker's writes through `storage` events from another window. A remote channel for online rooms can implement the same `PlayerViewChannel` interface.
 
 ## CommandHistory (undo/redo)
 
