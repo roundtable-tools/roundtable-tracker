@@ -33,6 +33,26 @@ export type PlayerViewChannel = {
 /** Storage key of the tracker's persisted encounter store. */
 export const ENCOUNTER_STORE_KEY = 'encounter-store';
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+	typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const isStringArray = (value: unknown): value is string[] =>
+	Array.isArray(value) && value.every((item) => typeof item === 'string');
+
+/** Each field the player view reads is either missing or of its stored type. */
+const isStoredStateShape = (state: unknown): state is Partial<EncounterStore> =>
+	isRecord(state) &&
+	(state.encounterData === undefined || isRecord(state.encounterData)) &&
+	(state.charactersMap === undefined || isRecord(state.charactersMap)) &&
+	(state.charactersOrder === undefined ||
+		isStringArray(state.charactersOrder)) &&
+	(state.delayedOrder === undefined || isStringArray(state.delayedOrder)) &&
+	(state.trackerMetaMap === undefined || isRecord(state.trackerMetaMap)) &&
+	(state.partyLevel === undefined || typeof state.partyLevel === 'number') &&
+	(state.round === undefined || typeof state.round === 'number') &&
+	(state.charactersWithTurn === undefined ||
+		state.charactersWithTurn instanceof Set);
+
 /**
  * Builds a snapshot from the persisted encounter store JSON. Returns null for
  * a missing or unreadable value. Stored commands are left as plain JSON,
@@ -43,7 +63,7 @@ export const parsePlayerViewSnapshot = (
 ): PlayerViewSnapshot | null => {
 	if (!json) return null;
 
-	let parsed: { state?: Partial<EncounterStore> } | null;
+	let parsed: { state?: unknown } | null;
 
 	try {
 		parsed = JSON.parse(json, (_key, value) =>
@@ -57,7 +77,7 @@ export const parsePlayerViewSnapshot = (
 
 	const state = parsed?.state;
 
-	if (!state) return null;
+	if (!isStoredStateShape(state)) return null;
 
 	return {
 		encounterData: state.encounterData,

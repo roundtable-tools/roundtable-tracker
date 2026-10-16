@@ -202,6 +202,21 @@ describe('player view sync', () => {
 			expect(parsePlayerViewSnapshot('{"version":0}')).toBeNull();
 		});
 
+		it('returns null when a stored field has the wrong type', () => {
+			const stored = (state: object) =>
+				parsePlayerViewSnapshot(
+					JSON.stringify({ state: { encounterData: encounter, ...state } })
+				);
+
+			expect(stored({ charactersOrder: 'hero' })).toBeNull();
+			expect(stored({ delayedOrder: [1] })).toBeNull();
+			expect(stored({ charactersMap: [] })).toBeNull();
+			expect(stored({ round: '2' })).toBeNull();
+			expect(stored({ charactersWithTurn: ['hero'] })).toBeNull();
+			expect(stored({ encounterData: 'Bridge Fight' })).toBeNull();
+			expect(parsePlayerViewSnapshot('{"state":[]}')).toBeNull();
+		});
+
 		it('is not running without encounter data or participants', () => {
 			const snapshot = parsePlayerViewSnapshot(
 				JSON.stringify({ state: { charactersOrder: ['hero'] } })
