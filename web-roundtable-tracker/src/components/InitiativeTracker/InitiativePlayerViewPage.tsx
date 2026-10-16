@@ -234,6 +234,8 @@ export function InitiativePlayerViewPage() {
 	}
 
 	const encounterDescription = encounter.encounterData?.description ?? '';
+	// GM and monster notes stay with the GM; only player notes are shown.
+	const playerNotes = encounter.encounterData?.notes?.player?.trim() ?? '';
 
 	return (
 		<main className="mx-auto w-full max-w-4xl space-y-4 p-4 lg:p-6">
@@ -304,10 +306,19 @@ export function InitiativePlayerViewPage() {
 
 			<Card className="p-4">
 				<h2 className="mb-2 text-base font-semibold">Encounter Description</h2>
-				<p className="text-sm text-muted-foreground">
+				<p className="whitespace-pre-line text-sm text-muted-foreground">
 					{encounterDescription || 'No encounter description available.'}
 				</p>
 			</Card>
+
+			{playerNotes && (
+				<Card className="p-4">
+					<h2 className="mb-2 text-base font-semibold">Player Notes</h2>
+					<p className="whitespace-pre-line text-sm text-muted-foreground">
+						{playerNotes}
+					</p>
+				</Card>
+			)}
 		</main>
 	);
 }

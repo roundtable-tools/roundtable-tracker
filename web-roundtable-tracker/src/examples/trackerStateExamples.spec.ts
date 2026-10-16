@@ -98,14 +98,16 @@ const encounter: Encounter = {
 	id: 'example-bridge-ambush',
 	name: 'Bridge Ambush',
 	description:
-		'Goblins hold the rope bridge over the gorge. The bridge is rigged to collapse.',
+		'Goblins hold the rope bridge over the gorge, with archers on the far side.',
 	difficulty: DIFFICULTY.Severe,
 	partySize: 4,
 	levelRepresentation: LEVEL_REPRESENTATION.Exact,
 	level: 3,
 	notes: {
-		gm: 'The warchief flees once bloodied.',
-		player: 'The bridge sways under every step.',
+		gm: 'The bridge is rigged to collapse once the hazard is triggered. The warchief flees once bloodied.',
+		monster: 'The goblin dog stays hidden in the rigging until it attacks.',
+		player:
+			'The bridge sways under every step.\nThe toll keeper watches from his hut.',
 	},
 	participants: [
 		{
