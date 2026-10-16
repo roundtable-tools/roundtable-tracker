@@ -1,6 +1,5 @@
 import {
 	ALIGNMENT,
-	CharacterConfig,
 	DIFFICULTY,
 	difficultyToString,
 	Encounter,
@@ -10,6 +9,12 @@ import {
 import { generateUUID } from '@/utils/uuid';
 import { PreviewCard } from './PreviewCard';
 import { generateParticipants } from './generateParticipants';
+import {
+	generatePartyFromData,
+	toPreviewCharacter,
+	toStartingParticipant,
+	type PreviewCharacterConfig,
+} from './startingParticipants';
 import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { useEffect, useMemo, useState } from 'react';
 import { AppHeader } from '@/AppHeader';
@@ -39,11 +44,6 @@ import {
 import { Bot, FolderOpen, Trees, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useSavedPartiesStore } from '@/store/savedPartiesInstance';
-import { Party } from '@/store/savedParties';
-
-type PreviewCharacterConfig = CharacterConfig & {
-	hasHealthData?: boolean;
-};
 
 type TeamAppearance = {
 	borderClassName: string;
@@ -117,21 +117,6 @@ const generateParty = (
 	);
 };
 
-const generatePartyFromData = (party: Party): InitiativeParticipant[] =>
-	party.members.map((member) => ({
-		uuid: member.uuid,
-		name: member.name,
-		level: member.level,
-		side: ALIGNMENT.PCs,
-		tiePriority: member.tiePriority ? PRIORITY.PC : PRIORITY.NPC,
-		maxHealth: member.maxHealth,
-		health: member.maxHealth,
-		tempHealth: typeof member.maxHealth === 'number' ? 0 : undefined,
-		initiative: 0,
-		type: 'creature' as const,
-		isSimpleHazard: false,
-	}));
-
 export type Inputs = {
 	teams: {
 		side: number;
@@ -197,17 +182,7 @@ export const PreviewDisplay = (): JSX.Element => {
 				.map((group, index) => ({
 					side: group[0].side,
 					isParty: index === 0,
-					characters: group.map((participant) => ({
-						hasHealthData:
-							typeof participant.maxHealth === 'number' ||
-							typeof participant.health === 'number' ||
-							typeof participant.tempHealth === 'number',
-						...participant,
-						initiative: participant.initiative ?? 0,
-						maxHealth: participant.maxHealth ?? 1,
-						tempHealth: participant.tempHealth ?? 0,
-						health: participant.health ?? participant.maxHealth,
-					})),
+					characters: group.map(toPreviewCharacter),
 				})),
 		[fullParty]
 	);
@@ -250,50 +225,8 @@ export const PreviewDisplay = (): JSX.Element => {
 						...sourceParticipant,
 						...participant,
 					};
-					const hasHealthData = mergedParticipant.hasHealthData !== false;
-					const maxHealth =
-						typeof mergedParticipant.maxHealth === 'number' &&
-						Number.isFinite(mergedParticipant.maxHealth) &&
-						mergedParticipant.maxHealth >= 0
-							? mergedParticipant.maxHealth
-							: 1;
-					const health =
-						typeof mergedParticipant.health === 'number' &&
-						Number.isFinite(mergedParticipant.health) &&
-						mergedParticipant.health >= 0
-							? mergedParticipant.health
-							: maxHealth;
-					const tempHealth =
-						typeof mergedParticipant.tempHealth === 'number' &&
-						Number.isFinite(mergedParticipant.tempHealth) &&
-						mergedParticipant.tempHealth >= 0
-							? mergedParticipant.tempHealth
-							: 0;
-					const initiative =
-						typeof mergedParticipant.initiative === 'number' &&
-						Number.isFinite(mergedParticipant.initiative)
-							? mergedParticipant.initiative
-							: (mergedParticipant.initiative ?? 0);
 
-					if (!hasHealthData) {
-						return {
-							...mergedParticipant,
-							hasHealthData: false,
-							initiative,
-							maxHealth: 1,
-							health: 1,
-							tempHealth: 0,
-						};
-					}
-
-					return {
-						...mergedParticipant,
-						hasHealthData: true,
-						initiative,
-						maxHealth,
-						health,
-						tempHealth,
-					};
+					return toStartingParticipant(mergedParticipant);
 				});
 			setPreparedParticipants(formParticipants);
 			setShowInitiativeChoice(true);
