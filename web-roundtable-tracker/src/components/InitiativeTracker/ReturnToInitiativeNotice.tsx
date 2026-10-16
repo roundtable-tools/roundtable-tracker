@@ -12,6 +12,10 @@ type DelayedParticipant = { id: string; name: string };
  * the turn ends. Picking one returns it. Anything else means nobody returns:
  * the close button, Escape, a click outside (which does nothing else) or no
  * answer within RETURN_NOTICE_TIMEOUT_MS.
+ *
+ * The notice takes the focus when it opens and gives it back when it closes.
+ * The countdown stops while the pointer is over it or a control in it has
+ * the focus, and starts over when both leave.
  */
 export function ReturnToInitiativeNotice({
 	participants,
@@ -24,6 +28,9 @@ export function ReturnToInitiativeNotice({
 }) {
 	const noticeRef = useRef<HTMLDivElement>(null);
 	const [countdownStarted, setCountdownStarted] = useState(false);
+	const [hovered, setHovered] = useState(false);
+	const [controlFocused, setControlFocused] = useState(false);
+	const paused = hovered || controlFocused;
 	// The handlers change every render; the listeners below read the latest.
 	const handlersRef = useRef({ onReturn, onDismiss });
 	handlersRef.current = { onReturn, onDismiss };
@@ -39,8 +46,31 @@ export function ReturnToInitiativeNotice({
 	const dismiss = () => settle(() => handlersRef.current.onDismiss());
 
 	useEffect(() => {
+		if (paused) {
+			setCountdownStarted(false);
+
+			return;
+		}
+
 		const timeout = window.setTimeout(dismiss, RETURN_NOTICE_TIMEOUT_MS);
 		const frame = window.requestAnimationFrame(() => setCountdownStarted(true));
+
+		return () => {
+			window.clearTimeout(timeout);
+			window.cancelAnimationFrame(frame);
+		};
+		// dismiss reads the latest handlers through a ref.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [paused]);
+
+	useEffect(() => {
+		const notice = noticeRef.current;
+		const previousFocus =
+			document.activeElement instanceof HTMLElement
+				? document.activeElement
+				: null;
+
+		notice?.focus({ preventScroll: true });
 
 		const isOutside = (target: EventTarget | null) =>
 			!(target instanceof Node && noticeRef.current?.contains(target));
@@ -83,10 +113,21 @@ export function ReturnToInitiativeNotice({
 		document.addEventListener('keydown', onKeyDown);
 
 		return () => {
-			window.clearTimeout(timeout);
-			window.cancelAnimationFrame(frame);
 			document.removeEventListener('pointerdown', onPointerDown, true);
 			document.removeEventListener('keydown', onKeyDown);
+
+			// Give the focus back unless the press that closed the notice
+			// already moved it elsewhere.
+			const active = document.activeElement;
+
+			if (
+				previousFocus?.isConnected &&
+				(active === null ||
+					active === document.body ||
+					notice?.contains(active))
+			) {
+				previousFocus.focus({ preventScroll: true });
+			}
 		};
 		// Runs once per notice; dismiss reads the latest handlers through a ref.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -98,7 +139,18 @@ export function ReturnToInitiativeNotice({
 			role="alertdialog"
 			aria-labelledby="return-to-initiative-title"
 			aria-describedby="return-to-initiative-description"
-			className="fixed bottom-4 right-4 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-lg border bg-popover text-popover-foreground shadow-lg"
+			tabIndex={-1}
+			onPointerEnter={() => setHovered(true)}
+			onPointerLeave={() => setHovered(false)}
+			onFocus={(event) =>
+				setControlFocused(event.target !== event.currentTarget)
+			}
+			onBlur={(event) => {
+				if (!event.currentTarget.contains(event.relatedTarget)) {
+					setControlFocused(false);
+				}
+			}}
+			className="outline-none fixed bottom-4 right-4 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-lg border bg-popover text-popover-foreground shadow-lg"
 		>
 			<div className="space-y-3 p-4">
 				<div className="flex items-start justify-between gap-2">
@@ -149,7 +201,10 @@ export function ReturnToInitiativeNotice({
 					className="h-full origin-left bg-primary/60 transition-transform ease-linear"
 					style={{
 						transform: countdownStarted ? 'scaleX(0)' : 'scaleX(1)',
-						transitionDuration: `${RETURN_NOTICE_TIMEOUT_MS}ms`,
+						// Snaps back to full while paused, then runs down again.
+						transitionDuration: countdownStarted
+							? `${RETURN_NOTICE_TIMEOUT_MS}ms`
+							: '0ms',
 					}}
 				/>
 			</div>
