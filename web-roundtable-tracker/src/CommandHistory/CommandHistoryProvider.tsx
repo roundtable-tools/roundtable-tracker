@@ -5,9 +5,12 @@ import {
 	getEncounterStore,
 	useEncounterStore,
 } from '@/store/encounterRuntimeInstance';
-import { Command, STATUS } from './common';
-
-const commandName = (command: Command) => command.description ?? command.type;
+import { Command } from './common';
+import {
+	executeCommand as executeStoreCommand,
+	redoNextCommand,
+	undoLastCommand,
+} from './commandExecution';
 
 export const CommandHistoryProvider: FC<{ children: ReactNode }> = ({
 	children,
@@ -17,46 +20,10 @@ export const CommandHistoryProvider: FC<{ children: ReactNode }> = ({
 	const history = useEncounterStore((state) => state.history);
 	const setHistory = useEncounterStore((state) => state.setHistory);
 
-	const executeCommand = (command: Command) => {
-		// A command that fails leaves the state unchanged, so there is nothing
-		// to roll back here (CompositeCommand rolls back its own parts).
-		if (command.execute() === STATUS.failure) {
-			throw new Error('Failed to execute command');
-		}
-
-		setHistory((prev) => [...prev, command]);
-		setRedoStack([]); // Clear redo stack after a new command is executed
-	};
-
-	const undo = () => {
-		const lastCommand = getEncounterStore().getState().history.at(-1);
-
-		if (!lastCommand) return;
-
-		if (lastCommand.undo() === STATUS.failure) {
-			console.error(`Failed to undo command: ${commandName(lastCommand)}`);
-
-			return;
-		}
-
-		setHistory((prev) => prev.slice(0, -1));
-		setRedoStack((prev) => [lastCommand, ...prev]);
-	};
-
-	const redo = () => {
-		const nextCommand = getEncounterStore().getState().redoStack[0];
-
-		if (!nextCommand) return;
-
-		if (nextCommand.execute() === STATUS.failure) {
-			console.error(`Failed to redo command: ${commandName(nextCommand)}`);
-
-			return;
-		}
-
-		setRedoStack((prev) => prev.slice(1));
-		setHistory((prev) => [...prev, nextCommand]);
-	};
+	const executeCommand = (command: Command) =>
+		executeStoreCommand(getEncounterStore(), command);
+	const undo = () => undoLastCommand(getEncounterStore());
+	const redo = () => redoNextCommand(getEncounterStore());
 
 	const clearHistory = () => {
 		setHistory([]);

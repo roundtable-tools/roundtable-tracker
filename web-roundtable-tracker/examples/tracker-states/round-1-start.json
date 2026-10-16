@@ -486,6 +486,15 @@
 					]
 				}
 			]
+		},
+		"timer": {
+			"round": 1,
+			"roundStartedAt": 1767294000000,
+			"turnParticipantId": "pc-valeros",
+			"turnStartedAt": 1767294000000,
+			"pausedAt": 1767294000000,
+			"turnLog": [],
+			"roundLog": []
 		}
 	},
 	"version": 0

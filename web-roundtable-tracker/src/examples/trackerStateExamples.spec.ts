@@ -30,7 +30,9 @@ import {
 	participantsToEncounterCharacters,
 } from '@/store/convert';
 import { Party } from '@/store/savedParties';
-import { type Command, STATUS } from '@/CommandHistory/common';
+import { type Command } from '@/CommandHistory/common';
+import { executeCommand } from '@/CommandHistory/commandExecution';
+import { pauseTimer } from '@/store/encounterTimer';
 import { ChangeHealthCommand } from '@/CommandHistory/Commands/ChangeHealthCommand';
 import { SetTempHealthCommand } from '@/CommandHistory/Commands/SetTempHealthCommand';
 import { TriggerReinforcementEventCommand } from '@/CommandHistory/Commands/TriggerReinforcementEventCommand';
@@ -295,11 +297,23 @@ const startFromPreview = (store: EncounterStoreApi) => {
 };
 
 /** Runs a command and records it, as CommandHistoryProvider.executeCommand does. */
-const run = (store: EncounterStoreApi, command: Command) => {
-	expect(command.execute()).toBe(STATUS.success);
-	store.getState().setHistory((history) => [...history, command]);
-	store.getState().setRedoStack([]);
+// The examples start at a fixed time; each turn moves this clock on.
+const EXAMPLE_START = Date.UTC(2026, 0, 1, 19, 0, 0);
+const clock = { now: EXAMPLE_START };
+
+// How long each participant takes per turn; GM-owned ones are quicker.
+const TURN_SECONDS: Record<string, number> = {
+	Valeros: 75,
+	Kyra: 95,
+	Merisiel: 60,
+	Ezren: 140,
+	'Goblin Warchief': 40,
+	'Bridge Keeper': 15,
 };
+
+/** Runs a command as the tracker does, so the timer moves with it. */
+const run = (store: EncounterStoreApi, command: Command) =>
+	executeCommand(store, command, clock.now);
 
 const uuidOf = (store: EncounterStoreApi, name: string) => {
 	const entry = Object.values(store.getState().charactersMap).find(
@@ -316,6 +330,7 @@ const act = (store: EncounterStoreApi, name: string, action: RoundAction) => {
 	const uuid = uuidOf(store, name);
 
 	expect(store.getState().charactersOrder[0]).toBe(uuid);
+	clock.now += (TURN_SECONDS[name] ?? 25) * 1000;
 	run(
 		store,
 		getRoundActionCommand(uuid, action, store.getState(), {
@@ -347,8 +362,14 @@ const expectEachParticipantOnceForPlayers = (store: EncounterStoreApi) => {
 	expect(new Set(ids)).toEqual(expected);
 };
 
-/** The persisted encounter-store, formatted like the repo's other JSON. */
-const storedExample = async () => {
+/**
+ * The persisted encounter-store, formatted like the repo's other JSON. The
+ * timer is paused first, as the GM would before a break, so a loaded example
+ * shows these times until the GM resumes it.
+ */
+const storedExample = async (store: EncounterStoreApi) => {
+	store.getState().setTimer((timer) => timer && pauseTimer(timer, clock.now));
+
 	const stored = localStorage.getItem(ENCOUNTER_STORE_KEY);
 
 	expect(stored).not.toBeNull();
@@ -367,6 +388,7 @@ describe('tracker state examples', () => {
 
 	afterEach(() => {
 		vi.restoreAllMocks();
+		vi.useRealTimers();
 	});
 
 	beforeAll(() => {
@@ -377,6 +399,9 @@ describe('tracker state examples', () => {
 	beforeEach(() => {
 		// Every d20 roll (preview defaults, arriving reinforcements) comes up 11.
 		vi.spyOn(Math, 'random').mockReturnValue(0.5);
+		vi.useFakeTimers({ toFake: ['Date'] });
+		clock.now = EXAMPLE_START;
+		vi.setSystemTime(clock.now);
 		uuidCounter.next = 0;
 		store = createEncounterStore();
 		startFromPreview(store);
@@ -393,7 +418,7 @@ describe('tracker state examples', () => {
 
 		expectEachParticipantOnceForPlayers(store);
 
-		await expect(await storedExample()).toMatchFileSnapshot(
+		await expect(await storedExample(store)).toMatchFileSnapshot(
 			examplePath('round-1-start')
 		);
 	});
@@ -456,6 +481,8 @@ describe('tracker state examples', () => {
 		}
 		store.getState().setTrackerMetaMap(meta);
 		act(store, 'Collapsing Bridge', 'end-turn');
+		// Kyra has been thinking for a while when the GM pauses.
+		clock.now += 50 * 1000;
 
 		const state = store.getState();
 
@@ -472,7 +499,7 @@ describe('tracker state examples', () => {
 
 		expectEachParticipantOnceForPlayers(store);
 
-		await expect(await storedExample()).toMatchFileSnapshot(
+		await expect(await storedExample(store)).toMatchFileSnapshot(
 			examplePath('round-2-mid-round')
 		);
 	});

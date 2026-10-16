@@ -1723,6 +1723,71 @@
 					]
 				}
 			]
+		},
+		"timer": {
+			"round": 2,
+			"roundStartedAt": 1767294575000,
+			"turnParticipantId": "pc-kyra",
+			"turnStartedAt": 1767294715000,
+			"pausedAt": 1767294765000,
+			"turnLog": [
+				{ "participantId": "pc-valeros", "round": 1, "durationMs": 75000 },
+				{
+					"participantId": "00000000-0000-4000-8000-000000000001",
+					"round": 1,
+					"durationMs": 40000
+				},
+				{
+					"participantId": "00000000-0000-4000-8000-000000000006",
+					"round": 1,
+					"durationMs": 25000
+				},
+				{ "participantId": "pc-kyra", "round": 1, "durationMs": 95000 },
+				{
+					"participantId": "00000000-0000-4000-8000-000000000002",
+					"round": 1,
+					"durationMs": 25000
+				},
+				{
+					"participantId": "00000000-0000-4000-8000-000000000010",
+					"round": 1,
+					"durationMs": 15000
+				},
+				{ "participantId": "pc-merisiel", "round": 1, "durationMs": 60000 },
+				{
+					"participantId": "00000000-0000-4000-8000-000000000007",
+					"round": 1,
+					"durationMs": 25000
+				},
+				{
+					"participantId": "00000000-0000-4000-8000-000000000004",
+					"round": 1,
+					"durationMs": 25000
+				},
+				{
+					"participantId": "00000000-0000-4000-8000-000000000003",
+					"round": 1,
+					"durationMs": 25000
+				},
+				{ "participantId": "pc-ezren", "round": 1, "durationMs": 140000 },
+				{
+					"participantId": "00000000-0000-4000-8000-000000000008",
+					"round": 1,
+					"durationMs": 25000
+				},
+				{ "participantId": "pc-valeros", "round": 2, "durationMs": 75000 },
+				{
+					"participantId": "00000000-0000-4000-8000-000000000001",
+					"round": 2,
+					"durationMs": 40000
+				},
+				{
+					"participantId": "00000000-0000-4000-8000-000000000006",
+					"round": 2,
+					"durationMs": 25000
+				}
+			],
+			"roundLog": [{ "round": 1, "durationMs": 575000 }]
 		}
 	},
 	"version": 0

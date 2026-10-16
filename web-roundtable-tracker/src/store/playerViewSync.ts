@@ -13,6 +13,7 @@ export type PlayerViewSnapshot = Pick<
 	| 'partyLevel'
 	| 'round'
 	| 'charactersWithTurn'
+	| 'timer'
 >;
 
 /**
@@ -88,6 +89,7 @@ export const parsePlayerViewSnapshot = (
 		partyLevel: state.partyLevel ?? 1,
 		round: state.round ?? 0,
 		charactersWithTurn: state.charactersWithTurn ?? new Set(),
+		timer: state.timer ?? null,
 	};
 };
 
