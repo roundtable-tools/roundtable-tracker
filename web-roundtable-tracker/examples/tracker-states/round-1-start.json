@@ -1,0 +1,425 @@
+{
+	"state": {
+		"charactersMap": {
+			"pc-valeros": {
+				"uuid": "pc-valeros",
+				"name": "Valeros",
+				"initiative": 24,
+				"health": 45,
+				"maxHealth": 45,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "players"
+			},
+			"00000000-0000-4000-8000-000000000001": {
+				"uuid": "00000000-0000-4000-8000-000000000001",
+				"name": "Goblin Warchief",
+				"initiative": 22,
+				"health": 70,
+				"maxHealth": 70,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "enemies"
+			},
+			"00000000-0000-4000-8000-000000000006": {
+				"uuid": "00000000-0000-4000-8000-000000000006",
+				"name": "Collapsing Bridge",
+				"initiative": 20,
+				"health": 40,
+				"maxHealth": 40,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "enemies"
+			},
+			"pc-kyra": {
+				"uuid": "pc-kyra",
+				"name": "Kyra",
+				"initiative": 19,
+				"health": 38,
+				"maxHealth": 38,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "players"
+			},
+			"00000000-0000-4000-8000-000000000002": {
+				"uuid": "00000000-0000-4000-8000-000000000002",
+				"name": "Goblin Archer A",
+				"initiative": 17,
+				"health": 18,
+				"maxHealth": 18,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "enemies"
+			},
+			"00000000-0000-4000-8000-000000000005": {
+				"uuid": "00000000-0000-4000-8000-000000000005",
+				"name": "Goblin Sneak",
+				"initiative": 16,
+				"health": 25,
+				"maxHealth": 25,
+				"tempHealth": 0,
+				"turnState": "delayed",
+				"group": "enemies"
+			},
+			"00000000-0000-4000-8000-000000000008": {
+				"uuid": "00000000-0000-4000-8000-000000000008",
+				"name": "Bridge Keeper",
+				"initiative": 15,
+				"health": 45,
+				"maxHealth": 45,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "enemies"
+			},
+			"pc-merisiel": {
+				"uuid": "pc-merisiel",
+				"name": "Merisiel",
+				"initiative": 14,
+				"health": 32,
+				"maxHealth": 32,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "players"
+			},
+			"00000000-0000-4000-8000-000000000004": {
+				"uuid": "00000000-0000-4000-8000-000000000004",
+				"name": "Goblin Dog",
+				"initiative": 12,
+				"health": 17,
+				"maxHealth": 17,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "enemies"
+			},
+			"00000000-0000-4000-8000-000000000007": {
+				"uuid": "00000000-0000-4000-8000-000000000007",
+				"name": "Hidden Pit",
+				"initiative": 11,
+				"health": 1,
+				"maxHealth": 1,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "enemies"
+			},
+			"00000000-0000-4000-8000-000000000003": {
+				"uuid": "00000000-0000-4000-8000-000000000003",
+				"name": "Goblin Archer B",
+				"initiative": 10,
+				"health": 18,
+				"maxHealth": 18,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "enemies"
+			},
+			"pc-ezren": {
+				"uuid": "pc-ezren",
+				"name": "Ezren",
+				"initiative": 8,
+				"health": 1,
+				"maxHealth": 1,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "players"
+			}
+		},
+		"charactersOrder": [
+			"pc-valeros",
+			"00000000-0000-4000-8000-000000000001",
+			"00000000-0000-4000-8000-000000000006",
+			"pc-kyra",
+			"00000000-0000-4000-8000-000000000002",
+			"00000000-0000-4000-8000-000000000008",
+			"pc-merisiel",
+			"00000000-0000-4000-8000-000000000004",
+			"00000000-0000-4000-8000-000000000003",
+			"pc-ezren"
+		],
+		"delayedOrder": ["00000000-0000-4000-8000-000000000005"],
+		"trackerMetaMap": {
+			"pc-valeros": {
+				"role": "pc",
+				"sideTheme": "pc",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": ""
+			},
+			"00000000-0000-4000-8000-000000000001": {
+				"role": "opponent",
+				"sideTheme": "opponent",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": "Leads from the far end of the bridge.",
+				"initiativeBonus": 9,
+				"dcs": [{ "name": "AC", "value": 22 }],
+				"adjustmentDescription": "Elite",
+				"adjustmentLevelModifier": 1,
+				"traits": ["Goblin", "Humanoid"]
+			},
+			"00000000-0000-4000-8000-000000000006": {
+				"role": "hazard",
+				"sideTheme": "opponent",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 3,
+				"disableChecksSucceeded": 0,
+				"notes": "Planks drop away each round.",
+				"hardness": 8,
+				"initiativeBonus": 9,
+				"dcs": [
+					{ "name": "Thievery", "value": 20, "disableSuccesses": 2 },
+					{ "name": "Athletics", "value": 22, "disableSuccesses": 1 }
+				]
+			},
+			"pc-kyra": {
+				"role": "pc",
+				"sideTheme": "pc",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": ""
+			},
+			"00000000-0000-4000-8000-000000000002": {
+				"role": "opponent",
+				"sideTheme": "opponent",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": "",
+				"initiativeBonus": 6,
+				"adjustmentDescription": "Weak",
+				"adjustmentLevelModifier": -1,
+				"traits": ["Goblin", "Humanoid"]
+			},
+			"00000000-0000-4000-8000-000000000005": {
+				"role": "opponent",
+				"sideTheme": "opponent",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": "",
+				"initiativeBonus": 8
+			},
+			"00000000-0000-4000-8000-000000000008": {
+				"role": "neutral",
+				"sideTheme": "other",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": "Collects the toll and wants nobody hurt.",
+				"initiativeBonus": 7,
+				"traits": ["Human"]
+			},
+			"pc-merisiel": {
+				"role": "pc",
+				"sideTheme": "pc",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": ""
+			},
+			"00000000-0000-4000-8000-000000000004": {
+				"role": "opponent",
+				"sideTheme": "opponent",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": "",
+				"initiativeBonus": 6,
+				"traits": ["Animal"]
+			},
+			"00000000-0000-4000-8000-000000000007": {
+				"role": "hazard",
+				"sideTheme": "opponent",
+				"hasHealthData": false,
+				"isSimpleHazard": true,
+				"disableChecksRequired": 1,
+				"disableChecksSucceeded": 0,
+				"notes": "",
+				"dcs": [{ "name": "Perception", "value": 18 }]
+			},
+			"00000000-0000-4000-8000-000000000003": {
+				"role": "opponent",
+				"sideTheme": "opponent",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": "",
+				"initiativeBonus": 6,
+				"adjustmentDescription": "Weak",
+				"adjustmentLevelModifier": -1,
+				"traits": ["Goblin", "Humanoid"]
+			},
+			"pc-ezren": {
+				"role": "pc",
+				"sideTheme": "pc",
+				"hasHealthData": false,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": ""
+			}
+		},
+		"round": 1,
+		"charactersWithTurn": {
+			"type": "Set",
+			"data": [
+				"00000000-0000-4000-8000-000000000005",
+				"pc-valeros",
+				"00000000-0000-4000-8000-000000000001",
+				"00000000-0000-4000-8000-000000000006",
+				"pc-kyra",
+				"00000000-0000-4000-8000-000000000002",
+				"00000000-0000-4000-8000-000000000008",
+				"pc-merisiel",
+				"00000000-0000-4000-8000-000000000004",
+				"00000000-0000-4000-8000-000000000003",
+				"pc-ezren"
+			]
+		},
+		"history": [],
+		"redoStack": [],
+		"partyLevel": 3,
+		"encounterData": {
+			"id": "example-bridge-ambush",
+			"name": "Bridge Ambush",
+			"description": "Goblins hold the rope bridge over the gorge. The bridge is rigged to collapse.",
+			"difficulty": 3,
+			"partySize": 4,
+			"levelRepresentation": 1,
+			"level": 3,
+			"notes": {
+				"gm": "The warchief flees once bloodied.",
+				"player": "The bridge sways under every step."
+			},
+			"participants": [
+				{
+					"type": "creature",
+					"name": "Goblin Warchief",
+					"level": 4,
+					"side": 1,
+					"maxHealth": 70,
+					"initiativeBonus": 9,
+					"adjustmentDescription": "Elite",
+					"adjustmentLevelModifier": 1,
+					"traits": ["Goblin", "Humanoid"],
+					"description": "Leads from the far end of the bridge.",
+					"dcs": [{ "name": "AC", "value": 22 }]
+				},
+				{
+					"type": "creature",
+					"name": "Goblin Archer",
+					"level": 1,
+					"count": 2,
+					"side": 1,
+					"maxHealth": 18,
+					"initiativeBonus": 6,
+					"adjustmentDescription": "Weak",
+					"adjustmentLevelModifier": -1,
+					"traits": ["Goblin", "Humanoid"]
+				},
+				{
+					"type": "creature",
+					"name": "Goblin Dog",
+					"level": 1,
+					"side": 1,
+					"maxHealth": 17,
+					"initiativeBonus": 6,
+					"traits": ["Animal"],
+					"hiddenFromPlayers": true
+				},
+				{
+					"type": "creature",
+					"name": "Goblin Sneak",
+					"level": 2,
+					"side": 1,
+					"maxHealth": 25,
+					"initiativeBonus": 8,
+					"startingState": "delayed",
+					"initiativeDescription": "Waits in the rigging to ambush"
+				},
+				{
+					"type": "creature",
+					"name": "Bridge Keeper",
+					"level": 3,
+					"side": 2,
+					"maxHealth": 45,
+					"initiativeBonus": 7,
+					"traits": ["Human"],
+					"description": "Collects the toll and wants nobody hurt."
+				},
+				{
+					"type": "hazard",
+					"name": "Collapsing Bridge",
+					"level": 3,
+					"side": 1,
+					"isComplexHazard": true,
+					"successesToDisable": 3,
+					"maxHealth": 40,
+					"hardness": 8,
+					"initiativeBonus": 9,
+					"description": "Planks drop away each round.",
+					"dcs": [
+						{ "name": "Thievery", "value": 20, "disableSuccesses": 2 },
+						{ "name": "Athletics", "value": 22, "disableSuccesses": 1 }
+					]
+				},
+				{
+					"type": "hazard",
+					"name": "Hidden Pit",
+					"level": 1,
+					"side": 1,
+					"successesToDisable": 1,
+					"dcs": [{ "name": "Perception", "value": 18 }]
+				}
+			],
+			"narrativeSlots": [
+				{
+					"id": "goblin-reinforcements",
+					"type": "reinforcement",
+					"description": "More goblins climb up from the gorge.",
+					"trigger": { "round": 2 },
+					"participants": [
+						{
+							"type": "creature",
+							"name": "Goblin Warrior",
+							"level": "-1",
+							"count": 2,
+							"side": 1,
+							"maxHealth": 15,
+							"initiativeBonus": 5,
+							"traits": ["Goblin"]
+						}
+					]
+				},
+				{
+					"id": "town-guard",
+					"type": "reinforcement",
+					"description": "The town guard comes to see what the noise is.",
+					"trigger": { "round": 3 },
+					"participants": [
+						{
+							"type": "creature",
+							"name": "Town Guard",
+							"level": "+0",
+							"side": 2,
+							"maxHealth": 40,
+							"initiativeBonus": 7
+						}
+					]
+				}
+			]
+		}
+	},
+	"version": 0
+}

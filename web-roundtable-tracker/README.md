@@ -50,3 +50,16 @@ Tracker actions (end turn, delay, knock out, change health, reorder, trigger rei
 - `CommandHistoryProvider` (wrapped around the router in `main.tsx`) exposes `executeCommand`, `undo`, `redo`, `clearHistory`, `canUndo` and `canRedo` through `CommandHistoryContext`. Executing a command pushes it onto `history` and clears `redoStack`; a failed command is undone and throws.
 - `history` and `redoStack` live in the encounter store, so they are persisted with it. `src/store/serializer.ts` turns commands into `{ type: 'Command.<type>', data }` JSON and back (and also handles `Set`s).
 - To be restored after a reload, a command class must be registered in `registerSerializableCommands()` in `commandRegistry.ts`.
+
+## Tracker state examples
+
+`examples/tracker-states/` holds saved tracker states for checking the tracker and the player view by hand. Each file is a persisted `encounter-store`:
+
+| File                     | State                                                                                                                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `round-1-start.json`     | Round 1, nobody has acted. PCs (one without HP data), elite, weak and hidden opponents, a neutral creature, a complex and a simple hazard, a participant that starts delaying |
+| `round-2-mid-round.json` | Round 2 after a few turns: wounded, critical and knocked-out participants, temp HP, a delay on a turn, triggered and pending reinforcements, hazard disable progress          |
+
+With the dev server (`yarn dev`), open `?example=<file name>` before the hash, e.g. `http://localhost:5173/roundtable-tracker/?example=round-2-mid-round#/initiative_tracker`. It replaces the running encounter, so undo and redo work from there. Production builds don't include the loader (`src/devTrackerExamples.ts`).
+
+`src/examples/trackerStateExamples.spec.ts` builds the files from the preview's starting participants and the tracker's commands, so they never hold a state the app can't reach. `yarn workspace web-roundtable-tracker vitest run src/examples -u` rewrites them after a change; the spec fails until then.

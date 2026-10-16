@@ -25,6 +25,11 @@ declare module '@tanstack/react-router' {
 	}
 }
 
+if (import.meta.env.DEV) {
+	const { loadTrackerExampleFromUrl } = await import('./devTrackerExamples');
+	await loadTrackerExampleFromUrl();
+}
+
 // Render the app
 const rootElement = document.getElementById('root')!;
 
