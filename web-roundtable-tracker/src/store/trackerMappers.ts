@@ -70,8 +70,44 @@ export type PlayerTrackerParticipant = {
 	sideTheme: ParticipantSideTheme;
 };
 
-/** Segments in the player HP bar. Players see HP in these steps only. */
-export const PLAYER_HP_SEGMENTS = 5;
+/** HP tiers above 0 HP, from worst to best. */
+const HEALTH_TIERS = [
+	'Near Death',
+	'Badly Injured',
+	'Injured',
+	'Barely Injured',
+	'Uninjured',
+] as const;
+
+type HealthTier = (typeof HEALTH_TIERS)[number];
+
+/** Segments in the player HP bar: one per HP tier. */
+export const PLAYER_HP_SEGMENTS = HEALTH_TIERS.length;
+
+/** The HP tier for a percentage of max HP; Unconscious at 0 HP or less. */
+export function getHealthLabelFromPercentage(healthPercentage: number) {
+	if (healthPercentage <= 0) {
+		return 'Unconscious';
+	}
+
+	if (healthPercentage >= 100) {
+		return 'Uninjured';
+	}
+
+	if (healthPercentage >= 85) {
+		return 'Barely Injured';
+	}
+
+	if (healthPercentage >= 65) {
+		return 'Injured';
+	}
+
+	if (healthPercentage >= 35) {
+		return 'Badly Injured';
+	}
+
+	return 'Near Death';
+}
 
 /** The colour group a participant is shown in. */
 export type ParticipantSideTheme = 'pc' | 'opponent' | 'ally' | 'other';
@@ -336,49 +372,32 @@ const toPlayerStatus = (
 	return 'Ready';
 };
 
-const toCoarseHpLabel = (participant: TrackerParticipant): string => {
+/**
+ * A participant's HP as players see it: the HP tier, and that tier's number of
+ * filled segments in the player HP bar.
+ */
+const toPlayerHealth = (
+	participant: TrackerParticipant
+): Pick<PlayerTrackerParticipant, 'hpLabel' | 'hpSegments'> => {
+	if (participant.state === 'knocked-out') {
+		return { hpLabel: 'Unconscious', hpSegments: 0 };
+	}
+
 	if (
 		typeof participant.currentHp !== 'number' ||
 		typeof participant.maxHp !== 'number'
 	) {
-		return 'No HP Data';
+		return { hpLabel: 'No HP Data', hpSegments: null };
 	}
 
-	const maxHp = participant.maxHp ?? 1;
-	const currentHp = participant.currentHp ?? maxHp;
-
-	if (currentHp <= 0) {
-		return 'Defeated';
-	}
-
-	const ratio = currentHp / Math.max(maxHp, 1);
-
-	if (ratio >= 0.75) {
-		return 'Healthy';
-	}
-
-	if (ratio >= 0.4) {
-		return 'Wounded';
-	}
-
-	return 'Critical';
-};
-
-const toHpSegments = (participant: TrackerParticipant): number | null => {
-	if (
-		typeof participant.currentHp !== 'number' ||
-		typeof participant.maxHp !== 'number'
-	) {
-		return null;
-	}
-
-	const ratio = participant.currentHp / Math.max(participant.maxHp, 1);
-
-	// Any HP left shows at least one segment; only 0 HP shows none.
-	return Math.min(
-		PLAYER_HP_SEGMENTS,
-		Math.max(0, Math.ceil(ratio * PLAYER_HP_SEGMENTS))
+	const hpLabel = getHealthLabelFromPercentage(
+		(participant.currentHp / Math.max(participant.maxHp, 1)) * 100
 	);
+
+	return {
+		hpLabel,
+		hpSegments: HEALTH_TIERS.indexOf(hpLabel as HealthTier) + 1,
+	};
 };
 
 export function runtimeToPlayerInitiativeQueue(
@@ -401,8 +420,7 @@ export function runtimeToPlayerInitiativeQueue(
 			id: participant.id,
 			name: participant.name,
 			status: toPlayerStatus(participant.state),
-			hpLabel: toCoarseHpLabel(participant),
-			hpSegments: toHpSegments(participant),
+			...toPlayerHealth(participant),
 			sideTheme: resolveParticipantSideTheme(participant),
 		})
 	);

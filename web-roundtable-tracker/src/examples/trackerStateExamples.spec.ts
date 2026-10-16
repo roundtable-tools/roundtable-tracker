@@ -399,6 +399,7 @@ describe('tracker state examples', () => {
 		act(store, 'Merisiel', 'end-turn');
 		changeHealth(store, 'Goblin Dog', -17);
 		act(store, 'Goblin Dog', 'ko');
+		changeHealth(store, 'Goblin Archer B', -2);
 		act(store, 'Goblin Archer B', 'end-turn');
 		act(store, 'Ezren', 'end-turn');
 

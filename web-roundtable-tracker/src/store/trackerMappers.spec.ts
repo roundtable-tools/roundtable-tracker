@@ -101,7 +101,7 @@ describe('trackerMappers', () => {
 		expect(outOfInitiative.delayed[0].state).toBe('delayed');
 	});
 
-	it('builds a player-safe initiative queue with coarse hp labels', () => {
+	it('builds a player-safe initiative queue with HP tiers', () => {
 		const charactersMap = {
 			healthy: createCharacter({
 				uuid: 'healthy',
@@ -142,15 +142,15 @@ describe('trackerMappers', () => {
 				id: 'healthy',
 				name: 'Healthy',
 				status: 'Ready',
-				hpLabel: 'Healthy',
-				hpSegments: 5,
+				hpLabel: 'Barely Injured',
+				hpSegments: 4,
 				sideTheme: 'pc',
 			},
 			{
 				id: 'wounded',
 				name: 'Wounded',
 				status: 'Delayed',
-				hpLabel: 'Wounded',
+				hpLabel: 'Badly Injured',
 				hpSegments: 2,
 				sideTheme: 'opponent',
 			},
@@ -158,10 +158,45 @@ describe('trackerMappers', () => {
 				id: 'defeated',
 				name: 'Defeated',
 				status: 'Knocked Out',
-				hpLabel: 'Defeated',
+				hpLabel: 'Unconscious',
 				hpSegments: 0,
 				sideTheme: 'ally',
 			},
+		]);
+	});
+
+	it('maps HP to the five tiers, and a knock-out to Unconscious', () => {
+		const participants = [
+			['uninjured', 20, 'normal'],
+			['barely', 17, 'normal'],
+			['injured', 13, 'normal'],
+			['badly', 7, 'normal'],
+			['near-death', 6, 'normal'],
+			['knocked-out', 15, 'knocked-out'],
+		] as const;
+		const charactersMap = Object.fromEntries(
+			participants.map(([uuid, health, turnState]) => [
+				uuid,
+				createCharacter({ uuid, health, maxHealth: 20, turnState }),
+			])
+		);
+
+		const queue = runtimeToPlayerInitiativeQueue({
+			charactersOrder: participants.map(([uuid]) => uuid),
+			delayedOrder: [],
+			charactersMap,
+			trackerMetaMap: {},
+		});
+
+		expect(
+			queue.map(({ id, hpLabel, hpSegments }) => [id, hpLabel, hpSegments])
+		).toEqual([
+			['uninjured', 'Uninjured', 5],
+			['barely', 'Barely Injured', 4],
+			['injured', 'Injured', 3],
+			['badly', 'Badly Injured', 2],
+			['near-death', 'Near Death', 1],
+			['knocked-out', 'Unconscious', 0],
 		]);
 	});
 

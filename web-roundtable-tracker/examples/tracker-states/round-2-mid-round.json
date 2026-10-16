@@ -106,7 +106,7 @@
 				"uuid": "00000000-0000-4000-8000-000000000003",
 				"name": "Goblin Archer B",
 				"initiative": 10,
-				"health": 18,
+				"health": 16,
 				"maxHealth": 18,
 				"tempHealth": 0,
 				"turnState": "normal",
@@ -775,6 +775,24 @@
 				}
 			},
 			{
+				"type": "Command.ChangeHealthCommand",
+				"description": "Change Health",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000003",
+					"delta": -2,
+					"oldCharacter": {
+						"uuid": "00000000-0000-4000-8000-000000000003",
+						"name": "Goblin Archer B",
+						"initiative": 10,
+						"health": 18,
+						"maxHealth": 18,
+						"tempHealth": 0,
+						"turnState": "normal",
+						"group": "enemies"
+					}
+				}
+			},
+			{
 				"type": "Command.EndTurnCommand",
 				"description": "End Turn Command",
 				"data": {
@@ -1022,7 +1040,7 @@
 								"uuid": "00000000-0000-4000-8000-000000000003",
 								"name": "Goblin Archer B",
 								"initiative": 10,
-								"health": 18,
+								"health": 16,
 								"maxHealth": 18,
 								"tempHealth": 0,
 								"turnState": "normal",

@@ -54,6 +54,7 @@ import {
 	narrativeSlotsToTimeline,
 	encounterToTrackerHeader,
 	historyToPreviewLines,
+	getHealthLabelFromPercentage,
 	resolveParticipantSideTheme,
 	type ParticipantSideTheme,
 	type TrackerParticipant,
@@ -77,30 +78,6 @@ const HAZARD_DISABLE_CHECK_NAMES = [
 	'Critical',
 	'Disabled',
 ] as const;
-
-function getHealthLabelFromPercentage(healthPercentage: number) {
-	if (healthPercentage <= 0) {
-		return 'Unconscious';
-	}
-
-	if (healthPercentage >= 100) {
-		return 'Uninjured';
-	}
-
-	if (healthPercentage >= 85) {
-		return 'Barely Injured';
-	}
-
-	if (healthPercentage >= 65) {
-		return 'Injured';
-	}
-
-	if (healthPercentage >= 35) {
-		return 'Badly Injured';
-	}
-
-	return 'Near Death';
-}
 
 function getHazardDisableStageNames(requiredChecks: number) {
 	const clampedRequiredChecks = Math.min(Math.max(requiredChecks, 1), 5);
