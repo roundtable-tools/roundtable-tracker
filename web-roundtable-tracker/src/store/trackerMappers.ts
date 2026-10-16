@@ -65,8 +65,13 @@ export type PlayerTrackerParticipant = {
 	name: string;
 	status: 'Ready' | 'Delayed' | 'Knocked Out' | 'Inactive';
 	hpLabel: string;
+	/** Filled segments of the player HP bar, or null without HP data. */
+	hpSegments: number | null;
 	sideTheme: ParticipantSideTheme;
 };
+
+/** Segments in the player HP bar. Players see HP in these steps only. */
+export const PLAYER_HP_SEGMENTS = 5;
 
 /** The colour group a participant is shown in. */
 export type ParticipantSideTheme = 'pc' | 'opponent' | 'ally' | 'other';
@@ -359,6 +364,23 @@ const toCoarseHpLabel = (participant: TrackerParticipant): string => {
 	return 'Critical';
 };
 
+const toHpSegments = (participant: TrackerParticipant): number | null => {
+	if (
+		typeof participant.currentHp !== 'number' ||
+		typeof participant.maxHp !== 'number'
+	) {
+		return null;
+	}
+
+	const ratio = participant.currentHp / Math.max(participant.maxHp, 1);
+
+	// Any HP left shows at least one segment; only 0 HP shows none.
+	return Math.min(
+		PLAYER_HP_SEGMENTS,
+		Math.max(0, Math.ceil(ratio * PLAYER_HP_SEGMENTS))
+	);
+};
+
 export function runtimeToPlayerInitiativeQueue(
 	store: Pick<
 		EncounterStore,
@@ -380,6 +402,7 @@ export function runtimeToPlayerInitiativeQueue(
 			name: participant.name,
 			status: toPlayerStatus(participant.state),
 			hpLabel: toCoarseHpLabel(participant),
+			hpSegments: toHpSegments(participant),
 			sideTheme: resolveParticipantSideTheme(participant),
 		})
 	);

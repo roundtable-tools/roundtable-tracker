@@ -1,6 +1,5 @@
 import { Fragment, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Toggle } from '@/components/ui/toggle';
 import { Clock3, Skull } from 'lucide-react';
 import {
@@ -11,6 +10,7 @@ import {
 	encounterToTrackerHeader,
 	runtimeToInitiativeQueue,
 	runtimeToPlayerInitiativeQueue,
+	PLAYER_HP_SEGMENTS,
 	type PlayerTrackerParticipant,
 } from '@/store/trackerMappers';
 import { getSideAccent } from './sideAccent';
@@ -63,6 +63,53 @@ function PlayerStatusGroup({
 					</Toggle>
 				)
 			)}
+		</div>
+	);
+}
+
+// Colour of the filled segments by how many are filled: green when all are,
+// one step closer to red for each segment lost.
+const HP_SEGMENT_COLORS: Record<number, string> = {
+	5: 'bg-green-500',
+	4: 'bg-lime-500',
+	3: 'bg-yellow-400',
+	2: 'bg-orange-500',
+	1: 'bg-red-500',
+};
+
+/**
+ * HP as a bar of equal segments with the coarse label centred under it.
+ * Without HP data the bar stays empty.
+ */
+function PlayerHealthBar({
+	segments,
+	label,
+}: {
+	segments: number | null;
+	label: string;
+}) {
+	const filled = segments ?? 0;
+	const fillColor = HP_SEGMENT_COLORS[filled] ?? '';
+
+	return (
+		<div className="flex w-24 flex-col items-center gap-1">
+			<div
+				role="meter"
+				aria-label="Health"
+				aria-valuemin={0}
+				aria-valuemax={PLAYER_HP_SEGMENTS}
+				aria-valuenow={filled}
+				aria-valuetext={label}
+				className="flex w-full gap-0.5"
+			>
+				{Array.from({ length: PLAYER_HP_SEGMENTS }, (_, index) => (
+					<span
+						key={index}
+						className={`h-2 flex-1 rounded-sm ${index < filled ? fillColor : 'bg-muted'}`}
+					/>
+				))}
+			</div>
+			<span className="text-xs text-muted-foreground">{label}</span>
 		</div>
 	);
 }
@@ -167,12 +214,10 @@ export function InitiativePlayerViewPage() {
 								</p>
 								<div className="flex items-center gap-2">
 									<PlayerStatusGroup status={participant.status} />
-									<Badge
-										variant="secondary"
-										className="min-w-20 justify-center"
-									>
-										{participant.hpLabel}
-									</Badge>
+									<PlayerHealthBar
+										segments={participant.hpSegments}
+										label={participant.hpLabel}
+									/>
 								</div>
 							</div>
 						</Fragment>

@@ -143,6 +143,7 @@ describe('trackerMappers', () => {
 				name: 'Healthy',
 				status: 'Ready',
 				hpLabel: 'Healthy',
+				hpSegments: 5,
 				sideTheme: 'pc',
 			},
 			{
@@ -150,6 +151,7 @@ describe('trackerMappers', () => {
 				name: 'Wounded',
 				status: 'Delayed',
 				hpLabel: 'Wounded',
+				hpSegments: 2,
 				sideTheme: 'opponent',
 			},
 			{
@@ -157,6 +159,7 @@ describe('trackerMappers', () => {
 				name: 'Defeated',
 				status: 'Knocked Out',
 				hpLabel: 'Defeated',
+				hpSegments: 0,
 				sideTheme: 'ally',
 			},
 		]);
