@@ -15,6 +15,9 @@ import {
 	type PlayerTrackerParticipant,
 } from '@/store/trackerMappers';
 import { getHazardStripe, getSideAccent } from './sideAccent';
+import { type EncounterTimer, formatDuration } from '@/store/encounterTimer';
+import { TurnTimeChip } from './TurnTimeChip';
+import { useTimerElapsed } from './useTimerElapsed';
 import { NextRoundMarkerCard } from './NextRoundMarkerCard';
 import { getRoundBoundaryIndex } from './roundBoundary';
 
@@ -236,6 +239,13 @@ function PlayerProgressBar({
 	);
 }
 
+/** The round time, counting up; ticks on its own, not the page. */
+function RoundTime({ timer }: { timer: EncounterTimer | null }) {
+	const elapsed = useTimerElapsed(timer);
+
+	return <>{elapsed ? formatDuration(elapsed.roundMs) : '--:--'}</>;
+}
+
 // Reads the encounter only through the player view channel, so this page
 // never writes to the GM's encounter store.
 export function InitiativePlayerViewPage() {
@@ -308,13 +318,15 @@ export function InitiativePlayerViewPage() {
 							{encounter.round}
 						</dd>
 					</div>
-					{/* Placeholder until the timer exists; it shows no time yet. */}
 					<div>
 						<dt className="text-xs uppercase tracking-wide text-muted-foreground">
-							Timer
+							{encounter.timer?.pausedAt != null ? 'Paused' : 'Round Time'}
 						</dt>
-						<dd className="text-2xl font-semibold tabular-nums text-muted-foreground">
-							--:--
+						<dd
+							data-slot="player-round-time"
+							className={`text-2xl font-semibold tabular-nums ${encounter.timer?.pausedAt != null ? 'text-muted-foreground' : ''}`}
+						>
+							<RoundTime timer={encounter.timer} />
 						</dd>
 					</div>
 				</dl>
@@ -363,6 +375,12 @@ export function InitiativePlayerViewPage() {
 									>
 										{participant.name}
 									</p>
+									{isCurrent && (
+										<TurnTimeChip
+											timer={encounter.timer}
+											className="ml-3 mr-auto text-sm text-current/85"
+										/>
+									)}
 									<div className="flex items-center gap-2">
 										<PlayerStatusGroup
 											status={participant.status}

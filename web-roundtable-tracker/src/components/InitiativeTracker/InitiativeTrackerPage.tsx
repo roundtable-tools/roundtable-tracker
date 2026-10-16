@@ -40,6 +40,8 @@ import { Reorder } from 'motion/react';
 import { useNavigate } from '@tanstack/react-router';
 import { InitiativeActionCarouselCard } from './InitiativeActionCarouselCard';
 import { OpenPlayerViewButton } from './OpenPlayerViewButton';
+import { EncounterTimerControls } from './EncounterTimerControls';
+import { TurnStatsPanel } from './TurnStatsPanel';
 import { ReturnToInitiativeNotice } from './ReturnToInitiativeNotice';
 import { getHazardStripe, getSideAccent } from './sideAccent';
 import { NextRoundMarkerCard } from './NextRoundMarkerCard';
@@ -598,6 +600,7 @@ export function InitiativeTrackerPage() {
 	);
 	const charactersOrder = useEncounterStore((state) => state.charactersOrder);
 	const delayedOrder = useEncounterStore((state) => state.delayedOrder);
+	const timer = useEncounterStore((state) => state.timer);
 	const charactersMap = useEncounterStore((state) => state.charactersMap);
 	const charactersWithTurn = useEncounterStore(
 		(state) => state.charactersWithTurn
@@ -1421,6 +1424,7 @@ export function InitiativeTrackerPage() {
 										<TooltipContent side="bottom">Redo</TooltipContent>
 									</Tooltip>
 								</div>
+								<EncounterTimerControls />
 							</div>
 						</div>
 
@@ -1481,6 +1485,7 @@ export function InitiativeTrackerPage() {
 													onSwipeAction={handleParticipantSwipeAction}
 													density="desktop"
 													accent={getParticipantAccent(item.participant)}
+													turnTimer={timer}
 													indicatorLabel={getParticipantIndicatorLabel(
 														item.participant
 													)}
@@ -1670,7 +1675,7 @@ export function InitiativeTrackerPage() {
 								className="mt-3 min-h-0 flex-1 text-sm"
 							>
 								<ScrollArea className="h-full pr-3">
-									<p>Average turn duration data will be connected in MVP.</p>
+									<TurnStatsPanel />
 								</ScrollArea>
 							</TabsContent>
 						</Tabs>
@@ -1774,6 +1779,7 @@ export function InitiativeTrackerPage() {
 								</div>
 							</div>
 						</div>
+						<EncounterTimerControls />
 					</div>
 				</Card>
 
@@ -1929,6 +1935,7 @@ export function InitiativeTrackerPage() {
 													onSwipeAction={handleParticipantSwipeAction}
 													density="mobile"
 													accent={getParticipantAccent(item.participant)}
+													turnTimer={timer}
 													indicatorLabel={getParticipantIndicatorLabel(
 														item.participant
 													)}
@@ -1995,7 +2002,7 @@ export function InitiativeTrackerPage() {
 									</ul>
 								</TabsContent>
 								<TabsContent value="stats" className="mt-0 text-sm">
-									<p>Average turn duration data will be connected in MVP.</p>
+									<TurnStatsPanel />
 								</TabsContent>
 							</Tabs>
 						</Card>
