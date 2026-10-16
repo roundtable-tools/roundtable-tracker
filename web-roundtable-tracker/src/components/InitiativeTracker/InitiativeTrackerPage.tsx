@@ -722,24 +722,34 @@ export function InitiativeTrackerPage() {
 	const [returnPrompt, setReturnPrompt] = useState<ReturnPromptState | null>(
 		null
 	);
-	// Whose turn and which round the timer is on; when it changes while the
-	// timer is paused, the GM is asked whether to resume it.
+	// Whose turn and which round the timer is on; when a new command (not an
+	// undo) moves it on while the timer is paused, the GM is asked whether to
+	// resume it.
 	const timerPosition = timer
 		? `${timer.round}:${timer.turnParticipantId ?? ''}`
 		: null;
 	const isTimerPaused = timer?.pausedAt != null;
 	const lastTimerPositionRef = useRef(timerPosition);
+	const lastHistoryLengthRef = useRef(history.length);
 	const [resumePrompt, setResumePrompt] = useState<string | null>(null);
 
 	useEffect(() => {
+		const movedOn = history.length > lastHistoryLengthRef.current;
+		lastHistoryLengthRef.current = history.length;
+
 		if (timerPosition === lastTimerPositionRef.current) return;
 
 		lastTimerPositionRef.current = timerPosition;
 
-		if (isTimerPaused && timerPosition) {
+		if (movedOn && isTimerPaused && timerPosition) {
 			setResumePrompt(timerPosition);
 		}
-	}, [timerPosition, isTimerPaused]);
+	}, [timerPosition, isTimerPaused, history.length]);
+
+	// A timer resumed some other way (e.g. the toolbar) answers the prompt.
+	useEffect(() => {
+		if (!isTimerPaused) setResumePrompt(null);
+	}, [isTimerPaused]);
 	const [reorderDraftParticipants, setReorderDraftParticipants] = useState<
 		TrackerParticipant[]
 	>(storeInitiativeParticipants);
