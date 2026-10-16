@@ -365,23 +365,25 @@ export function InitiativePlayerViewPage() {
 											: '',
 									].join(' ')}
 								>
-									<p
-										data-slot="player-participant-name"
-										className={
-											isCurrent
-												? 'text-lg font-semibold'
-												: `text-sm font-medium ${accent.name}`
-										}
-									>
-										{participant.name}
-									</p>
-									{isCurrent && (
-										<TurnTimeChip
-											timer={encounter.timer}
-											className="ml-3 mr-auto text-sm text-current/85"
-										/>
-									)}
-									<div className="flex items-center gap-2">
+									<div className="min-w-0 flex-1 pr-3">
+										<p
+											data-slot="player-participant-name"
+											className={`truncate ${
+												isCurrent
+													? 'text-lg font-semibold'
+													: `text-sm font-medium ${accent.name}`
+											}`}
+										>
+											{participant.name}
+										</p>
+										{isCurrent && (
+											<TurnTimeChip
+												timer={encounter.timer}
+												className="text-sm text-current/85"
+											/>
+										)}
+									</div>
+									<div className="flex shrink-0 items-center gap-2">
 										<PlayerStatusGroup
 											status={participant.status}
 											surface={surface}

@@ -43,6 +43,8 @@ import { OpenPlayerViewButton } from './OpenPlayerViewButton';
 import { EncounterTimerControls } from './EncounterTimerControls';
 import { TurnStatsPanel } from './TurnStatsPanel';
 import { ReturnToInitiativeNotice } from './ReturnToInitiativeNotice';
+import { ResumeTimerNotice } from './ResumeTimerNotice';
+import { resumeTimer } from '@/store/encounterTimer';
 import { getHazardStripe, getSideAccent } from './sideAccent';
 import { NextRoundMarkerCard } from './NextRoundMarkerCard';
 import { getRoundBoundaryIndex } from './roundBoundary';
@@ -601,6 +603,7 @@ export function InitiativeTrackerPage() {
 	const charactersOrder = useEncounterStore((state) => state.charactersOrder);
 	const delayedOrder = useEncounterStore((state) => state.delayedOrder);
 	const timer = useEncounterStore((state) => state.timer);
+	const setTimer = useEncounterStore((state) => state.setTimer);
 	const charactersMap = useEncounterStore((state) => state.charactersMap);
 	const charactersWithTurn = useEncounterStore(
 		(state) => state.charactersWithTurn
@@ -719,6 +722,24 @@ export function InitiativeTrackerPage() {
 	const [returnPrompt, setReturnPrompt] = useState<ReturnPromptState | null>(
 		null
 	);
+	// Whose turn and which round the timer is on; when it changes while the
+	// timer is paused, the GM is asked whether to resume it.
+	const timerPosition = timer
+		? `${timer.round}:${timer.turnParticipantId ?? ''}`
+		: null;
+	const isTimerPaused = timer?.pausedAt != null;
+	const lastTimerPositionRef = useRef(timerPosition);
+	const [resumePrompt, setResumePrompt] = useState<string | null>(null);
+
+	useEffect(() => {
+		if (timerPosition === lastTimerPositionRef.current) return;
+
+		lastTimerPositionRef.current = timerPosition;
+
+		if (isTimerPaused && timerPosition) {
+			setResumePrompt(timerPosition);
+		}
+	}, [timerPosition, isTimerPaused]);
 	const [reorderDraftParticipants, setReorderDraftParticipants] = useState<
 		TrackerParticipant[]
 	>(storeInitiativeParticipants);
@@ -2092,6 +2113,17 @@ export function InitiativeTrackerPage() {
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
+
+			{resumePrompt && isTimerPaused && !returnPrompt && (
+				<ResumeTimerNotice
+					key={resumePrompt}
+					onStayPaused={() => setResumePrompt(null)}
+					onResume={() => {
+						setResumePrompt(null);
+						setTimer((current) => current && resumeTimer(current, Date.now()));
+					}}
+				/>
+			)}
 
 			{returnPrompt && (
 				<ReturnToInitiativeNotice
