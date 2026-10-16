@@ -34,20 +34,62 @@ const PLAYER_STATUS_OPTIONS = [
 ] as const;
 
 /**
+ * What a row's status group and bar sit on: the current participant's
+ * coloured card, a hazard's stripes, or a plain row. On stripes they get a
+ * solid backing; on the coloured card they take the card's text colour, like
+ * the chips on the tracker's current card.
+ */
+type RowSurface = 'current' | 'current-striped' | 'striped' | 'plain';
+
+const SURFACE_STYLES: Record<
+	RowSurface,
+	{ box: string; idle: string; empty: string; label: string }
+> = {
+	current: {
+		box: 'border-current/30',
+		idle: 'text-current/50',
+		empty: 'bg-current/20',
+		label: 'text-current/85',
+	},
+	'current-striped': {
+		box: 'border-current/30 bg-black/30',
+		idle: 'text-current/50',
+		empty: 'bg-current/20',
+		label: 'text-current/85',
+	},
+	striped: {
+		box: 'border-input bg-card',
+		idle: 'text-muted-foreground/40',
+		empty: 'bg-muted',
+		label: 'text-muted-foreground',
+	},
+	plain: {
+		box: 'border-input',
+		idle: 'text-muted-foreground/40',
+		empty: 'bg-muted',
+		label: 'text-muted-foreground',
+	},
+};
+
+/**
  * Shows Delayed and Knocked Out as a group with at most one option pressed.
  * Ready is the default, so it has no option and leaves both unpressed. The
  * group only displays the status; players can't change it.
  */
 function PlayerStatusGroup({
 	status,
+	surface,
 }: {
 	status: PlayerTrackerParticipant['status'];
+	surface: RowSurface;
 }) {
+	const styles = SURFACE_STYLES[surface];
+
 	return (
 		<div
 			role="group"
 			aria-label="Status"
-			className="inline-flex items-center overflow-hidden rounded-md border border-input bg-card"
+			className={`inline-flex items-center overflow-hidden rounded-md border ${styles.box}`}
 		>
 			{PLAYER_STATUS_OPTIONS.map(
 				({ status: option, Icon, pressedClassName }) => (
@@ -58,7 +100,7 @@ function PlayerStatusGroup({
 						aria-label={option}
 						title={option}
 						tabIndex={-1}
-						className={`pointer-events-none rounded-none text-muted-foreground/40 ${pressedClassName}`}
+						className={`pointer-events-none rounded-none ${styles.idle} ${pressedClassName}`}
 					>
 						<Icon className="h-4 w-4" />
 					</Toggle>
@@ -108,6 +150,7 @@ function SegmentedBar({
 	fillColor,
 	fillFrom = 'left',
 	label,
+	surface,
 }: {
 	name: string;
 	total: number;
@@ -116,12 +159,16 @@ function SegmentedBar({
 	fillColor?: string;
 	fillFrom?: 'left' | 'right';
 	label: string;
+	surface: RowSurface;
 }) {
+	const styles = SURFACE_STYLES[surface];
 	const isFilled = (index: number) =>
 		fillFrom === 'left' ? index < filled : index >= total - filled;
 
 	return (
-		<div className="flex w-28 flex-col items-center gap-1 rounded-md bg-card px-2 py-1">
+		<div
+			className={`flex w-28 flex-col items-center gap-1 rounded-md px-2 py-1 ${surface === 'plain' || surface === 'current' ? '' : styles.box}`}
+		>
 			<div
 				role="meter"
 				aria-label={name}
@@ -134,7 +181,7 @@ function SegmentedBar({
 				{Array.from({ length: total }, (_, index) => (
 					<span
 						key={index}
-						className={`h-2 flex-1 rounded-sm ${isFilled(index) ? fillClassName : 'bg-muted'}`}
+						className={`h-2 flex-1 rounded-sm ${isFilled(index) ? fillClassName : styles.empty}`}
 						style={
 							isFilled(index) && fillColor
 								? { backgroundColor: fillColor }
@@ -143,7 +190,7 @@ function SegmentedBar({
 					/>
 				))}
 			</div>
-			<span className="text-xs text-muted-foreground">{label}</span>
+			<span className={`text-xs ${styles.label}`}>{label}</span>
 		</div>
 	);
 }
@@ -154,8 +201,10 @@ function SegmentedBar({
  */
 function PlayerProgressBar({
 	participant,
+	surface,
 }: {
 	participant: PlayerTrackerParticipant;
+	surface: RowSurface;
 }) {
 	const { disableProgress, hpSegments, hpLabel } = participant;
 
@@ -168,6 +217,7 @@ function PlayerProgressBar({
 				fillColor={getDisableSegmentColor(disableProgress)}
 				fillFrom="right"
 				label={disableProgress.label}
+				surface={surface}
 			/>
 		);
 	}
@@ -181,6 +231,7 @@ function PlayerProgressBar({
 			filled={filled}
 			fillClassName={HP_SEGMENT_COLORS[filled] ?? ''}
 			label={hpLabel}
+			surface={surface}
 		/>
 	);
 }
@@ -276,6 +327,13 @@ export function InitiativePlayerViewPage() {
 						const accent = getSideAccent(participant.sideTheme);
 						// The tracker's current participant is the first in the order.
 						const isCurrent = participant.id === encounter.charactersOrder[0];
+						const surface: RowSurface = isCurrent
+							? participant.isHazard
+								? 'current-striped'
+								: 'current'
+							: participant.isHazard
+								? 'striped'
+								: 'plain';
 
 						return (
 							<Fragment key={participant.id}>
@@ -306,8 +364,14 @@ export function InitiativePlayerViewPage() {
 										{participant.name}
 									</p>
 									<div className="flex items-center gap-2">
-										<PlayerStatusGroup status={participant.status} />
-										<PlayerProgressBar participant={participant} />
+										<PlayerStatusGroup
+											status={participant.status}
+											surface={surface}
+										/>
+										<PlayerProgressBar
+											participant={participant}
+											surface={surface}
+										/>
 									</div>
 								</div>
 							</Fragment>
