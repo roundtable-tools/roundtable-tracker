@@ -144,9 +144,7 @@ export function InitiativePlayerViewPage() {
 							<p
 								className={`text-sm font-medium ${getSideAccent(participant.sideTheme).name}`}
 							>
-								{participant.status === 'Delayed'
-									? participant.name
-									: `${index + 1}. ${participant.name}`}
+								{index + 1}. {participant.name}
 							</p>
 							<div className="flex items-center gap-2">
 								<PlayerStatusGroup status={participant.status} />

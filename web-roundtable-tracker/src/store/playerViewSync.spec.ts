@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createEncounterStore } from './encounterRuntimeStore';
 import { Character, DIFFICULTY, Encounter, LEVEL_REPRESENTATION } from './data';
+import { DelayCharacterCommand } from '@/CommandHistory/Commands/DelayCharacterCommand';
 import { EndTurnCommand } from '@/CommandHistory/Commands/EndTurnCommand';
 import { STATUS } from '@/CommandHistory/common';
 import {
@@ -10,6 +11,7 @@ import {
 	parsePlayerViewSnapshot,
 	type PlayerViewChannel,
 } from './playerViewSync';
+import { runtimeToPlayerInitiativeQueue } from './trackerMappers';
 
 const character = (uuid: string, name: string, initiative: number) =>
 	({
@@ -122,6 +124,23 @@ describe('player view sync', () => {
 
 		expect(listener).toHaveBeenCalledTimes(2);
 		expect(channel.getSnapshot()?.charactersOrder).toEqual(['hero', 'goblin']);
+	});
+
+	it('lists a delayed participant once, as delayed', () => {
+		startTrackerEncounter();
+		const delay = new DelayCharacterCommand(
+			{ uuid: 'hero' },
+			{ encounterStore: tracker }
+		);
+
+		expect(delay.execute()).toBe(STATUS.success);
+
+		const queue = runtimeToPlayerInitiativeQueue(channel.getSnapshot()!);
+
+		expect(queue.map(({ id, status }) => ({ id, status }))).toEqual([
+			{ id: 'goblin', status: 'Ready' },
+			{ id: 'hero', status: 'Delayed' },
+		]);
 	});
 
 	it('notifies on the encounter key and on a cleared storage only', () => {

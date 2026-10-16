@@ -286,25 +286,7 @@ export function runtimeToOutOfInitiativeData(
 			})
 		);
 
-	const delayed = runtimeToDelayedParticipants({
-		delayedOrder,
-		charactersMap,
-		trackerMetaMap,
-	});
-
-	return { reinforcements, delayed, hazards };
-}
-
-/** Participants that delayed out of the order, in the order they delayed. */
-function runtimeToDelayedParticipants(
-	store: Pick<
-		EncounterStore,
-		'delayedOrder' | 'charactersMap' | 'trackerMetaMap'
-	>
-): TrackerParticipant[] {
-	const { delayedOrder, charactersMap, trackerMetaMap } = store;
-
-	return delayedOrder
+	const delayed: TrackerParticipant[] = delayedOrder
 		.filter((uuid) => {
 			const meta = trackerMetaMap[uuid];
 
@@ -321,6 +303,8 @@ function runtimeToDelayedParticipants(
 		.filter(
 			(participant): participant is TrackerParticipant => participant !== null
 		);
+
+	return { reinforcements, delayed, hazards };
 }
 
 const toPlayerStatus = (
@@ -363,17 +347,13 @@ const toCoarseHpLabel = (participant: TrackerParticipant): string => {
 	return 'Critical';
 };
 
-/** The initiative order, then the delayed participants, with only what players may see. */
 export function runtimeToPlayerInitiativeQueue(
 	store: Pick<
 		EncounterStore,
 		'charactersOrder' | 'delayedOrder' | 'charactersMap' | 'trackerMetaMap'
 	>
 ): PlayerTrackerParticipant[] {
-	return [
-		...runtimeToInitiativeQueue(store),
-		...runtimeToDelayedParticipants(store),
-	].map((participant) => ({
+	return runtimeToInitiativeQueue(store).map((participant) => ({
 		id: participant.id,
 		name: participant.name,
 		status: toPlayerStatus(participant.state),

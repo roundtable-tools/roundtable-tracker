@@ -162,40 +162,6 @@ describe('trackerMappers', () => {
 		]);
 	});
 
-	it('lists delayed participants after the order in the player queue', () => {
-		const charactersMap = {
-			hero: createCharacter({ uuid: 'hero', name: 'Hero' }),
-			rogue: createCharacter({
-				uuid: 'rogue',
-				name: 'Rogue',
-				turnState: 'delayed',
-			}),
-			trap: createCharacter({
-				uuid: 'trap',
-				name: 'Trap',
-				turnState: 'delayed',
-			}),
-		};
-
-		const queue = runtimeToPlayerInitiativeQueue({
-			charactersOrder: ['hero'],
-			delayedOrder: ['rogue', 'trap'],
-			charactersMap,
-			trackerMetaMap: {
-				hero: createMeta({ role: 'pc', sideTheme: 'pc' }),
-				rogue: createMeta({ role: 'pc', sideTheme: 'pc' }),
-				trap: createMeta({ role: 'hazard', isSimpleHazard: true }),
-			},
-		});
-
-		expect(
-			queue.map(({ id, status, sideTheme }) => ({ id, status, sideTheme }))
-		).toEqual([
-			{ id: 'hero', status: 'Ready', sideTheme: 'pc' },
-			{ id: 'rogue', status: 'Delayed', sideTheme: 'pc' },
-		]);
-	});
-
 	it('maps additional participant metadata into tracker participants', () => {
 		const charactersMap = {
 			alpha: createCharacter({
