@@ -35,6 +35,10 @@ function TimelineItem({
 	children?: React.ReactNode;
 }) {
 	const hasEvents = events && events.length > 0;
+	// An event still needs the GM until its action is done (a triggered
+	// reinforcement disables its action); events without an action always do.
+	const hasPendingEvents =
+		events?.some((event) => !event.actionDisabled) ?? false;
 
 	return (
 		<div className="flex items-center relative">
@@ -51,10 +55,25 @@ function TimelineItem({
 						)}
 					>
 						<span className="text-base">{turn}</span>
-						{hasEvents && events.length > 1 && (
-							<Badge className="absolute -top-2 -right-2 pointer-events-none select-none text-[10px] w-4 h-4 flex items-center justify-center p-0">
+						{hasEvents && events.length > 1 ? (
+							<Badge
+								data-slot="timeline-event-count"
+								className={cn(
+									'absolute -top-2 -right-2 pointer-events-none select-none text-[10px] w-4 h-4 flex items-center justify-center p-0',
+									hasPendingEvents &&
+										'bg-amber-400 text-amber-950 ring-2 ring-background'
+								)}
+							>
 								{events.length}
 							</Badge>
+						) : (
+							hasPendingEvents && (
+								<span
+									data-slot="timeline-event-dot"
+									aria-label="Event to trigger"
+									className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-background pointer-events-none"
+								/>
+							)
 						)}
 					</div>
 				</TooltipTrigger>
