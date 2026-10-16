@@ -85,15 +85,25 @@ export const isEncounterRunning = (
  * reaches the player window as soon as the tracker saves it.
  */
 export const createLocalPlayerViewChannel = (
-	storage: Storage = localStorage,
+	getStorage: () => Storage = () => localStorage,
 	target: Pick<Window, 'addEventListener' | 'removeEventListener'> = window
 ): PlayerViewChannel => {
 	let lastJson: string | null = null;
 	let lastSnapshot: PlayerViewSnapshot | null = null;
 
+	// The browser throws when site data is blocked; the player view then
+	// waits as if nothing were stored.
+	const readStoredJson = () => {
+		try {
+			return getStorage().getItem(ENCOUNTER_STORE_KEY);
+		} catch {
+			return null;
+		}
+	};
+
 	return {
 		getSnapshot: () => {
-			const json = storage.getItem(ENCOUNTER_STORE_KEY);
+			const json = readStoredJson();
 
 			if (json !== lastJson) {
 				lastJson = json;

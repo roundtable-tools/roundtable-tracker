@@ -51,7 +51,7 @@ describe('player view sync', () => {
 	beforeEach(() => {
 		tracker = createEncounterStore();
 		playerWindow = new EventTarget();
-		channel = createLocalPlayerViewChannel(localStorage, playerWindow);
+		channel = createLocalPlayerViewChannel(() => localStorage, playerWindow);
 	});
 
 	afterEach(() => {
@@ -185,6 +185,14 @@ describe('player view sync', () => {
 
 		expect(setItem).not.toHaveBeenCalled();
 		expect(removeItem).not.toHaveBeenCalled();
+	});
+
+	it('waits instead of failing when the browser blocks the storage', () => {
+		const blocked = createLocalPlayerViewChannel(() => {
+			throw new DOMException('The operation is insecure.', 'SecurityError');
+		}, playerWindow);
+
+		expect(blocked.getSnapshot()).toBeNull();
 	});
 
 	describe('parsePlayerViewSnapshot', () => {
