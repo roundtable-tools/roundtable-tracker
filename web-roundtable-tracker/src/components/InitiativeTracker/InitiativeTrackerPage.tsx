@@ -40,6 +40,7 @@ import { Reorder } from 'motion/react';
 import { useNavigate } from '@tanstack/react-router';
 import { InitiativeActionCarouselCard } from './InitiativeActionCarouselCard';
 import { OpenPlayerViewButton } from './OpenPlayerViewButton';
+import { ReturnToInitiativeNotice } from './ReturnToInitiativeNotice';
 import { getHazardStripe, getSideAccent } from './sideAccent';
 import { NextRoundMarkerCard } from './NextRoundMarkerCard';
 import { getRoundBoundaryIndex } from './roundBoundary';
@@ -2085,43 +2086,14 @@ export function InitiativeTrackerPage() {
 				</DialogContent>
 			</Dialog>
 
-			<Dialog
-				open={returnPrompt !== null}
-				onOpenChange={(open) => {
-					if (!open) handleReturnPromptSkip();
-				}}
-			>
-				<DialogContent className="sm:max-w-sm">
-					<DialogHeader>
-						<DialogTitle>Return to Initiative?</DialogTitle>
-						<DialogDescription>
-							Before ending this turn, does any delayed participant want to
-							return to initiative?
-						</DialogDescription>
-					</DialogHeader>
-					<div className="space-y-2">
-						{delayedSectionParticipants.map((participant) => (
-							<div
-								key={participant.id}
-								className="flex items-center justify-between gap-2 rounded-md border p-3"
-							>
-								<p className="text-sm font-semibold">{participant.name}</p>
-								<Button
-									size="sm"
-									onClick={() => handleReturnPromptSelect(participant.id)}
-								>
-									Return
-								</Button>
-							</div>
-						))}
-					</div>
-					<DialogFooter>
-						<Button variant="outline" onClick={handleReturnPromptSkip}>
-							Nobody returns
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+			{returnPrompt && (
+				<ReturnToInitiativeNotice
+					key={`${returnPrompt.participantId}-${returnPrompt.action}`}
+					participants={delayedSectionParticipants}
+					onReturn={handleReturnPromptSelect}
+					onDismiss={handleReturnPromptSkip}
+				/>
+			)}
 
 			<Dialog open={reorderOpen} onOpenChange={handleReorderOpenChange}>
 				<DialogContent
