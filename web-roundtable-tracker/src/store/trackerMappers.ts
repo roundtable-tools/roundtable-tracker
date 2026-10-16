@@ -286,7 +286,21 @@ export function runtimeToOutOfInitiativeData(
 			})
 		);
 
-	const delayed: TrackerParticipant[] = delayedOrder
+	const delayed = delayedToTrackerParticipants(
+		delayedOrder,
+		charactersMap,
+		trackerMetaMap
+	);
+
+	return { reinforcements, delayed, hazards };
+}
+
+function delayedToTrackerParticipants(
+	delayedIds: EncounterStore['delayedOrder'],
+	charactersMap: EncounterStore['charactersMap'],
+	trackerMetaMap: EncounterStore['trackerMetaMap']
+): TrackerParticipant[] {
+	return delayedIds
 		.filter((uuid) => {
 			const meta = trackerMetaMap[uuid];
 
@@ -303,8 +317,6 @@ export function runtimeToOutOfInitiativeData(
 		.filter(
 			(participant): participant is TrackerParticipant => participant !== null
 		);
-
-	return { reinforcements, delayed, hazards };
 }
 
 const toPlayerStatus = (
@@ -353,13 +365,24 @@ export function runtimeToPlayerInitiativeQueue(
 		'charactersOrder' | 'delayedOrder' | 'charactersMap' | 'trackerMetaMap'
 	>
 ): PlayerTrackerParticipant[] {
-	return runtimeToInitiativeQueue(store).map((participant) => ({
-		id: participant.id,
-		name: participant.name,
-		status: toPlayerStatus(participant.state),
-		hpLabel: toCoarseHpLabel(participant),
-		sideTheme: resolveParticipantSideTheme(participant),
-	}));
+	// Delaying on a turn keeps a participant in the order; one that starts
+	// the encounter delaying is only in delayedOrder, so it is added after.
+	const inOrder = new Set(store.charactersOrder);
+	const delayedOutsideOrder = delayedToTrackerParticipants(
+		store.delayedOrder.filter((uuid) => !inOrder.has(uuid)),
+		store.charactersMap,
+		store.trackerMetaMap
+	);
+
+	return [...runtimeToInitiativeQueue(store), ...delayedOutsideOrder].map(
+		(participant) => ({
+			id: participant.id,
+			name: participant.name,
+			status: toPlayerStatus(participant.state),
+			hpLabel: toCoarseHpLabel(participant),
+			sideTheme: resolveParticipantSideTheme(participant),
+		})
+	);
 }
 
 export function narrativeSlotsToTimeline(
