@@ -11,6 +11,7 @@ import {
 	runtimeToInitiativeQueue,
 	runtimeToPlayerInitiativeQueue,
 	PLAYER_HP_SEGMENTS,
+	type PlayerDisableProgress,
 	type PlayerTrackerParticipant,
 } from '@/store/trackerMappers';
 import { getSideAccent } from './sideAccent';
@@ -67,8 +68,8 @@ function PlayerStatusGroup({
 	);
 }
 
-// Colour of the filled segments by how many are filled: green when all are,
-// one step closer to red for each segment lost.
+// Colour of the filled HP segments by how many are filled: green when all
+// are, one step closer to red for each segment lost.
 const HP_SEGMENT_COLORS: Record<number, string> = {
 	5: 'bg-green-500',
 	4: 'bg-lime-500',
@@ -77,40 +78,85 @@ const HP_SEGMENT_COLORS: Record<number, string> = {
 	1: 'bg-red-500',
 };
 
-/**
- * HP as a bar of equal segments with the coarse label centred under it.
- * Without HP data the bar stays empty.
- */
-function PlayerHealthBar({
-	segments,
+// Colour of the filled disable-check segments, from the same scale: closer
+// to green as the hazard gets closer to disabled.
+const DISABLE_SEGMENT_COLORS: Record<PlayerDisableProgress['label'], string> = {
+	Stable: '',
+	Disrupted: 'bg-yellow-400',
+	Fracturing: 'bg-lime-500',
+	Disabled: 'bg-green-500',
+};
+
+/** A bar of equal segments, the first `filled` in one colour, with a label centred under it. */
+function SegmentedBar({
+	name,
+	total,
+	filled,
+	fillClassName,
 	label,
 }: {
-	segments: number | null;
+	name: string;
+	total: number;
+	filled: number;
+	fillClassName: string;
 	label: string;
 }) {
-	const filled = segments ?? 0;
-	const fillColor = HP_SEGMENT_COLORS[filled] ?? '';
-
 	return (
 		<div className="flex w-24 flex-col items-center gap-1">
 			<div
 				role="meter"
-				aria-label="Health"
+				aria-label={name}
 				aria-valuemin={0}
-				aria-valuemax={PLAYER_HP_SEGMENTS}
+				aria-valuemax={total}
 				aria-valuenow={filled}
 				aria-valuetext={label}
 				className="flex w-full gap-0.5"
 			>
-				{Array.from({ length: PLAYER_HP_SEGMENTS }, (_, index) => (
+				{Array.from({ length: total }, (_, index) => (
 					<span
 						key={index}
-						className={`h-2 flex-1 rounded-sm ${index < filled ? fillColor : 'bg-muted'}`}
+						className={`h-2 flex-1 rounded-sm ${index < filled ? fillClassName : 'bg-muted'}`}
 					/>
 				))}
 			</div>
 			<span className="text-xs text-muted-foreground">{label}</span>
 		</div>
+	);
+}
+
+/**
+ * A hazard that needs disable checks shows one segment per check; anyone else
+ * shows HP in tiers. Without HP data the HP bar stays empty.
+ */
+function PlayerProgressBar({
+	participant,
+}: {
+	participant: PlayerTrackerParticipant;
+}) {
+	const { disableProgress, hpSegments, hpLabel } = participant;
+
+	if (disableProgress) {
+		return (
+			<SegmentedBar
+				name="Disable checks"
+				total={disableProgress.required}
+				filled={disableProgress.succeeded}
+				fillClassName={DISABLE_SEGMENT_COLORS[disableProgress.label]}
+				label={disableProgress.label}
+			/>
+		);
+	}
+
+	const filled = hpSegments ?? 0;
+
+	return (
+		<SegmentedBar
+			name="Health"
+			total={PLAYER_HP_SEGMENTS}
+			filled={filled}
+			fillClassName={HP_SEGMENT_COLORS[filled] ?? ''}
+			label={hpLabel}
+		/>
 	);
 }
 
@@ -214,10 +260,7 @@ export function InitiativePlayerViewPage() {
 								</p>
 								<div className="flex items-center gap-2">
 									<PlayerStatusGroup status={participant.status} />
-									<PlayerHealthBar
-										segments={participant.hpSegments}
-										label={participant.hpLabel}
-									/>
+									<PlayerProgressBar participant={participant} />
 								</div>
 							</div>
 						</Fragment>

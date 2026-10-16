@@ -55,10 +55,10 @@ Tracker actions (end turn, delay, knock out, change health, reorder, trigger rei
 
 `examples/tracker-states/` holds saved tracker states for checking the tracker and the player view by hand. Each file is a persisted `encounter-store`:
 
-| File                     | State                                                                                                                                                                                       |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `round-1-start.json`     | Round 1, nobody has acted. PCs (one without HP data), elite, weak and hidden opponents, a neutral creature, a complex and a simple hazard, a participant that starts delaying               |
-| `round-2-mid-round.json` | Round 2 after a few turns: every HP tier from Uninjured to Near Death, a knocked-out participant, temp HP, a delay on a turn, triggered and pending reinforcements, hazard disable progress |
+| File                     | State                                                                                                                                                                                                              |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `round-1-start.json`     | Round 1, nobody has acted. PCs (one without HP data), elite, weak and hidden opponents, a neutral creature, three complex hazards and a simple one, a participant that starts delaying                             |
+| `round-2-mid-round.json` | Round 2 after a few turns: every HP tier from Uninjured to Near Death, a knocked-out participant, temp HP, a delay on a turn, triggered and pending reinforcements, hazards under half, at half and fully disabled |
 
 With the dev server (`yarn dev`), open `?example=<file name>` before the hash, e.g. `http://localhost:5173/roundtable-tracker/?example=round-2-mid-round#/initiative_tracker`. It replaces the running encounter, so undo and redo work from there. Production builds don't include the loader (`src/devTrackerExamples.ts`).
 

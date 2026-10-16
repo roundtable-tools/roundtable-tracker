@@ -67,7 +67,15 @@ export type PlayerTrackerParticipant = {
 	hpLabel: string;
 	/** Filled segments of the player HP bar, or null without HP data. */
 	hpSegments: number | null;
+	/** Disable checks of a hazard that needs any, shown instead of HP. */
+	disableProgress: PlayerDisableProgress | null;
 	sideTheme: ParticipantSideTheme;
+};
+
+export type PlayerDisableProgress = {
+	succeeded: number;
+	required: number;
+	label: 'Stable' | 'Disrupted' | 'Fracturing' | 'Disabled';
 };
 
 /** HP tiers above 0 HP, from worst to best. */
@@ -400,6 +408,35 @@ const toPlayerHealth = (
 	};
 };
 
+/**
+ * A hazard's disable checks as players see them: Stable with none, Disrupted
+ * under half, Fracturing from half on, Disabled with all of them.
+ */
+const toPlayerDisableProgress = (
+	participant: TrackerParticipant
+): PlayerDisableProgress | null => {
+	const required = participant.disableChecksRequired ?? 0;
+
+	if (participant.role !== 'hazard' || required <= 0) {
+		return null;
+	}
+
+	const succeeded = Math.min(
+		Math.max(participant.disableChecksSucceeded ?? 0, 0),
+		required
+	);
+	const label =
+		succeeded === 0
+			? 'Stable'
+			: succeeded === required
+				? 'Disabled'
+				: succeeded * 2 < required
+					? 'Disrupted'
+					: 'Fracturing';
+
+	return { succeeded, required, label };
+};
+
 export function runtimeToPlayerInitiativeQueue(
 	store: Pick<
 		EncounterStore,
@@ -421,6 +458,7 @@ export function runtimeToPlayerInitiativeQueue(
 			name: participant.name,
 			status: toPlayerStatus(participant.state),
 			...toPlayerHealth(participant),
+			disableProgress: toPlayerDisableProgress(participant),
 			sideTheme: resolveParticipantSideTheme(participant),
 		})
 	);

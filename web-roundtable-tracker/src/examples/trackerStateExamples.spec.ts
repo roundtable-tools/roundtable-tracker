@@ -181,6 +181,26 @@ const encounter: Encounter = {
 		},
 		{
 			type: 'hazard',
+			name: 'Swinging Log',
+			level: 2,
+			side: ALIGNMENT.Opponents,
+			isComplexHazard: true,
+			successesToDisable: 4,
+			initiativeBonus: 6,
+			dcs: [{ name: 'Thievery', value: 19 }],
+		},
+		{
+			type: 'hazard',
+			name: 'Rope Snare',
+			level: 1,
+			side: ALIGNMENT.Opponents,
+			isComplexHazard: true,
+			successesToDisable: 2,
+			initiativeBonus: 4,
+			dcs: [{ name: 'Survival', value: 17 }],
+		},
+		{
+			type: 'hazard',
 			name: 'Hidden Pit',
 			level: 1,
 			side: ALIGNMENT.Opponents,
@@ -236,9 +256,11 @@ const INITIATIVES: Record<string, number> = {
 	'Goblin Sneak': 16,
 	'Bridge Keeper': 15,
 	Merisiel: 14,
+	'Swinging Log': 13,
 	'Goblin Dog': 12,
 	'Goblin Archer B': 10,
 	Ezren: 8,
+	'Rope Snare': 5,
 };
 
 /** Starts the encounter as Preview → Start → Initiative Tracker does. */
@@ -397,11 +419,13 @@ describe('tracker state examples', () => {
 		act(store, 'Goblin Archer A', 'end-turn');
 		act(store, 'Bridge Keeper', 'delay');
 		act(store, 'Merisiel', 'end-turn');
+		act(store, 'Swinging Log', 'end-turn');
 		changeHealth(store, 'Goblin Dog', -17);
 		act(store, 'Goblin Dog', 'ko');
 		changeHealth(store, 'Goblin Archer B', -2);
 		act(store, 'Goblin Archer B', 'end-turn');
 		act(store, 'Ezren', 'end-turn');
+		act(store, 'Rope Snare', 'end-turn');
 
 		// Round 2: the reinforcements arrive, then three turns pass.
 		expect(store.getState().round).toBe(2);
@@ -417,12 +441,18 @@ describe('tracker state examples', () => {
 		act(store, 'Goblin Warchief', 'end-turn');
 
 		// No command records disable progress yet; it lives in the tracker meta.
-		const bridge = uuidOf(store, 'Collapsing Bridge');
-		const meta = store.getState().trackerMetaMap;
-		store.getState().setTrackerMetaMap({
-			...meta,
-			[bridge]: { ...meta[bridge], disableChecksSucceeded: 1 },
-		});
+		// Under half, half and all of the checks needed.
+		const meta = { ...store.getState().trackerMetaMap };
+
+		for (const [name, succeeded] of [
+			['Collapsing Bridge', 1],
+			['Swinging Log', 2],
+			['Rope Snare', 2],
+		] as const) {
+			const uuid = uuidOf(store, name);
+			meta[uuid] = { ...meta[uuid], disableChecksSucceeded: succeeded };
+		}
+		store.getState().setTrackerMetaMap(meta);
 		act(store, 'Collapsing Bridge', 'end-turn');
 
 		const state = store.getState();

@@ -61,8 +61,8 @@
 				"turnState": "delayed",
 				"group": "enemies"
 			},
-			"00000000-0000-4000-8000-000000000008": {
-				"uuid": "00000000-0000-4000-8000-000000000008",
+			"00000000-0000-4000-8000-000000000010": {
+				"uuid": "00000000-0000-4000-8000-000000000010",
 				"name": "Bridge Keeper",
 				"initiative": 15,
 				"health": 45,
@@ -81,6 +81,16 @@
 				"turnState": "normal",
 				"group": "players"
 			},
+			"00000000-0000-4000-8000-000000000007": {
+				"uuid": "00000000-0000-4000-8000-000000000007",
+				"name": "Swinging Log",
+				"initiative": 13,
+				"health": 1,
+				"maxHealth": 1,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "enemies"
+			},
 			"00000000-0000-4000-8000-000000000004": {
 				"uuid": "00000000-0000-4000-8000-000000000004",
 				"name": "Goblin Dog",
@@ -91,8 +101,8 @@
 				"turnState": "normal",
 				"group": "enemies"
 			},
-			"00000000-0000-4000-8000-000000000007": {
-				"uuid": "00000000-0000-4000-8000-000000000007",
+			"00000000-0000-4000-8000-000000000009": {
+				"uuid": "00000000-0000-4000-8000-000000000009",
 				"name": "Hidden Pit",
 				"initiative": 11,
 				"health": 1,
@@ -120,6 +130,16 @@
 				"tempHealth": 0,
 				"turnState": "normal",
 				"group": "players"
+			},
+			"00000000-0000-4000-8000-000000000008": {
+				"uuid": "00000000-0000-4000-8000-000000000008",
+				"name": "Rope Snare",
+				"initiative": 5,
+				"health": 1,
+				"maxHealth": 1,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "enemies"
 			}
 		},
 		"charactersOrder": [
@@ -128,11 +148,13 @@
 			"00000000-0000-4000-8000-000000000006",
 			"pc-kyra",
 			"00000000-0000-4000-8000-000000000002",
-			"00000000-0000-4000-8000-000000000008",
+			"00000000-0000-4000-8000-000000000010",
 			"pc-merisiel",
+			"00000000-0000-4000-8000-000000000007",
 			"00000000-0000-4000-8000-000000000004",
 			"00000000-0000-4000-8000-000000000003",
-			"pc-ezren"
+			"pc-ezren",
+			"00000000-0000-4000-8000-000000000008"
 		],
 		"delayedOrder": ["00000000-0000-4000-8000-000000000005"],
 		"trackerMetaMap": {
@@ -206,7 +228,7 @@
 				"notes": "",
 				"initiativeBonus": 8
 			},
-			"00000000-0000-4000-8000-000000000008": {
+			"00000000-0000-4000-8000-000000000010": {
 				"role": "neutral",
 				"sideTheme": "other",
 				"hasHealthData": true,
@@ -226,6 +248,17 @@
 				"disableChecksSucceeded": 0,
 				"notes": ""
 			},
+			"00000000-0000-4000-8000-000000000007": {
+				"role": "hazard",
+				"sideTheme": "opponent",
+				"hasHealthData": false,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 4,
+				"disableChecksSucceeded": 0,
+				"notes": "",
+				"initiativeBonus": 6,
+				"dcs": [{ "name": "Thievery", "value": 19 }]
+			},
 			"00000000-0000-4000-8000-000000000004": {
 				"role": "opponent",
 				"sideTheme": "opponent",
@@ -237,7 +270,7 @@
 				"initiativeBonus": 6,
 				"traits": ["Animal"]
 			},
-			"00000000-0000-4000-8000-000000000007": {
+			"00000000-0000-4000-8000-000000000009": {
 				"role": "hazard",
 				"sideTheme": "opponent",
 				"hasHealthData": false,
@@ -268,6 +301,17 @@
 				"disableChecksRequired": 0,
 				"disableChecksSucceeded": 0,
 				"notes": ""
+			},
+			"00000000-0000-4000-8000-000000000008": {
+				"role": "hazard",
+				"sideTheme": "opponent",
+				"hasHealthData": false,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 2,
+				"disableChecksSucceeded": 0,
+				"notes": "",
+				"initiativeBonus": 4,
+				"dcs": [{ "name": "Survival", "value": 17 }]
 			}
 		},
 		"round": 1,
@@ -280,11 +324,13 @@
 				"00000000-0000-4000-8000-000000000006",
 				"pc-kyra",
 				"00000000-0000-4000-8000-000000000002",
-				"00000000-0000-4000-8000-000000000008",
+				"00000000-0000-4000-8000-000000000010",
 				"pc-merisiel",
+				"00000000-0000-4000-8000-000000000007",
 				"00000000-0000-4000-8000-000000000004",
 				"00000000-0000-4000-8000-000000000003",
-				"pc-ezren"
+				"pc-ezren",
+				"00000000-0000-4000-8000-000000000008"
 			]
 		},
 		"history": [],
@@ -373,6 +419,26 @@
 						{ "name": "Thievery", "value": 20, "disableSuccesses": 2 },
 						{ "name": "Athletics", "value": 22, "disableSuccesses": 1 }
 					]
+				},
+				{
+					"type": "hazard",
+					"name": "Swinging Log",
+					"level": 2,
+					"side": 1,
+					"isComplexHazard": true,
+					"successesToDisable": 4,
+					"initiativeBonus": 6,
+					"dcs": [{ "name": "Thievery", "value": 19 }]
+				},
+				{
+					"type": "hazard",
+					"name": "Rope Snare",
+					"level": 1,
+					"side": 1,
+					"isComplexHazard": true,
+					"successesToDisable": 2,
+					"initiativeBonus": 4,
+					"dcs": [{ "name": "Survival", "value": 17 }]
 				},
 				{
 					"type": "hazard",

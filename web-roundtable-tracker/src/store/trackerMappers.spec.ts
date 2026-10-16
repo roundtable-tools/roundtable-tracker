@@ -144,6 +144,7 @@ describe('trackerMappers', () => {
 				status: 'Ready',
 				hpLabel: 'Barely Injured',
 				hpSegments: 4,
+				disableProgress: null,
 				sideTheme: 'pc',
 			},
 			{
@@ -152,6 +153,7 @@ describe('trackerMappers', () => {
 				status: 'Delayed',
 				hpLabel: 'Badly Injured',
 				hpSegments: 2,
+				disableProgress: null,
 				sideTheme: 'opponent',
 			},
 			{
@@ -160,6 +162,7 @@ describe('trackerMappers', () => {
 				status: 'Knocked Out',
 				hpLabel: 'Unconscious',
 				hpSegments: 0,
+				disableProgress: null,
 				sideTheme: 'ally',
 			},
 		]);
@@ -198,6 +201,60 @@ describe('trackerMappers', () => {
 			['near-death', 'Near Death', 1],
 			['knocked-out', 'Unconscious', 0],
 		]);
+	});
+
+	it('shows hazard disable checks in four bands instead of HP', () => {
+		const hazards = [
+			['none', 0, 4],
+			['under-half', 1, 4],
+			['half', 2, 4],
+			['over-half', 2, 3],
+			['all', 4, 4],
+		] as const;
+		const charactersMap = Object.fromEntries(
+			hazards.map(([uuid]) => [uuid, createCharacter({ uuid })])
+		);
+		const trackerMetaMap = Object.fromEntries(
+			hazards.map(([uuid, succeeded, required]) => [
+				uuid,
+				createMeta({
+					role: 'hazard',
+					disableChecksSucceeded: succeeded,
+					disableChecksRequired: required,
+				}),
+			])
+		);
+
+		const queue = runtimeToPlayerInitiativeQueue({
+			charactersOrder: hazards.map(([uuid]) => uuid),
+			delayedOrder: [],
+			charactersMap,
+			trackerMetaMap,
+		});
+
+		expect(
+			queue.map(({ id, disableProgress }) => [id, disableProgress])
+		).toEqual([
+			['none', { succeeded: 0, required: 4, label: 'Stable' }],
+			['under-half', { succeeded: 1, required: 4, label: 'Disrupted' }],
+			['half', { succeeded: 2, required: 4, label: 'Fracturing' }],
+			['over-half', { succeeded: 2, required: 3, label: 'Fracturing' }],
+			['all', { succeeded: 4, required: 4, label: 'Disabled' }],
+		]);
+	});
+
+	it('shows HP for a creature even with disable checks set', () => {
+		const queue = runtimeToPlayerInitiativeQueue({
+			charactersOrder: ['ogre'],
+			delayedOrder: [],
+			charactersMap: { ogre: createCharacter({ uuid: 'ogre' }) },
+			trackerMetaMap: {
+				ogre: createMeta({ role: 'opponent', disableChecksRequired: 2 }),
+			},
+		});
+
+		expect(queue[0].disableProgress).toBeNull();
+		expect(queue[0].hpLabel).toBe('Uninjured');
 	});
 
 	it('adds participants that start delaying after the order in the player queue', () => {
