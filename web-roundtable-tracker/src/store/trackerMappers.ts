@@ -65,7 +65,98 @@ export type PlayerTrackerParticipant = {
 	name: string;
 	status: 'Ready' | 'Delayed' | 'Knocked Out' | 'Inactive';
 	hpLabel: string;
+	/** Filled segments of the player HP bar, or null without HP data. */
+	hpSegments: number | null;
+	isHazard: boolean;
+	/** Disable checks of a hazard that needs any, shown instead of HP. */
+	disableProgress: PlayerDisableProgress | null;
+	sideTheme: ParticipantSideTheme;
 };
+
+export type PlayerDisableProgress = {
+	succeeded: number;
+	required: number;
+	label: string;
+};
+
+/** HP tiers above 0 HP, from worst to best. */
+const HEALTH_TIERS = [
+	'Near Death',
+	'Badly Injured',
+	'Injured',
+	'Barely Injured',
+	'Uninjured',
+] as const;
+
+type HealthTier = (typeof HEALTH_TIERS)[number];
+
+/** Segments in the player HP bar: one per HP tier. */
+export const PLAYER_HP_SEGMENTS = HEALTH_TIERS.length;
+
+/** The HP tier for a percentage of max HP; Unconscious at 0 HP or less. */
+export function getHealthLabelFromPercentage(healthPercentage: number) {
+	if (healthPercentage <= 0) {
+		return 'Unconscious';
+	}
+
+	if (healthPercentage >= 100) {
+		return 'Uninjured';
+	}
+
+	if (healthPercentage >= 85) {
+		return 'Barely Injured';
+	}
+
+	if (healthPercentage >= 65) {
+		return 'Injured';
+	}
+
+	if (healthPercentage >= 35) {
+		return 'Badly Injured';
+	}
+
+	return 'Near Death';
+}
+
+/** The colour group a participant is shown in. */
+export type ParticipantSideTheme = 'pc' | 'opponent' | 'ally' | 'other';
+
+export function resolveParticipantSideTheme(
+	participant: Pick<TrackerParticipant, 'role' | 'sideTheme'>
+): ParticipantSideTheme {
+	if (participant.sideTheme === 'pc') {
+		return 'pc';
+	}
+
+	if (participant.sideTheme === 'ally') {
+		return 'ally';
+	}
+
+	if (
+		participant.sideTheme === 'other' ||
+		participant.sideTheme === 'neutral'
+	) {
+		return 'other';
+	}
+
+	if (participant.sideTheme === 'opponent') {
+		return 'opponent';
+	}
+
+	if (participant.role === 'pc') {
+		return 'pc';
+	}
+
+	if (participant.role === 'ally') {
+		return 'ally';
+	}
+
+	if (participant.role === 'neutral') {
+		return 'other';
+	}
+
+	return 'opponent';
+}
 
 const DEFAULT_META: TrackerParticipantMeta = {
 	role: 'opponent',
@@ -245,7 +336,21 @@ export function runtimeToOutOfInitiativeData(
 			})
 		);
 
-	const delayed: TrackerParticipant[] = delayedOrder
+	const delayed = delayedToTrackerParticipants(
+		delayedOrder,
+		charactersMap,
+		trackerMetaMap
+	);
+
+	return { reinforcements, delayed, hazards };
+}
+
+function delayedToTrackerParticipants(
+	delayedIds: EncounterStore['delayedOrder'],
+	charactersMap: EncounterStore['charactersMap'],
+	trackerMetaMap: EncounterStore['trackerMetaMap']
+): TrackerParticipant[] {
+	return delayedIds
 		.filter((uuid) => {
 			const meta = trackerMetaMap[uuid];
 
@@ -262,8 +367,6 @@ export function runtimeToOutOfInitiativeData(
 		.filter(
 			(participant): participant is TrackerParticipant => participant !== null
 		);
-
-	return { reinforcements, delayed, hazards };
 }
 
 const toPlayerStatus = (
@@ -278,32 +381,113 @@ const toPlayerStatus = (
 	return 'Ready';
 };
 
-const toCoarseHpLabel = (participant: TrackerParticipant): string => {
+/**
+ * A participant's HP as players see it: the HP tier, and that tier's number of
+ * filled segments in the player HP bar.
+ */
+const toPlayerHealth = (
+	participant: TrackerParticipant
+): Pick<PlayerTrackerParticipant, 'hpLabel' | 'hpSegments'> => {
+	if (participant.state === 'knocked-out') {
+		return { hpLabel: 'Unconscious', hpSegments: 0 };
+	}
+
 	if (
 		typeof participant.currentHp !== 'number' ||
 		typeof participant.maxHp !== 'number'
 	) {
-		return 'No HP Data';
+		return { hpLabel: 'No HP Data', hpSegments: null };
 	}
 
-	const maxHp = participant.maxHp ?? 1;
-	const currentHp = participant.currentHp ?? maxHp;
+	const hpLabel = getHealthLabelFromPercentage(
+		(participant.currentHp / Math.max(participant.maxHp, 1)) * 100
+	);
 
-	if (currentHp <= 0) {
-		return 'Defeated';
+	return {
+		hpLabel,
+		hpSegments: HEALTH_TIERS.indexOf(hpLabel as HealthTier) + 1,
+	};
+};
+
+const HAZARD_DISABLE_CHECK_NAMES = [
+	'Disrupted',
+	'Compromised',
+	'Fracturing',
+	'Critical',
+	'Disabled',
+] as const;
+
+function getHazardDisableStageNames(requiredChecks: number) {
+	const clampedRequiredChecks = Math.min(Math.max(requiredChecks, 1), 5);
+
+	if (clampedRequiredChecks === 5) {
+		return [...HAZARD_DISABLE_CHECK_NAMES];
 	}
 
-	const ratio = currentHp / Math.max(maxHp, 1);
-
-	if (ratio >= 0.75) {
-		return 'Healthy';
+	if (clampedRequiredChecks === 4) {
+		return [
+			HAZARD_DISABLE_CHECK_NAMES[0],
+			HAZARD_DISABLE_CHECK_NAMES[1],
+			HAZARD_DISABLE_CHECK_NAMES[3],
+			HAZARD_DISABLE_CHECK_NAMES[4],
+		];
 	}
 
-	if (ratio >= 0.4) {
-		return 'Wounded';
+	if (clampedRequiredChecks === 3) {
+		return [
+			HAZARD_DISABLE_CHECK_NAMES[0],
+			HAZARD_DISABLE_CHECK_NAMES[2],
+			HAZARD_DISABLE_CHECK_NAMES[4],
+		];
 	}
 
-	return 'Critical';
+	if (clampedRequiredChecks === 2) {
+		return [HAZARD_DISABLE_CHECK_NAMES[0], HAZARD_DISABLE_CHECK_NAMES[4]];
+	}
+
+	return [HAZARD_DISABLE_CHECK_NAMES[4]];
+}
+
+/**
+ * The tracker's label for a hazard's disable checks: Stable before the first
+ * success, then one stage name per success, ending at Disabled.
+ */
+export function getHazardDisableLabel(
+	participant: Pick<
+		TrackerParticipant,
+		'disableChecksRequired' | 'disableChecksSucceeded'
+	>
+) {
+	const requiredChecks = participant.disableChecksRequired ?? 5;
+	const successfulChecks = participant.disableChecksSucceeded ?? 0;
+
+	if (successfulChecks <= 0) {
+		return 'Stable';
+	}
+
+	const stageNames = getHazardDisableStageNames(requiredChecks);
+	const stageIndex =
+		Math.min(Math.max(successfulChecks, 1), requiredChecks) - 1;
+
+	return stageNames[Math.min(stageIndex, stageNames.length - 1)] ?? 'Disabled';
+}
+
+/** A hazard's disable checks as players see them, with the tracker's label. */
+const toPlayerDisableProgress = (
+	participant: TrackerParticipant
+): PlayerDisableProgress | null => {
+	const required = participant.disableChecksRequired ?? 0;
+
+	if (participant.role !== 'hazard' || required <= 0) {
+		return null;
+	}
+
+	const succeeded = Math.min(
+		Math.max(participant.disableChecksSucceeded ?? 0, 0),
+		required
+	);
+
+	return { succeeded, required, label: getHazardDisableLabel(participant) };
 };
 
 export function runtimeToPlayerInitiativeQueue(
@@ -312,12 +496,26 @@ export function runtimeToPlayerInitiativeQueue(
 		'charactersOrder' | 'delayedOrder' | 'charactersMap' | 'trackerMetaMap'
 	>
 ): PlayerTrackerParticipant[] {
-	return runtimeToInitiativeQueue(store).map((participant) => ({
-		id: participant.id,
-		name: participant.name,
-		status: toPlayerStatus(participant.state),
-		hpLabel: toCoarseHpLabel(participant),
-	}));
+	// Delaying on a turn keeps a participant in the order; one that starts
+	// the encounter delaying is only in delayedOrder, so it is added after.
+	const inOrder = new Set(store.charactersOrder);
+	const delayedOutsideOrder = delayedToTrackerParticipants(
+		store.delayedOrder.filter((uuid) => !inOrder.has(uuid)),
+		store.charactersMap,
+		store.trackerMetaMap
+	);
+
+	return [...runtimeToInitiativeQueue(store), ...delayedOutsideOrder].map(
+		(participant) => ({
+			id: participant.id,
+			name: participant.name,
+			status: toPlayerStatus(participant.state),
+			isHazard: participant.role === 'hazard',
+			...toPlayerHealth(participant),
+			disableProgress: toPlayerDisableProgress(participant),
+			sideTheme: resolveParticipantSideTheme(participant),
+		})
+	);
 }
 
 export function narrativeSlotsToTimeline(

@@ -1,0 +1,1729 @@
+{
+	"state": {
+		"charactersMap": {
+			"pc-valeros": {
+				"uuid": "pc-valeros",
+				"name": "Valeros",
+				"initiative": 24,
+				"health": 25,
+				"maxHealth": 45,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "players"
+			},
+			"00000000-0000-4000-8000-000000000001": {
+				"uuid": "00000000-0000-4000-8000-000000000001",
+				"name": "Goblin Warchief",
+				"initiative": 22,
+				"health": 56,
+				"maxHealth": 70,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "enemies"
+			},
+			"00000000-0000-4000-8000-000000000006": {
+				"uuid": "00000000-0000-4000-8000-000000000006",
+				"name": "Collapsing Bridge",
+				"initiative": 20,
+				"health": 40,
+				"maxHealth": 40,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "enemies"
+			},
+			"pc-kyra": {
+				"uuid": "pc-kyra",
+				"name": "Kyra",
+				"initiative": 19,
+				"health": 38,
+				"maxHealth": 38,
+				"tempHealth": 8,
+				"turnState": "normal",
+				"group": "players",
+				"tempHealthDescription": "False Life, until the end of the encounter"
+			},
+			"00000000-0000-4000-8000-000000000002": {
+				"uuid": "00000000-0000-4000-8000-000000000002",
+				"name": "Goblin Archer A",
+				"initiative": 17,
+				"health": 6,
+				"maxHealth": 18,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "enemies"
+			},
+			"00000000-0000-4000-8000-000000000005": {
+				"uuid": "00000000-0000-4000-8000-000000000005",
+				"name": "Goblin Sneak",
+				"initiative": 16,
+				"health": 25,
+				"maxHealth": 25,
+				"tempHealth": 0,
+				"turnState": "delayed",
+				"group": "enemies"
+			},
+			"00000000-0000-4000-8000-000000000010": {
+				"uuid": "00000000-0000-4000-8000-000000000010",
+				"name": "Bridge Keeper",
+				"initiative": 15,
+				"health": 45,
+				"maxHealth": 45,
+				"tempHealth": 0,
+				"turnState": "delayed",
+				"group": "enemies"
+			},
+			"pc-merisiel": {
+				"uuid": "pc-merisiel",
+				"name": "Merisiel",
+				"initiative": 14,
+				"health": 4,
+				"maxHealth": 32,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "players"
+			},
+			"00000000-0000-4000-8000-000000000007": {
+				"uuid": "00000000-0000-4000-8000-000000000007",
+				"name": "Swinging Log",
+				"initiative": 13,
+				"health": 1,
+				"maxHealth": 1,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "enemies"
+			},
+			"00000000-0000-4000-8000-000000000004": {
+				"uuid": "00000000-0000-4000-8000-000000000004",
+				"name": "Goblin Dog",
+				"initiative": 12,
+				"health": 0,
+				"maxHealth": 17,
+				"tempHealth": 0,
+				"turnState": "knocked-out",
+				"group": "enemies"
+			},
+			"00000000-0000-4000-8000-000000000009": {
+				"uuid": "00000000-0000-4000-8000-000000000009",
+				"name": "Hidden Pit",
+				"initiative": 11,
+				"health": 1,
+				"maxHealth": 1,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "enemies"
+			},
+			"00000000-0000-4000-8000-000000000003": {
+				"uuid": "00000000-0000-4000-8000-000000000003",
+				"name": "Goblin Archer B",
+				"initiative": 10,
+				"health": 16,
+				"maxHealth": 18,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "enemies"
+			},
+			"pc-ezren": {
+				"uuid": "pc-ezren",
+				"name": "Ezren",
+				"initiative": 8,
+				"health": 1,
+				"maxHealth": 1,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "players"
+			},
+			"00000000-0000-4000-8000-000000000008": {
+				"uuid": "00000000-0000-4000-8000-000000000008",
+				"name": "Rope Snare",
+				"initiative": 5,
+				"health": 1,
+				"maxHealth": 1,
+				"tempHealth": 0,
+				"turnState": "normal",
+				"group": "enemies"
+			},
+			"00000000-0000-4000-8000-000000000011": {
+				"uuid": "00000000-0000-4000-8000-000000000011",
+				"name": "Goblin Warrior A",
+				"initiative": 16,
+				"turnState": "normal",
+				"health": 15,
+				"maxHealth": 15,
+				"tempHealth": 0,
+				"group": "enemies",
+				"level": 2
+			},
+			"00000000-0000-4000-8000-000000000012": {
+				"uuid": "00000000-0000-4000-8000-000000000012",
+				"name": "Goblin Warrior B",
+				"initiative": 16,
+				"turnState": "normal",
+				"health": 15,
+				"maxHealth": 15,
+				"tempHealth": 0,
+				"group": "enemies",
+				"level": 2
+			}
+		},
+		"charactersOrder": [
+			"pc-kyra",
+			"00000000-0000-4000-8000-000000000002",
+			"00000000-0000-4000-8000-000000000010",
+			"00000000-0000-4000-8000-000000000011",
+			"00000000-0000-4000-8000-000000000012",
+			"pc-merisiel",
+			"00000000-0000-4000-8000-000000000007",
+			"00000000-0000-4000-8000-000000000004",
+			"00000000-0000-4000-8000-000000000003",
+			"pc-ezren",
+			"00000000-0000-4000-8000-000000000008",
+			"pc-valeros",
+			"00000000-0000-4000-8000-000000000001",
+			"00000000-0000-4000-8000-000000000006"
+		],
+		"delayedOrder": [
+			"00000000-0000-4000-8000-000000000005",
+			"00000000-0000-4000-8000-000000000010"
+		],
+		"trackerMetaMap": {
+			"pc-valeros": {
+				"role": "pc",
+				"sideTheme": "pc",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": ""
+			},
+			"00000000-0000-4000-8000-000000000001": {
+				"role": "opponent",
+				"sideTheme": "opponent",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": "Leads from the far end of the bridge.",
+				"initiativeBonus": 9,
+				"dcs": [{ "name": "AC", "value": 22 }],
+				"adjustmentDescription": "Elite",
+				"adjustmentLevelModifier": 1,
+				"traits": ["Goblin", "Humanoid"]
+			},
+			"00000000-0000-4000-8000-000000000006": {
+				"role": "hazard",
+				"sideTheme": "opponent",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 3,
+				"disableChecksSucceeded": 1,
+				"notes": "Planks drop away each round.",
+				"hardness": 8,
+				"initiativeBonus": 9,
+				"dcs": [
+					{ "name": "Thievery", "value": 20, "disableSuccesses": 2 },
+					{ "name": "Athletics", "value": 22, "disableSuccesses": 1 }
+				]
+			},
+			"pc-kyra": {
+				"role": "pc",
+				"sideTheme": "pc",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": ""
+			},
+			"00000000-0000-4000-8000-000000000002": {
+				"role": "opponent",
+				"sideTheme": "opponent",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": "",
+				"initiativeBonus": 6,
+				"adjustmentDescription": "Weak",
+				"adjustmentLevelModifier": -1,
+				"traits": ["Goblin", "Humanoid"]
+			},
+			"00000000-0000-4000-8000-000000000005": {
+				"role": "opponent",
+				"sideTheme": "opponent",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": "",
+				"initiativeBonus": 8
+			},
+			"00000000-0000-4000-8000-000000000010": {
+				"role": "neutral",
+				"sideTheme": "other",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": "Collects the toll and wants nobody hurt.",
+				"initiativeBonus": 7,
+				"traits": ["Human"]
+			},
+			"pc-merisiel": {
+				"role": "pc",
+				"sideTheme": "pc",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": ""
+			},
+			"00000000-0000-4000-8000-000000000007": {
+				"role": "hazard",
+				"sideTheme": "opponent",
+				"hasHealthData": false,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 4,
+				"disableChecksSucceeded": 2,
+				"notes": "",
+				"initiativeBonus": 6,
+				"dcs": [{ "name": "Thievery", "value": 19 }]
+			},
+			"00000000-0000-4000-8000-000000000004": {
+				"role": "opponent",
+				"sideTheme": "opponent",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": "",
+				"initiativeBonus": 6,
+				"traits": ["Animal"]
+			},
+			"00000000-0000-4000-8000-000000000009": {
+				"role": "hazard",
+				"sideTheme": "opponent",
+				"hasHealthData": false,
+				"isSimpleHazard": true,
+				"disableChecksRequired": 1,
+				"disableChecksSucceeded": 0,
+				"notes": "",
+				"dcs": [{ "name": "Perception", "value": 18 }]
+			},
+			"00000000-0000-4000-8000-000000000003": {
+				"role": "opponent",
+				"sideTheme": "opponent",
+				"hasHealthData": true,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": "",
+				"initiativeBonus": 6,
+				"adjustmentDescription": "Weak",
+				"adjustmentLevelModifier": -1,
+				"traits": ["Goblin", "Humanoid"]
+			},
+			"pc-ezren": {
+				"role": "pc",
+				"sideTheme": "pc",
+				"hasHealthData": false,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": ""
+			},
+			"00000000-0000-4000-8000-000000000008": {
+				"role": "hazard",
+				"sideTheme": "opponent",
+				"hasHealthData": false,
+				"isSimpleHazard": false,
+				"disableChecksRequired": 2,
+				"disableChecksSucceeded": 2,
+				"notes": "",
+				"initiativeBonus": 4,
+				"dcs": [{ "name": "Survival", "value": 17 }]
+			},
+			"00000000-0000-4000-8000-000000000011": {
+				"role": "reinforcement",
+				"sideTheme": "opponent",
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": "More goblins climb up from the gorge.",
+				"initiativeBonus": 5,
+				"traits": ["Goblin"],
+				"reinforcementSlotId": "goblin-reinforcements"
+			},
+			"00000000-0000-4000-8000-000000000012": {
+				"role": "reinforcement",
+				"sideTheme": "opponent",
+				"isSimpleHazard": false,
+				"disableChecksRequired": 0,
+				"disableChecksSucceeded": 0,
+				"notes": "More goblins climb up from the gorge.",
+				"initiativeBonus": 5,
+				"traits": ["Goblin"],
+				"reinforcementSlotId": "goblin-reinforcements"
+			}
+		},
+		"round": 2,
+		"charactersWithTurn": {
+			"type": "Set",
+			"data": [
+				"00000000-0000-4000-8000-000000000005",
+				"00000000-0000-4000-8000-000000000010",
+				"pc-kyra",
+				"00000000-0000-4000-8000-000000000002",
+				"pc-merisiel",
+				"00000000-0000-4000-8000-000000000007",
+				"00000000-0000-4000-8000-000000000004",
+				"00000000-0000-4000-8000-000000000003",
+				"pc-ezren",
+				"00000000-0000-4000-8000-000000000008",
+				"00000000-0000-4000-8000-000000000011",
+				"00000000-0000-4000-8000-000000000012"
+			]
+		},
+		"history": [
+			{
+				"type": "Command.ChangeHealthCommand",
+				"description": "Change Health",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000001",
+					"delta": -14,
+					"oldCharacter": {
+						"uuid": "00000000-0000-4000-8000-000000000001",
+						"name": "Goblin Warchief",
+						"initiative": 22,
+						"health": 70,
+						"maxHealth": 70,
+						"tempHealth": 0,
+						"turnState": "normal",
+						"group": "enemies"
+					}
+				}
+			},
+			{
+				"type": "Command.EndTurnCommand",
+				"description": "End Turn Command",
+				"data": {
+					"uuid": "pc-valeros",
+					"original": {
+						"charactersOrder": [
+							"pc-valeros",
+							"00000000-0000-4000-8000-000000000001",
+							"00000000-0000-4000-8000-000000000006",
+							"pc-kyra",
+							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000010",
+							"pc-merisiel",
+							"00000000-0000-4000-8000-000000000007",
+							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000003",
+							"pc-ezren",
+							"00000000-0000-4000-8000-000000000008"
+						],
+						"charactersWithTurn": {
+							"type": "Set",
+							"data": [
+								"00000000-0000-4000-8000-000000000005",
+								"pc-valeros",
+								"00000000-0000-4000-8000-000000000001",
+								"00000000-0000-4000-8000-000000000006",
+								"pc-kyra",
+								"00000000-0000-4000-8000-000000000002",
+								"00000000-0000-4000-8000-000000000010",
+								"pc-merisiel",
+								"00000000-0000-4000-8000-000000000007",
+								"00000000-0000-4000-8000-000000000004",
+								"00000000-0000-4000-8000-000000000003",
+								"pc-ezren",
+								"00000000-0000-4000-8000-000000000008"
+							]
+						}
+					}
+				}
+			},
+			{
+				"type": "Command.ChangeHealthCommand",
+				"description": "Change Health",
+				"data": {
+					"uuid": "pc-valeros",
+					"delta": -20,
+					"oldCharacter": {
+						"uuid": "pc-valeros",
+						"name": "Valeros",
+						"initiative": 24,
+						"health": 45,
+						"maxHealth": 45,
+						"tempHealth": 0,
+						"turnState": "normal",
+						"group": "players"
+					}
+				}
+			},
+			{
+				"type": "Command.EndTurnCommand",
+				"description": "End Turn Command",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000001",
+					"original": {
+						"charactersOrder": [
+							"00000000-0000-4000-8000-000000000001",
+							"00000000-0000-4000-8000-000000000006",
+							"pc-kyra",
+							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000010",
+							"pc-merisiel",
+							"00000000-0000-4000-8000-000000000007",
+							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000003",
+							"pc-ezren",
+							"00000000-0000-4000-8000-000000000008",
+							"pc-valeros"
+						],
+						"charactersWithTurn": {
+							"type": "Set",
+							"data": [
+								"00000000-0000-4000-8000-000000000005",
+								"00000000-0000-4000-8000-000000000001",
+								"00000000-0000-4000-8000-000000000006",
+								"pc-kyra",
+								"00000000-0000-4000-8000-000000000002",
+								"00000000-0000-4000-8000-000000000010",
+								"pc-merisiel",
+								"00000000-0000-4000-8000-000000000007",
+								"00000000-0000-4000-8000-000000000004",
+								"00000000-0000-4000-8000-000000000003",
+								"pc-ezren",
+								"00000000-0000-4000-8000-000000000008"
+							]
+						}
+					}
+				}
+			},
+			{
+				"type": "Command.EndTurnCommand",
+				"description": "End Turn Command",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000006",
+					"original": {
+						"charactersOrder": [
+							"00000000-0000-4000-8000-000000000006",
+							"pc-kyra",
+							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000010",
+							"pc-merisiel",
+							"00000000-0000-4000-8000-000000000007",
+							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000003",
+							"pc-ezren",
+							"00000000-0000-4000-8000-000000000008",
+							"pc-valeros",
+							"00000000-0000-4000-8000-000000000001"
+						],
+						"charactersWithTurn": {
+							"type": "Set",
+							"data": [
+								"00000000-0000-4000-8000-000000000005",
+								"00000000-0000-4000-8000-000000000006",
+								"pc-kyra",
+								"00000000-0000-4000-8000-000000000002",
+								"00000000-0000-4000-8000-000000000010",
+								"pc-merisiel",
+								"00000000-0000-4000-8000-000000000007",
+								"00000000-0000-4000-8000-000000000004",
+								"00000000-0000-4000-8000-000000000003",
+								"pc-ezren",
+								"00000000-0000-4000-8000-000000000008"
+							]
+						}
+					}
+				}
+			},
+			{
+				"type": "Command.SetTempHealthCommand",
+				"description": "Set Temporary HP",
+				"data": {
+					"uuid": "pc-kyra",
+					"tempHealth": 8,
+					"description": "False Life, until the end of the encounter",
+					"oldCharacter": {
+						"uuid": "pc-kyra",
+						"name": "Kyra",
+						"initiative": 19,
+						"health": 38,
+						"maxHealth": 38,
+						"tempHealth": 0,
+						"turnState": "normal",
+						"group": "players"
+					}
+				}
+			},
+			{
+				"type": "Command.EndTurnCommand",
+				"description": "End Turn Command",
+				"data": {
+					"uuid": "pc-kyra",
+					"original": {
+						"charactersOrder": [
+							"pc-kyra",
+							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000010",
+							"pc-merisiel",
+							"00000000-0000-4000-8000-000000000007",
+							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000003",
+							"pc-ezren",
+							"00000000-0000-4000-8000-000000000008",
+							"pc-valeros",
+							"00000000-0000-4000-8000-000000000001",
+							"00000000-0000-4000-8000-000000000006"
+						],
+						"charactersWithTurn": {
+							"type": "Set",
+							"data": [
+								"00000000-0000-4000-8000-000000000005",
+								"pc-kyra",
+								"00000000-0000-4000-8000-000000000002",
+								"00000000-0000-4000-8000-000000000010",
+								"pc-merisiel",
+								"00000000-0000-4000-8000-000000000007",
+								"00000000-0000-4000-8000-000000000004",
+								"00000000-0000-4000-8000-000000000003",
+								"pc-ezren",
+								"00000000-0000-4000-8000-000000000008"
+							]
+						}
+					}
+				}
+			},
+			{
+				"type": "Command.ChangeHealthCommand",
+				"description": "Change Health",
+				"data": {
+					"uuid": "pc-merisiel",
+					"delta": -28,
+					"oldCharacter": {
+						"uuid": "pc-merisiel",
+						"name": "Merisiel",
+						"initiative": 14,
+						"health": 32,
+						"maxHealth": 32,
+						"tempHealth": 0,
+						"turnState": "normal",
+						"group": "players"
+					}
+				}
+			},
+			{
+				"type": "Command.EndTurnCommand",
+				"description": "End Turn Command",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000002",
+					"original": {
+						"charactersOrder": [
+							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000010",
+							"pc-merisiel",
+							"00000000-0000-4000-8000-000000000007",
+							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000003",
+							"pc-ezren",
+							"00000000-0000-4000-8000-000000000008",
+							"pc-valeros",
+							"00000000-0000-4000-8000-000000000001",
+							"00000000-0000-4000-8000-000000000006",
+							"pc-kyra"
+						],
+						"charactersWithTurn": {
+							"type": "Set",
+							"data": [
+								"00000000-0000-4000-8000-000000000005",
+								"00000000-0000-4000-8000-000000000002",
+								"00000000-0000-4000-8000-000000000010",
+								"pc-merisiel",
+								"00000000-0000-4000-8000-000000000007",
+								"00000000-0000-4000-8000-000000000004",
+								"00000000-0000-4000-8000-000000000003",
+								"pc-ezren",
+								"00000000-0000-4000-8000-000000000008"
+							]
+						}
+					}
+				}
+			},
+			{
+				"type": "Command.DelayCharacterCommand",
+				"description": "Delay Character Command",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000010",
+					"command": {
+						"type": "Command.CompositeCommand",
+						"description": "Composite Command",
+						"data": {
+							"commands": [
+								{
+									"type": "Command.UpdateCharacterCommand",
+									"description": "Update Character Command",
+									"data": {
+										"uuid": "00000000-0000-4000-8000-000000000010",
+										"newCharacterProps": { "turnState": "delayed" },
+										"oldCharacter": {
+											"uuid": "00000000-0000-4000-8000-000000000010",
+											"name": "Bridge Keeper",
+											"initiative": 15,
+											"health": 45,
+											"maxHealth": 45,
+											"tempHealth": 0,
+											"turnState": "normal",
+											"group": "enemies"
+										}
+									}
+								},
+								{
+									"type": "Command.EndTurnCommand",
+									"description": "End Turn Command",
+									"data": {
+										"uuid": "00000000-0000-4000-8000-000000000010",
+										"original": {
+											"charactersOrder": [
+												"00000000-0000-4000-8000-000000000010",
+												"pc-merisiel",
+												"00000000-0000-4000-8000-000000000007",
+												"00000000-0000-4000-8000-000000000004",
+												"00000000-0000-4000-8000-000000000003",
+												"pc-ezren",
+												"00000000-0000-4000-8000-000000000008",
+												"pc-valeros",
+												"00000000-0000-4000-8000-000000000001",
+												"00000000-0000-4000-8000-000000000006",
+												"pc-kyra",
+												"00000000-0000-4000-8000-000000000002"
+											],
+											"charactersWithTurn": {
+												"type": "Set",
+												"data": [
+													"00000000-0000-4000-8000-000000000005",
+													"00000000-0000-4000-8000-000000000010",
+													"pc-merisiel",
+													"00000000-0000-4000-8000-000000000007",
+													"00000000-0000-4000-8000-000000000004",
+													"00000000-0000-4000-8000-000000000003",
+													"pc-ezren",
+													"00000000-0000-4000-8000-000000000008"
+												]
+											}
+										}
+									}
+								},
+								{
+									"type": "Command.ReorderCharactersCommand",
+									"description": "Reorder delayedOrder order",
+									"data": {
+										"newOrder": [
+											"00000000-0000-4000-8000-000000000005",
+											"00000000-0000-4000-8000-000000000010"
+										],
+										"type": "delay",
+										"oldOrder": ["00000000-0000-4000-8000-000000000005"]
+									}
+								}
+							]
+						}
+					}
+				}
+			},
+			{
+				"type": "Command.EndTurnCommand",
+				"description": "End Turn Command",
+				"data": {
+					"uuid": "pc-merisiel",
+					"original": {
+						"charactersOrder": [
+							"pc-merisiel",
+							"00000000-0000-4000-8000-000000000007",
+							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000003",
+							"pc-ezren",
+							"00000000-0000-4000-8000-000000000008",
+							"pc-valeros",
+							"00000000-0000-4000-8000-000000000001",
+							"00000000-0000-4000-8000-000000000006",
+							"pc-kyra",
+							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000010"
+						],
+						"charactersWithTurn": {
+							"type": "Set",
+							"data": [
+								"00000000-0000-4000-8000-000000000005",
+								"pc-merisiel",
+								"00000000-0000-4000-8000-000000000007",
+								"00000000-0000-4000-8000-000000000004",
+								"00000000-0000-4000-8000-000000000003",
+								"pc-ezren",
+								"00000000-0000-4000-8000-000000000008"
+							]
+						}
+					}
+				}
+			},
+			{
+				"type": "Command.EndTurnCommand",
+				"description": "End Turn Command",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000007",
+					"original": {
+						"charactersOrder": [
+							"00000000-0000-4000-8000-000000000007",
+							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000003",
+							"pc-ezren",
+							"00000000-0000-4000-8000-000000000008",
+							"pc-valeros",
+							"00000000-0000-4000-8000-000000000001",
+							"00000000-0000-4000-8000-000000000006",
+							"pc-kyra",
+							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000010",
+							"pc-merisiel"
+						],
+						"charactersWithTurn": {
+							"type": "Set",
+							"data": [
+								"00000000-0000-4000-8000-000000000005",
+								"00000000-0000-4000-8000-000000000007",
+								"00000000-0000-4000-8000-000000000004",
+								"00000000-0000-4000-8000-000000000003",
+								"pc-ezren",
+								"00000000-0000-4000-8000-000000000008"
+							]
+						}
+					}
+				}
+			},
+			{
+				"type": "Command.ChangeHealthCommand",
+				"description": "Change Health",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000004",
+					"delta": -17,
+					"oldCharacter": {
+						"uuid": "00000000-0000-4000-8000-000000000004",
+						"name": "Goblin Dog",
+						"initiative": 12,
+						"health": 17,
+						"maxHealth": 17,
+						"tempHealth": 0,
+						"turnState": "normal",
+						"group": "enemies"
+					}
+				}
+			},
+			{
+				"type": "Command.KnockOutCharacterCommand",
+				"description": "Knock Out Character Command",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000004",
+					"command": {
+						"type": "Command.CompositeCommand",
+						"description": "Composite Command",
+						"data": {
+							"commands": [
+								{
+									"type": "Command.UpdateCharacterCommand",
+									"description": "Update Character Command",
+									"data": {
+										"uuid": "00000000-0000-4000-8000-000000000004",
+										"newCharacterProps": { "turnState": "knocked-out" },
+										"oldCharacter": {
+											"uuid": "00000000-0000-4000-8000-000000000004",
+											"name": "Goblin Dog",
+											"initiative": 12,
+											"health": 0,
+											"maxHealth": 17,
+											"tempHealth": 0,
+											"turnState": "normal",
+											"group": "enemies"
+										}
+									}
+								},
+								{
+									"type": "Command.EndTurnCommand",
+									"description": "End Turn Command",
+									"data": {
+										"uuid": "00000000-0000-4000-8000-000000000004",
+										"original": {
+											"charactersOrder": [
+												"00000000-0000-4000-8000-000000000004",
+												"00000000-0000-4000-8000-000000000003",
+												"pc-ezren",
+												"00000000-0000-4000-8000-000000000008",
+												"pc-valeros",
+												"00000000-0000-4000-8000-000000000001",
+												"00000000-0000-4000-8000-000000000006",
+												"pc-kyra",
+												"00000000-0000-4000-8000-000000000002",
+												"00000000-0000-4000-8000-000000000010",
+												"pc-merisiel",
+												"00000000-0000-4000-8000-000000000007"
+											],
+											"charactersWithTurn": {
+												"type": "Set",
+												"data": [
+													"00000000-0000-4000-8000-000000000005",
+													"00000000-0000-4000-8000-000000000004",
+													"00000000-0000-4000-8000-000000000003",
+													"pc-ezren",
+													"00000000-0000-4000-8000-000000000008"
+												]
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				}
+			},
+			{
+				"type": "Command.ChangeHealthCommand",
+				"description": "Change Health",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000003",
+					"delta": -2,
+					"oldCharacter": {
+						"uuid": "00000000-0000-4000-8000-000000000003",
+						"name": "Goblin Archer B",
+						"initiative": 10,
+						"health": 18,
+						"maxHealth": 18,
+						"tempHealth": 0,
+						"turnState": "normal",
+						"group": "enemies"
+					}
+				}
+			},
+			{
+				"type": "Command.EndTurnCommand",
+				"description": "End Turn Command",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000003",
+					"original": {
+						"charactersOrder": [
+							"00000000-0000-4000-8000-000000000003",
+							"pc-ezren",
+							"00000000-0000-4000-8000-000000000008",
+							"pc-valeros",
+							"00000000-0000-4000-8000-000000000001",
+							"00000000-0000-4000-8000-000000000006",
+							"pc-kyra",
+							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000010",
+							"pc-merisiel",
+							"00000000-0000-4000-8000-000000000007",
+							"00000000-0000-4000-8000-000000000004"
+						],
+						"charactersWithTurn": {
+							"type": "Set",
+							"data": [
+								"00000000-0000-4000-8000-000000000005",
+								"00000000-0000-4000-8000-000000000003",
+								"pc-ezren",
+								"00000000-0000-4000-8000-000000000008"
+							]
+						}
+					}
+				}
+			},
+			{
+				"type": "Command.EndTurnCommand",
+				"description": "End Turn Command",
+				"data": {
+					"uuid": "pc-ezren",
+					"original": {
+						"charactersOrder": [
+							"pc-ezren",
+							"00000000-0000-4000-8000-000000000008",
+							"pc-valeros",
+							"00000000-0000-4000-8000-000000000001",
+							"00000000-0000-4000-8000-000000000006",
+							"pc-kyra",
+							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000010",
+							"pc-merisiel",
+							"00000000-0000-4000-8000-000000000007",
+							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000003"
+						],
+						"charactersWithTurn": {
+							"type": "Set",
+							"data": [
+								"00000000-0000-4000-8000-000000000005",
+								"pc-ezren",
+								"00000000-0000-4000-8000-000000000008"
+							]
+						}
+					}
+				}
+			},
+			{
+				"type": "Command.FinalizeTurnAndAdvanceRoundCommand",
+				"description": "Finalize Turn And Advance Round Command",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000008",
+					"action": "end-turn",
+					"command": {
+						"type": "Command.CompositeCommand",
+						"description": "Composite Command",
+						"data": {
+							"commands": [
+								{
+									"type": "Command.EndTurnCommand",
+									"description": "End Turn Command",
+									"data": {
+										"uuid": "00000000-0000-4000-8000-000000000008",
+										"original": {
+											"charactersOrder": [
+												"00000000-0000-4000-8000-000000000008",
+												"pc-valeros",
+												"00000000-0000-4000-8000-000000000001",
+												"00000000-0000-4000-8000-000000000006",
+												"pc-kyra",
+												"00000000-0000-4000-8000-000000000002",
+												"00000000-0000-4000-8000-000000000010",
+												"pc-merisiel",
+												"00000000-0000-4000-8000-000000000007",
+												"00000000-0000-4000-8000-000000000004",
+												"00000000-0000-4000-8000-000000000003",
+												"pc-ezren"
+											],
+											"charactersWithTurn": {
+												"type": "Set",
+												"data": [
+													"00000000-0000-4000-8000-000000000005",
+													"00000000-0000-4000-8000-000000000008"
+												]
+											}
+										}
+									}
+								},
+								{
+									"type": "Command.EndRoundCommand",
+									"description": "End Round Command",
+									"data": {
+										"original": {
+											"round": 1,
+											"charactersWithTurn": {
+												"type": "Set",
+												"data": ["00000000-0000-4000-8000-000000000005"]
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				}
+			},
+			{
+				"type": "Command.TriggerReinforcementEventCommand",
+				"description": "Trigger Reinforcement Event Command",
+				"data": {
+					"slotId": "goblin-reinforcements",
+					"spawnedParticipants": [
+						{
+							"character": {
+								"uuid": "00000000-0000-4000-8000-000000000011",
+								"name": "Goblin Warrior A",
+								"initiative": 16,
+								"turnState": "normal",
+								"health": 15,
+								"maxHealth": 15,
+								"tempHealth": 0,
+								"group": "enemies",
+								"level": 2
+							},
+							"meta": {
+								"role": "reinforcement",
+								"sideTheme": "opponent",
+								"isSimpleHazard": false,
+								"disableChecksRequired": 0,
+								"disableChecksSucceeded": 0,
+								"notes": "More goblins climb up from the gorge.",
+								"initiativeBonus": 5,
+								"traits": ["Goblin"],
+								"reinforcementSlotId": "goblin-reinforcements"
+							}
+						},
+						{
+							"character": {
+								"uuid": "00000000-0000-4000-8000-000000000012",
+								"name": "Goblin Warrior B",
+								"initiative": 16,
+								"turnState": "normal",
+								"health": 15,
+								"maxHealth": 15,
+								"tempHealth": 0,
+								"group": "enemies",
+								"level": 2
+							},
+							"meta": {
+								"role": "reinforcement",
+								"sideTheme": "opponent",
+								"isSimpleHazard": false,
+								"disableChecksRequired": 0,
+								"disableChecksSucceeded": 0,
+								"notes": "More goblins climb up from the gorge.",
+								"initiativeBonus": 5,
+								"traits": ["Goblin"],
+								"reinforcementSlotId": "goblin-reinforcements"
+							}
+						}
+					],
+					"original": {
+						"charactersMap": {
+							"pc-valeros": {
+								"uuid": "pc-valeros",
+								"name": "Valeros",
+								"initiative": 24,
+								"health": 25,
+								"maxHealth": 45,
+								"tempHealth": 0,
+								"turnState": "normal",
+								"group": "players"
+							},
+							"00000000-0000-4000-8000-000000000001": {
+								"uuid": "00000000-0000-4000-8000-000000000001",
+								"name": "Goblin Warchief",
+								"initiative": 22,
+								"health": 56,
+								"maxHealth": 70,
+								"tempHealth": 0,
+								"turnState": "normal",
+								"group": "enemies"
+							},
+							"00000000-0000-4000-8000-000000000006": {
+								"uuid": "00000000-0000-4000-8000-000000000006",
+								"name": "Collapsing Bridge",
+								"initiative": 20,
+								"health": 40,
+								"maxHealth": 40,
+								"tempHealth": 0,
+								"turnState": "normal",
+								"group": "enemies"
+							},
+							"pc-kyra": {
+								"uuid": "pc-kyra",
+								"name": "Kyra",
+								"initiative": 19,
+								"health": 38,
+								"maxHealth": 38,
+								"tempHealth": 8,
+								"turnState": "normal",
+								"group": "players",
+								"tempHealthDescription": "False Life, until the end of the encounter"
+							},
+							"00000000-0000-4000-8000-000000000002": {
+								"uuid": "00000000-0000-4000-8000-000000000002",
+								"name": "Goblin Archer A",
+								"initiative": 17,
+								"health": 18,
+								"maxHealth": 18,
+								"tempHealth": 0,
+								"turnState": "normal",
+								"group": "enemies"
+							},
+							"00000000-0000-4000-8000-000000000005": {
+								"uuid": "00000000-0000-4000-8000-000000000005",
+								"name": "Goblin Sneak",
+								"initiative": 16,
+								"health": 25,
+								"maxHealth": 25,
+								"tempHealth": 0,
+								"turnState": "delayed",
+								"group": "enemies"
+							},
+							"00000000-0000-4000-8000-000000000010": {
+								"uuid": "00000000-0000-4000-8000-000000000010",
+								"name": "Bridge Keeper",
+								"initiative": 15,
+								"health": 45,
+								"maxHealth": 45,
+								"tempHealth": 0,
+								"turnState": "delayed",
+								"group": "enemies"
+							},
+							"pc-merisiel": {
+								"uuid": "pc-merisiel",
+								"name": "Merisiel",
+								"initiative": 14,
+								"health": 4,
+								"maxHealth": 32,
+								"tempHealth": 0,
+								"turnState": "normal",
+								"group": "players"
+							},
+							"00000000-0000-4000-8000-000000000007": {
+								"uuid": "00000000-0000-4000-8000-000000000007",
+								"name": "Swinging Log",
+								"initiative": 13,
+								"health": 1,
+								"maxHealth": 1,
+								"tempHealth": 0,
+								"turnState": "normal",
+								"group": "enemies"
+							},
+							"00000000-0000-4000-8000-000000000004": {
+								"uuid": "00000000-0000-4000-8000-000000000004",
+								"name": "Goblin Dog",
+								"initiative": 12,
+								"health": 0,
+								"maxHealth": 17,
+								"tempHealth": 0,
+								"turnState": "knocked-out",
+								"group": "enemies"
+							},
+							"00000000-0000-4000-8000-000000000009": {
+								"uuid": "00000000-0000-4000-8000-000000000009",
+								"name": "Hidden Pit",
+								"initiative": 11,
+								"health": 1,
+								"maxHealth": 1,
+								"tempHealth": 0,
+								"turnState": "normal",
+								"group": "enemies"
+							},
+							"00000000-0000-4000-8000-000000000003": {
+								"uuid": "00000000-0000-4000-8000-000000000003",
+								"name": "Goblin Archer B",
+								"initiative": 10,
+								"health": 16,
+								"maxHealth": 18,
+								"tempHealth": 0,
+								"turnState": "normal",
+								"group": "enemies"
+							},
+							"pc-ezren": {
+								"uuid": "pc-ezren",
+								"name": "Ezren",
+								"initiative": 8,
+								"health": 1,
+								"maxHealth": 1,
+								"tempHealth": 0,
+								"turnState": "normal",
+								"group": "players"
+							},
+							"00000000-0000-4000-8000-000000000008": {
+								"uuid": "00000000-0000-4000-8000-000000000008",
+								"name": "Rope Snare",
+								"initiative": 5,
+								"health": 1,
+								"maxHealth": 1,
+								"tempHealth": 0,
+								"turnState": "normal",
+								"group": "enemies"
+							}
+						},
+						"charactersOrder": [
+							"pc-valeros",
+							"00000000-0000-4000-8000-000000000001",
+							"00000000-0000-4000-8000-000000000006",
+							"pc-kyra",
+							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000010",
+							"pc-merisiel",
+							"00000000-0000-4000-8000-000000000007",
+							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000003",
+							"pc-ezren",
+							"00000000-0000-4000-8000-000000000008"
+						],
+						"delayedOrder": [
+							"00000000-0000-4000-8000-000000000005",
+							"00000000-0000-4000-8000-000000000010"
+						],
+						"charactersWithTurn": {
+							"type": "Set",
+							"data": [
+								"00000000-0000-4000-8000-000000000005",
+								"00000000-0000-4000-8000-000000000010",
+								"pc-valeros",
+								"00000000-0000-4000-8000-000000000001",
+								"00000000-0000-4000-8000-000000000006",
+								"pc-kyra",
+								"00000000-0000-4000-8000-000000000002",
+								"pc-merisiel",
+								"00000000-0000-4000-8000-000000000007",
+								"00000000-0000-4000-8000-000000000004",
+								"00000000-0000-4000-8000-000000000003",
+								"pc-ezren",
+								"00000000-0000-4000-8000-000000000008"
+							]
+						},
+						"trackerMetaMap": {
+							"pc-valeros": {
+								"role": "pc",
+								"sideTheme": "pc",
+								"hasHealthData": true,
+								"isSimpleHazard": false,
+								"disableChecksRequired": 0,
+								"disableChecksSucceeded": 0,
+								"notes": ""
+							},
+							"00000000-0000-4000-8000-000000000001": {
+								"role": "opponent",
+								"sideTheme": "opponent",
+								"hasHealthData": true,
+								"isSimpleHazard": false,
+								"disableChecksRequired": 0,
+								"disableChecksSucceeded": 0,
+								"notes": "Leads from the far end of the bridge.",
+								"initiativeBonus": 9,
+								"dcs": [{ "name": "AC", "value": 22 }],
+								"adjustmentDescription": "Elite",
+								"adjustmentLevelModifier": 1,
+								"traits": ["Goblin", "Humanoid"]
+							},
+							"00000000-0000-4000-8000-000000000006": {
+								"role": "hazard",
+								"sideTheme": "opponent",
+								"hasHealthData": true,
+								"isSimpleHazard": false,
+								"disableChecksRequired": 3,
+								"disableChecksSucceeded": 0,
+								"notes": "Planks drop away each round.",
+								"hardness": 8,
+								"initiativeBonus": 9,
+								"dcs": [
+									{ "name": "Thievery", "value": 20, "disableSuccesses": 2 },
+									{ "name": "Athletics", "value": 22, "disableSuccesses": 1 }
+								]
+							},
+							"pc-kyra": {
+								"role": "pc",
+								"sideTheme": "pc",
+								"hasHealthData": true,
+								"isSimpleHazard": false,
+								"disableChecksRequired": 0,
+								"disableChecksSucceeded": 0,
+								"notes": ""
+							},
+							"00000000-0000-4000-8000-000000000002": {
+								"role": "opponent",
+								"sideTheme": "opponent",
+								"hasHealthData": true,
+								"isSimpleHazard": false,
+								"disableChecksRequired": 0,
+								"disableChecksSucceeded": 0,
+								"notes": "",
+								"initiativeBonus": 6,
+								"adjustmentDescription": "Weak",
+								"adjustmentLevelModifier": -1,
+								"traits": ["Goblin", "Humanoid"]
+							},
+							"00000000-0000-4000-8000-000000000005": {
+								"role": "opponent",
+								"sideTheme": "opponent",
+								"hasHealthData": true,
+								"isSimpleHazard": false,
+								"disableChecksRequired": 0,
+								"disableChecksSucceeded": 0,
+								"notes": "",
+								"initiativeBonus": 8
+							},
+							"00000000-0000-4000-8000-000000000010": {
+								"role": "neutral",
+								"sideTheme": "other",
+								"hasHealthData": true,
+								"isSimpleHazard": false,
+								"disableChecksRequired": 0,
+								"disableChecksSucceeded": 0,
+								"notes": "Collects the toll and wants nobody hurt.",
+								"initiativeBonus": 7,
+								"traits": ["Human"]
+							},
+							"pc-merisiel": {
+								"role": "pc",
+								"sideTheme": "pc",
+								"hasHealthData": true,
+								"isSimpleHazard": false,
+								"disableChecksRequired": 0,
+								"disableChecksSucceeded": 0,
+								"notes": ""
+							},
+							"00000000-0000-4000-8000-000000000007": {
+								"role": "hazard",
+								"sideTheme": "opponent",
+								"hasHealthData": false,
+								"isSimpleHazard": false,
+								"disableChecksRequired": 4,
+								"disableChecksSucceeded": 0,
+								"notes": "",
+								"initiativeBonus": 6,
+								"dcs": [{ "name": "Thievery", "value": 19 }]
+							},
+							"00000000-0000-4000-8000-000000000004": {
+								"role": "opponent",
+								"sideTheme": "opponent",
+								"hasHealthData": true,
+								"isSimpleHazard": false,
+								"disableChecksRequired": 0,
+								"disableChecksSucceeded": 0,
+								"notes": "",
+								"initiativeBonus": 6,
+								"traits": ["Animal"]
+							},
+							"00000000-0000-4000-8000-000000000009": {
+								"role": "hazard",
+								"sideTheme": "opponent",
+								"hasHealthData": false,
+								"isSimpleHazard": true,
+								"disableChecksRequired": 1,
+								"disableChecksSucceeded": 0,
+								"notes": "",
+								"dcs": [{ "name": "Perception", "value": 18 }]
+							},
+							"00000000-0000-4000-8000-000000000003": {
+								"role": "opponent",
+								"sideTheme": "opponent",
+								"hasHealthData": true,
+								"isSimpleHazard": false,
+								"disableChecksRequired": 0,
+								"disableChecksSucceeded": 0,
+								"notes": "",
+								"initiativeBonus": 6,
+								"adjustmentDescription": "Weak",
+								"adjustmentLevelModifier": -1,
+								"traits": ["Goblin", "Humanoid"]
+							},
+							"pc-ezren": {
+								"role": "pc",
+								"sideTheme": "pc",
+								"hasHealthData": false,
+								"isSimpleHazard": false,
+								"disableChecksRequired": 0,
+								"disableChecksSucceeded": 0,
+								"notes": ""
+							},
+							"00000000-0000-4000-8000-000000000008": {
+								"role": "hazard",
+								"sideTheme": "opponent",
+								"hasHealthData": false,
+								"isSimpleHazard": false,
+								"disableChecksRequired": 2,
+								"disableChecksSucceeded": 0,
+								"notes": "",
+								"initiativeBonus": 4,
+								"dcs": [{ "name": "Survival", "value": 17 }]
+							}
+						}
+					}
+				}
+			},
+			{
+				"type": "Command.ChangeHealthCommand",
+				"description": "Change Health",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000002",
+					"delta": -12,
+					"oldCharacter": {
+						"uuid": "00000000-0000-4000-8000-000000000002",
+						"name": "Goblin Archer A",
+						"initiative": 17,
+						"health": 18,
+						"maxHealth": 18,
+						"tempHealth": 0,
+						"turnState": "normal",
+						"group": "enemies"
+					}
+				}
+			},
+			{
+				"type": "Command.EndTurnCommand",
+				"description": "End Turn Command",
+				"data": {
+					"uuid": "pc-valeros",
+					"original": {
+						"charactersOrder": [
+							"pc-valeros",
+							"00000000-0000-4000-8000-000000000001",
+							"00000000-0000-4000-8000-000000000006",
+							"pc-kyra",
+							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000010",
+							"00000000-0000-4000-8000-000000000011",
+							"00000000-0000-4000-8000-000000000012",
+							"pc-merisiel",
+							"00000000-0000-4000-8000-000000000007",
+							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000003",
+							"pc-ezren",
+							"00000000-0000-4000-8000-000000000008"
+						],
+						"charactersWithTurn": {
+							"type": "Set",
+							"data": [
+								"00000000-0000-4000-8000-000000000005",
+								"00000000-0000-4000-8000-000000000010",
+								"pc-valeros",
+								"00000000-0000-4000-8000-000000000001",
+								"00000000-0000-4000-8000-000000000006",
+								"pc-kyra",
+								"00000000-0000-4000-8000-000000000002",
+								"pc-merisiel",
+								"00000000-0000-4000-8000-000000000007",
+								"00000000-0000-4000-8000-000000000004",
+								"00000000-0000-4000-8000-000000000003",
+								"pc-ezren",
+								"00000000-0000-4000-8000-000000000008",
+								"00000000-0000-4000-8000-000000000011",
+								"00000000-0000-4000-8000-000000000012"
+							]
+						}
+					}
+				}
+			},
+			{
+				"type": "Command.EndTurnCommand",
+				"description": "End Turn Command",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000001",
+					"original": {
+						"charactersOrder": [
+							"00000000-0000-4000-8000-000000000001",
+							"00000000-0000-4000-8000-000000000006",
+							"pc-kyra",
+							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000010",
+							"00000000-0000-4000-8000-000000000011",
+							"00000000-0000-4000-8000-000000000012",
+							"pc-merisiel",
+							"00000000-0000-4000-8000-000000000007",
+							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000003",
+							"pc-ezren",
+							"00000000-0000-4000-8000-000000000008",
+							"pc-valeros"
+						],
+						"charactersWithTurn": {
+							"type": "Set",
+							"data": [
+								"00000000-0000-4000-8000-000000000005",
+								"00000000-0000-4000-8000-000000000010",
+								"00000000-0000-4000-8000-000000000001",
+								"00000000-0000-4000-8000-000000000006",
+								"pc-kyra",
+								"00000000-0000-4000-8000-000000000002",
+								"pc-merisiel",
+								"00000000-0000-4000-8000-000000000007",
+								"00000000-0000-4000-8000-000000000004",
+								"00000000-0000-4000-8000-000000000003",
+								"pc-ezren",
+								"00000000-0000-4000-8000-000000000008",
+								"00000000-0000-4000-8000-000000000011",
+								"00000000-0000-4000-8000-000000000012"
+							]
+						}
+					}
+				}
+			},
+			{
+				"type": "Command.EndTurnCommand",
+				"description": "End Turn Command",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000006",
+					"original": {
+						"charactersOrder": [
+							"00000000-0000-4000-8000-000000000006",
+							"pc-kyra",
+							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000010",
+							"00000000-0000-4000-8000-000000000011",
+							"00000000-0000-4000-8000-000000000012",
+							"pc-merisiel",
+							"00000000-0000-4000-8000-000000000007",
+							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000003",
+							"pc-ezren",
+							"00000000-0000-4000-8000-000000000008",
+							"pc-valeros",
+							"00000000-0000-4000-8000-000000000001"
+						],
+						"charactersWithTurn": {
+							"type": "Set",
+							"data": [
+								"00000000-0000-4000-8000-000000000005",
+								"00000000-0000-4000-8000-000000000010",
+								"00000000-0000-4000-8000-000000000006",
+								"pc-kyra",
+								"00000000-0000-4000-8000-000000000002",
+								"pc-merisiel",
+								"00000000-0000-4000-8000-000000000007",
+								"00000000-0000-4000-8000-000000000004",
+								"00000000-0000-4000-8000-000000000003",
+								"pc-ezren",
+								"00000000-0000-4000-8000-000000000008",
+								"00000000-0000-4000-8000-000000000011",
+								"00000000-0000-4000-8000-000000000012"
+							]
+						}
+					}
+				}
+			}
+		],
+		"redoStack": [],
+		"partyLevel": 3,
+		"encounterData": {
+			"id": "example-bridge-ambush",
+			"name": "Bridge Ambush",
+			"description": "Goblins hold the rope bridge over the gorge, with archers on the far side.",
+			"difficulty": 3,
+			"partySize": 4,
+			"levelRepresentation": 1,
+			"level": 3,
+			"notes": {
+				"gm": "The bridge is rigged to collapse once the hazard is triggered. The warchief flees once bloodied.",
+				"monster": "The goblin dog stays hidden in the rigging until it attacks.",
+				"player": "The bridge sways under every step.\nThe toll keeper watches from his hut."
+			},
+			"participants": [
+				{
+					"type": "creature",
+					"name": "Goblin Warchief",
+					"level": 4,
+					"side": 1,
+					"maxHealth": 70,
+					"initiativeBonus": 9,
+					"adjustmentDescription": "Elite",
+					"adjustmentLevelModifier": 1,
+					"traits": ["Goblin", "Humanoid"],
+					"description": "Leads from the far end of the bridge.",
+					"dcs": [{ "name": "AC", "value": 22 }]
+				},
+				{
+					"type": "creature",
+					"name": "Goblin Archer",
+					"level": 1,
+					"count": 2,
+					"side": 1,
+					"maxHealth": 18,
+					"initiativeBonus": 6,
+					"adjustmentDescription": "Weak",
+					"adjustmentLevelModifier": -1,
+					"traits": ["Goblin", "Humanoid"]
+				},
+				{
+					"type": "creature",
+					"name": "Goblin Dog",
+					"level": 1,
+					"side": 1,
+					"maxHealth": 17,
+					"initiativeBonus": 6,
+					"traits": ["Animal"],
+					"hiddenFromPlayers": true
+				},
+				{
+					"type": "creature",
+					"name": "Goblin Sneak",
+					"level": 2,
+					"side": 1,
+					"maxHealth": 25,
+					"initiativeBonus": 8,
+					"startingState": "delayed",
+					"initiativeDescription": "Waits in the rigging to ambush"
+				},
+				{
+					"type": "creature",
+					"name": "Bridge Keeper",
+					"level": 3,
+					"side": 2,
+					"maxHealth": 45,
+					"initiativeBonus": 7,
+					"traits": ["Human"],
+					"description": "Collects the toll and wants nobody hurt."
+				},
+				{
+					"type": "hazard",
+					"name": "Collapsing Bridge",
+					"level": 3,
+					"side": 1,
+					"isComplexHazard": true,
+					"successesToDisable": 3,
+					"maxHealth": 40,
+					"hardness": 8,
+					"initiativeBonus": 9,
+					"description": "Planks drop away each round.",
+					"dcs": [
+						{ "name": "Thievery", "value": 20, "disableSuccesses": 2 },
+						{ "name": "Athletics", "value": 22, "disableSuccesses": 1 }
+					]
+				},
+				{
+					"type": "hazard",
+					"name": "Swinging Log",
+					"level": 2,
+					"side": 1,
+					"isComplexHazard": true,
+					"successesToDisable": 4,
+					"initiativeBonus": 6,
+					"dcs": [{ "name": "Thievery", "value": 19 }]
+				},
+				{
+					"type": "hazard",
+					"name": "Rope Snare",
+					"level": 1,
+					"side": 1,
+					"isComplexHazard": true,
+					"successesToDisable": 2,
+					"initiativeBonus": 4,
+					"dcs": [{ "name": "Survival", "value": 17 }]
+				},
+				{
+					"type": "hazard",
+					"name": "Hidden Pit",
+					"level": 1,
+					"side": 1,
+					"successesToDisable": 1,
+					"dcs": [{ "name": "Perception", "value": 18 }]
+				}
+			],
+			"narrativeSlots": [
+				{
+					"id": "goblin-reinforcements",
+					"type": "reinforcement",
+					"description": "More goblins climb up from the gorge.",
+					"trigger": { "round": 2 },
+					"participants": [
+						{
+							"type": "creature",
+							"name": "Goblin Warrior",
+							"level": "-1",
+							"count": 2,
+							"side": 1,
+							"maxHealth": 15,
+							"initiativeBonus": 5,
+							"traits": ["Goblin"]
+						}
+					]
+				},
+				{
+					"id": "town-guard",
+					"type": "reinforcement",
+					"description": "The town guard comes to see what the noise is.",
+					"trigger": { "round": 3 },
+					"participants": [
+						{
+							"type": "creature",
+							"name": "Town Guard",
+							"level": "+0",
+							"side": 2,
+							"maxHealth": 40,
+							"initiativeBonus": 7
+						}
+					]
+				}
+			]
+		}
+	},
+	"version": 0
+}

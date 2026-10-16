@@ -101,7 +101,7 @@ describe('trackerMappers', () => {
 		expect(outOfInitiative.delayed[0].state).toBe('delayed');
 	});
 
-	it('builds a player-safe initiative queue with coarse hp labels', () => {
+	it('builds a player-safe initiative queue with HP tiers', () => {
 		const charactersMap = {
 			healthy: createCharacter({
 				uuid: 'healthy',
@@ -125,9 +125,9 @@ describe('trackerMappers', () => {
 			}),
 		};
 		const trackerMetaMap = {
-			healthy: createMeta({ role: 'pc' }),
-			wounded: createMeta({ role: 'opponent' }),
-			defeated: createMeta({ role: 'ally' }),
+			healthy: createMeta({ role: 'pc', sideTheme: 'pc' }),
+			wounded: createMeta({ role: 'opponent', sideTheme: 'opponent' }),
+			defeated: createMeta({ role: 'ally', sideTheme: 'ally' }),
 		};
 
 		const queue = runtimeToPlayerInitiativeQueue({
@@ -142,20 +142,157 @@ describe('trackerMappers', () => {
 				id: 'healthy',
 				name: 'Healthy',
 				status: 'Ready',
-				hpLabel: 'Healthy',
+				hpLabel: 'Barely Injured',
+				hpSegments: 4,
+				isHazard: false,
+				disableProgress: null,
+				sideTheme: 'pc',
 			},
 			{
 				id: 'wounded',
 				name: 'Wounded',
 				status: 'Delayed',
-				hpLabel: 'Wounded',
+				hpLabel: 'Badly Injured',
+				hpSegments: 2,
+				isHazard: false,
+				disableProgress: null,
+				sideTheme: 'opponent',
 			},
 			{
 				id: 'defeated',
 				name: 'Defeated',
 				status: 'Knocked Out',
-				hpLabel: 'Defeated',
+				hpLabel: 'Unconscious',
+				hpSegments: 0,
+				isHazard: false,
+				disableProgress: null,
+				sideTheme: 'ally',
 			},
+		]);
+	});
+
+	it('maps HP to the five tiers, and a knock-out to Unconscious', () => {
+		const participants = [
+			['uninjured', 20, 'normal'],
+			['barely', 17, 'normal'],
+			['injured', 13, 'normal'],
+			['badly', 7, 'normal'],
+			['near-death', 6, 'normal'],
+			['knocked-out', 15, 'knocked-out'],
+		] as const;
+		const charactersMap = Object.fromEntries(
+			participants.map(([uuid, health, turnState]) => [
+				uuid,
+				createCharacter({ uuid, health, maxHealth: 20, turnState }),
+			])
+		);
+
+		const queue = runtimeToPlayerInitiativeQueue({
+			charactersOrder: participants.map(([uuid]) => uuid),
+			delayedOrder: [],
+			charactersMap,
+			trackerMetaMap: {},
+		});
+
+		expect(
+			queue.map(({ id, hpLabel, hpSegments }) => [id, hpLabel, hpSegments])
+		).toEqual([
+			['uninjured', 'Uninjured', 5],
+			['barely', 'Barely Injured', 4],
+			['injured', 'Injured', 3],
+			['badly', 'Badly Injured', 2],
+			['near-death', 'Near Death', 1],
+			['knocked-out', 'Unconscious', 0],
+		]);
+	});
+
+	it('shows hazard disable checks with the tracker labels instead of HP', () => {
+		const hazards = [
+			['none', 0, 4],
+			['under-half', 1, 4],
+			['half', 2, 4],
+			['over-half', 2, 3],
+			['three-of-four', 3, 4],
+			['one-of-two', 1, 2],
+			['all', 4, 4],
+		] as const;
+		const charactersMap = Object.fromEntries(
+			hazards.map(([uuid]) => [uuid, createCharacter({ uuid })])
+		);
+		const trackerMetaMap = Object.fromEntries(
+			hazards.map(([uuid, succeeded, required]) => [
+				uuid,
+				createMeta({
+					role: 'hazard',
+					disableChecksSucceeded: succeeded,
+					disableChecksRequired: required,
+				}),
+			])
+		);
+
+		const queue = runtimeToPlayerInitiativeQueue({
+			charactersOrder: hazards.map(([uuid]) => uuid),
+			delayedOrder: [],
+			charactersMap,
+			trackerMetaMap,
+		});
+
+		expect(
+			queue.map(({ id, disableProgress }) => [id, disableProgress])
+		).toEqual([
+			['none', { succeeded: 0, required: 4, label: 'Stable' }],
+			['under-half', { succeeded: 1, required: 4, label: 'Disrupted' }],
+			['half', { succeeded: 2, required: 4, label: 'Compromised' }],
+			['over-half', { succeeded: 2, required: 3, label: 'Fracturing' }],
+			['three-of-four', { succeeded: 3, required: 4, label: 'Critical' }],
+			['one-of-two', { succeeded: 1, required: 2, label: 'Disrupted' }],
+			['all', { succeeded: 4, required: 4, label: 'Disabled' }],
+		]);
+	});
+
+	it('shows HP for a creature even with disable checks set', () => {
+		const queue = runtimeToPlayerInitiativeQueue({
+			charactersOrder: ['ogre'],
+			delayedOrder: [],
+			charactersMap: { ogre: createCharacter({ uuid: 'ogre' }) },
+			trackerMetaMap: {
+				ogre: createMeta({ role: 'opponent', disableChecksRequired: 2 }),
+			},
+		});
+
+		expect(queue[0].disableProgress).toBeNull();
+		expect(queue[0].hpLabel).toBe('Uninjured');
+	});
+
+	it('adds participants that start delaying after the order in the player queue', () => {
+		const charactersMap = {
+			hero: createCharacter({ uuid: 'hero', name: 'Hero' }),
+			rogue: createCharacter({
+				uuid: 'rogue',
+				name: 'Rogue',
+				turnState: 'delayed',
+			}),
+			trap: createCharacter({
+				uuid: 'trap',
+				name: 'Trap',
+				turnState: 'delayed',
+			}),
+		};
+
+		const queue = runtimeToPlayerInitiativeQueue({
+			charactersOrder: ['hero'],
+			delayedOrder: ['rogue', 'trap'],
+			charactersMap,
+			trackerMetaMap: {
+				hero: createMeta({ role: 'pc', sideTheme: 'pc' }),
+				rogue: createMeta({ role: 'pc', sideTheme: 'pc' }),
+				trap: createMeta({ role: 'hazard', isSimpleHazard: true }),
+			},
+		});
+
+		expect(queue.map(({ id, status }) => ({ id, status }))).toEqual([
+			{ id: 'hero', status: 'Ready' },
+			{ id: 'rogue', status: 'Delayed' },
 		]);
 	});
 

@@ -12,7 +12,9 @@ const setToJSON = (set: Set<unknown>) => ({
 	data: Array.from(set),
 });
 
-const isSetJSON = (value: object): value is { type: 'Set'; data: unknown[] } =>
+export const isSetJSON = (
+	value: object
+): value is { type: 'Set'; data: unknown[] } =>
 	'type' in value && value.type === 'Set';
 
 type Conf = NonNullable<

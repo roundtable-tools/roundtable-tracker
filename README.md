@@ -13,7 +13,7 @@ Roundtable Tracker is a web app for game masters running **Pathfinder 2e (PF2e)*
 - **Party setup**: save parties of player characters and reuse them across encounters.
 - **Initiative tracker**: run the encounter round by round: turn order, delay, knock-out, health and temporary HP, reinforcements and hazards.
 - **Undo/redo**: tracker actions can be undone and redone, also after a page reload.
-- **Player view (proof of concept)**: a read-only initiative view for players.
+- **Player view**: a read-only initiative view for players. The tracker opens it in a separate window (e.g. on a second screen), which follows the tracker live.
 
 ## Project Structure 🗂️
 

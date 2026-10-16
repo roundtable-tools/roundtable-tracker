@@ -39,6 +39,12 @@ import {
 import { Reorder } from 'motion/react';
 import { useNavigate } from '@tanstack/react-router';
 import { InitiativeActionCarouselCard } from './InitiativeActionCarouselCard';
+import { OpenPlayerViewButton } from './OpenPlayerViewButton';
+import { ReturnToInitiativeNotice } from './ReturnToInitiativeNotice';
+import { getHazardStripe, getSideAccent } from './sideAccent';
+import { NextRoundMarkerCard } from './NextRoundMarkerCard';
+import { getRoundBoundaryIndex } from './roundBoundary';
+import { closesRound, getRoundActionCommand } from './roundActionCommand';
 import {
 	getEncounterStore,
 	useEncounterStore,
@@ -49,16 +55,13 @@ import {
 	narrativeSlotsToTimeline,
 	encounterToTrackerHeader,
 	historyToPreviewLines,
+	getHazardDisableLabel,
+	getHealthLabelFromPercentage,
+	resolveParticipantSideTheme,
 	type TrackerParticipant,
 } from '@/store/trackerMappers';
 import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
-import { type Command } from '@/CommandHistory/common';
-import { DelayCharacterCommand } from '@/CommandHistory/Commands/DelayCharacterCommand';
-import { EndTurnCommand } from '@/CommandHistory/Commands/EndTurnCommand';
 import { GiveAdditionalTurnCommand } from '@/CommandHistory/Commands/GiveAdditionalTurnCommand';
-import { FinalizeTurnAndAdvanceRoundCommand } from '@/CommandHistory/Commands/FinalizeTurnAndAdvanceRoundCommand';
-import { FinalizeTurnAndReturnToInitiativeCommand } from '@/CommandHistory/Commands/FinalizeTurnAndReturnToInitiativeCommand';
-import { KnockOutCharacterCommand } from '@/CommandHistory/Commands/KnockOutCharacterCommand';
 import { TriggerReinforcementEventCommand } from '@/CommandHistory/Commands/TriggerReinforcementEventCommand';
 import { ReturnToInitiativeCommand } from '@/CommandHistory/Commands/ReturnToInitiativeCommand';
 import { ReorderCharactersCommand } from '@/CommandHistory/Commands/ReorderCharactersCommand';
@@ -68,85 +71,6 @@ import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/Reactivate
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 import { Input } from '@/components/ui/input';
 import { type SwipeAction } from './InitiativeActionCarouselCard';
-import { isFinalActiveParticipant as isFinalActiveParticipantInRound } from './isFinalActiveParticipant';
-
-const HAZARD_DISABLE_CHECK_NAMES = [
-	'Disrupted',
-	'Compromised',
-	'Fracturing',
-	'Critical',
-	'Disabled',
-] as const;
-
-function getHealthLabelFromPercentage(healthPercentage: number) {
-	if (healthPercentage <= 0) {
-		return 'Unconscious';
-	}
-
-	if (healthPercentage >= 100) {
-		return 'Uninjured';
-	}
-
-	if (healthPercentage >= 85) {
-		return 'Barely Injured';
-	}
-
-	if (healthPercentage >= 65) {
-		return 'Injured';
-	}
-
-	if (healthPercentage >= 35) {
-		return 'Badly Injured';
-	}
-
-	return 'Near Death';
-}
-
-function getHazardDisableStageNames(requiredChecks: number) {
-	const clampedRequiredChecks = Math.min(Math.max(requiredChecks, 1), 5);
-
-	if (clampedRequiredChecks === 5) {
-		return [...HAZARD_DISABLE_CHECK_NAMES];
-	}
-
-	if (clampedRequiredChecks === 4) {
-		return [
-			HAZARD_DISABLE_CHECK_NAMES[0],
-			HAZARD_DISABLE_CHECK_NAMES[1],
-			HAZARD_DISABLE_CHECK_NAMES[3],
-			HAZARD_DISABLE_CHECK_NAMES[4],
-		];
-	}
-
-	if (clampedRequiredChecks === 3) {
-		return [
-			HAZARD_DISABLE_CHECK_NAMES[0],
-			HAZARD_DISABLE_CHECK_NAMES[2],
-			HAZARD_DISABLE_CHECK_NAMES[4],
-		];
-	}
-
-	if (clampedRequiredChecks === 2) {
-		return [HAZARD_DISABLE_CHECK_NAMES[0], HAZARD_DISABLE_CHECK_NAMES[4]];
-	}
-
-	return [HAZARD_DISABLE_CHECK_NAMES[4]];
-}
-
-function getHazardDisableLabel(participant: TrackerParticipant) {
-	const requiredChecks = participant.disableChecksRequired ?? 5;
-	const successfulChecks = participant.disableChecksSucceeded ?? 0;
-
-	if (successfulChecks <= 0) {
-		return 'Stable';
-	}
-
-	const stageNames = getHazardDisableStageNames(requiredChecks);
-	const stageIndex =
-		Math.min(Math.max(successfulChecks, 1), requiredChecks) - 1;
-
-	return stageNames[Math.min(stageIndex, stageNames.length - 1)] ?? 'Disabled';
-}
 
 function getParticipantIndicatorLabel(participant: TrackerParticipant) {
 	if (participant.role === 'hazard') {
@@ -199,98 +123,6 @@ function getDcName(dc: NonNullable<TrackerParticipant['dcs']>[number]) {
 	return dc.name ?? dc.inline ?? 'DC';
 }
 
-type SideTheme = 'pc' | 'opponent' | 'ally' | 'other';
-
-function resolveParticipantSideTheme(
-	participant: TrackerParticipant
-): SideTheme {
-	if (participant.sideTheme === 'pc') {
-		return 'pc';
-	}
-
-	if (participant.sideTheme === 'ally') {
-		return 'ally';
-	}
-
-	if (
-		participant.sideTheme === 'other' ||
-		participant.sideTheme === 'neutral'
-	) {
-		return 'other';
-	}
-
-	if (participant.sideTheme === 'opponent') {
-		return 'opponent';
-	}
-
-	if (participant.role === 'pc') {
-		return 'pc';
-	}
-
-	if (participant.role === 'ally') {
-		return 'ally';
-	}
-
-	if (participant.role === 'neutral') {
-		return 'other';
-	}
-
-	return 'opponent';
-}
-
-function getSideAccent(sideTheme: SideTheme) {
-	switch (sideTheme) {
-		case 'pc':
-			return {
-				badge: 'bg-sky-500/15 text-sky-200 ring-1 ring-sky-400/40',
-				inactiveCard:
-					'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-sky-500/60 hover:bg-slate-900/95',
-				inactiveMarker: 'border-l-4 border-l-sky-400',
-				name: 'text-sky-200',
-				activeCard:
-					'border-sky-300 bg-sky-600 text-sky-50 shadow-lg shadow-sky-950/30',
-				delayedCard: 'border-sky-500/50 bg-sky-500/10 text-sky-200',
-			};
-
-		case 'opponent':
-			return {
-				badge: 'bg-rose-500/15 text-rose-200 ring-1 ring-rose-400/40',
-				inactiveCard:
-					'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-rose-500/60 hover:bg-slate-900/95',
-				inactiveMarker: 'border-l-4 border-l-rose-400',
-				name: 'text-rose-200',
-				activeCard:
-					'border-rose-300 bg-rose-700 text-rose-50 shadow-lg shadow-rose-950/30',
-				delayedCard: 'border-rose-500/50 bg-rose-500/10 text-rose-200',
-			};
-
-		case 'other':
-			return {
-				badge: 'bg-violet-500/15 text-violet-200 ring-1 ring-violet-400/40',
-				inactiveCard:
-					'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-violet-500/60 hover:bg-slate-900/95',
-				inactiveMarker: 'border-l-4 border-l-violet-400',
-				name: 'text-violet-200',
-				activeCard:
-					'border-violet-300 bg-violet-700 text-violet-50 shadow-lg shadow-violet-950/30',
-				delayedCard: 'border-violet-500/50 bg-violet-500/10 text-violet-200',
-			};
-
-		case 'ally':
-		default:
-			return {
-				badge: 'bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/40',
-				inactiveCard:
-					'border-slate-800 bg-slate-950/95 text-slate-50 hover:border-emerald-500/60 hover:bg-slate-900/95',
-				inactiveMarker: 'border-l-4 border-l-emerald-400',
-				name: 'text-emerald-200',
-				activeCard:
-					'border-emerald-300 bg-emerald-600 text-emerald-50 shadow-lg shadow-emerald-950/30',
-				delayedCard: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-200',
-			};
-	}
-}
-
 function getParticipantAccent(participant: TrackerParticipant) {
 	const sideTheme = resolveParticipantSideTheme(participant);
 	const baseAccent = getSideAccent(sideTheme);
@@ -299,16 +131,7 @@ function getParticipantAccent(participant: TrackerParticipant) {
 		return baseAccent;
 	}
 
-	const hazardStripeBySide: Record<SideTheme, string> = {
-		pc: 'bg-[repeating-linear-gradient(135deg,rgba(56,189,248,0.14)_0_6px,rgba(56,189,248,0)_6px_12px)]',
-		opponent:
-			'bg-[repeating-linear-gradient(135deg,rgba(251,113,133,0.14)_0_6px,rgba(251,113,133,0)_6px_12px)]',
-		ally: 'bg-[repeating-linear-gradient(135deg,rgba(52,211,153,0.14)_0_6px,rgba(52,211,153,0)_6px_12px)]',
-		other:
-			'bg-[repeating-linear-gradient(135deg,rgba(167,139,250,0.14)_0_6px,rgba(167,139,250,0)_6px_12px)]',
-	};
-
-	const hazardStripe = hazardStripeBySide[sideTheme];
+	const hazardStripe = getHazardStripe(sideTheme);
 
 	return {
 		...baseAccent,
@@ -661,32 +484,6 @@ function TrackerDescriptionSections({
 	);
 }
 
-function NextRoundMarkerCard({
-	nextRound,
-	compact = false,
-}: {
-	nextRound: number;
-	compact?: boolean;
-}) {
-	return (
-		<div
-			className={[
-				'flex w-full min-w-0 items-center justify-center rounded-xl text-center',
-				compact ? 'h-full min-h-0 px-3 py-4' : 'min-h-15 px-4 py-4',
-			].join(' ')}
-		>
-			<div className="space-y-1">
-				<p className="text-xs font-medium uppercase tracking-[0.24em] text-primary/80">
-					Next Round
-				</p>
-				<p className="text-xl font-semibold tabular-nums text-primary">
-					{nextRound}
-				</p>
-			</div>
-		</div>
-	);
-}
-
 function DelayedMarkerCard({
 	participant,
 	compact = false,
@@ -736,38 +533,6 @@ function DelayedMarkerCard({
 				{participant.name} is delaying
 			</p>
 		</div>
-	);
-}
-
-function hasTurnLeft(
-	participant: TrackerParticipant,
-	charactersWithTurn: Set<string>
-) {
-	return (
-		participant.state !== 'delayed' && charactersWithTurn.has(participant.id)
-	);
-}
-
-function countParticipantsWithTurn(
-	participants: TrackerParticipant[],
-	charactersWithTurn: Set<string>
-) {
-	return participants.filter((participant) =>
-		hasTurnLeft(participant, charactersWithTurn)
-	).length;
-}
-
-// The round ends after the last participant that still has a turn. After a
-// manual reorder, participants that already acted can sit before it; they are
-// skipped when the turn passes to them.
-function getRoundBoundaryIndex(
-	participants: TrackerParticipant[],
-	charactersWithTurn: Set<string>
-) {
-	return (
-		participants.findLastIndex((participant) =>
-			hasTurnLeft(participant, charactersWithTurn)
-		) + 1
 	);
 }
 
@@ -974,10 +739,6 @@ export function InitiativeTrackerPage() {
 		() => getRoundBoundaryIndex(initiativeParticipants, charactersWithTurn),
 		[initiativeParticipants, charactersWithTurn]
 	);
-	const activeParticipantCount = useMemo(
-		() => countParticipantsWithTurn(initiativeParticipants, charactersWithTurn),
-		[initiativeParticipants, charactersWithTurn]
-	);
 
 	useEffect(() => {
 		return () => {
@@ -1039,18 +800,6 @@ export function InitiativeTrackerPage() {
 		}
 	};
 
-	const isFinalActiveParticipant = (participantId: string) =>
-		isFinalActiveParticipantInRound(participantId, {
-			activeParticipantCount,
-			charactersWithTurn,
-			charactersMap,
-		});
-
-	const isNextParticipantDelayed = () => {
-		return (
-			charactersOrder.length > 1 && delayedOrder.includes(charactersOrder[1])
-		);
-	};
 	const executeRoundAction = ({
 		participantId,
 		action,
@@ -1062,33 +811,15 @@ export function InitiativeTrackerPage() {
 	}) => {
 		clearPinnedMarkerForCurrentRound();
 
-		const shouldReturnToInitiative = isNextParticipantDelayed();
-		const shouldAdvanceRound = isFinalActiveParticipant(participantId);
-		const returningParticipantId = charactersOrder[1];
-
-		const command: Command =
-			shouldAdvanceRound && shouldReturnToInitiative && returningParticipantId
-				? new FinalizeTurnAndReturnToInitiativeCommand({
-						activeUuid: participantId,
-						returningUuid: returningParticipantId,
-						action,
-					})
-				: shouldAdvanceRound
-					? new FinalizeTurnAndAdvanceRoundCommand({
-							uuid: participantId,
-							action,
-						})
-					: shouldReturnToInitiative && returningParticipantId
-						? new ReturnToInitiativeCommand({
-								activeUuid: participantId,
-								returningUuid: returningParticipantId,
-								action,
-							})
-						: action === 'delay'
-							? new DelayCharacterCommand({ uuid: participantId })
-							: action === 'ko'
-								? new KnockOutCharacterCommand({ uuid: participantId })
-								: new EndTurnCommand({ uuid: participantId });
+		const roundState = {
+			charactersOrder,
+			delayedOrder,
+			charactersMap,
+			trackerMetaMap,
+			charactersWithTurn,
+		};
+		const shouldAdvanceRound = closesRound(participantId, roundState);
+		const command = getRoundActionCommand(participantId, action, roundState);
 
 		try {
 			executeCommand(command);
@@ -1652,6 +1383,7 @@ export function InitiativeTrackerPage() {
 									</TooltipTrigger>
 									<TooltipContent side="bottom">Manual Reorder</TooltipContent>
 								</Tooltip>
+								<OpenPlayerViewButton />
 								<div className="inline-flex items-center overflow-hidden rounded-md border border-input">
 									<Tooltip>
 										<TooltipTrigger asChild>
@@ -2003,6 +1735,7 @@ export function InitiativeTrackerPage() {
 								</Button>
 							</div>
 							<div className="flex items-right gap-2 pr-1">
+								<OpenPlayerViewButton />
 								<Button
 									aria-label="Manual Reorder"
 									size="icon"
@@ -2353,43 +2086,14 @@ export function InitiativeTrackerPage() {
 				</DialogContent>
 			</Dialog>
 
-			<Dialog
-				open={returnPrompt !== null}
-				onOpenChange={(open) => {
-					if (!open) handleReturnPromptSkip();
-				}}
-			>
-				<DialogContent className="sm:max-w-sm">
-					<DialogHeader>
-						<DialogTitle>Return to Initiative?</DialogTitle>
-						<DialogDescription>
-							Before ending this turn, does any delayed participant want to
-							return to initiative?
-						</DialogDescription>
-					</DialogHeader>
-					<div className="space-y-2">
-						{delayedSectionParticipants.map((participant) => (
-							<div
-								key={participant.id}
-								className="flex items-center justify-between gap-2 rounded-md border p-3"
-							>
-								<p className="text-sm font-semibold">{participant.name}</p>
-								<Button
-									size="sm"
-									onClick={() => handleReturnPromptSelect(participant.id)}
-								>
-									Return
-								</Button>
-							</div>
-						))}
-					</div>
-					<DialogFooter>
-						<Button variant="outline" onClick={handleReturnPromptSkip}>
-							Nobody returns
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+			{returnPrompt && (
+				<ReturnToInitiativeNotice
+					key={`${returnPrompt.participantId}-${returnPrompt.action}`}
+					participants={delayedSectionParticipants}
+					onReturn={handleReturnPromptSelect}
+					onDismiss={handleReturnPromptSkip}
+				/>
+			)}
 
 			<Dialog open={reorderOpen} onOpenChange={handleReorderOpenChange}>
 				<DialogContent

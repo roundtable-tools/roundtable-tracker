@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { createFileRoute, Link } from '@tanstack/react-router';
+import { useOpenPlayerView } from '@/components/InitiativeTracker/useOpenPlayerView';
 
 import {
 	FolderOpen,
@@ -14,6 +15,8 @@ export const Route = createFileRoute('/')({
 });
 
 function Index() {
+	const openPlayerView = useOpenPlayerView();
+
 	return (
 		<div className="flex flex-col items-center justify-center h-screen">
 			<div className="flex gap-4 p-4 flex-wrap items-center justify-center">
@@ -23,10 +26,12 @@ function Index() {
 					</Link>
 				</Button>
 
-				<Button asChild className="text-xl h-auto" variant="secondary">
-					<Link to="/initiative_player">
-						<MonitorPlay size={48} /> Player View
-					</Link>
+				<Button
+					className="text-xl h-auto"
+					variant="secondary"
+					onClick={openPlayerView}
+				>
+					<MonitorPlay size={48} /> Player View
 				</Button>
 
 				<Button asChild className="text-xl h-auto" variant="secondary">

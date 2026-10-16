@@ -2,6 +2,7 @@ import { Link, useMatchRoute } from '@tanstack/react-router';
 import * as React from 'react';
 
 import { NAV_GROUPS, type NavItem } from '@/components/appNavigation';
+import { useOpenPlayerView } from '@/components/InitiativeTracker/useOpenPlayerView';
 
 import {
 	Sidebar,
@@ -18,7 +19,20 @@ import {
 
 function MenuItem({ item }: { item: NavItem }) {
 	const matchRoute = useMatchRoute();
+	const openPlayerView = useOpenPlayerView();
 	const isActive = !!matchRoute({ to: item.url });
+
+	// The player view opens in its own window, so this tab keeps the menu.
+	if (item.url === '/initiative_player') {
+		return (
+			<SidebarMenuItem>
+				<SidebarMenuButton tooltip={item.title} onClick={openPlayerView}>
+					<item.icon />
+					<span>{item.title}</span>
+				</SidebarMenuButton>
+			</SidebarMenuItem>
+		);
+	}
 
 	return (
 		<SidebarMenuItem>
