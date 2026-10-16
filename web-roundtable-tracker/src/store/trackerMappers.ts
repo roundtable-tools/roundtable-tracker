@@ -67,6 +67,7 @@ export type PlayerTrackerParticipant = {
 	hpLabel: string;
 	/** Filled segments of the player HP bar, or null without HP data. */
 	hpSegments: number | null;
+	isHazard: boolean;
 	/** Disable checks of a hazard that needs any, shown instead of HP. */
 	disableProgress: PlayerDisableProgress | null;
 	sideTheme: ParticipantSideTheme;
@@ -509,6 +510,7 @@ export function runtimeToPlayerInitiativeQueue(
 			id: participant.id,
 			name: participant.name,
 			status: toPlayerStatus(participant.state),
+			isHazard: participant.role === 'hazard',
 			...toPlayerHealth(participant),
 			disableProgress: toPlayerDisableProgress(participant),
 			sideTheme: resolveParticipantSideTheme(participant),

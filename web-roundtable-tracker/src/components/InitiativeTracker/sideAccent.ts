@@ -53,3 +53,16 @@ export function getSideAccent(sideTheme: ParticipantSideTheme) {
 			};
 	}
 }
+
+const HAZARD_STRIPES: Record<ParticipantSideTheme, string> = {
+	pc: 'bg-[repeating-linear-gradient(135deg,rgba(56,189,248,0.14)_0_6px,rgba(56,189,248,0)_6px_12px)]',
+	opponent:
+		'bg-[repeating-linear-gradient(135deg,rgba(251,113,133,0.14)_0_6px,rgba(251,113,133,0)_6px_12px)]',
+	ally: 'bg-[repeating-linear-gradient(135deg,rgba(52,211,153,0.14)_0_6px,rgba(52,211,153,0)_6px_12px)]',
+	other:
+		'bg-[repeating-linear-gradient(135deg,rgba(167,139,250,0.14)_0_6px,rgba(167,139,250,0)_6px_12px)]',
+};
+
+/** Diagonal stripes in the side's colour that mark a hazard's card or row. */
+export const getHazardStripe = (sideTheme: ParticipantSideTheme) =>
+	HAZARD_STRIPES[sideTheme];

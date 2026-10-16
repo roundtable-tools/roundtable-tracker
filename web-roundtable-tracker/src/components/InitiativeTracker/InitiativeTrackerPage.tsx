@@ -40,7 +40,7 @@ import { Reorder } from 'motion/react';
 import { useNavigate } from '@tanstack/react-router';
 import { InitiativeActionCarouselCard } from './InitiativeActionCarouselCard';
 import { OpenPlayerViewButton } from './OpenPlayerViewButton';
-import { getSideAccent } from './sideAccent';
+import { getHazardStripe, getSideAccent } from './sideAccent';
 import { NextRoundMarkerCard } from './NextRoundMarkerCard';
 import { getRoundBoundaryIndex } from './roundBoundary';
 import { closesRound, getRoundActionCommand } from './roundActionCommand';
@@ -57,7 +57,6 @@ import {
 	getHazardDisableLabel,
 	getHealthLabelFromPercentage,
 	resolveParticipantSideTheme,
-	type ParticipantSideTheme,
 	type TrackerParticipant,
 } from '@/store/trackerMappers';
 import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
@@ -131,16 +130,7 @@ function getParticipantAccent(participant: TrackerParticipant) {
 		return baseAccent;
 	}
 
-	const hazardStripeBySide: Record<ParticipantSideTheme, string> = {
-		pc: 'bg-[repeating-linear-gradient(135deg,rgba(56,189,248,0.14)_0_6px,rgba(56,189,248,0)_6px_12px)]',
-		opponent:
-			'bg-[repeating-linear-gradient(135deg,rgba(251,113,133,0.14)_0_6px,rgba(251,113,133,0)_6px_12px)]',
-		ally: 'bg-[repeating-linear-gradient(135deg,rgba(52,211,153,0.14)_0_6px,rgba(52,211,153,0)_6px_12px)]',
-		other:
-			'bg-[repeating-linear-gradient(135deg,rgba(167,139,250,0.14)_0_6px,rgba(167,139,250,0)_6px_12px)]',
-	};
-
-	const hazardStripe = hazardStripeBySide[sideTheme];
+	const hazardStripe = getHazardStripe(sideTheme);
 
 	return {
 		...baseAccent,

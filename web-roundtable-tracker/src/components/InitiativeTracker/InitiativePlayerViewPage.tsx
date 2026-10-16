@@ -14,7 +14,7 @@ import {
 	type PlayerDisableProgress,
 	type PlayerTrackerParticipant,
 } from '@/store/trackerMappers';
-import { getSideAccent } from './sideAccent';
+import { getHazardStripe, getSideAccent } from './sideAccent';
 import { NextRoundMarkerCard } from './NextRoundMarkerCard';
 import { getRoundBoundaryIndex } from './roundBoundary';
 
@@ -276,7 +276,7 @@ export function InitiativePlayerViewPage() {
 								<NextRoundMarkerCard nextRound={encounter.round + 1} />
 							)}
 							<div
-								className={`flex items-center justify-between rounded-md border px-3 py-2 ${getSideAccent(participant.sideTheme).inactiveMarker}`}
+								className={`flex items-center justify-between rounded-md border px-3 py-2 ${getSideAccent(participant.sideTheme).inactiveMarker} ${participant.isHazard ? getHazardStripe(participant.sideTheme) : ''}`}
 							>
 								<p
 									className={`text-sm font-medium ${getSideAccent(participant.sideTheme).name}`}
