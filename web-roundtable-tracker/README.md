@@ -33,11 +33,11 @@ The app uses hash history (`src/main.tsx`), so URLs look like `/roundtable-track
 
 Each store is a vanilla zustand store defined by a `create…Store()` factory in its store file. The matching `*Instance.ts` file creates it lazily in a `get…Store()` getter and exports a `use…Store(selector)` hook for components:
 
-| Store file                 | Instance file (getter, hook)                                                       | Holds                                                                                                    | localStorage key         |
-| -------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `encounterRuntimeStore.ts` | `encounterRuntimeInstance.ts` (`getEncounterStore`, `useEncounterStore`)           | The running encounter: participants, turn order, delayed list, tracker metadata, round, undo/redo stacks | `encounter-store`        |
-| `savedEncounters.ts`       | `savedEncounterInstance.ts` (`getSavedEncountersStore`, `useSavedEncountersStore`) | Encounters saved from the builder                                                                        | `saved-encounters-store` |
-| `savedParties.ts`          | `savedPartiesInstance.ts` (`getSavedPartiesStore`, `useSavedPartiesStore`)         | Saved parties and the last used party                                                                    | `saved-parties-store`    |
+| Store file                 | Instance file (getter, hook)                                                       | Holds                                                                                                                          | localStorage key         |
+| -------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
+| `encounterRuntimeStore.ts` | `encounterRuntimeInstance.ts` (`getEncounterStore`, `useEncounterStore`)           | The running encounter: participants, turn order, delayed list, tracker metadata, round, undo/redo stacks, round and turn timer | `encounter-store`        |
+| `savedEncounters.ts`       | `savedEncounterInstance.ts` (`getSavedEncountersStore`, `useSavedEncountersStore`) | Encounters saved from the builder                                                                                              | `saved-encounters-store` |
+| `savedParties.ts`          | `savedPartiesInstance.ts` (`getSavedPartiesStore`, `useSavedPartiesStore`)         | Saved parties and the last used party                                                                                          | `saved-parties-store`    |
 
 All three use zustand's `persist` middleware with `localStorage`, so data stays in the browser it was created in. There is no server-side storage. The theme choice is stored separately under `vite-ui-theme`. Imported encounters waiting to be opened in the builder are kept only in memory (`importedEncounterDraft.ts`).
 
@@ -47,7 +47,7 @@ The player view doesn't use the encounter store. It reads `encounter-store` thro
 
 Tracker actions (end turn, delay, knock out, change health, reorder, trigger reinforcements, …) are command objects in `src/CommandHistory/Commands/`. Each command has a `type`, a `data` payload and `execute()`/`undo()` methods that change the encounter store and return `SUCCESS` or `FAILURE`. `CompositeCommand` groups several commands into one undo step.
 
-- `CommandHistoryProvider` (wrapped around the router in `main.tsx`) exposes `executeCommand`, `undo`, `redo`, `clearHistory`, `canUndo` and `canRedo` through `CommandHistoryContext`. Executing a command pushes it onto `history` and clears `redoStack`; a failed command is undone and throws.
+- `commandExecution.ts` runs, undoes and redoes commands on a store, and moves the encounter timer (`src/store/encounterTimer.ts`) when the current participant or the round changes: a finished turn goes into the turn log, and undo gives a turn or round back its time. `CommandHistoryProvider` (wrapped around the router in `main.tsx`) calls it and exposes `executeCommand`, `undo`, `redo`, `clearHistory`, `canUndo` and `canRedo` through `CommandHistoryContext`. Executing a command pushes it onto `history` and clears `redoStack`; a failed command is undone and throws.
 - `history` and `redoStack` live in the encounter store, so they are persisted with it. `src/store/serializer.ts` turns commands into `{ type: 'Command.<type>', data }` JSON and back (and also handles `Set`s).
 - To be restored after a reload, a command class must be registered in `registerSerializableCommands()` in `commandRegistry.ts`.
 
@@ -60,6 +60,6 @@ Tracker actions (end turn, delay, knock out, change health, reorder, trigger rei
 | `round-1-start.json`     | Round 1, nobody has acted. PCs (one without HP data), elite, weak and hidden opponents, a neutral creature, three complex hazards and a simple one, a participant that starts delaying                             |
 | `round-2-mid-round.json` | Round 2 after a few turns: every HP tier from Uninjured to Near Death, a knocked-out participant, temp HP, a delay on a turn, triggered and pending reinforcements, hazards under half, at half and fully disabled |
 
-With the dev server (`yarn dev`), open `?example=<file name>` before the hash, e.g. `http://localhost:5173/roundtable-tracker/?example=round-2-mid-round#/initiative_tracker`. It replaces the running encounter, so undo and redo work from there. Production builds don't include the loader (`src/devTrackerExamples.ts`).
+Both examples are saved with the timer paused, so they show fixed times; resume it in the tracker toolbar. With the dev server (`yarn dev`), open `?example=<file name>` before the hash, e.g. `http://localhost:5173/roundtable-tracker/?example=round-2-mid-round#/initiative_tracker`. It replaces the running encounter, so undo and redo work from there. Production builds don't include the loader (`src/devTrackerExamples.ts`).
 
 `src/examples/trackerStateExamples.spec.ts` builds the files from the preview's starting participants and the tracker's commands, so they never hold a state the app can't reach. `yarn workspace web-roundtable-tracker vitest run src/examples -u` rewrites them after a change; the spec fails until then.

@@ -38,6 +38,7 @@ import {
 	keepUndoableCommands,
 } from '@/CommandHistory/serialization';
 import { splitArray } from '@/utils/array';
+import { type EncounterTimer, startTimer } from './encounterTimer';
 
 type ValueOrFunction<T> = T | ((prev: T) => T);
 
@@ -64,6 +65,8 @@ export interface EncounterStore {
 	charactersWithTurn: Set<UUID>;
 	history: Command[];
 	redoStack: Command[];
+	/** Round and turn timing; null when no encounter is running. */
+	timer: EncounterTimer | null;
 	startEncounter: (
 		characters: Character[],
 		trackerMetaMap?: Record<UUID, TrackerParticipantMeta>
@@ -75,6 +78,7 @@ export interface EncounterStore {
 	setTrackerMetaMap: (metaMap: Record<UUID, TrackerParticipantMeta>) => void;
 	setHistory: (history: ValueOrFunction<Command[]>) => void;
 	setRedoStack: (redoStack: ValueOrFunction<Command[]>) => void;
+	setTimer: (timer: ValueOrFunction<EncounterTimer | null>) => void;
 }
 
 export type EncounterStoreJson = {
@@ -152,6 +156,13 @@ const startEncounter = (
 		// Starting out delayed doesn't cost the round-1 turn: a delaying
 		// participant can still return to the order and act this round.
 		charactersWithTurn: new Set(delayedOrder.concat(charactersOrder)),
+		timer:
+			charactersOrder.length > 0 || delayedOrder.length > 0
+				? startTimer(
+						{ participantId: charactersOrder[0] ?? null, round: 1 },
+						Date.now()
+					)
+				: null,
 		...resetHistory(),
 	};
 };
@@ -191,6 +202,7 @@ export const createEncounterStore = () =>
 				redoStack: [],
 				partyLevel: 1,
 				encounterData: undefined,
+				timer: null,
 				startEncounter: (
 					characters: Character[],
 					trackerMetaMap?: Record<UUID, TrackerParticipantMeta>
@@ -205,6 +217,7 @@ export const createEncounterStore = () =>
 					set(() => ({ trackerMetaMap: metaMap })),
 				setHistory: simpleSet<Command[], typeof set>(set, 'history'),
 				setRedoStack: simpleSet<Command[], typeof set>(set, 'redoStack'),
+				setTimer: simpleSet<EncounterTimer | null, typeof set>(set, 'timer'),
 			}),
 			{
 				name: 'encounter-store',

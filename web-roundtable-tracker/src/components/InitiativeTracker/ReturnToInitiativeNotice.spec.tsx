@@ -27,6 +27,6 @@ describe('ReturnToInitiativeNotice', () => {
 	});
 
 	it('shows the countdown before nobody returns', () => {
-		expect(markup).toContain('data-slot="return-notice-countdown"');
+		expect(markup).toContain('data-slot="notice-countdown"');
 	});
 });

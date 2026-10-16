@@ -40,7 +40,11 @@ import { Reorder } from 'motion/react';
 import { useNavigate } from '@tanstack/react-router';
 import { InitiativeActionCarouselCard } from './InitiativeActionCarouselCard';
 import { OpenPlayerViewButton } from './OpenPlayerViewButton';
+import { EncounterTimerControls } from './EncounterTimerControls';
+import { TurnStatsPanel } from './TurnStatsPanel';
 import { ReturnToInitiativeNotice } from './ReturnToInitiativeNotice';
+import { ResumeTimerNotice } from './ResumeTimerNotice';
+import { resumeTimer } from '@/store/encounterTimer';
 import { getHazardStripe, getSideAccent } from './sideAccent';
 import { NextRoundMarkerCard } from './NextRoundMarkerCard';
 import { getRoundBoundaryIndex } from './roundBoundary';
@@ -598,6 +602,8 @@ export function InitiativeTrackerPage() {
 	);
 	const charactersOrder = useEncounterStore((state) => state.charactersOrder);
 	const delayedOrder = useEncounterStore((state) => state.delayedOrder);
+	const timer = useEncounterStore((state) => state.timer);
+	const setTimer = useEncounterStore((state) => state.setTimer);
 	const charactersMap = useEncounterStore((state) => state.charactersMap);
 	const charactersWithTurn = useEncounterStore(
 		(state) => state.charactersWithTurn
@@ -607,6 +613,7 @@ export function InitiativeTrackerPage() {
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
 	const round = useEncounterStore((state) => state.round);
 	const history = useEncounterStore((state) => state.history);
+	const redoStack = useEncounterStore((state) => state.redoStack);
 	const startEncounter = useEncounterStore((state) => state.startEncounter);
 	const navigate = useNavigate();
 	const [endEncounterOpen, setEndEncounterOpen] = useState(false);
@@ -716,6 +723,41 @@ export function InitiativeTrackerPage() {
 	const [returnPrompt, setReturnPrompt] = useState<ReturnPromptState | null>(
 		null
 	);
+	// Whose turn and which round the timer is on; when a new command (not an
+	// undo or redo) moves it on while the timer is paused, the GM is asked
+	// whether to resume it.
+	const timerPosition = timer
+		? `${timer.round}:${timer.turnParticipantId ?? ''}`
+		: null;
+	const isTimerPaused = timer?.pausedAt != null;
+	const lastTimerPositionRef = useRef(timerPosition);
+	const lastCommand = history.at(-1);
+	const lastCommandRef = useRef(lastCommand);
+	// A redo moves the head of the redo stack back to the history.
+	const redoHeadRef = useRef(redoStack[0]);
+	const [resumePrompt, setResumePrompt] = useState<string | null>(null);
+
+	useEffect(() => {
+		const isNewCommand =
+			lastCommand !== undefined &&
+			lastCommand !== lastCommandRef.current &&
+			lastCommand !== redoHeadRef.current;
+		lastCommandRef.current = lastCommand;
+		redoHeadRef.current = redoStack[0];
+
+		if (timerPosition === lastTimerPositionRef.current) return;
+
+		lastTimerPositionRef.current = timerPosition;
+
+		if (isNewCommand && isTimerPaused && timerPosition) {
+			setResumePrompt(timerPosition);
+		}
+	}, [timerPosition, isTimerPaused, lastCommand, redoStack]);
+
+	// A timer resumed some other way (e.g. the toolbar) answers the prompt.
+	useEffect(() => {
+		if (!isTimerPaused) setResumePrompt(null);
+	}, [isTimerPaused]);
 	const [reorderDraftParticipants, setReorderDraftParticipants] = useState<
 		TrackerParticipant[]
 	>(storeInitiativeParticipants);
@@ -1421,6 +1463,7 @@ export function InitiativeTrackerPage() {
 										<TooltipContent side="bottom">Redo</TooltipContent>
 									</Tooltip>
 								</div>
+								<EncounterTimerControls />
 							</div>
 						</div>
 
@@ -1481,6 +1524,7 @@ export function InitiativeTrackerPage() {
 													onSwipeAction={handleParticipantSwipeAction}
 													density="desktop"
 													accent={getParticipantAccent(item.participant)}
+													turnTimer={timer}
 													indicatorLabel={getParticipantIndicatorLabel(
 														item.participant
 													)}
@@ -1670,7 +1714,7 @@ export function InitiativeTrackerPage() {
 								className="mt-3 min-h-0 flex-1 text-sm"
 							>
 								<ScrollArea className="h-full pr-3">
-									<p>Average turn duration data will be connected in MVP.</p>
+									<TurnStatsPanel />
 								</ScrollArea>
 							</TabsContent>
 						</Tabs>
@@ -1774,6 +1818,7 @@ export function InitiativeTrackerPage() {
 								</div>
 							</div>
 						</div>
+						<EncounterTimerControls />
 					</div>
 				</Card>
 
@@ -1929,6 +1974,7 @@ export function InitiativeTrackerPage() {
 													onSwipeAction={handleParticipantSwipeAction}
 													density="mobile"
 													accent={getParticipantAccent(item.participant)}
+													turnTimer={timer}
 													indicatorLabel={getParticipantIndicatorLabel(
 														item.participant
 													)}
@@ -1995,7 +2041,7 @@ export function InitiativeTrackerPage() {
 									</ul>
 								</TabsContent>
 								<TabsContent value="stats" className="mt-0 text-sm">
-									<p>Average turn duration data will be connected in MVP.</p>
+									<TurnStatsPanel />
 								</TabsContent>
 							</Tabs>
 						</Card>
@@ -2085,6 +2131,17 @@ export function InitiativeTrackerPage() {
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
+
+			{resumePrompt && isTimerPaused && !returnPrompt && (
+				<ResumeTimerNotice
+					key={resumePrompt}
+					onStayPaused={() => setResumePrompt(null)}
+					onResume={() => {
+						setResumePrompt(null);
+						setTimer((current) => current && resumeTimer(current, Date.now()));
+					}}
+				/>
+			)}
 
 			{returnPrompt && (
 				<ReturnToInitiativeNotice

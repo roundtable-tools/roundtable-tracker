@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Ban, Clock3, Heart, RotateCcw, ShieldOff, Skull } from 'lucide-react';
+import { type EncounterTimer } from '@/store/encounterTimer';
+import { TurnTimeChip } from './TurnTimeChip';
 import {
 	Tooltip,
 	TooltipContent,
@@ -82,6 +84,7 @@ export function InitiativeActionCarouselCard({
 	density,
 	accent,
 	indicatorLabel,
+	turnTimer,
 }: {
 	participant: TrackerParticipant;
 	selected: boolean;
@@ -91,6 +94,8 @@ export function InitiativeActionCarouselCard({
 	density: InitiativeCardDensity;
 	accent: ParticipantAccent;
 	indicatorLabel: string;
+	/** Shown as the running turn time, on the current participant's card. */
+	turnTimer?: EncounterTimer | null;
 }) {
 	const {
 		swipeRevealPx,
@@ -361,6 +366,12 @@ export function InitiativeActionCarouselCard({
 									)}
 									{indicatorLabel}
 								</p>
+								{isCurrent && (
+									<TurnTimeChip
+										timer={turnTimer}
+										className="text-[11px] text-current/85"
+									/>
+								)}
 							</>
 						) : (
 							<div className="flex min-w-0 items-center justify-between gap-3">
@@ -372,6 +383,12 @@ export function InitiativeActionCarouselCard({
 								>
 									{participant.name}
 								</p>
+								{isCurrent && (
+									<TurnTimeChip
+										timer={turnTimer}
+										className="ml-auto text-xs text-current/85"
+									/>
+								)}
 								<span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-current/20 px-2 py-1 text-[11px] uppercase tracking-[0.16em] text-current/85">
 									{participant.role === 'hazard' ? (
 										<ShieldOff className="h-3 w-3" />
