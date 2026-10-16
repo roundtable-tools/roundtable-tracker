@@ -40,6 +40,13 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isStringArray = (value: unknown): value is string[] =>
 	Array.isArray(value) && value.every((item) => typeof item === 'string');
 
+/** A stored timer with the times the player view counts up from. */
+const isStoredTimer = (value: unknown) =>
+	isRecord(value) &&
+	typeof value.roundStartedAt === 'number' &&
+	typeof value.turnStartedAt === 'number' &&
+	(value.pausedAt === null || typeof value.pausedAt === 'number');
+
 /** Each field the player view reads is either missing or of its stored type. */
 const isStoredStateShape = (state: unknown): state is Partial<EncounterStore> =>
 	isRecord(state) &&
@@ -52,7 +59,10 @@ const isStoredStateShape = (state: unknown): state is Partial<EncounterStore> =>
 	(state.partyLevel === undefined || typeof state.partyLevel === 'number') &&
 	(state.round === undefined || typeof state.round === 'number') &&
 	(state.charactersWithTurn === undefined ||
-		state.charactersWithTurn instanceof Set);
+		state.charactersWithTurn instanceof Set) &&
+	(state.timer === undefined ||
+		state.timer === null ||
+		isStoredTimer(state.timer));
 
 /**
  * Builds a snapshot from the persisted encounter store JSON. Returns null for

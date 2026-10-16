@@ -214,6 +214,10 @@ describe('player view sync', () => {
 			expect(stored({ round: '2' })).toBeNull();
 			expect(stored({ charactersWithTurn: ['hero'] })).toBeNull();
 			expect(stored({ encounterData: 'Bridge Fight' })).toBeNull();
+			expect(stored({ timer: 'running' })).toBeNull();
+			expect(
+				stored({ timer: { roundStartedAt: '0', turnStartedAt: 0 } })
+			).toBeNull();
 			expect(parsePlayerViewSnapshot('{"state":[]}')).toBeNull();
 		});
 
