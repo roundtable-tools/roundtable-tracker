@@ -33,7 +33,7 @@ describe('Timeline', () => {
 		expect(count(markup, 'timeline-event-dot')).toBe(0);
 	});
 
-	it('marks the count of several events in amber while any is pending', () => {
+	it('fills the count of several events in amber while any is pending', () => {
 		const pending = render([
 			{ round: 4, label: 'Ongoing' },
 			{ round: 4, label: 'Reinforcement', actionDisabled: true },
@@ -48,5 +48,7 @@ describe('Timeline', () => {
 		expect(pending).toContain('bg-amber-400');
 		expect(count(done, 'timeline-event-count')).toBe(1);
 		expect(done).not.toContain('bg-amber-400');
+		expect(pending).toContain('aria-label="2 events, some to trigger"');
+		expect(done).toContain('aria-label="2 events, all triggered"');
 	});
 });

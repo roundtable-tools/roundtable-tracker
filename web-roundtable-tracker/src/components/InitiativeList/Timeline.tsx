@@ -56,12 +56,21 @@ function TimelineItem({
 					>
 						<span className="text-base">{turn}</span>
 						{hasEvents && events.length > 1 ? (
+							// Filled while an event is to trigger, hollow once all are done,
+							// so the state doesn't rest on the colour alone.
 							<Badge
 								data-slot="timeline-event-count"
+								variant={hasPendingEvents ? 'default' : 'outline'}
+								aria-label={
+									hasPendingEvents
+										? `${events.length} events, some to trigger`
+										: `${events.length} events, all triggered`
+								}
 								className={cn(
 									'absolute -top-2 -right-2 pointer-events-none select-none text-[10px] w-4 h-4 flex items-center justify-center p-0',
-									hasPendingEvents &&
-										'bg-amber-400 text-amber-950 ring-2 ring-background'
+									hasPendingEvents
+										? 'bg-amber-400 text-amber-950 ring-2 ring-background'
+										: 'bg-background'
 								)}
 							>
 								{events.length}
