@@ -1,6 +1,7 @@
 import { type EncounterStore } from '@/store/encounterRuntimeStore';
 import {
 	advanceTimer,
+	type EncounterTimer,
 	rewindTimer,
 	startTimer,
 	type TurnPosition,
@@ -29,55 +30,78 @@ const timedParticipantHasTurn = (state: EncounterStore) => {
 };
 
 /**
- * Moves the timer after a command changed whose turn it is or the round.
- * Going forward, the turn that ended is logged only if its participant had a
- * turn (one skipped because it already acted didn't take one).
+ * Whether the command ended the turn the timer is on: its participant had a
+ * turn and used it up (ending it or delaying), left the order (e.g. knocked
+ * out) or the round ended with it. A reorder that only moves someone else on
+ * top ends no turn, and one skipped because it already acted had none to end.
  */
-const moveTimer = (
-	store: EncounterStoreApi,
+const timedTurnEnded = (state: EncounterStore, hadTurn: boolean) => {
+	const participantId = state.timer?.turnParticipantId;
+
+	return Boolean(
+		hadTurn &&
+		participantId &&
+		(state.round !== state.timer?.round ||
+			!state.charactersWithTurn.has(participantId) ||
+			!state.charactersOrder.includes(participantId))
+	);
+};
+
+/** The timer after a command changed whose turn it is or the round. */
+const movedTimer = (
+	state: EncounterStore,
 	direction: 'forward' | 'back',
-	endedTurnWasTaken: boolean,
+	turnEnded: boolean,
 	now: number
-) => {
-	const state = store.getState();
+): EncounterTimer | null => {
 	const position = getTurnPosition(state);
 	const { timer } = state;
 
 	if (!timer) {
-		if (position.participantId) {
-			state.setTimer(startTimer(position, now));
-		}
-
-		return;
+		return position.participantId ? startTimer(position, now) : null;
 	}
 
-	state.setTimer(
-		direction === 'forward'
-			? advanceTimer(timer, position, now, endedTurnWasTaken)
-			: rewindTimer(timer, position, now)
-	);
+	return direction === 'forward'
+		? advanceTimer(timer, position, now, turnEnded)
+		: rewindTimer(timer, position, now);
 };
 
 /**
- * Runs a command and records it for undo. A command that fails leaves the
- * state unchanged, so there is nothing to roll back here (CompositeCommand
- * rolls back its own parts); it throws.
+ * Runs a command forward, records it in the history and moves the timer, in
+ * one store update so the player window never sees the order without its
+ * timer. Returns false when the command fails, which leaves the state
+ * unchanged (CompositeCommand rolls back its own parts).
  */
+const runForward = (
+	store: EncounterStoreApi,
+	command: Command,
+	redoStack: (prev: Command[]) => Command[],
+	now: number
+) => {
+	const hadTurn = timedParticipantHasTurn(store.getState());
+
+	if (command.execute() === STATUS.failure) return false;
+
+	const state = store.getState();
+
+	store.setState({
+		history: [...state.history, command],
+		redoStack: redoStack(state.redoStack),
+		timer: movedTimer(state, 'forward', timedTurnEnded(state, hadTurn), now),
+	});
+
+	return true;
+};
+
+/** Runs a command and records it for undo; throws when it fails. */
 export const executeCommand = (
 	store: EncounterStoreApi,
 	command: Command,
 	now = Date.now()
 ) => {
-	const endedTurnWasTaken = timedParticipantHasTurn(store.getState());
-
-	if (command.execute() === STATUS.failure) {
+	if (!runForward(store, command, () => [], now)) {
 		throw new Error('Failed to execute command');
 	}
-
-	const state = store.getState();
-	state.setHistory((prev) => [...prev, command]);
-	state.setRedoStack([]);
-	moveTimer(store, 'forward', endedTurnWasTaken, now);
 };
 
 /** Undoes the last command; logs and keeps it when its undo fails. */
@@ -93,26 +117,21 @@ export const undoLastCommand = (store: EncounterStoreApi, now = Date.now()) => {
 	}
 
 	const state = store.getState();
-	state.setHistory((prev) => prev.slice(0, -1));
-	state.setRedoStack((prev) => [lastCommand, ...prev]);
-	moveTimer(store, 'back', false, now);
+
+	store.setState({
+		history: state.history.slice(0, -1),
+		redoStack: [lastCommand, ...state.redoStack],
+		timer: movedTimer(state, 'back', false, now),
+	});
 };
 
 /** Redoes the next undone command; logs and keeps it when it fails. */
 export const redoNextCommand = (store: EncounterStoreApi, now = Date.now()) => {
-	const endedTurnWasTaken = timedParticipantHasTurn(store.getState());
 	const nextCommand = store.getState().redoStack[0];
 
 	if (!nextCommand) return;
 
-	if (nextCommand.execute() === STATUS.failure) {
+	if (!runForward(store, nextCommand, (prev) => prev.slice(1), now)) {
 		console.error(`Failed to redo command: ${commandName(nextCommand)}`);
-
-		return;
 	}
-
-	const state = store.getState();
-	state.setRedoStack((prev) => prev.slice(1));
-	state.setHistory((prev) => [...prev, nextCommand]);
-	moveTimer(store, 'forward', endedTurnWasTaken, now);
 };

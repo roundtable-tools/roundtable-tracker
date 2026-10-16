@@ -137,6 +137,34 @@ describe('command execution with the encounter timer', () => {
 		});
 	});
 
+	it('does not log a turn when a reorder moves someone else on top', () => {
+		executeCommand(
+			store,
+			new ReorderCharactersCommand(
+				{ newOrder: ['goblin', 'hero'] },
+				{ encounterStore: store }
+			),
+			5 * SECOND
+		);
+
+		expect(timer().turnLog).toEqual([]);
+		expect(timer()).toMatchObject({
+			turnParticipantId: 'goblin',
+			turnStartedAt: 5 * SECOND,
+		});
+	});
+
+	it('records the command and moves the timer in one store change', () => {
+		const states: ReturnType<typeof store.getState>[] = [];
+		store.subscribe((state) => states.push(state));
+
+		endTurn(30 * SECOND);
+
+		const recorded = states.find((state) => state.history.length === 1);
+
+		expect(recorded?.timer?.turnParticipantId).toBe('goblin');
+	});
+
 	it('leaves the timer alone for commands that keep the turn', () => {
 		const before = timer();
 
