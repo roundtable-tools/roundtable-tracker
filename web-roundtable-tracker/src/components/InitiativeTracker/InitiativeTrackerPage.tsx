@@ -611,6 +611,9 @@ export function InitiativeTrackerPage() {
 	const trackerMetaMap = useEncounterStore((state) => state.trackerMetaMap);
 	const encounterData = useEncounterStore((state) => state.encounterData);
 	const partyLevel = useEncounterStore((state) => state.partyLevel);
+	const pendingReinforcements = useEncounterStore(
+		(state) => state.pendingReinforcements
+	);
 	const round = useEncounterStore((state) => state.round);
 	const history = useEncounterStore((state) => state.history);
 	const redoStack = useEncounterStore((state) => state.redoStack);
@@ -646,6 +649,7 @@ export function InitiativeTrackerPage() {
 				trackerMetaMap,
 				encounterData,
 				partyLevel,
+				pendingReinforcements,
 			}),
 		[
 			charactersOrder,
@@ -654,6 +658,7 @@ export function InitiativeTrackerPage() {
 			trackerMetaMap,
 			encounterData,
 			partyLevel,
+			pendingReinforcements,
 		]
 	);
 
@@ -766,6 +771,9 @@ export function InitiativeTrackerPage() {
 	const reorderScrollContainerRef = useRef<HTMLDivElement | null>(null);
 	const reorderAutoScrollVelocityRef = useRef(0);
 	const reorderAutoScrollFrameRef = useRef<number | null>(null);
+	// Who the user dragged in the reorder draft: pending reinforcements stick
+	// to the participant below them unless that one is dragged.
+	const reorderDraggedIdsRef = useRef(new Set<string>());
 	const delayedSectionParticipants = outOfInitiative.delayed;
 	const hasReinforcements = pendingReinforcementParticipants.length > 0;
 	const hasDelayed = delayedSectionParticipants.length > 0;
@@ -940,6 +948,7 @@ export function InitiativeTrackerPage() {
 
 	const resetReorderDraft = () => {
 		setReorderDraftParticipants(storeInitiativeParticipants);
+		reorderDraggedIdsRef.current = new Set();
 	};
 
 	const stopReorderAutoScroll = () => {
@@ -1062,7 +1071,12 @@ export function InitiativeTrackerPage() {
 		}
 
 		try {
-			executeCommand(new ReorderCharactersCommand({ newOrder }));
+			executeCommand(
+				new ReorderCharactersCommand({
+					newOrder,
+					movedIds: [...reorderDraggedIdsRef.current],
+				})
+			);
 			handleReorderOpenChange(false);
 		} catch (error) {
 			console.error('Failed to save manual reorder', error);
@@ -2185,6 +2199,7 @@ export function InitiativeTrackerPage() {
 									value={participant}
 									whileDrag={{ scale: 1.01 }}
 									onDragStart={(_, info) => {
+										reorderDraggedIdsRef.current.add(participant.id);
 										handleReorderDrag(info.point.y);
 									}}
 									onDrag={(_, info) => {

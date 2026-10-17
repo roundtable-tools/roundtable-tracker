@@ -23,19 +23,21 @@ when the turn flow changes.
   | `round` | Starts at 1 |
   | `charactersMap` | Characters by uuid |
   | `trackerMetaMap` | Role (pc / opponent / neutral / ally / hazard / reinforcement), `isSimpleHazard`, `initiativeBonus`, `reinforcementSlotId`, … |
+  | `pendingReinforcements` | Reinforcements given an initiative in the preview and not yet triggered: `slotId`, the prepared `character` and `meta`, and their spot (`above`, `below`). Not in `charactersMap` or the orders, so the tracker's queue and the player view don't show them |
   | `history`, `redoStack` | Command history |
 
 ## Rolling and ordering
 
 - Rolling happens in the preview (`components/PreviewDisplay/PreviewDisplay.tsx`), not in a command:
   - Encounter creatures roll d20 + `initiativeBonus`, with tie priority `NPC`. Groups with `count` are expanded. A name used more than once across the whole roster (any side, any entry) gets a letter suffix A, B, … on each use, skipping letters already taken; party names count as taken but are never renamed (`utils/uniqueNames.ts`).
+  - Reinforcement slot participants are rolled the same way (`generateReinforcements` in `PreviewDisplay/generateParticipants.ts`; a fixed `initiative` on the slot participant wins) and shown in their own "Reinforcements · round N" cards, where the GM can change initiative and HP. HP defaults to level × 5. Their names are made unique against the party and the starting roster.
   - A generic party (no saved party) rolls a plain d20 with priority `PC`.
   - Saved party members start at initiative 0. The GM types in the players' real results.
   - The GM can edit every value in the preview form.
   - Simple hazards have no initiative field.
 - `participantsToEncounterCharacters` (`store/convert.ts`) sorts once, when the encounter starts: by initiative, highest first, then by `tiePriority`, highest first.
 - After that the **queue position is what counts**. The stored `initiative` number is not updated by a reorder or a return from Delay. That matches the rules ("usually not necessary to track the original initiative numbers").
-- `ReorderCharactersCommand {newOrder, oldOrder?, type?: 'initiative' | 'delay'}` replaces `charactersOrder` or `delayedOrder`, dropping duplicates. For `charactersOrder` it treats `newOrder` as a reshuffle of the current queue: participants no longer in the queue are dropped, and ones `newOrder` misses keep their current index (#28). The UI has a drag-and-drop dialog for it.
+- `ReorderCharactersCommand {newOrder, oldOrder?, type?: 'initiative' | 'delay', movedIds?}` replaces `charactersOrder` or `delayedOrder`, dropping duplicates. For `charactersOrder` it treats `newOrder` as a reshuffle of the current queue: participants no longer in the queue are dropped, and ones `newOrder` misses keep their current index (#28). The UI has a drag-and-drop dialog for it, which passes the dragged participants as `movedIds`. A reorder of `charactersOrder` also moves the spots of pending reinforcements (see below) and undo restores them.
 - `skipParticipantsWithoutTurn` (`store/operations.ts`) runs after a reorder of `charactersOrder` and after `EndTurnCommand`: it rotates the queue until a participant with a turn, or a delaying one, is at the front, so someone moved up after acting doesn't act twice. When nobody has a turn left (the round's last turn), the order stays as it is.
 - No PC initiative modifier is stored. There is no skill choice (Perception or Stealth) and no reroll support. The builder's "Initiative Description" field is saved, but the tracker doesn't use it.
 
@@ -87,11 +89,16 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 
 ## Reinforcements and hazards
 
+- **Pending reinforcements (initiative set in the preview).** When the encounter starts, `buildPendingReinforcements` (`store/convert.ts`) sorts the reinforcements into the starting order with the same comparator (stable, starting participants first, so other ties go after the participants already there) and stores each one's spot as its neighbours among the participants that start in `charactersOrder`: `below` (null at the end of the round) and `above` (null at the top). Logic lives in `store/pendingReinforcements.ts`.
+  - **Spot resolution** (`spotIndex`): before `below`; at the end when `below` is null; after `above` when `below` has left the order (delaying, slain); by initiative (`arrivalActsBefore` against `effectiveInitiatives`) when both have left.
+  - **Reorder** (`respotAfterReorder`, house rule): a pending reinforcement sticks to the participant below it and moves with it while others are reordered; when that participant is the one moved, it sticks to the participant above and keeps its place. "Moved" is `movedIds`, or, without it, everyone outside the longest common subsequence of the old and new round orders (`movedInReorder`). The spots are read in round order (`roundOrderOf`), not the rotating queue. Other order changes (Delay, knock-out, removal) don't move spots; spot resolution falls back as above.
+  - **Trigger** (`placePendingReinforcements`, house rule): each arrival goes to its spot. A spot after the current turn acts this round; so does a spot at the very top of a round nobody has acted in yet, which makes the arrival the current actor. A spot that has passed waits for the next round. Arrivals that come in delayed go to `delayedOrder` with the same turn rule. Arrivals sharing a spot keep their initiative order. Names are not changed on arrival.
 - **Triggering reinforcements.** `TriggerReinforcementEventCommand {slotId}`:
+  - When the slot has pending reinforcements, it places them as above and removes them from `pendingReinforcements`; undo restores them. The rest of this list is the fallback for slots without them (encounters started before the preview set reinforcement initiative).
   - It spawns the slot's participants, expanded by `count`, with `role: 'reinforcement'`. Reinforcements are not in the starting roster; a slot whose participants are already in `trackerMetaMap` (by `reinforcementSlotId`) counts as triggered, and triggering it again fails.
   - Without a fixed `initiative`, a participant rolls d20 + `initiativeBonus`. The roll is stored in the command data, so redo and reload replay it.
   - It places them with `insertByInitiative` among the participants still to act this round, never before index 0. They act this round (house rule); one whose initiative is above everyone still to act goes right after the current turn.
-  - Placement compares against `effectiveInitiatives`: values derived from the current order, because a reorder or a return from Delay doesn't update the stored numbers.
+  - Placement compares against `effectiveInitiatives` (`store/initiativePlacement.ts`): values derived from the current order, because a reorder or a return from Delay doesn't update the stored numbers.
   - Ties (`arrivalActsBefore`): an opposing arrival goes before a PC it ties with; other ties go after the participants already there.
   - Participants that arrive delayed go to `delayedOrder`. They keep a turn this round only when their initiative puts them after the current actor (`charactersOrder[0]` with a turn left, compared by its effective initiative); otherwise their spot has passed and they wait for the next round (house rule). With no current actor they get no turn. Participants that start the encounter delayed keep their round-1 turn.
   - The UI allows triggering only once `trigger.round <= round`.

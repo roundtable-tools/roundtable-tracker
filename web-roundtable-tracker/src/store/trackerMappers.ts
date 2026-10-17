@@ -262,7 +262,8 @@ export function runtimeToOutOfInitiativeData(
 		| 'trackerMetaMap'
 		| 'encounterData'
 		| 'partyLevel'
-	>
+	> &
+		Partial<Pick<EncounterStore, 'pendingReinforcements'>>
 ): {
 	reinforcements: TrackerParticipant[];
 	delayed: TrackerParticipant[];
@@ -274,6 +275,7 @@ export function runtimeToOutOfInitiativeData(
 		encounterData,
 		partyLevel,
 		delayedOrder,
+		pendingReinforcements = [],
 	} = store;
 
 	const triggeredReinforcementSlots = new Set(
@@ -301,8 +303,39 @@ export function runtimeToOutOfInitiativeData(
 				slot.type === 'reinforcement' &&
 				!triggeredReinforcementSlots.has(slot.id)
 		)
-		.flatMap((slot) =>
-			(slot.participants ?? []).map((participant, index) => {
+		.flatMap((slot) => {
+			const pending = pendingReinforcements.filter(
+				({ slotId }) => slotId === slot.id
+			);
+
+			// Reinforcements set up in the preview show its names, initiative
+			// and HP.
+			if (pending.length > 0) {
+				return pending.map(
+					({ character, meta }) =>
+						({
+							id: character.uuid,
+							name: character.name,
+							role: 'reinforcement' as const,
+							sideTheme: meta.sideTheme,
+							state: 'inactive' as const,
+							initiative: character.initiative,
+							initiativeBonus: meta.initiativeBonus,
+							eventId: slot.id,
+							eventRound: slot.trigger.round,
+							currentHp: character.health,
+							maxHp: character.maxHealth,
+							hardness: meta.hardness,
+							dcs: meta.dcs,
+							adjustmentDescription: meta.adjustmentDescription,
+							adjustmentLevelModifier: meta.adjustmentLevelModifier,
+							traits: meta.traits,
+							notes: meta.notes,
+						}) satisfies TrackerParticipant
+				);
+			}
+
+			return (slot.participants ?? []).map((participant, index) => {
 				const id = `${slot.id}-${index}`;
 				const initiative =
 					typeof (participant as { initiative?: unknown }).initiative ===
@@ -333,8 +366,8 @@ export function runtimeToOutOfInitiativeData(
 					traits: participant.traits,
 					notes: slot.description ?? '',
 				} satisfies TrackerParticipant;
-			})
-		);
+			});
+		});
 
 	const delayed = delayedToTrackerParticipants(
 		delayedOrder,

@@ -39,6 +39,7 @@ import {
 } from '@/CommandHistory/serialization';
 import { splitArray } from '@/utils/array';
 import { type EncounterTimer, startTimer } from './encounterTimer';
+import { type PendingReinforcement } from './pendingReinforcements';
 
 type ValueOrFunction<T> = T | ((prev: T) => T);
 
@@ -60,6 +61,8 @@ export interface EncounterStore {
 	charactersOrder: UUID[];
 	delayedOrder: UUID[];
 	trackerMetaMap: Record<UUID, TrackerParticipantMeta>;
+	/** Reinforcements given an initiative in the preview, not yet triggered. */
+	pendingReinforcements: PendingReinforcement[];
 	partyLevel: number;
 	round: number;
 	charactersWithTurn: Set<UUID>;
@@ -69,7 +72,8 @@ export interface EncounterStore {
 	timer: EncounterTimer | null;
 	startEncounter: (
 		characters: Character[],
-		trackerMetaMap?: Record<UUID, TrackerParticipantMeta>
+		trackerMetaMap?: Record<UUID, TrackerParticipantMeta>,
+		pendingReinforcements?: PendingReinforcement[]
 	) => void;
 	setEncounterData: (encounterData: Encounter) => void;
 	updateCharacter: (uuid: UUID, character: ValueOrFunction<Character>) => void;
@@ -140,7 +144,8 @@ const resetHistory = () => ({ history: [], redoStack: [] });
 
 const startEncounter = (
 	characters: Character[],
-	trackerMetaMap: Record<UUID, TrackerParticipantMeta> = {}
+	trackerMetaMap: Record<UUID, TrackerParticipantMeta> = {},
+	pendingReinforcements: PendingReinforcement[] = []
 ): Partial<EncounterStore> => {
 	const { charactersMap, charactersOrder, delayedOrder } = parseCharacters(
 		characters,
@@ -152,6 +157,7 @@ const startEncounter = (
 		charactersOrder,
 		delayedOrder,
 		trackerMetaMap,
+		pendingReinforcements,
 		round: 1,
 		// Starting out delayed doesn't cost the round-1 turn: a delaying
 		// participant can still return to the order and act this round.
@@ -196,6 +202,7 @@ export const createEncounterStore = () =>
 				charactersOrder: [],
 				delayedOrder: [],
 				trackerMetaMap: {},
+				pendingReinforcements: [],
 				round: 0,
 				charactersWithTurn: new Set(),
 				history: [],
@@ -205,8 +212,12 @@ export const createEncounterStore = () =>
 				timer: null,
 				startEncounter: (
 					characters: Character[],
-					trackerMetaMap?: Record<UUID, TrackerParticipantMeta>
-				) => set(() => startEncounter(characters, trackerMetaMap)),
+					trackerMetaMap?: Record<UUID, TrackerParticipantMeta>,
+					pendingReinforcements?: PendingReinforcement[]
+				) =>
+					set(() =>
+						startEncounter(characters, trackerMetaMap, pendingReinforcements)
+					),
 				setCharacters: (characters: Character[]) =>
 					set(() => parseCharacters(characters)),
 				updateCharacter: updateCharacter(set),

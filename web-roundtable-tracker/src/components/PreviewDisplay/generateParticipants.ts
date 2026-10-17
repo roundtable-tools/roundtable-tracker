@@ -2,6 +2,7 @@ import {
 	ALIGNMENT,
 	Encounter,
 	InitiativeParticipant,
+	NarrativeSlot,
 	normalizeLevel,
 	Participant,
 	PRIORITY,
@@ -99,4 +100,80 @@ export const generateParticipants = (
 	);
 
 	return withUniqueNames(teams, reservedNames);
+};
+
+/** A reinforcement slot's participants, as preview rows. */
+export type ReinforcementTeam = {
+	slot: NarrativeSlot;
+	participants: InitiativeParticipant[];
+};
+
+/**
+ * The participants of every reinforcement slot, expanded by `count`, with an
+ * initiative rolled now (d20 + initiative bonus) unless the slot fixes it. The
+ * preview lets the GM change it, and the reinforcements then join at that
+ * initiative when triggered. HP defaults to level × 5, as for arrivals rolled
+ * on the spot. Names are made unique against `takenNames` (the party and the
+ * starting roster), which are never renamed.
+ */
+export const generateReinforcements = (
+	encounterData: Encounter | undefined,
+	partyLevel: number,
+	takenNames: string[] = []
+): ReinforcementTeam[] => {
+	const teams = (encounterData?.narrativeSlots ?? [])
+		.filter(
+			(slot) =>
+				slot.type === 'reinforcement' && (slot.participants?.length ?? 0) > 0
+		)
+		.map((slot) => ({
+			slot,
+			participants: (slot.participants ?? []).flatMap(
+				({ level, name, count, ...participant }) => {
+					const normalizedLevel = normalizeLevel(partyLevel, level);
+					const fixedInitiative = (participant as { initiative?: unknown })
+						.initiative;
+					const initiativeBonus =
+						typeof participant.initiativeBonus === 'number' &&
+						Number.isFinite(participant.initiativeBonus)
+							? participant.initiativeBonus
+							: 0;
+					const maxHealth =
+						participant.maxHealth ?? Math.max(1, normalizedLevel * 5);
+
+					return Array.from({ length: Math.max(1, count ?? 1) }).map(
+						(): InitiativeParticipant => ({
+							uuid: generateUUID(),
+							tiePriority: PRIORITY.NPC,
+							...participant,
+							initiative:
+								typeof fixedInitiative === 'number' &&
+								Number.isFinite(fixedInitiative)
+									? fixedInitiative
+									: Math.floor(Math.random() * 20) + 1 + initiativeBonus,
+							level: normalizedLevel,
+							name: name.trim() || 'Reinforcement',
+							maxHealth,
+							health: participant.health ?? maxHealth,
+							tempHealth: participant.tempHealth ?? 0,
+							isSimpleHazard:
+								participant.type === 'hazard' && !participant.isComplexHazard,
+						})
+					);
+				}
+			),
+		}));
+	const names = uniqueNames(
+		teams.flatMap(({ participants }) => participants.map(({ name }) => name)),
+		takenNames
+	);
+	let index = 0;
+
+	return teams.map((team) => ({
+		...team,
+		participants: team.participants.map((participant) => ({
+			...participant,
+			name: names[index++],
+		})),
+	}));
 };
