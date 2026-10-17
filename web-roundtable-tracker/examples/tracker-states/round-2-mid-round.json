@@ -364,6 +364,7 @@
 				"reinforcementSlotId": "goblin-reinforcements"
 			}
 		},
+		"pendingReinforcements": [],
 		"round": 2,
 		"charactersWithTurn": {
 			"type": "Set",
@@ -1416,7 +1417,8 @@
 								"initiativeBonus": 4,
 								"dcs": [{ "name": "Survival", "value": 17 }]
 							}
-						}
+						},
+						"pendingReinforcements": []
 					}
 				}
 			},

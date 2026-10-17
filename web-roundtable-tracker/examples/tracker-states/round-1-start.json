@@ -314,6 +314,7 @@
 				"dcs": [{ "name": "Survival", "value": 17 }]
 			}
 		},
+		"pendingReinforcements": [],
 		"round": 1,
 		"charactersWithTurn": {
 			"type": "Set",

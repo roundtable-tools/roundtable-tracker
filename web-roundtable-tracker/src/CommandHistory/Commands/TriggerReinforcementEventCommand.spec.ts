@@ -9,10 +9,8 @@ import {
 } from '@/store/data';
 import { STATUS } from '../common';
 import { ReorderCharactersCommand } from './ReorderCharactersCommand';
-import {
-	effectiveInitiatives,
-	TriggerReinforcementEventCommand,
-} from './TriggerReinforcementEventCommand';
+import { TriggerReinforcementEventCommand } from './TriggerReinforcementEventCommand';
+import { effectiveInitiatives } from '@/store/initiativePlacement';
 
 const character = (
 	uuid: string,

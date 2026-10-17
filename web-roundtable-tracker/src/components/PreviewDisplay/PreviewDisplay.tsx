@@ -8,7 +8,10 @@ import {
 } from '@/store/data';
 import { generateUUID } from '@/utils/uuid';
 import { PreviewCard } from './PreviewCard';
-import { generateParticipants } from './generateParticipants';
+import {
+	generateParticipants,
+	generateReinforcements,
+} from './generateParticipants';
 import {
 	generatePartyFromData,
 	toPreviewCharacter,
@@ -19,6 +22,7 @@ import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { useEffect, useMemo, useState } from 'react';
 import { AppHeader } from '@/AppHeader';
 import {
+	buildPendingReinforcements,
 	buildTrackerMetaMap,
 	participantsToEncounterCharacters,
 } from '@/store/convert';
@@ -41,9 +45,10 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { Bot, FolderOpen, Trees, User } from 'lucide-react';
+import { Bot, FolderOpen, ShieldPlus, Trees, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useSavedPartiesStore } from '@/store/savedPartiesInstance';
+import { splitArray } from '@/utils/array';
 
 type TeamAppearance = {
 	borderClassName: string;
@@ -82,9 +87,24 @@ const TEAM_APPEARANCES = {
 		label: 'Other',
 		Icon: Trees,
 	},
+	reinforcements: {
+		borderClassName: 'border-l-amber-600',
+		markerClassName: 'bg-amber-600',
+		textClassName: 'text-amber-600',
+		label: 'Reinforcements',
+		Icon: ShieldPlus,
+	},
 } as const;
 
-function getTeamAppearance(side: number, isParty: boolean): TeamAppearance {
+function getTeamAppearance(
+	side: number,
+	isParty: boolean,
+	isReinforcement: boolean
+): TeamAppearance {
+	if (isReinforcement) {
+		return TEAM_APPEARANCES.reinforcements;
+	}
+
 	if (isParty) {
 		return TEAM_APPEARANCES.pc;
 	}
@@ -121,6 +141,8 @@ export type Inputs = {
 	teams: {
 		side: number;
 		isParty: boolean;
+		/** Set on a reinforcement slot's team. */
+		reinforcement?: { slotId: string; round: number };
 		characters: PreviewCharacterConfig[];
 	}[];
 };
@@ -171,20 +193,41 @@ export const PreviewDisplay = (): JSX.Element => {
 		[encounterData, partyLevel, partyNamesKey]
 	);
 
+	// Reinforcements get their initiative here too; they join at it when their
+	// event is triggered.
+	const reinforcements = useMemo(
+		() =>
+			generateReinforcements(encounterData, partyLevel, [
+				...(JSON.parse(partyNamesKey) as string[]),
+				...participants.flat().map((participant) => participant.name),
+			]),
+		[encounterData, partyLevel, partyNamesKey, participants]
+	);
+
 	const fullParty = useMemo(
 		() => [party, ...participants],
 		[party, participants]
 	);
 	const defaultTeams = useMemo(
-		() =>
-			fullParty
+		() => [
+			...fullParty
 				.filter((group) => group.length > 0)
 				.map((group, index) => ({
 					side: group[0].side,
 					isParty: index === 0,
 					characters: group.map(toPreviewCharacter),
 				})),
-		[fullParty]
+			...reinforcements.map(({ slot, participants: slotParticipants }) => ({
+				side: slotParticipants[0].side,
+				isParty: false,
+				reinforcement: { slotId: slot.id, round: slot.trigger.round },
+				characters: slotParticipants.map((participant) => ({
+					...toPreviewCharacter(participant),
+					reinforcementSlotId: slot.id,
+				})),
+			})),
+		],
+		[fullParty, reinforcements]
 	);
 
 	const sourceParticipantsById = useMemo(() => {
@@ -236,9 +279,22 @@ export const PreviewDisplay = (): JSX.Element => {
 	const onSelectInitiativeView = (
 		view: 'initiativeTracker' | 'initiativePlayer'
 	) => {
+		const [reinforcementParticipants, startingParticipants] = splitArray(
+			preparedParticipants,
+			(participant) => Boolean(participant.reinforcementSlotId)
+		);
+
 		startEncounter(
-			participantsToEncounterCharacters(preparedParticipants),
-			buildTrackerMetaMap(preparedParticipants)
+			participantsToEncounterCharacters([...startingParticipants]),
+			buildTrackerMetaMap(startingParticipants),
+			buildPendingReinforcements(
+				startingParticipants,
+				reinforcementParticipants.map((participant) => ({
+					...participant,
+					reinforcementSlotId: participant.reinforcementSlotId ?? '',
+				})),
+				encounterData?.narrativeSlots
+			)
 		);
 		setShowInitiativeChoice(false);
 
@@ -356,7 +412,8 @@ export const PreviewDisplay = (): JSX.Element => {
 						{teamFields.map((teamField, index) => {
 							const appearance = getTeamAppearance(
 								teamField.side,
-								teamField.isParty
+								teamField.isParty,
+								teamField.reinforcement !== undefined
 							);
 							const TeamIcon = appearance.Icon;
 
@@ -369,10 +426,23 @@ export const PreviewDisplay = (): JSX.Element => {
 									key={teamField.id}
 									teamIndex={index}
 									sideFlag={<TeamIcon className="h-5 w-5" />}
-									sideTitle={appearance.label}
+									sideTitle={
+										teamField.reinforcement ? (
+											<span className="flex flex-col gap-0.5">
+												<span>{`${appearance.label} · round ${teamField.reinforcement.round}`}</span>
+												<span className="text-xs font-normal">
+													Join at this initiative when triggered
+												</span>
+											</span>
+										) : (
+											appearance.label
+										)
+									}
 									participants={teamField.characters}
 									readonlyFields={
-										selectedParty !== null && teamField.side === ALIGNMENT.PCs
+										selectedParty !== null &&
+										teamField.side === ALIGNMENT.PCs &&
+										!teamField.reinforcement
 											? ['name']
 											: []
 									}

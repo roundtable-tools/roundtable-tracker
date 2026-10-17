@@ -9,6 +9,8 @@ import { Party } from '@/store/savedParties';
 /** A row of the preview form: a participant with its starting HP and initiative. */
 export type PreviewCharacterConfig = CharacterConfig & {
 	hasHealthData?: boolean;
+	/** Set on a reinforcement: the slot that brings it in when triggered. */
+	reinforcementSlotId?: string;
 };
 
 /** The party's members as preview participants. */

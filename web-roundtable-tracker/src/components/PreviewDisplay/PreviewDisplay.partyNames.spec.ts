@@ -57,6 +57,7 @@ vi.mock('./generateParticipants', async (importOriginal) => {
 		await importOriginal<typeof import('./generateParticipants')>();
 
 	return {
+		...actual,
 		generateParticipants: (
 			...args: Parameters<typeof actual.generateParticipants>
 		) => {
