@@ -247,6 +247,39 @@ describe('placePendingReinforcements', () => {
 		expect(placed.charactersOrder).toEqual(['a', 'r1', 'r2', 'b', 'c']);
 	});
 
+	it('keeps arrivals sharing the top spot in order when the participant below has left', () => {
+		const placed = placePendingReinforcements(
+			{
+				charactersOrder: ['a', 'b'],
+				delayedOrder: [],
+				charactersWithTurn: new Set(['a', 'b']),
+				charactersMap,
+			},
+			[pending('r1', null, 'gone'), pending('r2', null, 'gone')]
+		);
+
+		expect(placed.charactersOrder).toEqual(['r1', 'r2', 'a', 'b']);
+	});
+
+	it('compares a later arrival placed by initiative against earlier arrivals', () => {
+		// Both neighbours left: r1 (12) and r2 (11) are placed by initiative,
+		// between b (15) and c (10)
+		const placed = placePendingReinforcements(
+			{
+				charactersOrder: ['a', 'b', 'c', 'd'],
+				delayedOrder: [],
+				charactersWithTurn: new Set(['a', 'b', 'c', 'd']),
+				charactersMap,
+			},
+			[
+				pending('r1', 'gone', 'also-gone', { initiative: 12 }),
+				pending('r2', 'gone', 'also-gone', { initiative: 11 }),
+			]
+		);
+
+		expect(placed.charactersOrder).toEqual(['a', 'b', 'r1', 'r2', 'c', 'd']);
+	});
+
 	it('sends arrivals that come in delayed to the delayed list, with a turn only when their spot is ahead', () => {
 		const placed = placePendingReinforcements(
 			{

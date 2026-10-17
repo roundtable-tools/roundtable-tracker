@@ -440,7 +440,9 @@ export const PreviewDisplay = (): JSX.Element => {
 									}
 									participants={teamField.characters}
 									readonlyFields={
-										selectedParty !== null && teamField.side === ALIGNMENT.PCs
+										selectedParty !== null &&
+										teamField.side === ALIGNMENT.PCs &&
+										!teamField.reinforcement
 											? ['name']
 											: []
 									}

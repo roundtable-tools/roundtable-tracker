@@ -58,8 +58,8 @@ export function spotsFromSortedRoster(
  * left, by its initiative against the order, as an arrival without a preset
  * spot is placed.
  *
- * `placed` are arrivals already placed at the same time: one after `above`
- * goes after those, so arrivals sharing a spot keep their order.
+ * `placed` are arrivals already placed at the same time: one at the top or
+ * after `above` goes after those, so arrivals sharing a spot keep their order.
  */
 export function spotIndex(
 	pending: PendingReinforcement,
@@ -73,19 +73,19 @@ export function spotIndex(
 
 	if (belowIndex !== -1) return belowIndex;
 
-	if (pending.above === null) return 0;
-
-	const aboveIndex = roundOrder.indexOf(pending.above);
-
-	if (aboveIndex !== -1) {
-		let index = aboveIndex + 1;
-
+	const afterPlaced = (index: number) => {
 		while (index < roundOrder.length && placed.has(roundOrder[index])) {
 			index += 1;
 		}
 
 		return index;
-	}
+	};
+
+	if (pending.above === null) return afterPlaced(0);
+
+	const aboveIndex = roundOrder.indexOf(pending.above);
+
+	if (aboveIndex !== -1) return afterPlaced(aboveIndex + 1);
 
 	const effective = effectiveInitiatives(roundOrder, charactersMap);
 	const before = roundOrder.findIndex((uuid) =>
@@ -210,6 +210,13 @@ export function placePendingReinforcements(
 	const charactersWithTurn = new Set(state.charactersWithTurn);
 	const arrivingDelayed: UUID[] = [];
 	const placed = new Set<UUID>();
+	// Arrivals placed earlier are compared by their own initiative when a
+	// later one falls back to placing by initiative.
+	const charactersMap = { ...state.charactersMap };
+
+	for (const arrival of arrivals) {
+		charactersMap[arrival.character.uuid] = arrival.character;
+	}
 
 	for (const arrival of arrivals) {
 		if (arrival.meta.isSimpleHazard) continue;
@@ -223,7 +230,7 @@ export function placePendingReinforcements(
 		const acted = roundOrder.filter(
 			(participant) => !charactersWithTurn.has(participant)
 		).length;
-		const index = spotIndex(arrival, roundOrder, state.charactersMap, placed);
+		const index = spotIndex(arrival, roundOrder, charactersMap, placed);
 		const keepsTurn = index > acted || (index === acted && acted === 0);
 
 		if (keepsTurn) {

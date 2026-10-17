@@ -311,28 +311,14 @@ export function runtimeToOutOfInitiativeData(
 			// Reinforcements set up in the preview show its names, initiative
 			// and HP.
 			if (pending.length > 0) {
-				return pending.map(
-					({ character, meta }) =>
-						({
-							id: character.uuid,
-							name: character.name,
-							role: 'reinforcement' as const,
-							sideTheme: meta.sideTheme,
-							state: 'inactive' as const,
-							initiative: character.initiative,
-							initiativeBonus: meta.initiativeBonus,
-							eventId: slot.id,
-							eventRound: slot.trigger.round,
-							currentHp: character.health,
-							maxHp: character.maxHealth,
-							hardness: meta.hardness,
-							dcs: meta.dcs,
-							adjustmentDescription: meta.adjustmentDescription,
-							adjustmentLevelModifier: meta.adjustmentLevelModifier,
-							traits: meta.traits,
-							notes: meta.notes,
-						}) satisfies TrackerParticipant
-				);
+				return pending.map(({ character, meta }) => ({
+					...characterToTrackerParticipant(character, meta, false),
+					role: 'reinforcement' as const,
+					state: 'inactive' as const,
+					initiative: character.initiative,
+					eventId: slot.id,
+					eventRound: slot.trigger.round,
+				}));
 			}
 
 			return (slot.participants ?? []).map((participant, index) => {

@@ -18,7 +18,8 @@ type CommandProps = {
 	 * longest run that kept its order count as moved.
 	 */
 	movedIds?: UUID[];
-	oldPendingReinforcements?: PendingReinforcement[];
+	/** The spots of pending reinforcements before the reorder, by uuid. */
+	oldPendingSpots?: Record<UUID, Pick<PendingReinforcement, 'above' | 'below'>>;
 };
 
 export class ReorderCharactersCommand implements Command {
@@ -48,8 +49,11 @@ export class ReorderCharactersCommand implements Command {
 					delayedOrder: state.delayedOrder,
 				});
 				const pendingReinforcements = state.pendingReinforcements ?? [];
-				this.data.oldPendingReinforcements = structuredClone(
-					pendingReinforcements
+				this.data.oldPendingSpots = Object.fromEntries(
+					pendingReinforcements.map(({ character, above, below }) => [
+						character.uuid,
+						{ above, below },
+					])
 				);
 				const roundOrder = (order: UUID[]) =>
 					roundOrderOf(order, state.charactersWithTurn, state.delayedOrder);
@@ -86,12 +90,17 @@ export class ReorderCharactersCommand implements Command {
 			return STATUS.failure;
 		}
 
-		const pendingToRestore = this.data.oldPendingReinforcements;
+		const spotsToRestore = this.data.oldPendingSpots;
 
-		getDeps(this.deps).encounterStore.setState(() => ({
+		getDeps(this.deps).encounterStore.setState((state) => ({
 			[getOrderName(this.data)]: structuredClone(orderToRestore),
-			...(pendingToRestore && {
-				pendingReinforcements: structuredClone(pendingToRestore),
+			...(spotsToRestore && {
+				pendingReinforcements: (state.pendingReinforcements ?? []).map(
+					(reinforcement) => ({
+						...reinforcement,
+						...spotsToRestore[reinforcement.character.uuid],
+					})
+				),
 			}),
 		}));
 

@@ -808,7 +808,9 @@ export function InitiativeTrackerPage() {
 			return;
 		}
 
+		// A store change discards the draft, and with it what was dragged
 		setReorderDraftParticipants(storeInitiativeParticipants);
+		reorderDraggedIdsRef.current = new Set();
 	}, [storeInitiativeParticipants, reorderOpen]);
 
 	const focusCurrentParticipant = () => {
