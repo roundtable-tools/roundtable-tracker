@@ -78,12 +78,18 @@ export function returnPromptEntries({
 	RoundActionState,
 	'charactersOrder' | 'charactersMap'
 >): ReturnPromptEntry[] {
-	return delayingIds({ charactersOrder, charactersMap }).map((id) => ({
-		id,
-		distance: charactersOrder
-			.slice(1, charactersOrder.indexOf(id))
-			.filter((other) => !isDelaying(charactersMap, other)).length,
-	}));
+	const entries: ReturnPromptEntry[] = [];
+	let turnsBefore = 0;
+
+	charactersOrder.forEach((id, index) => {
+		if (isDelaying(charactersMap, id)) {
+			entries.push({ id, distance: turnsBefore });
+		} else if (index > 0) {
+			turnsBefore++;
+		}
+	});
+
+	return entries;
 }
 
 /**
