@@ -1456,16 +1456,23 @@ export function InitiativeTrackerPage() {
 
 	// A queued K.O. / Disable is asked only while its participant is still in
 	// the tracker and not already out (e.g. dropped to 0 HP in between).
-	const takeOutCandidates = useMemo(
-		() =>
-			takeOutPromptIds.flatMap((id) =>
-				allParticipants.filter(
-					(participant) =>
-						participant.id === id && participant.state !== 'knocked-out'
-				)
-			),
-		[allParticipants, takeOutPromptIds]
-	);
+	// A delayer is listed twice in allParticipants (the order and the Delaying
+	// tab), so each id takes only its first match.
+	const takeOutCandidates = useMemo(() => {
+		const byId = new Map<string, TrackerParticipant>();
+
+		for (const participant of allParticipants) {
+			if (!byId.has(participant.id)) byId.set(participant.id, participant);
+		}
+
+		return takeOutPromptIds.flatMap((id) => {
+			const participant = byId.get(id);
+
+			return participant && participant.state !== 'knocked-out'
+				? [participant]
+				: [];
+		});
+	}, [allParticipants, takeOutPromptIds]);
 	const takeOutPromptParticipant = takeOutCandidates[0] ?? null;
 
 	useEffect(() => {
@@ -2776,23 +2783,27 @@ export function InitiativeTrackerPage() {
 					/>
 				)}
 
-			{/* An answer can open the return prompt; the next K.O. waits for it. */}
-			{takeOutPromptParticipant && !returnPrompt && !bringBackPrompt && (
-				<TakeOutNotice
-					key={`take-out-${takeOutPromptParticipant.id}`}
-					participant={takeOutPromptParticipant}
-					effects={getApplicableTakeOutEffects(takeOutPromptParticipant.id, {
-						charactersMap,
-						trackerMetaMap,
-					})}
-					onTakeOut={(effects) =>
-						handleTakeOutPromptTakeOut(takeOutPromptParticipant.id, effects)
-					}
-					onRemove={() =>
-						handleTakeOutPromptRemove(takeOutPromptParticipant.id)
-					}
-				/>
-			)}
+			{/* An answer can open the return prompt or end the round; the next
+			    K.O. waits for that notice or the round dialog. */}
+			{takeOutPromptParticipant &&
+				!returnPrompt &&
+				!bringBackPrompt &&
+				nextRoundAnnouncement === null && (
+					<TakeOutNotice
+						key={`take-out-${takeOutPromptParticipant.id}`}
+						participant={takeOutPromptParticipant}
+						effects={getApplicableTakeOutEffects(takeOutPromptParticipant.id, {
+							charactersMap,
+							trackerMetaMap,
+						})}
+						onTakeOut={(effects) =>
+							handleTakeOutPromptTakeOut(takeOutPromptParticipant.id, effects)
+						}
+						onRemove={() =>
+							handleTakeOutPromptRemove(takeOutPromptParticipant.id)
+						}
+					/>
+				)}
 
 			{bringBackPrompt && (
 				<BringBackNotice
