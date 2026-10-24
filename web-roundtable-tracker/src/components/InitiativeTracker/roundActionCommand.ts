@@ -1,9 +1,11 @@
 import { type Command, type CommandDeps } from '@/CommandHistory/common';
+import { CompositeCommand } from '@/CommandHistory/Commands/CompositeCommand';
 import { DelayCharacterCommand } from '@/CommandHistory/Commands/DelayCharacterCommand';
 import { EndTurnCommand } from '@/CommandHistory/Commands/EndTurnCommand';
 import { FinalizeTurnAndAdvanceRoundCommand } from '@/CommandHistory/Commands/FinalizeTurnAndAdvanceRoundCommand';
 import { FinalizeTurnAndReturnToInitiativeCommand } from '@/CommandHistory/Commands/FinalizeTurnAndReturnToInitiativeCommand';
 import { KnockOutCharacterCommand } from '@/CommandHistory/Commands/KnockOutCharacterCommand';
+import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 import { ReturnToInitiativeCommand } from '@/CommandHistory/Commands/ReturnToInitiativeCommand';
 import { type EncounterStore } from '@/store/encounterRuntimeStore';
 import { delayingIds, isDelaying } from '@/store/operations';
@@ -166,4 +168,27 @@ export function getRoundActionCommand(
 	}
 
 	return new EndTurnCommand({ uuid: participantId }, deps);
+}
+
+/**
+ * The command for Slay / Destroy: the participant leaves the initiative. When
+ * removing it would stop the round with nobody left to act (see
+ * removalEndsTurn), its turn ends first, which also closes the round after
+ * the last actor.
+ */
+export function getRemoveCommand(
+	participantId: string,
+	state: RoundActionState,
+	deps?: CommandDeps
+): Command {
+	const remove = new RemoveCharacterCommand({ uuid: participantId }, deps);
+
+	return removalEndsTurn(participantId, state)
+		? new CompositeCommand({
+				commands: [
+					getRoundActionCommand(participantId, 'end-turn', state, deps),
+					remove,
+				],
+			})
+		: remove;
 }

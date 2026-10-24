@@ -9,7 +9,11 @@ import { ChangeHealthCommand } from '@/CommandHistory/Commands/ChangeHealthComma
 import { RecordDisableProgressCommand } from '@/CommandHistory/Commands/RecordDisableProgressCommand';
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/ReactivateCharacterCommand';
-import { getRoundActionCommand, removalEndsTurn } from './roundActionCommand';
+import {
+	getRemoveCommand,
+	getRoundActionCommand,
+	removalEndsTurn,
+} from './roundActionCommand';
 import {
 	damageDropsToZeroHp,
 	disableProgressFillsChecks,
@@ -273,10 +277,7 @@ describe('taking a participant out of the fight', () => {
 				charactersOrder: [GHOST, HERO, CLOCKWORK, TRAP],
 				charactersWithTurn: new Set([GHOST]),
 			});
-			const command = inOneUndoStep(
-				getRoundActionCommand(GHOST, 'end-turn', store.getState(), deps()),
-				new RemoveCharacterCommand({ uuid: GHOST }, deps())
-			);
+			const command = getRemoveCommand(GHOST, store.getState(), deps());
 
 			expect(command.execute()).toBe(STATUS.success);
 			expect(store.getState()).toMatchObject({
@@ -292,6 +293,31 @@ describe('taking a participant out of the fight', () => {
 				charactersWithTurn: new Set([GHOST]),
 			});
 		});
+	});
+
+	it('ends the current turn before slaying the current actor', () => {
+		const command = getRemoveCommand(HERO, store.getState(), deps());
+
+		expect(command.execute()).toBe(STATUS.success);
+		expect(store.getState()).toMatchObject({
+			round: 1,
+			charactersOrder: [CLOCKWORK, TRAP, GHOST],
+			charactersWithTurn: new Set([CLOCKWORK, TRAP, GHOST]),
+		});
+
+		expect(command.undo()).toBe(STATUS.success);
+		expect(store.getState().charactersOrder).toEqual([
+			HERO,
+			CLOCKWORK,
+			TRAP,
+			GHOST,
+		]);
+	});
+
+	it('only removes a participant whose turn is not up', () => {
+		expect(
+			getRemoveCommand(CLOCKWORK, store.getState(), deps())
+		).toBeInstanceOf(RemoveCharacterCommand);
 	});
 
 	describe('bringing a participant back', () => {
