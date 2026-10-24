@@ -8,8 +8,9 @@ export const isDelaying = (charactersMap: TurnStates, uuid: UUID) =>
 	charactersMap[uuid]?.turnState === 'delayed';
 
 /**
- * The delaying participants, in the order they started delaying: only the
- * current participant can delay, and it moves to the end of the queue.
+ * The delaying participants, in queue order. That is the order they started
+ * delaying (only the current participant can delay, and it moves to the end of
+ * the queue) unless the GM reorders them.
  */
 export const delayingIds = ({
 	charactersOrder,

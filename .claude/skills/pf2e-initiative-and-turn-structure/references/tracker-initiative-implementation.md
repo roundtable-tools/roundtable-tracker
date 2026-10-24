@@ -18,7 +18,7 @@ when the turn flow changes.
 
   | Field | Meaning |
   |---|---|
-  | `charactersOrder: UUID[]` | A **rotating queue**. Index 0 is the current actor. Delayers keep their spot in it; there is no separate delayed list. `delayingIds` (`store/operations.ts`) picks them out by `turnState: 'delayed'`, in the order they started delaying |
+  | `charactersOrder: UUID[]` | A **rotating queue**. Index 0 is the current actor. Delayers keep their spot in it; there is no separate delayed list. `delayingIds` (`store/operations.ts`) picks them out by `turnState: 'delayed'`, in queue order (the order they started delaying, unless the GM reorders them) |
   | `charactersWithTurn: Set<UUID>` | Who still has a turn this round |
   | `round` | Starts at 1 |
   | `charactersMap` | Characters by uuid |
