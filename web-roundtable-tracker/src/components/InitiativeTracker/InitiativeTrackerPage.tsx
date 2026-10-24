@@ -1086,9 +1086,7 @@ export function InitiativeTrackerPage() {
 		}
 
 		if (!charactersWithTurn.has(currentParticipantId)) {
-			const currentCharacter = charactersMap[currentParticipantId];
-
-			if (currentCharacter?.turnState === 'delayed') {
+			if (isDelaying(charactersMap, currentParticipantId)) {
 				setReturnPrompt({
 					participantId: currentParticipantId,
 					action: 'end-turn',

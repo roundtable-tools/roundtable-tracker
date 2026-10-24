@@ -1,4 +1,5 @@
 import type { Character } from '@/store/data';
+import { isDelaying } from '@/store/operations';
 
 type RoundState = {
 	// Participants in the initiative queue that aren't delaying and still have
@@ -18,6 +19,6 @@ export function isFinalActiveParticipant(
 	return (
 		activeParticipantCount === 1 &&
 		charactersWithTurn.has(participantId) &&
-		charactersMap[participantId]?.turnState !== 'delayed'
+		!isDelaying(charactersMap, participantId)
 	);
 }
