@@ -1677,9 +1677,8 @@ export function InitiativeTrackerPage() {
 	};
 
 	// `before` takes the `changed` value of a knocked-out or disabled
-	// participant out of its take-out level. With no other value on the
-	// tracker, it comes back. With another one, the GM is asked: the tracker
-	// may not hold everything that keeps it out.
+	// participant out of its take-out level. The GM is always asked, since the
+	// tracker may not hold everything that keeps it out.
 	const handleBringBackTrigger = (
 		participantId: string,
 		changed: TakeOutEffect,
@@ -1689,12 +1688,6 @@ export function InitiativeTrackerPage() {
 			charactersMap,
 			trackerMetaMap,
 		});
-
-		if (getTakeOutEffects(participantId, { trackerMetaMap }).length === 1) {
-			reactivateParticipant(participantId, [], before);
-
-			return;
-		}
 
 		queueOutOfFightPrompt({
 			kind: 'bring-back',
