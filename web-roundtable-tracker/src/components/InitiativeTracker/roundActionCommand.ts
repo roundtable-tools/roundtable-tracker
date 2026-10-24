@@ -115,8 +115,9 @@ export function returnPromptEntries({
 /**
  * The command the tracker runs when the GM ends a participant's turn, delays
  * or knocks them out. It also closes the round after the last active
- * participant, and brings back a delaying participant who is next in the
- * order.
+ * participant. Acting on the current participant also brings back a delaying
+ * participant who is next in the order; acting on anyone else (e.g. a K.O.
+ * during another participant's turn) leaves the current turn running.
  */
 export function getRoundActionCommand(
 	participantId: string,
@@ -125,7 +126,10 @@ export function getRoundActionCommand(
 	deps?: CommandDeps
 ): Command {
 	const shouldAdvanceRound = closesRound(participantId, state);
-	const returningParticipantId = delayerReturningAfterTurn(state);
+	const returningParticipantId =
+		participantId === state.charactersOrder[0]
+			? delayerReturningAfterTurn(state)
+			: undefined;
 
 	if (shouldAdvanceRound && returningParticipantId) {
 		return new FinalizeTurnAndReturnToInitiativeCommand(

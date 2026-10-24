@@ -79,6 +79,31 @@ describe('delaying through a whole round', () => {
 		expect(state().delayedOrder).toEqual([]);
 	});
 
+	it('keeps the current turn when someone else is knocked out before the old spot', () => {
+		state().startEncounter(['a', 'x', 'b', 'c'].map((id) => character(id)));
+
+		act(); // a
+		act('delay'); // x
+		act(); // b
+		act(); // c closes round 1
+
+		// Round 2, a's turn, x's spot is next: c drops during a's turn
+		expect(
+			getRoundActionCommand('c', 'ko', state(), { encounterStore }).execute()
+		).toBe(STATUS.success);
+
+		expect(state().charactersOrder).toEqual(['a', 'x', 'b', 'c']);
+		expect(state().charactersWithTurn.has('a')).toBe(true);
+		expect(state().charactersWithTurn.has('c')).toBe(false);
+		expect(state().charactersMap.c.turnState).toBe('knocked-out');
+		expect(state().delayedOrder).toEqual(['x']);
+
+		act(); // a
+
+		expect(state().charactersOrder[0]).toBe('x');
+		expect(state().charactersMap.x.turnState).toBe('normal');
+	});
+
 	it('never sends back a participant that started silently delayed', () => {
 		state().startEncounter([
 			character('a'),
