@@ -51,8 +51,8 @@ import { getRoundBoundaryIndex } from './roundBoundary';
 import {
 	asksToReturnFromDelay,
 	closesRound,
-	delayerReturningAfterTurn,
 	getRoundActionCommand,
+	returnPromptEntries,
 } from './roundActionCommand';
 import {
 	getEncounterStore,
@@ -781,13 +781,26 @@ export function InitiativeTrackerPage() {
 	const reorderDraggedIdsRef = useRef(new Set<string>());
 	const delayedSectionParticipants = outOfInitiative.delayed;
 	const returnPromptState = useMemo(() => {
-		const state = { charactersOrder, delayedOrder, charactersMap };
+		const names = new Map(
+			delayedSectionParticipants.map(({ id, name }) => [id, name])
+		);
 
 		return {
-			asks: asksToReturnFromDelay(state),
-			returningId: delayerReturningAfterTurn(state),
+			asks: asksToReturnFromDelay({
+				charactersOrder,
+				delayedOrder,
+				charactersMap,
+			}),
+			participants: returnPromptEntries({ charactersOrder, delayedOrder })
+				.filter((entry) => names.has(entry.id))
+				.map((entry) => ({ ...entry, name: names.get(entry.id) ?? '' })),
 		};
-	}, [charactersOrder, delayedOrder, charactersMap]);
+	}, [
+		charactersOrder,
+		delayedOrder,
+		charactersMap,
+		delayedSectionParticipants,
+	]);
 	const hasReinforcements = pendingReinforcementParticipants.length > 0;
 	const hasDelayed = delayedSectionParticipants.length > 0;
 	const hasHazards = outOfInitiative.hazards.length > 0;
@@ -2175,8 +2188,7 @@ export function InitiativeTrackerPage() {
 			{returnPrompt && (
 				<ReturnToInitiativeNotice
 					key={`${returnPrompt.participantId}-${returnPrompt.action}`}
-					participants={delayedSectionParticipants}
-					returningId={returnPromptState.returningId}
+					participants={returnPromptState.participants}
 					onReturn={handleReturnPromptSelect}
 					onDismiss={handleReturnPromptSkip}
 				/>

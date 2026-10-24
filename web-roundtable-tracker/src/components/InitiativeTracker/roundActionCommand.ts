@@ -75,6 +75,43 @@ export function asksToReturnFromDelay(
 	);
 }
 
+export type ReturnPromptEntry = {
+	id: string;
+	/** Turns before the old spot comes up; 0 when it is right after this one. */
+	distance?: number;
+	/** Has no spot yet (started or arrived delayed): it joins the order. */
+	joins: boolean;
+};
+
+/**
+ * The delayers the return prompt lists: nearest old spot first, then the ones
+ * that join the order for the first time. Only participants that take a turn
+ * count towards the distance, not other delayers' spots.
+ */
+export function returnPromptEntries({
+	charactersOrder,
+	delayedOrder,
+}: Pick<
+	RoundActionState,
+	'charactersOrder' | 'delayedOrder'
+>): ReturnPromptEntry[] {
+	const delayed = new Set(delayedOrder);
+	const withSpot = charactersOrder
+		.filter((id) => delayed.has(id))
+		.map((id) => ({
+			id,
+			distance: charactersOrder
+				.slice(1, charactersOrder.indexOf(id))
+				.filter((other) => !delayed.has(other)).length,
+			joins: false,
+		}));
+	const joining = delayedOrder
+		.filter((id) => !charactersOrder.includes(id))
+		.map((id) => ({ id, joins: true }));
+
+	return [...withSpot, ...joining];
+}
+
 /**
  * The command the tracker runs when the GM ends a participant's turn, delays
  * or knocks them out. It also closes the round after the last active

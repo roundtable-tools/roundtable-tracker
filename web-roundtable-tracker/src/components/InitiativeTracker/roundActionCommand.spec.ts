@@ -6,6 +6,7 @@ import {
 	asksToReturnFromDelay,
 	delayerReturningAfterTurn,
 	getRoundActionCommand,
+	returnPromptEntries,
 	type RoundAction,
 } from './roundActionCommand';
 
@@ -178,5 +179,31 @@ describe('asksToReturnFromDelay', () => {
 				),
 			})
 		).toBe(true);
+	});
+});
+
+describe('returnPromptEntries', () => {
+	it('lists the nearest old spot first and the joining participants last', () => {
+		expect(
+			returnPromptEntries({
+				charactersOrder: ['a', 'b', 'y', 'c', 'x', 'z'],
+				delayedOrder: ['s', 'x', 'y', 'z'],
+			})
+		).toEqual([
+			{ id: 'y', distance: 1, joins: false },
+			{ id: 'x', distance: 2, joins: false },
+			// Spots of other delayers aren't turns, so they don't count
+			{ id: 'z', distance: 2, joins: false },
+			{ id: 's', joins: true },
+		]);
+	});
+
+	it('gives distance 0 to the delayer whose spot is right after this turn', () => {
+		expect(
+			returnPromptEntries({
+				charactersOrder: ['a', 'x', 'b'],
+				delayedOrder: ['x'],
+			})
+		).toEqual([{ id: 'x', distance: 0, joins: false }]);
 	});
 });
