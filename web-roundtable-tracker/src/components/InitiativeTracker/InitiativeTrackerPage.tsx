@@ -45,7 +45,6 @@ import { OpenPlayerViewButton } from './OpenPlayerViewButton';
 import { EncounterTimerControls } from './EncounterTimerControls';
 import { TurnStatsPanel } from './TurnStatsPanel';
 import { ReturnToInitiativeNotice } from './ReturnToInitiativeNotice';
-import { TakeOutNotice } from './TakeOutNotice';
 import { BringBackNotice } from './BringBackNotice';
 import {
 	damageDropsToZeroHp,
@@ -72,7 +71,9 @@ import {
 	closesRound,
 	getRoundActionCommand,
 	returnPromptEntries,
+	getRemoveCommand,
 	removalEndsTurn,
+	type RoundAction,
 } from './roundActionCommand';
 import {
 	getEncounterStore,
@@ -87,6 +88,7 @@ import {
 	historyToPreviewLines,
 	getDisableProgressLabel,
 	hasDisableChecks,
+	hasHpData,
 	getHealthLabelFromPercentage,
 	getOutOfFightNames,
 	getParticipantStateLabel,
@@ -106,13 +108,14 @@ import { ChangeHealthCommand } from '@/CommandHistory/Commands/ChangeHealthComma
 import { SetTempHealthCommand } from '@/CommandHistory/Commands/SetTempHealthCommand';
 import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/ReactivateCharacterCommand';
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
-import { RecordDisableProgressCommand } from '@/CommandHistory/Commands/RecordDisableProgressCommand';
+import {
+	type DisableProgressChange as DisableChange,
+	RecordDisableProgressCommand,
+} from '@/CommandHistory/Commands/RecordDisableProgressCommand';
 import { SetShownProgressCommand } from '@/CommandHistory/Commands/SetShownProgressCommand';
 import { Input } from '@/components/ui/input';
 import { type SwipeAction } from './InitiativeActionCarouselCard';
 import { type Command } from '@/CommandHistory/common';
-
-type DisableChange = { delta: number } | { value: number };
 
 function DisableQuickActions({
 	participant,
@@ -230,10 +233,12 @@ function OutOfFightRowActions({
 }
 
 function getParticipantIndicatorLabel(participant: TrackerParticipant) {
-	if (showsDisableProgress(participant)) {
-		return getDisableProgressLabel(participant);
-	}
+	return showsDisableProgress(participant)
+		? getDisableProgressLabel(participant)
+		: getHealthIndicatorLabel(participant);
+}
 
+function getHealthIndicatorLabel(participant: TrackerParticipant) {
 	if (
 		typeof participant.maxHp !== 'number' ||
 		typeof participant.currentHp !== 'number'
@@ -424,12 +429,9 @@ function ParticipantDetails({
 		);
 	}
 
-	const indicatorLabel = getParticipantIndicatorLabel(participant);
 	const isHazard = participant.role === 'hazard';
 	const showHpControls = onHeal || onDamage || onSetTempHp;
-	const hasHpData =
-		typeof participant.currentHp === 'number' &&
-		typeof participant.maxHp === 'number';
+	const hasHp = hasHpData(participant);
 
 	const handleHeal = () => {
 		const amount = parseInt(hpAmount, 10);
@@ -588,7 +590,7 @@ function ParticipantDetails({
 					</div>
 				</div>
 			)}
-			{hasHpData && (
+			{hasHp && (
 				<>
 					<p className="text-sm text-muted-foreground">
 						Health:{' '}
@@ -601,7 +603,7 @@ function ParticipantDetails({
 								</span>
 							)}
 							<span className="ml-1 text-muted-foreground">
-								({indicatorLabel})
+								({getHealthIndicatorLabel(participant)})
 							</span>
 						</span>
 					</p>
@@ -621,7 +623,7 @@ function ParticipantDetails({
 					</span>
 				</p>
 			)}
-			{showHpControls && hasHpData && (
+			{showHpControls && hasHp && (
 				<div className="space-y-2 rounded-md border p-3">
 					<h4 className="text-sm font-medium">HP</h4>
 					<div className="flex gap-2">
@@ -1028,47 +1030,21 @@ export function InitiativeTrackerPage() {
 		/** Runs last in the same undo step, e.g. removing a slain participant. */
 		after?: Command;
 	};
-	// A question about a participant whose `reason` value changed: it dropped
-	// to 0 HP or had its disable checks filled (take-out), or it left that
-	// level while it is out (bring-back) and `stillOut` values are still
-	// there. `before` is that change, run together with the GM's answer.
-	type OutOfFightPromptState =
-		| {
-				kind: 'take-out';
-				participantId: string;
-				reason: TakeOutEffect;
-				before: Command;
-		  }
-		| {
-				kind: 'bring-back';
-				participantId: string;
-				reason: TakeOutEffect;
-				stillOut: TakeOutEffect[];
-				before: Command;
-		  };
-	// Asked one at a time, in the order they came.
-	const [outOfFightPrompts, setOutOfFightPrompts] = useState<
-		OutOfFightPromptState[]
-	>([]);
-	const outOfFightPrompt =
-		outOfFightPrompts.find((prompt) => prompt.participantId in charactersMap) ??
-		null;
+	// A knocked-out or disabled participant's `reason` value left its take-out
+	// level, while `stillOut` values may still be there. `before` is that
+	// change, run together with the GM's answer.
+	type BringBackPromptState = {
+		participantId: string;
+		reason: TakeOutEffect;
+		stillOut: TakeOutEffect[];
+		before: Command;
+	};
+	const [bringBackPrompt, setBringBackPrompt] =
+		useState<BringBackPromptState | null>(null);
 	const [returnPrompt, setReturnPrompt] = useState<ReturnPromptState | null>(
 		null
 	);
 
-	// A participant that left the tracker (e.g. an undone reinforcement) takes
-	// its open questions with it.
-	useEffect(() => {
-		setOutOfFightPrompts((prompts) =>
-			prompts.every((prompt) => prompt.participantId in charactersMap)
-				? prompts
-				: prompts.filter((prompt) => prompt.participantId in charactersMap)
-		);
-		setReturnPrompt((prompt) =>
-			prompt && !(prompt.participantId in charactersMap) ? null : prompt
-		);
-	}, [charactersMap]);
 	// Whose turn and which round the timer is on; when a new command (not an
 	// undo or redo) moves it on while the timer is paused, the GM is asked
 	// whether to resume it.
@@ -1220,17 +1196,22 @@ export function InitiativeTrackerPage() {
 		after,
 	}: {
 		participantId: string;
-		action: 'end-turn' | 'delay' | 'ko';
+		/** `remove` is Slay / Destroy (see getRemoveCommand). */
+		action: RoundAction | 'remove';
 		focusCurrentOnSuccess?: boolean;
 		before?: Command;
 		after?: Command;
 	}) => {
 		clearPinnedMarkerForCurrentRound();
 
-		const shouldAdvanceRound = closesRound(participantId, roundState);
+		const shouldAdvanceRound =
+			closesRound(participantId, roundState) &&
+			(action !== 'remove' || removalEndsTurn(participantId, roundState));
 		const command = inOneUndoStep(
 			before,
-			getRoundActionCommand(participantId, action, roundState),
+			action === 'remove'
+				? getRemoveCommand(participantId, roundState)
+				: getRoundActionCommand(participantId, action, roundState),
 			after
 		);
 
@@ -1257,30 +1238,6 @@ export function InitiativeTrackerPage() {
 		}
 	};
 
-	// Only the current actor opens the return prompt, so a second request while
-	// it is open is for the same participant. It joins the open one: the
-	// earlier changes still run, and a K.O. isn't turned into a plain end of
-	// turn.
-	const openReturnPrompt = (prompt: ReturnPromptState) => {
-		setReturnPrompt((open) => {
-			if (!open || open.participantId !== prompt.participantId) {
-				return prompt;
-			}
-
-			return {
-				...prompt,
-				action: open.action === 'ko' ? 'ko' : prompt.action,
-				focusCurrentOnSuccess:
-					open.focusCurrentOnSuccess || prompt.focusCurrentOnSuccess,
-				before:
-					open.before && prompt.before
-						? inOneUndoStep(open.before, prompt.before)
-						: (open.before ?? prompt.before),
-				after: prompt.after ?? open.after,
-			};
-		});
-	};
-
 	const handleNextTurn = () => {
 		const currentParticipantId = charactersOrder[0];
 
@@ -1290,7 +1247,7 @@ export function InitiativeTrackerPage() {
 
 		if (!charactersWithTurn.has(currentParticipantId)) {
 			if (isDelaying(charactersMap, currentParticipantId)) {
-				openReturnPrompt({
+				setReturnPrompt({
 					participantId: currentParticipantId,
 					action: 'end-turn',
 					focusCurrentOnSuccess: true,
@@ -1315,7 +1272,7 @@ export function InitiativeTrackerPage() {
 		}
 
 		if (returnPromptState.asks) {
-			openReturnPrompt({
+			setReturnPrompt({
 				participantId: currentParticipantId,
 				action: 'end-turn',
 				focusCurrentOnSuccess: true,
@@ -1573,107 +1530,51 @@ export function InitiativeTrackerPage() {
 		}
 	};
 
-	// Slay, or Destroy for a hazard: the participant leaves the initiative. On
-	// its own turn, or as the last one to act, its turn ends first, so the
-	// round goes on.
-	const removeParticipant = (participantId: string, before?: Command) => {
-		const remove = new RemoveCharacterCommand({ uuid: participantId });
-
-		if (removalEndsTurn(participantId, roundState)) {
-			takeOutParticipant(participantId, before, 'end-turn', remove);
+	// Slay, or Destroy for a hazard: the participant leaves the initiative,
+	// ending its turn first when it has to (see getRemoveCommand). Ending the
+	// current turn first asks whether a delaying participant returns.
+	const removeParticipant = (participantId: string) => {
+		if (
+			participantId === currentInitiativeParticipantId &&
+			removalEndsTurn(participantId, roundState) &&
+			returnPromptState.asks
+		) {
+			setReturnPrompt({
+				participantId,
+				action: 'end-turn',
+				focusCurrentOnSuccess: true,
+				after: new RemoveCharacterCommand({ uuid: participantId }),
+			});
 
 			return;
 		}
 
-		try {
-			executeCommand(inOneUndoStep(before, remove));
-		} catch (error) {
-			console.error('Failed to slay participant', error);
-		}
+		executeRoundAction({ participantId, action: 'remove' });
 	};
 
 	// K.O., or Disable for a hazard (and Delay, which ends the turn the same
-	// way, and the end of the turn before a Slay). `before` and `after` run in
-	// the same undo step.
+	// way). `before` runs in the same undo step.
 	const takeOutParticipant = (
 		participantId: string,
 		before?: Command,
-		action: 'ko' | 'delay' | 'end-turn' = 'ko',
-		after?: Command
+		action: 'ko' | 'delay' | 'end-turn' = 'ko'
 	) => {
 		const isCurrentActive =
 			participantId === currentInitiativeParticipantId &&
 			charactersWithTurn.has(participantId);
 
 		if (isCurrentActive && returnPromptState.asks) {
-			openReturnPrompt({
+			setReturnPrompt({
 				participantId,
 				action,
 				focusCurrentOnSuccess: true,
 				before,
-				after,
 			});
 
 			return;
 		}
 
-		executeRoundAction({ participantId, action, before, after });
-	};
-
-	// Questions wait their turn. A second change to a participant that already
-	// has the same question open joins it, so neither change is lost.
-	const queueOutOfFightPrompt = (prompt: OutOfFightPromptState) => {
-		setOutOfFightPrompts((prompts) => {
-			const open = prompts.find(
-				(queued) =>
-					queued.kind === prompt.kind &&
-					queued.participantId === prompt.participantId
-			);
-
-			return open
-				? prompts.map((queued) =>
-						queued === open
-							? { ...open, before: inOneUndoStep(open.before, prompt.before) }
-							: queued
-					)
-				: [...prompts, prompt];
-		});
-	};
-
-	const settleOutOfFightPrompt = (prompt: OutOfFightPromptState) => {
-		setOutOfFightPrompts((prompts) =>
-			prompts.filter((queued) => queued !== prompt)
-		);
-	};
-
-	// A PC at 0 HP is knocked out; anyone else is asked about.
-	const handleTakeOutTrigger = (
-		participantId: string,
-		reason: TakeOutEffect,
-		before: Command
-	) => {
-		if (trackerMetaMap[participantId]?.role === 'pc') {
-			takeOutParticipant(participantId, before);
-
-			return;
-		}
-
-		queueOutOfFightPrompt({ kind: 'take-out', participantId, reason, before });
-	};
-
-	const handleTakeOutPromptAnswer = (answer: 'take-out' | 'remove') => {
-		if (outOfFightPrompt?.kind !== 'take-out') {
-			return;
-		}
-
-		const { participantId, before } = outOfFightPrompt;
-		settleOutOfFightPrompt(outOfFightPrompt);
-
-		if (answer === 'take-out') {
-			takeOutParticipant(participantId, before);
-		} else {
-			removeParticipant(participantId, before);
-		}
+		executeRoundAction({ participantId, action, before });
 	};
 
 	// `before` takes the `changed` value of a knocked-out or disabled
@@ -1684,27 +1585,24 @@ export function InitiativeTrackerPage() {
 		changed: TakeOutEffect,
 		before: Command
 	) => {
-		const stillOut = getOtherValuesAtTakeOutLevel(participantId, changed, {
-			charactersMap,
-			trackerMetaMap,
-		});
-
-		queueOutOfFightPrompt({
-			kind: 'bring-back',
+		setBringBackPrompt({
 			participantId,
 			reason: changed,
-			stillOut,
+			stillOut: getOtherValuesAtTakeOutLevel(participantId, changed, {
+				charactersMap,
+				trackerMetaMap,
+			}),
 			before,
 		});
 	};
 
 	const handleBringBackPromptAnswer = (answer: 'stay-out' | 'reactivate') => {
-		if (outOfFightPrompt?.kind !== 'bring-back') {
+		if (!bringBackPrompt) {
 			return;
 		}
 
-		const { participantId, stillOut, before } = outOfFightPrompt;
-		settleOutOfFightPrompt(outOfFightPrompt);
+		const { participantId, stillOut, before } = bringBackPrompt;
+		setBringBackPrompt(null);
 
 		if (answer === 'reactivate') {
 			reactivateParticipant(participantId, stillOut, before);
@@ -1840,7 +1738,7 @@ export function InitiativeTrackerPage() {
 						trackerMetaMap,
 					})
 				) {
-					handleTakeOutTrigger(selectedParticipantId, 'hp', command);
+					takeOutParticipant(selectedParticipantId, command);
 
 					return;
 				}
@@ -1868,7 +1766,7 @@ export function InitiativeTrackerPage() {
 				trackerMetaMap,
 			})
 		) {
-			handleTakeOutTrigger(participantId, 'checks', command);
+			takeOutParticipant(participantId, command);
 
 			return;
 		}
@@ -2851,7 +2749,7 @@ export function InitiativeTrackerPage() {
 				</DialogContent>
 			</Dialog>
 
-			{resumePrompt && isTimerPaused && !returnPrompt && !outOfFightPrompt && (
+			{resumePrompt && isTimerPaused && !returnPrompt && !bringBackPrompt && (
 				<ResumeTimerNotice
 					key={resumePrompt}
 					onStayPaused={() => setResumePrompt(null)}
@@ -2862,41 +2760,25 @@ export function InitiativeTrackerPage() {
 				/>
 			)}
 
-			{outOfFightPrompt?.kind === 'take-out' && (
-				<TakeOutNotice
-					key={`take-out-${outOfFightPrompt.participantId}-${outOfFightPrompt.reason}`}
-					participant={{
-						name: charactersMap[outOfFightPrompt.participantId].name,
-						role:
-							trackerMetaMap[outOfFightPrompt.participantId]?.role ??
-							'opponent',
-					}}
-					reason={outOfFightPrompt.reason}
-					onTakeOut={() => handleTakeOutPromptAnswer('take-out')}
-					onRemove={() => handleTakeOutPromptAnswer('remove')}
-				/>
-			)}
-
-			{outOfFightPrompt?.kind === 'bring-back' && (
+			{bringBackPrompt && (
 				<BringBackNotice
-					key={`bring-back-${outOfFightPrompt.participantId}-${outOfFightPrompt.reason}`}
+					key={`bring-back-${bringBackPrompt.participantId}-${bringBackPrompt.reason}`}
 					participant={{
-						name: charactersMap[outOfFightPrompt.participantId].name,
+						name: charactersMap[bringBackPrompt.participantId].name,
 						role:
-							trackerMetaMap[outOfFightPrompt.participantId]?.role ??
-							'opponent',
+							trackerMetaMap[bringBackPrompt.participantId]?.role ?? 'opponent',
 						disableChecksRequired:
-							trackerMetaMap[outOfFightPrompt.participantId]
+							trackerMetaMap[bringBackPrompt.participantId]
 								?.disableChecksRequired,
 					}}
-					reason={outOfFightPrompt.reason}
-					stillOut={outOfFightPrompt.stillOut}
+					reason={bringBackPrompt.reason}
+					stillOut={bringBackPrompt.stillOut}
 					onStayOut={() => handleBringBackPromptAnswer('stay-out')}
 					onReactivate={() => handleBringBackPromptAnswer('reactivate')}
 				/>
 			)}
 
-			{returnPrompt && !outOfFightPrompt && (
+			{returnPrompt && (
 				<ReturnToInitiativeNotice
 					key={`${returnPrompt.participantId}-${returnPrompt.action}`}
 					participants={returnPromptState.participants}

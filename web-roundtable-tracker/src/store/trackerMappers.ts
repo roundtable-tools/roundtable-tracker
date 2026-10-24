@@ -534,7 +534,8 @@ export function getDisableProgressLabel(
 	return stageNames[Math.min(stageIndex, stageNames.length - 1)] ?? 'Disabled';
 }
 
-const hasHpData = (
+/** Whether the participant has HP to show (current and max). */
+export const hasHpData = (
 	participant: Pick<TrackerParticipant, 'currentHp' | 'maxHp'>
 ) =>
 	typeof participant.currentHp === 'number' &&
