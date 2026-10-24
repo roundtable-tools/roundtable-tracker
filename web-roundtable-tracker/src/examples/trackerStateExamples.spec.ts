@@ -53,6 +53,7 @@ import {
 } from '@/components/InitiativeTracker/roundActionCommand';
 import { ENCOUNTER_STORE_KEY } from '@/store/playerViewSync';
 import { runtimeToPlayerInitiativeQueue } from '@/store/trackerMappers';
+import { delayingIds } from '@/store/operations';
 
 // Stable ids, so the files only change when the state does.
 const uuidCounter = vi.hoisted(() => ({ next: 0 }));
@@ -390,10 +391,6 @@ const expectEachParticipantOnceForPlayers = (store: EncounterStoreApi) => {
 		)
 	);
 
-	expect(state.charactersOrder).toEqual(
-		expect.arrayContaining(state.delayedOrder)
-	);
-
 	expect(ids).toHaveLength(expected.size);
 	expect(new Set(ids)).toEqual(expected);
 };
@@ -447,7 +444,7 @@ describe('tracker state examples', () => {
 		const state = store.getState();
 
 		expect(state.round).toBe(1);
-		expect(state.delayedOrder).toEqual([]);
+		expect(delayingIds(state)).toEqual([]);
 		expect(
 			state.trackerMetaMap[uuidOf(store, 'Goblin Sneak')].hiddenUntilFirstTurn
 		).toBe(true);
@@ -530,7 +527,7 @@ describe('tracker state examples', () => {
 		expect(state.charactersMap[uuidOf(store, 'Goblin Dog')].turnState).toBe(
 			'knocked-out'
 		);
-		expect(state.delayedOrder).toEqual(
+		expect(delayingIds(state)).toEqual(
 			expect.arrayContaining([
 				uuidOf(store, 'Goblin Sneak'),
 				uuidOf(store, 'Bridge Keeper'),

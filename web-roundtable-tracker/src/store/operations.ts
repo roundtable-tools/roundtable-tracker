@@ -1,4 +1,23 @@
 import { type UUID } from '@/utils/uuid';
+import { type Character } from './data';
+
+type TurnStates = Record<UUID, Pick<Character, 'turnState'>>;
+
+/** Whether the participant is delaying. A delayer keeps its spot in the order. */
+export const isDelaying = (charactersMap: TurnStates, uuid: UUID) =>
+	charactersMap[uuid]?.turnState === 'delayed';
+
+/**
+ * The delaying participants, in the order they started delaying: only the
+ * current participant can delay, and it moves to the end of the queue.
+ */
+export const delayingIds = ({
+	charactersOrder,
+	charactersMap,
+}: {
+	charactersOrder: UUID[];
+	charactersMap: TurnStates;
+}) => charactersOrder.filter((uuid) => isDelaying(charactersMap, uuid));
 
 export const nextRound = (state: {
 	round: number;
@@ -26,16 +45,16 @@ export const nextRound = (state: {
 export const skipParticipantsWithoutTurn = (state: {
 	charactersOrder: UUID[];
 	charactersWithTurn: Set<UUID>;
-	delayedOrder: UUID[];
+	charactersMap: TurnStates;
 }) => {
-	const { charactersOrder, charactersWithTurn, delayedOrder } = state;
+	const { charactersOrder, charactersWithTurn, charactersMap } = state;
 
 	if (!charactersOrder.some((uuid) => charactersWithTurn.has(uuid))) {
 		return charactersOrder;
 	}
 
 	const firstActorIndex = charactersOrder.findIndex(
-		(uuid) => charactersWithTurn.has(uuid) || delayedOrder.includes(uuid)
+		(uuid) => charactersWithTurn.has(uuid) || isDelaying(charactersMap, uuid)
 	);
 
 	if (firstActorIndex <= 0) {

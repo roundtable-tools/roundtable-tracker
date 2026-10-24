@@ -3,6 +3,7 @@ import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import { Character } from '@/store/data';
 import { STATUS } from '../common';
 import { DelayCharacterCommand } from './DelayCharacterCommand';
+import { delayingIds } from '@/store/operations';
 
 describe('DelayCharacterCommand', () => {
 	let encounterStore: ReturnType<typeof createEncounterStore>;
@@ -65,7 +66,7 @@ describe('DelayCharacterCommand', () => {
 		expect(stateAfterExecute.charactersWithTurn.has(characters[0].uuid)).toBe(
 			false
 		);
-		expect(stateAfterExecute.delayedOrder).toEqual([characters[0].uuid]);
+		expect(delayingIds(stateAfterExecute)).toEqual([characters[0].uuid]);
 
 		const undoStatus = command.undo();
 		expect(undoStatus).toBe(STATUS.success);
@@ -78,7 +79,7 @@ describe('DelayCharacterCommand', () => {
 			characters[0].uuid,
 			characters[1].uuid,
 		]);
-		expect(stateAfterUndo.delayedOrder).toEqual([]);
+		expect(delayingIds(stateAfterUndo)).toEqual([]);
 	});
 
 	it('fails when the character cannot be delayed', () => {

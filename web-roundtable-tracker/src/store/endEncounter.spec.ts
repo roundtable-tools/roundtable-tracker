@@ -3,6 +3,7 @@ import { Character, Encounter, LEVEL_REPRESENTATION } from './data';
 import { createEncounterStore } from './encounterRuntimeStore';
 import { STATUS } from '@/CommandHistory/common';
 import { EndTurnCommand } from '@/CommandHistory/Commands/EndTurnCommand';
+import { delayingIds } from '@/store/operations';
 
 const FIGHTER = '00000000-0000-0000-0000-000000000001';
 const GOBLIN = '00000000-0000-0000-0000-000000000002';
@@ -59,7 +60,7 @@ describe('ending an encounter', () => {
 
 		const state = encounterStore.getState();
 		expect(state.charactersOrder).toEqual([]);
-		expect(state.delayedOrder).toEqual([]);
+		expect(delayingIds(state)).toEqual([]);
 		expect(state.charactersMap).toEqual({});
 		// Undo and Redo are enabled only while these stacks are non-empty.
 		expect(state.history).toEqual([]);

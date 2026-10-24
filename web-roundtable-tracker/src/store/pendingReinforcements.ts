@@ -194,7 +194,6 @@ export function respotAfterReorder(
 export function placePendingReinforcements(
 	state: {
 		charactersOrder: UUID[];
-		delayedOrder: UUID[];
 		charactersWithTurn: Set<UUID>;
 		charactersMap: Record<UUID, Character>;
 	},
@@ -221,7 +220,7 @@ export function placePendingReinforcements(
 		const roundOrder = roundOrderOf(
 			charactersOrder,
 			charactersWithTurn,
-			state.delayedOrder
+			charactersMap
 		);
 		const acted = roundOrder.filter(
 			(participant) => !charactersWithTurn.has(participant)

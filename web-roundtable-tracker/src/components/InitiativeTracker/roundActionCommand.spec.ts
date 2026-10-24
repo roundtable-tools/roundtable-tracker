@@ -9,6 +9,7 @@ import {
 	returnPromptEntries,
 	type RoundAction,
 } from './roundActionCommand';
+import { delayingIds } from '@/store/operations';
 
 const character = (
 	uuid: string,
@@ -55,13 +56,13 @@ describe('delaying through a whole round', () => {
 		act(); // c closes round 1
 
 		expect(state().round).toBe(2);
-		expect(state().delayedOrder).toEqual(['x']);
+		expect(delayingIds(state())).toEqual(['x']);
 		expect(delayerReturningAfterTurn(state())).toBe('x');
 
 		act(); // a
 
 		expect(state().charactersOrder).toEqual(['x', 'b', 'c', 'a']);
-		expect(state().delayedOrder).toEqual([]);
+		expect(delayingIds(state())).toEqual([]);
 		expect(state().charactersMap.x.turnState).toBe('normal');
 		expect(state().charactersWithTurn.has('x')).toBe(true);
 	});
@@ -76,7 +77,7 @@ describe('delaying through a whole round', () => {
 		expect(state().round).toBe(2);
 		expect(state().charactersOrder[0]).toBe('x');
 		expect(state().charactersMap.x.turnState).toBe('normal');
-		expect(state().delayedOrder).toEqual([]);
+		expect(delayingIds(state())).toEqual([]);
 	});
 
 	it('keeps the current turn when someone else is knocked out before the old spot', () => {
@@ -96,7 +97,7 @@ describe('delaying through a whole round', () => {
 		expect(state().charactersWithTurn.has('a')).toBe(true);
 		expect(state().charactersWithTurn.has('c')).toBe(false);
 		expect(state().charactersMap.c.turnState).toBe('knocked-out');
-		expect(state().delayedOrder).toEqual(['x']);
+		expect(delayingIds(state())).toEqual(['x']);
 
 		act(); // a
 
@@ -105,12 +106,18 @@ describe('delaying through a whole round', () => {
 	});
 });
 
+/** Characters map holding only the given delaying participants. */
+const delaying = (...ids: string[]) =>
+	Object.fromEntries(
+		ids.map((id) => [id, character(id, { turnState: 'delayed' })])
+	);
+
 describe('asksToReturnFromDelay', () => {
 	it('skips the prompt when the only delayer comes back after this turn anyway', () => {
 		expect(
 			asksToReturnFromDelay({
 				charactersOrder: ['a', 'x', 'b'],
-				delayedOrder: ['x'],
+				charactersMap: delaying('x'),
 			})
 		).toBe(false);
 	});
@@ -119,7 +126,7 @@ describe('asksToReturnFromDelay', () => {
 		expect(
 			asksToReturnFromDelay({
 				charactersOrder: ['a', 'x', 'b', 'y'],
-				delayedOrder: ['x', 'y'],
+				charactersMap: delaying('x', 'y'),
 			})
 		).toBe(true);
 	});
@@ -128,7 +135,7 @@ describe('asksToReturnFromDelay', () => {
 		expect(
 			asksToReturnFromDelay({
 				charactersOrder: ['a', 'b', 'x'],
-				delayedOrder: ['x'],
+				charactersMap: delaying('x'),
 			})
 		).toBe(true);
 	});
@@ -139,7 +146,7 @@ describe('returnPromptEntries', () => {
 		expect(
 			returnPromptEntries({
 				charactersOrder: ['a', 'b', 'y', 'c', 'x', 'z'],
-				delayedOrder: ['x', 'y', 'z'],
+				charactersMap: delaying('x', 'y', 'z'),
 			})
 		).toEqual([
 			{ id: 'y', distance: 1 },
@@ -153,7 +160,7 @@ describe('returnPromptEntries', () => {
 		expect(
 			returnPromptEntries({
 				charactersOrder: ['a', 'x', 'b'],
-				delayedOrder: ['x'],
+				charactersMap: delaying('x'),
 			})
 		).toEqual([{ id: 'x', distance: 0 }]);
 	});

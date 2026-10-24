@@ -4,6 +4,7 @@ import { CompositeCommand } from './CompositeCommand';
 import { EndRoundCommand } from './EndRoundCommand';
 import { FinalizeTurnAction } from './FinalizeTurnAndAdvanceRoundCommand';
 import { ReturnToInitiativeCommand } from './ReturnToInitiativeCommand';
+import { isDelaying } from '@/store/operations';
 
 type CommandData = {
 	activeUuid: UUID;
@@ -56,7 +57,7 @@ export class FinalizeTurnAndReturnToInitiativeCommand implements Command {
 			return STATUS.failure;
 		}
 
-		if (!state.delayedOrder.includes(this.data.returningUuid)) {
+		if (!isDelaying(state.charactersMap, this.data.returningUuid)) {
 			console.error(
 				`Returning character with uuid ${this.data.returningUuid} is not delayed`
 			);

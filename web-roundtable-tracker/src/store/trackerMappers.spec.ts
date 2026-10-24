@@ -89,8 +89,7 @@ describe('trackerMappers', () => {
 		};
 
 		const outOfInitiative = runtimeToOutOfInitiativeData({
-			charactersOrder: [],
-			delayedOrder: ['delayed'],
+			charactersOrder: ['delayed'],
 			charactersMap,
 			trackerMetaMap,
 			encounterData: undefined,
@@ -310,7 +309,6 @@ describe('trackerMappers', () => {
 	it('shows the traits of reinforcements that have not arrived yet', () => {
 		const outOfInitiative = runtimeToOutOfInitiativeData({
 			charactersOrder: [],
-			delayedOrder: [],
 			charactersMap: {},
 			trackerMetaMap: {},
 			encounterData: {
@@ -370,7 +368,6 @@ describe('trackerMappers', () => {
 		});
 		const outOfInitiative = runtimeToOutOfInitiativeData({
 			charactersOrder: [],
-			delayedOrder: [],
 			charactersMap: {},
 			trackerMetaMap: {},
 			encounterData: {

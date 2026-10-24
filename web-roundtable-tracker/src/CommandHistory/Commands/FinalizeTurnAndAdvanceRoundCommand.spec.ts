@@ -5,6 +5,7 @@ import { STATUS } from '../common';
 import { FinalizeTurnAndAdvanceRoundCommand } from './FinalizeTurnAndAdvanceRoundCommand';
 import { EndTurnCommand } from './EndTurnCommand';
 import { DelayCharacterCommand } from './DelayCharacterCommand';
+import { delayingIds } from '@/store/operations';
 
 describe('FinalizeTurnAndAdvanceRoundCommand', () => {
 	let encounterStore: ReturnType<typeof createEncounterStore>;
@@ -83,7 +84,6 @@ describe('FinalizeTurnAndAdvanceRoundCommand', () => {
 				},
 			},
 			charactersOrder: [characters[1].uuid, characters[0].uuid],
-			delayedOrder: [characters[0].uuid],
 			// Delaying ended the delayer's turn; its spot stays in the order.
 			charactersWithTurn: new Set([characters[1].uuid]),
 		}));
@@ -111,7 +111,7 @@ describe('FinalizeTurnAndAdvanceRoundCommand', () => {
 		expect(
 			encounterStore.getState().charactersMap[characters[1].uuid].turnState
 		).toBe('normal');
-		expect(encounterStore.getState().delayedOrder).toEqual([
+		expect(delayingIds(encounterStore.getState())).toEqual([
 			characters[0].uuid,
 		]);
 	});

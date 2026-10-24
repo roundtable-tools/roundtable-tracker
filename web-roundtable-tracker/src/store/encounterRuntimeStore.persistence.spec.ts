@@ -37,14 +37,14 @@ const characters: Character[] = [
 	},
 ];
 
-// The Rogue has delayed out of the order and can return.
+// The Rogue is delaying: it keeps its spot in the order without a turn.
 const startWithRogueDelaying = (
 	store: ReturnType<typeof createEncounterStore>
 ) => {
 	store.getState().startEncounter(characters);
 	store.setState({
-		charactersOrder: [characters[0].uuid],
-		delayedOrder: [characters[1].uuid],
+		charactersOrder: [characters[0].uuid, characters[1].uuid],
+		charactersWithTurn: new Set([characters[0].uuid]),
 	});
 };
 
@@ -181,7 +181,6 @@ describe('encounter store persistence', () => {
 			return {
 				round: state.round,
 				charactersOrder: state.charactersOrder,
-				delayedOrder: state.delayedOrder,
 				charactersWithTurn: [...state.charactersWithTurn],
 				turnStates: Object.values(state.charactersMap).map(
 					(character) => character.turnState

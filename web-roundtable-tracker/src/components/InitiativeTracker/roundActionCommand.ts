@@ -6,6 +6,7 @@ import { FinalizeTurnAndReturnToInitiativeCommand } from '@/CommandHistory/Comma
 import { KnockOutCharacterCommand } from '@/CommandHistory/Commands/KnockOutCharacterCommand';
 import { ReturnToInitiativeCommand } from '@/CommandHistory/Commands/ReturnToInitiativeCommand';
 import { type EncounterStore } from '@/store/encounterRuntimeStore';
+import { delayingIds, isDelaying } from '@/store/operations';
 import { runtimeToInitiativeQueue } from '@/store/trackerMappers';
 import { isFinalActiveParticipant } from './isFinalActiveParticipant';
 import { countParticipantsWithTurn } from './roundBoundary';
@@ -14,11 +15,7 @@ export type RoundAction = 'end-turn' | 'delay' | 'ko';
 
 export type RoundActionState = Pick<
 	EncounterStore,
-	| 'charactersOrder'
-	| 'delayedOrder'
-	| 'charactersMap'
-	| 'trackerMetaMap'
-	| 'charactersWithTurn'
+	'charactersOrder' | 'charactersMap' | 'trackerMetaMap' | 'charactersWithTurn'
 >;
 
 /** Whether acting on this participant closes the round. */
@@ -41,11 +38,11 @@ export function closesRound(participantId: string, state: RoundActionState) {
  */
 export function delayerReturningAfterTurn({
 	charactersOrder,
-	delayedOrder,
-}: Pick<RoundActionState, 'charactersOrder' | 'delayedOrder'>) {
+	charactersMap,
+}: Pick<RoundActionState, 'charactersOrder' | 'charactersMap'>) {
 	const nextId = charactersOrder[1];
 
-	return charactersOrder.length > 1 && delayedOrder.includes(nextId)
+	return charactersOrder.length > 1 && isDelaying(charactersMap, nextId)
 		? nextId
 		: undefined;
 }
@@ -56,7 +53,7 @@ export function delayerReturningAfterTurn({
  * the prompt still lists it when another delayer asks.
  */
 export function asksToReturnFromDelay(
-	state: Pick<RoundActionState, 'charactersOrder' | 'delayedOrder'>
+	state: Pick<RoundActionState, 'charactersOrder' | 'charactersMap'>
 ) {
 	const returningId = delayerReturningAfterTurn(state);
 
@@ -76,21 +73,17 @@ export type ReturnPromptEntry = {
  */
 export function returnPromptEntries({
 	charactersOrder,
-	delayedOrder,
+	charactersMap,
 }: Pick<
 	RoundActionState,
-	'charactersOrder' | 'delayedOrder'
+	'charactersOrder' | 'charactersMap'
 >): ReturnPromptEntry[] {
-	const delayed = new Set(delayedOrder);
-
-	return charactersOrder
-		.filter((id) => delayed.has(id))
-		.map((id) => ({
-			id,
-			distance: charactersOrder
-				.slice(1, charactersOrder.indexOf(id))
-				.filter((other) => !delayed.has(other)).length,
-		}));
+	return delayingIds({ charactersOrder, charactersMap }).map((id) => ({
+		id,
+		distance: charactersOrder
+			.slice(1, charactersOrder.indexOf(id))
+			.filter((other) => !isDelaying(charactersMap, other)).length,
+	}));
 }
 
 /**

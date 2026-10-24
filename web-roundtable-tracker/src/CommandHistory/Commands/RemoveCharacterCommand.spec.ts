@@ -3,6 +3,7 @@ import { RemoveCharacterCommand } from './RemoveCharacterCommand';
 import { createEncounterStore } from '../../store/encounterRuntimeStore';
 import { Character } from '../../store/data';
 import { STATUS } from '../common';
+import { delayingIds } from '@/store/operations';
 
 describe('RemoveCharacterCommand', () => {
 	let uuid: string;
@@ -66,7 +67,6 @@ describe('RemoveCharacterCommand', () => {
 		const last = { ...character, uuid: 'last', name: 'Last' };
 		const delayer = { ...character, turnState: 'delayed' as const };
 		encounterStore.getState().setCharacters([first, delayer, last]);
-		encounterStore.setState({ delayedOrder: [uuid] });
 
 		const command = new RemoveCharacterCommand({ uuid }, { encounterStore });
 		command.execute();
@@ -75,7 +75,7 @@ describe('RemoveCharacterCommand', () => {
 			'first',
 			'last',
 		]);
-		expect(encounterStore.getState().delayedOrder).toEqual([]);
+		expect(delayingIds(encounterStore.getState())).toEqual([]);
 
 		command.undo();
 
@@ -84,7 +84,7 @@ describe('RemoveCharacterCommand', () => {
 			uuid,
 			'last',
 		]);
-		expect(encounterStore.getState().delayedOrder).toEqual([uuid]);
+		expect(delayingIds(encounterStore.getState())).toEqual([uuid]);
 	});
 
 	it('should return failure if undo is called without executing', () => {

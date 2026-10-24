@@ -7,6 +7,7 @@ import {
 import { TrackerParticipantMeta } from '@/store/encounterRuntimeStore';
 import { generateUUID, UUID } from '@/utils/uuid';
 import { uniqueNames } from '@/utils/uniqueNames';
+import { isDelaying } from '@/store/operations';
 import {
 	arrivalActsBefore,
 	effectiveInitiatives,
@@ -42,7 +43,6 @@ type CommandData = CommandProps & {
 	original?: {
 		charactersMap: Record<UUID, Character>;
 		charactersOrder: UUID[];
-		delayedOrder: UUID[];
 		charactersWithTurn: Set<UUID>;
 		trackerMetaMap: Record<UUID, TrackerParticipantMeta>;
 		pendingReinforcements: PendingReinforcement[];
@@ -183,19 +183,18 @@ const expandSlotParticipants = (
 function insertByInitiative(
 	currentOrder: UUID[],
 	charactersWithTurn: Set<UUID>,
-	delayedOrder: UUID[],
 	charactersMap: Record<UUID, Character>,
 	trackerMetaMap: Record<UUID, TrackerParticipantMeta>,
 	spawned: Character[]
 ): UUID[] {
 	const nextOrder = [...currentOrder];
-	const delayed = new Set(delayedOrder);
 	const arrivals = new Set<UUID>();
 	const isStillToAct = (uuid: UUID) =>
-		arrivals.has(uuid) || (charactersWithTurn.has(uuid) && !delayed.has(uuid));
+		arrivals.has(uuid) ||
+		(charactersWithTurn.has(uuid) && !isDelaying(charactersMap, uuid));
 
 	const effective = effectiveInitiatives(
-		roundOrderOf(currentOrder, charactersWithTurn, delayedOrder, isStillToAct),
+		roundOrderOf(currentOrder, charactersWithTurn, charactersMap, isStillToAct),
 		charactersMap
 	);
 
@@ -298,7 +297,6 @@ export class TriggerReinforcementEventCommand implements Command {
 		this.data.original = {
 			charactersMap: structuredClone(state.charactersMap),
 			charactersOrder: structuredClone(state.charactersOrder),
-			delayedOrder: structuredClone(state.delayedOrder),
 			charactersWithTurn: structuredClone(state.charactersWithTurn),
 			trackerMetaMap: structuredClone(state.trackerMetaMap),
 			pendingReinforcements: structuredClone(state.pendingReinforcements ?? []),
@@ -349,7 +347,6 @@ export class TriggerReinforcementEventCommand implements Command {
 			const charactersOrder = insertByInitiative(
 				current.charactersOrder,
 				current.charactersWithTurn,
-				current.delayedOrder,
 				charactersMap,
 				trackerMetaMap,
 				arrivingInOrder

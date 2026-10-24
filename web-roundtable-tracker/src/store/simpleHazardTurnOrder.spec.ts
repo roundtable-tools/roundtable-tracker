@@ -19,6 +19,7 @@ import { STATUS } from '@/CommandHistory/common';
 import { EndTurnCommand } from '@/CommandHistory/Commands/EndTurnCommand';
 import { FinalizeTurnAndAdvanceRoundCommand } from '@/CommandHistory/Commands/FinalizeTurnAndAdvanceRoundCommand';
 import { TriggerReinforcementEventCommand } from '@/CommandHistory/Commands/TriggerReinforcementEventCommand';
+import { delayingIds } from '@/store/operations';
 
 const GOBLIN = '00000000-0000-0000-0000-000000000001';
 const HAZARD = '00000000-0000-0000-0000-000000000002';
@@ -113,7 +114,7 @@ describe('encounter with a simple hazard', () => {
 
 			expect(state.charactersOrder).toEqual([GOBLIN]);
 			expect(state.charactersWithTurn).toEqual(new Set([GOBLIN]));
-			expect(state.delayedOrder).toEqual([]);
+			expect(delayingIds(state)).toEqual([]);
 			expect(state.charactersMap[HAZARD]).toBeDefined();
 			expect(state.trackerMetaMap[HAZARD].isSimpleHazard).toBe(true);
 			expect(

@@ -7,6 +7,7 @@ import { EndTurnCommand } from './EndTurnCommand';
 import { GiveAdditionalTurnCommand } from './GiveAdditionalTurnCommand';
 import { DelayCharacterCommand } from './DelayCharacterCommand';
 import { RemoveCharacterCommand } from './RemoveCharacterCommand';
+import { delayingIds } from '@/store/operations';
 
 describe('ReorderCharactersCommand', () => {
 	let initialCharacters: Character[];
@@ -235,7 +236,7 @@ describe('ReorderCharactersCommand', () => {
 				alice,
 				bob,
 			]);
-			expect(encounterStore.getState().delayedOrder).toEqual([alice]);
+			expect(delayingIds(encounterStore.getState())).toEqual([alice]);
 
 			expect(command.undo()).toBe(STATUS.success);
 			expect(encounterStore.getState().charactersOrder).toEqual([

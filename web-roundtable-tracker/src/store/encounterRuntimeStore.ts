@@ -71,7 +71,6 @@ export interface EncounterStore {
 	encounterData?: Encounter;
 	charactersMap: Record<UUID, Character>;
 	charactersOrder: UUID[];
-	delayedOrder: UUID[];
 	trackerMetaMap: Record<UUID, TrackerParticipantMeta>;
 	/** Reinforcements given an initiative in the preview, not yet triggered. */
 	pendingReinforcements: PendingReinforcement[];
@@ -145,7 +144,6 @@ const parseCharacters = (
 	return {
 		charactersMap,
 		charactersOrder,
-		delayedOrder: [],
 	};
 };
 
@@ -164,7 +162,6 @@ const startEncounter = (
 	return {
 		charactersMap,
 		charactersOrder,
-		delayedOrder: [],
 		trackerMetaMap,
 		pendingReinforcements,
 		round: 1,
@@ -207,7 +204,6 @@ export const createEncounterStore = () =>
 			(set) => ({
 				charactersMap: {},
 				charactersOrder: [],
-				delayedOrder: [],
 				trackerMetaMap: {},
 				pendingReinforcements: [],
 				round: 0,

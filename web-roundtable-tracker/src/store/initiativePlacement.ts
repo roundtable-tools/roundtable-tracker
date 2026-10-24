@@ -1,4 +1,5 @@
 import { Character } from './data';
+import { isDelaying } from './operations';
 import { TrackerParticipantMeta } from './encounterRuntimeStore';
 import { UUID } from '@/utils/uuid';
 
@@ -71,11 +72,12 @@ export function effectiveInitiatives(
 export function roundOrderOf(
 	currentOrder: UUID[],
 	charactersWithTurn: Set<UUID>,
-	delayedOrder: UUID[],
+	charactersMap: Record<UUID, Pick<Character, 'turnState'>>,
 	isStillToAct: (uuid: UUID) => boolean = (uuid) => charactersWithTurn.has(uuid)
 ): UUID[] {
-	const delayed = new Set(delayedOrder);
-	const inRound = currentOrder.filter((uuid) => !delayed.has(uuid));
+	const inRound = currentOrder.filter(
+		(uuid) => !isDelaying(charactersMap, uuid)
+	);
 
 	return [
 		...inRound.filter((uuid) => !isStillToAct(uuid)),

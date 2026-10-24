@@ -54,7 +54,7 @@ export class EndTurnCommand implements Command {
 					.filter((id) => id !== this.data.uuid)
 					.concat(this.data.uuid),
 				charactersWithTurn: state.charactersWithTurn,
-				delayedOrder: state.delayedOrder,
+				charactersMap: state.charactersMap,
 			});
 
 			return {

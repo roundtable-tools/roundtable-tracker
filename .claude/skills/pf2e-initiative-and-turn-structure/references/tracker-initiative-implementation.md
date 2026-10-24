@@ -18,8 +18,7 @@ when the turn flow changes.
 
   | Field | Meaning |
   |---|---|
-  | `charactersOrder: UUID[]` | A **rotating queue**. Index 0 is the current actor |
-  | `delayedOrder: UUID[]` | Participants currently delaying. Each keeps its spot in `charactersOrder` too |
+  | `charactersOrder: UUID[]` | A **rotating queue**. Index 0 is the current actor. Delayers keep their spot in it; there is no separate delayed list. `delayingIds` (`store/operations.ts`) picks them out by `turnState: 'delayed'`, in the order they started delaying |
   | `charactersWithTurn: Set<UUID>` | Who still has a turn this round |
   | `round` | Starts at 1 |
   | `charactersMap` | Characters by uuid |
@@ -38,7 +37,7 @@ when the turn flow changes.
   - Simple hazards have no initiative field.
 - `participantsToEncounterCharacters` (`store/convert.ts`) sorts once, when the encounter starts: by initiative, highest first, then by `tiePriority`, highest first.
 - After that the **queue position is what counts**. The stored `initiative` number is not updated by a reorder or a return from Delay. That matches the rules ("usually not necessary to track the original initiative numbers").
-- `ReorderCharactersCommand {newOrder, oldOrder?, type?: 'initiative' | 'delay', movedIds?}` replaces `charactersOrder` or `delayedOrder`, dropping duplicates. For `charactersOrder` it treats `newOrder` as a reshuffle of the current queue: participants no longer in the queue are dropped, and ones `newOrder` misses keep their current index (#28). The UI has a drag-and-drop dialog for it, which passes the dragged participants as `movedIds`. A reorder of `charactersOrder` also moves the spots of pending reinforcements (see below) and undo restores them.
+- `ReorderCharactersCommand {newOrder, oldOrder?, movedIds?}` replaces `charactersOrder`, dropping duplicates. It treats `newOrder` as a reshuffle of the current queue: participants no longer in the queue are dropped, and ones `newOrder` misses keep their current index (#28). The UI has a drag-and-drop dialog for it, which passes the dragged participants as `movedIds`. A reorder also moves the spots of pending reinforcements (see below) and undo restores them.
 - `skipParticipantsWithoutTurn` (`store/operations.ts`) runs after a reorder of `charactersOrder` and after `EndTurnCommand`: it rotates the queue until a participant with a turn, or a delaying one, is at the front, so someone moved up after acting doesn't act twice. When nobody has a turn left (the round's last turn), the order stays as it is.
 - No PC initiative modifier is stored. There is no skill choice (Perception or Stealth) and no reroll support. The builder's "Initiative Description" field is saved, but the tracker doesn't use it.
 
@@ -71,17 +70,16 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 
 | Transition | Added commands |
 |---|---|
-| normal → delayed (`DelayCharacterCommand`) | `EndTurnCommand` (to the end of the queue) + added to `delayedOrder`. Only allowed while the participant still has its turn |
+| normal → delayed (`DelayCharacterCommand`) | `EndTurnCommand` (to the end of the queue). Only allowed while the participant still has its turn |
 | normal → knocked-out (`KnockOutCharacterCommand`) | `EndTurnCommand` if it still has a turn, otherwise a move to the end of the queue |
-| delayed → normal (also `ReactivateCharacterCommand` on a delayed participant) | Removed from `delayedOrder`, moved to the front of the queue |
-| delayed → knocked-out | Removed from `delayedOrder`, then the knock-out step |
-| knocked-out → delayed | Moved to the end of the queue and added to `delayedOrder` |
+| delayed → normal (also `ReactivateCharacterCommand` on a delayed participant) | Moved to the front of the queue |
+| delayed → knocked-out | The knock-out step |
+| knocked-out → delayed | Moved to the end of the queue |
 | knocked-out → normal (`ReactivateCharacterCommand`) | Turn state only. The participant doesn't get its turn back |
 
 - `ReturnToInitiativeCommand {activeUuid, returningUuid, action}` does the return in one step. It:
   1. ends the active participant's turn,
-  2. gives the returner a turn and puts it at index 0 with `turnState: 'normal'`,
-  3. removes the returner from `delayedOrder`.
+  2. gives the returner a turn and puts it at index 0 with `turnState: 'normal'`.
 
   It is the rules' "return after another creature's turn".
 - **Knock-out position:** the end of a rotating queue is "directly before the current actor". A knock-out on someone else's turn therefore matches the rule "move to directly before the turn in which you were reduced to 0 HP", whatever caused it. A knock-out on the participant's own turn ends that turn and moves it to the end of the queue, which is the position it already had, as the rule requires.

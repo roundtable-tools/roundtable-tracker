@@ -11,6 +11,8 @@ import {
 	type EncounterStore,
 	type TrackerParticipantMeta,
 } from './encounterRuntimeStore';
+import { delayingIds } from './operations';
+import { type UUID } from '@/utils/uuid';
 
 export type TrackerParticipant = {
 	id: string;
@@ -263,7 +265,6 @@ export function runtimeToOutOfInitiativeData(
 	store: Pick<
 		EncounterStore,
 		| 'charactersOrder'
-		| 'delayedOrder'
 		| 'charactersMap'
 		| 'trackerMetaMap'
 		| 'encounterData'
@@ -280,7 +281,6 @@ export function runtimeToOutOfInitiativeData(
 		trackerMetaMap,
 		encounterData,
 		partyLevel,
-		delayedOrder,
 		pendingReinforcements = [],
 	} = store;
 
@@ -367,7 +367,7 @@ export function runtimeToOutOfInitiativeData(
 		});
 
 	const delayed = delayedToTrackerParticipants(
-		delayedOrder,
+		delayingIds(store),
 		charactersMap,
 		trackerMetaMap
 	);
@@ -376,7 +376,7 @@ export function runtimeToOutOfInitiativeData(
 }
 
 function delayedToTrackerParticipants(
-	delayedIds: EncounterStore['delayedOrder'],
+	delayedIds: UUID[],
 	charactersMap: EncounterStore['charactersMap'],
 	trackerMetaMap: EncounterStore['trackerMetaMap']
 ): TrackerParticipant[] {

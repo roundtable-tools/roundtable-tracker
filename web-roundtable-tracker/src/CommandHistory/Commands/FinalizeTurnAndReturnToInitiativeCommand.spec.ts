@@ -3,6 +3,7 @@ import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import { Character } from '@/store/data';
 import { STATUS } from '../common';
 import { FinalizeTurnAndReturnToInitiativeCommand } from './FinalizeTurnAndReturnToInitiativeCommand';
+import { delayingIds } from '@/store/operations';
 
 describe('FinalizeTurnAndReturnToInitiativeCommand', () => {
 	let encounterStore: ReturnType<typeof createEncounterStore>;
@@ -52,7 +53,6 @@ describe('FinalizeTurnAndReturnToInitiativeCommand', () => {
 				characters[1].uuid,
 				characters[2].uuid,
 			],
-			delayedOrder: [characters[1].uuid],
 			charactersWithTurn: new Set([characters[0].uuid]),
 			charactersMap: {
 				...state.charactersMap,
@@ -81,7 +81,7 @@ describe('FinalizeTurnAndReturnToInitiativeCommand', () => {
 			characters[2].uuid,
 			characters[0].uuid,
 		]);
-		expect(encounterStore.getState().delayedOrder).toEqual([]);
+		expect(delayingIds(encounterStore.getState())).toEqual([]);
 		expect(encounterStore.getState().charactersWithTurn).toEqual(
 			new Set([characters[1].uuid, characters[2].uuid, characters[0].uuid])
 		);
@@ -94,7 +94,6 @@ describe('FinalizeTurnAndReturnToInitiativeCommand', () => {
 				characters[1].uuid,
 				characters[2].uuid,
 			],
-			delayedOrder: [characters[1].uuid],
 			charactersWithTurn: new Set([characters[0].uuid]),
 			charactersMap: {
 				...state.charactersMap,
@@ -123,7 +122,7 @@ describe('FinalizeTurnAndReturnToInitiativeCommand', () => {
 			characters[1].uuid,
 			characters[2].uuid,
 		]);
-		expect(encounterStore.getState().delayedOrder).toEqual([
+		expect(delayingIds(encounterStore.getState())).toEqual([
 			characters[1].uuid,
 		]);
 		expect(encounterStore.getState().charactersWithTurn).toEqual(
@@ -141,7 +140,6 @@ describe('FinalizeTurnAndReturnToInitiativeCommand', () => {
 				characters[1].uuid,
 				characters[2].uuid,
 			],
-			delayedOrder: [characters[1].uuid],
 			charactersWithTurn: new Set([characters[0].uuid, characters[2].uuid]),
 		}));
 

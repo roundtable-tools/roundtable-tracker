@@ -16,7 +16,6 @@ type CommandData = CommandProps & {
 	original?: {
 		charactersMap: Record<UUID, Character>;
 		charactersOrder: UUID[];
-		delayedOrder: UUID[];
 		charactersWithTurn: Set<UUID>;
 	};
 };
@@ -45,7 +44,6 @@ export class RemoveCharacterCommand implements Command {
 		this.data.original = {
 			charactersMap: structuredClone(state.charactersMap),
 			charactersOrder: structuredClone(state.charactersOrder),
-			delayedOrder: structuredClone(state.delayedOrder),
 			charactersWithTurn: structuredClone(state.charactersWithTurn),
 		};
 
@@ -57,10 +55,6 @@ export class RemoveCharacterCommand implements Command {
 				(uuid) => uuid !== this.data.uuid
 			);
 
-			const delayedOrder = state.delayedOrder.filter(
-				(uuid) => uuid !== this.data.uuid
-			);
-
 			const charactersWithTurn = new Set(state.charactersWithTurn);
 			charactersWithTurn.delete(this.data.uuid);
 
@@ -68,7 +62,6 @@ export class RemoveCharacterCommand implements Command {
 				charactersMap,
 				charactersOrder,
 				charactersWithTurn,
-				delayedOrder,
 			};
 		});
 

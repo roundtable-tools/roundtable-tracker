@@ -50,7 +50,6 @@ describe('RecordHazardDisableProgressCommand', () => {
 				[PIT]: createCharacter(PIT, 'Hidden Pit'),
 			},
 			charactersOrder: [HERO, TRAP],
-			delayedOrder: [],
 			charactersWithTurn: new Set([HERO, TRAP]),
 			round: 1,
 			trackerMetaMap: {
