@@ -79,7 +79,6 @@ math changes.
 
 - Party-size variants are picked by `partySize`, not computed.
 - There is no Pathfinder Society Challenge Points mode.
-- The migration helper `inferCreatureRole` (`models/encounters/migrate.adapter.ts`) guesses a role from the name.
 
 ## Accomplishment XP, narrative slots, allies
 
