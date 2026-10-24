@@ -41,6 +41,17 @@ import { splitArray } from '@/utils/array';
 import { type EncounterTimer, startTimer } from './encounterTimer';
 import { type PendingReinforcement } from './pendingReinforcements';
 
+// A hazard is disabled once its Disable a Device successes reach the required
+// count. Hazards without a required count can't be disabled this way.
+export const isHazardDisabled = (meta: {
+	role: TrackerParticipantRole;
+	disableChecksRequired?: number;
+	disableChecksSucceeded?: number;
+}) =>
+	meta.role === 'hazard' &&
+	(meta.disableChecksRequired ?? 0) > 0 &&
+	(meta.disableChecksSucceeded ?? 0) >= (meta.disableChecksRequired ?? 0);
+
 type ValueOrFunction<T> = T | ((prev: T) => T);
 
 function isCallableFunction<T>(

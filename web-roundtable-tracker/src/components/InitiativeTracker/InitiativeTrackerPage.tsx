@@ -53,6 +53,7 @@ import {
 	getEncounterStore,
 	useEncounterStore,
 } from '@/store/encounterRuntimeInstance';
+import { isHazardDisabled } from '@/store/encounterRuntimeStore';
 import {
 	runtimeToInitiativeQueue,
 	runtimeToOutOfInitiativeData,
@@ -73,8 +74,65 @@ import { ChangeHealthCommand } from '@/CommandHistory/Commands/ChangeHealthComma
 import { SetTempHealthCommand } from '@/CommandHistory/Commands/SetTempHealthCommand';
 import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/ReactivateCharacterCommand';
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
+import { RecordHazardDisableProgressCommand } from '@/CommandHistory/Commands/RecordHazardDisableProgressCommand';
 import { Input } from '@/components/ui/input';
 import { type SwipeAction } from './InitiativeActionCarouselCard';
+
+function hasHazardDisableCount(participant: TrackerParticipant) {
+	return (
+		participant.role === 'hazard' &&
+		(participant.disableChecksRequired ?? 0) > 0
+	);
+}
+
+type HazardDisableChange = { delta: number } | { value: number };
+
+function HazardDisableQuickActions({
+	participant,
+	onRecord,
+}: {
+	participant: TrackerParticipant;
+	onRecord: (participantId: string, change: HazardDisableChange) => void;
+}) {
+	if (!hasHazardDisableCount(participant)) {
+		return null;
+	}
+
+	const disabled = isHazardDisabled(participant);
+
+	return (
+		<>
+			<Button
+				type="button"
+				size="sm"
+				variant="outline"
+				className="h-7 px-2 text-xs"
+				title="Disable a Device: success"
+				disabled={disabled}
+				onClick={(event) => {
+					event.stopPropagation();
+					onRecord(participant.id, { delta: 1 });
+				}}
+			>
+				+1
+			</Button>
+			<Button
+				type="button"
+				size="sm"
+				variant="outline"
+				className="h-7 px-2 text-xs"
+				title="Disable a Device: critical success"
+				disabled={disabled}
+				onClick={(event) => {
+					event.stopPropagation();
+					onRecord(participant.id, { delta: 2 });
+				}}
+			>
+				+2
+			</Button>
+		</>
+	);
+}
 
 function getParticipantIndicatorLabel(participant: TrackerParticipant) {
 	if (participant.role === 'hazard') {
@@ -224,6 +282,7 @@ type ParticipantDetailsProps = {
 	onDamage?: (amount: number) => void;
 	onSetTempHp?: (amount: number, description: string) => void;
 	onGiveTurnBack?: () => void;
+	onRecordDisableProgress?: (change: HazardDisableChange) => void;
 };
 
 function ParticipantDetails({
@@ -232,8 +291,10 @@ function ParticipantDetails({
 	onDamage,
 	onSetTempHp,
 	onGiveTurnBack,
+	onRecordDisableProgress,
 }: ParticipantDetailsProps) {
 	const [hpAmount, setHpAmount] = useState('');
+	const [disableSuccesses, setDisableSuccesses] = useState('');
 	const [tempHpAmount, setTempHpAmount] = useState('');
 	const [tempHpDescription, setTempHpDescription] = useState('');
 
@@ -266,6 +327,14 @@ function ParticipantDetails({
 		if (!Number.isFinite(amount) || amount <= 0) return;
 		onDamage?.(amount);
 		setHpAmount('');
+	};
+
+	const handleSetDisableSuccesses = () => {
+		const value = parseInt(disableSuccesses, 10);
+
+		if (!Number.isFinite(value) || value < 0) return;
+		onRecordDisableProgress?.({ value });
+		setDisableSuccesses('');
 	};
 
 	const handleSetTempHp = () => {
@@ -307,7 +376,60 @@ function ParticipantDetails({
 			{isHazard && (
 				<p className="inline-flex items-center gap-1 text-sm text-muted-foreground">
 					<ShieldOff className="h-4 w-4" /> {indicatorLabel}
+					{hasHazardDisableCount(participant) && (
+						<span className="ml-1">
+							({participant.disableChecksSucceeded ?? 0} /{' '}
+							{participant.disableChecksRequired} successes)
+						</span>
+					)}
 				</p>
+			)}
+			{onRecordDisableProgress && hasHazardDisableCount(participant) && (
+				<div className="space-y-2 rounded-md border p-3">
+					<h4 className="text-sm font-medium">Disable a Device</h4>
+					<div className="flex gap-2">
+						<Button
+							size="sm"
+							variant="outline"
+							className="flex-1"
+							disabled={isHazardDisabled(participant)}
+							onClick={() => onRecordDisableProgress({ delta: 1 })}
+						>
+							Success +1
+						</Button>
+						<Button
+							size="sm"
+							variant="outline"
+							className="flex-1"
+							disabled={isHazardDisabled(participant)}
+							onClick={() => onRecordDisableProgress({ delta: 2 })}
+						>
+							Critical +2
+						</Button>
+					</div>
+					<div className="flex gap-2">
+						<Input
+							type="number"
+							min={0}
+							max={participant.disableChecksRequired}
+							placeholder="Successes"
+							value={disableSuccesses}
+							onChange={(e) => setDisableSuccesses(e.target.value)}
+							className="h-8 text-sm"
+							onKeyDown={(e) => {
+								if (e.key === 'Enter') handleSetDisableSuccesses();
+							}}
+						/>
+						<Button
+							size="sm"
+							variant="outline"
+							className="shrink-0"
+							onClick={handleSetDisableSuccesses}
+						>
+							Set
+						</Button>
+					</div>
+				</div>
 			)}
 			{hasHpData && (
 				<>
@@ -1284,6 +1406,27 @@ export function InitiativeTrackerPage() {
 			}
 		: undefined;
 
+	const recordHazardDisableProgress = (
+		participantId: string,
+		change: HazardDisableChange
+	) => {
+		try {
+			executeCommand(
+				new RecordHazardDisableProgressCommand({
+					uuid: participantId,
+					...change,
+				})
+			);
+		} catch (error) {
+			console.error('Failed to record hazard disable progress', error);
+		}
+	};
+
+	const handleSelectedRecordDisableProgress = selectedParticipantId
+		? (change: HazardDisableChange) =>
+				recordHazardDisableProgress(selectedParticipantId, change)
+		: undefined;
+
 	const handleSelectedSetTempHp = selectedParticipantId
 		? (amount: number, description: string) => {
 				try {
@@ -1577,7 +1720,7 @@ export function InitiativeTrackerPage() {
 									)}
 									{hasHazards && (
 										<TabsTrigger value="hazards" className="whitespace-normal">
-											Simple Hazards
+											Hazards
 										</TabsTrigger>
 									)}
 								</TabsList>
@@ -1658,6 +1801,12 @@ export function InitiativeTrackerPage() {
 														participant={participant}
 														onSelect={setSelectedParticipantId}
 														selected={participant.id === selectedParticipantId}
+														actionSlot={
+															<HazardDisableQuickActions
+																participant={participant}
+																onRecord={recordHazardDisableProgress}
+															/>
+														}
 													/>
 												))}
 											</div>
@@ -1744,6 +1893,7 @@ export function InitiativeTrackerPage() {
 								onDamage={handleSelectedDamage}
 								onSetTempHp={handleSelectedSetTempHp}
 								onGiveTurnBack={handleSelectedGiveTurnBack}
+								onRecordDisableProgress={handleSelectedRecordDisableProgress}
 							/>
 						</ScrollArea>
 					</Card>
@@ -1870,7 +2020,7 @@ export function InitiativeTrackerPage() {
 											</TabsTrigger>
 										)}
 										{hasHazards && (
-											<TabsTrigger value="hazards">Simple Hazards</TabsTrigger>
+											<TabsTrigger value="hazards">Hazards</TabsTrigger>
 										)}
 									</TabsList>
 									{hasReinforcements && (
@@ -1942,6 +2092,12 @@ export function InitiativeTrackerPage() {
 														participant={participant}
 														onSelect={setSelectedParticipantId}
 														selected={participant.id === selectedParticipantId}
+														actionSlot={
+															<HazardDisableQuickActions
+																participant={participant}
+																onRecord={recordHazardDisableProgress}
+															/>
+														}
 													/>
 												))}
 											</div>
@@ -2070,6 +2226,7 @@ export function InitiativeTrackerPage() {
 								onDamage={handleSelectedDamage}
 								onSetTempHp={handleSelectedSetTempHp}
 								onGiveTurnBack={handleSelectedGiveTurnBack}
+								onRecordDisableProgress={handleSelectedRecordDisableProgress}
 							/>
 						</Card>
 					</TabsContent>
