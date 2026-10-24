@@ -35,6 +35,7 @@ import { type Command } from '@/CommandHistory/common';
 import { executeCommand } from '@/CommandHistory/commandExecution';
 import { pauseTimer } from '@/store/encounterTimer';
 import { ChangeHealthCommand } from '@/CommandHistory/Commands/ChangeHealthCommand';
+import { RecordDisableProgressCommand } from '@/CommandHistory/Commands/RecordDisableProgressCommand';
 import { SetTempHealthCommand } from '@/CommandHistory/Commands/SetTempHealthCommand';
 import { TriggerReinforcementEventCommand } from '@/CommandHistory/Commands/TriggerReinforcementEventCommand';
 import {
@@ -504,19 +505,32 @@ describe('tracker state examples', () => {
 		act(store, 'Valeros', 'end-turn');
 		act(store, 'Goblin Warchief', 'end-turn');
 
-		// No command records disable progress yet; it lives in the tracker meta.
-		// Under half, half and all of the checks needed.
-		const meta = { ...store.getState().trackerMetaMap };
-
-		for (const [name, succeeded] of [
+		// Under half, half and all of the checks needed; the GM answers the
+		// full checks with Disable, which takes the hazard out like a K.O.
+		for (const [name, value] of [
 			['Collapsing Bridge', 1],
 			['Swinging Log', 2],
 			['Rope Snare', 2],
 		] as const) {
-			const uuid = uuidOf(store, name);
-			meta[uuid] = { ...meta[uuid], disableChecksSucceeded: succeeded };
+			run(
+				store,
+				new RecordDisableProgressCommand(
+					{ uuid: uuidOf(store, name), value },
+					{ encounterStore: store }
+				)
+			);
 		}
-		store.getState().setTrackerMetaMap(meta);
+		run(
+			store,
+			getRoundActionCommand(
+				uuidOf(store, 'Rope Snare'),
+				'ko',
+				store.getState(),
+				{
+					encounterStore: store,
+				}
+			)
+		);
 		act(store, 'Collapsing Bridge', 'end-turn');
 		// Kyra has been thinking for a while when the GM pauses.
 		clock.now += 50 * 1000;
@@ -525,6 +539,9 @@ describe('tracker state examples', () => {
 
 		expect(state.round).toBe(2);
 		expect(state.charactersMap[uuidOf(store, 'Goblin Dog')].turnState).toBe(
+			'knocked-out'
+		);
+		expect(state.charactersMap[uuidOf(store, 'Rope Snare')].turnState).toBe(
 			'knocked-out'
 		);
 		expect(delayingIds(state)).toEqual(

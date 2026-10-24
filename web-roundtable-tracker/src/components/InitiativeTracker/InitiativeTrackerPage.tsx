@@ -59,7 +59,7 @@ import {
 	getEncounterStore,
 	useEncounterStore,
 } from '@/store/encounterRuntimeInstance';
-import { isHazardDisabled } from '@/store/encounterRuntimeStore';
+import { hasFullDisableChecks } from '@/store/encounterRuntimeStore';
 import {
 	runtimeToInitiativeQueue,
 	runtimeToOutOfInitiativeData,
@@ -82,7 +82,7 @@ import { ChangeHealthCommand } from '@/CommandHistory/Commands/ChangeHealthComma
 import { SetTempHealthCommand } from '@/CommandHistory/Commands/SetTempHealthCommand';
 import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/ReactivateCharacterCommand';
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
-import { RecordHazardDisableProgressCommand } from '@/CommandHistory/Commands/RecordHazardDisableProgressCommand';
+import { RecordDisableProgressCommand } from '@/CommandHistory/Commands/RecordDisableProgressCommand';
 import { Input } from '@/components/ui/input';
 import { type SwipeAction } from './InitiativeActionCarouselCard';
 
@@ -106,7 +106,7 @@ function HazardDisableQuickActions({
 		return null;
 	}
 
-	const disabled = isHazardDisabled(participant);
+	const disabled = hasFullDisableChecks(participant);
 
 	return (
 		<>
@@ -421,7 +421,7 @@ function ParticipantDetails({
 							size="sm"
 							variant="outline"
 							className="flex-1"
-							disabled={isHazardDisabled(participant)}
+							disabled={hasFullDisableChecks(participant)}
 							onClick={() => onRecordDisableProgress({ delta: 1 })}
 						>
 							Success +1
@@ -430,7 +430,7 @@ function ParticipantDetails({
 							size="sm"
 							variant="outline"
 							className="flex-1"
-							disabled={isHazardDisabled(participant)}
+							disabled={hasFullDisableChecks(participant)}
 							onClick={() => onRecordDisableProgress({ delta: 2 })}
 						>
 							Critical +2
@@ -1453,7 +1453,7 @@ export function InitiativeTrackerPage() {
 	) => {
 		try {
 			executeCommand(
-				new RecordHazardDisableProgressCommand({
+				new RecordDisableProgressCommand({
 					uuid: participantId,
 					...change,
 				})

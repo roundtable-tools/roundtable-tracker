@@ -1,7 +1,7 @@
 import { Fragment, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Toggle } from '@/components/ui/toggle';
-import { Clock3, Skull } from 'lucide-react';
+import { Clock3, PowerOff, Skull } from 'lucide-react';
 import {
 	isEncounterRunning,
 	usePlayerViewSnapshot,
@@ -21,20 +21,35 @@ import { useTimerElapsed } from './useTimerElapsed';
 import { NextRoundMarkerCard } from './NextRoundMarkerCard';
 import { getRoundBoundaryIndex } from './roundBoundary';
 
-const PLAYER_STATUS_OPTIONS = [
-	{
-		status: 'Delayed',
-		Icon: Clock3,
-		pressedClassName:
-			'data-[state=on]:bg-amber-500/25 data-[state=on]:text-amber-200',
-	},
-	{
-		status: 'Knocked Out',
-		Icon: Skull,
-		pressedClassName:
-			'data-[state=on]:bg-red-600/30 data-[state=on]:text-red-200',
-	},
-] as const;
+const DELAYED_OPTION = {
+	status: 'Delayed',
+	Icon: Clock3,
+	pressedClassName:
+		'data-[state=on]:bg-amber-500/25 data-[state=on]:text-amber-200',
+} as const;
+
+const OUT_OF_FIGHT_PRESSED_CLASS =
+	'data-[state=on]:bg-red-600/30 data-[state=on]:text-red-200';
+
+// Creatures are knocked out, hazards disabled.
+const PLAYER_STATUS_OPTIONS = {
+	creature: [
+		DELAYED_OPTION,
+		{
+			status: 'Knocked Out',
+			Icon: Skull,
+			pressedClassName: OUT_OF_FIGHT_PRESSED_CLASS,
+		},
+	],
+	hazard: [
+		DELAYED_OPTION,
+		{
+			status: 'Disabled',
+			Icon: PowerOff,
+			pressedClassName: OUT_OF_FIGHT_PRESSED_CLASS,
+		},
+	],
+} as const;
 
 /**
  * What a row's status group and bar sit on: the current participant's
@@ -75,15 +90,18 @@ const SURFACE_STYLES: Record<
 };
 
 /**
- * Shows Delayed and Knocked Out as a group with at most one option pressed.
+ * Shows Delayed and Knocked Out (Disabled for a hazard) as a group with at
+ * most one option pressed.
  * Ready is the default, so it has no option and leaves both unpressed. The
  * group only displays the status; players can't change it.
  */
 function PlayerStatusGroup({
 	status,
+	isHazard,
 	surface,
 }: {
 	status: PlayerTrackerParticipant['status'];
+	isHazard: boolean;
 	surface: RowSurface;
 }) {
 	const styles = SURFACE_STYLES[surface];
@@ -94,7 +112,7 @@ function PlayerStatusGroup({
 			aria-label="Status"
 			className={`inline-flex items-center overflow-hidden rounded-md border ${styles.box}`}
 		>
-			{PLAYER_STATUS_OPTIONS.map(
+			{PLAYER_STATUS_OPTIONS[isHazard ? 'hazard' : 'creature'].map(
 				({ status: option, Icon, pressedClassName }) => (
 					<Toggle
 						key={option}
@@ -386,6 +404,7 @@ export function InitiativePlayerViewPage() {
 									<div className="flex shrink-0 items-center gap-2">
 										<PlayerStatusGroup
 											status={participant.status}
+											isHazard={participant.isHazard}
 											surface={surface}
 										/>
 										<PlayerProgressBar

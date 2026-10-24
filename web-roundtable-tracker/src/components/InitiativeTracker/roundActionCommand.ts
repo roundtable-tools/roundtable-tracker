@@ -94,7 +94,7 @@ export function returnPromptEntries({
 
 /**
  * The command the tracker runs when the GM ends a participant's turn, delays
- * or knocks them out. It also closes the round after the last active
+ * or knocks them out (Disable for a hazard). It also closes the round after the last active
  * participant. Acting on the current participant also brings back a delaying
  * participant who is next in the order; acting on anyone else (e.g. a K.O.
  * during another participant's turn) leaves the current turn running.

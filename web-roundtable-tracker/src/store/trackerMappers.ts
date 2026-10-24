@@ -7,7 +7,6 @@ import {
 	LEVEL_REPRESENTATION,
 } from './data';
 import {
-	isHazardDisabled,
 	type EncounterStore,
 	type TrackerParticipantMeta,
 } from './encounterRuntimeStore';
@@ -70,7 +69,7 @@ export type TrackerHeader = {
 export type PlayerTrackerParticipant = {
 	id: string;
 	name: string;
-	status: 'Ready' | 'Delayed' | 'Knocked Out' | 'Inactive';
+	status: 'Ready' | 'Delayed' | 'Knocked Out' | 'Disabled' | 'Inactive';
 	hpLabel: string;
 	/** Filled segments of the player HP bar, or null without HP data. */
 	hpSegments: number | null;
@@ -291,9 +290,9 @@ export function runtimeToOutOfInitiativeData(
 	);
 
 	const hazards: TrackerParticipant[] = Object.entries(trackerMetaMap)
-		// Simple hazards never take turns; disabled complex hazards stop taking
-		// turns. Both are listed here instead of the initiative queue.
-		.filter(([, meta]) => meta.isSimpleHazard || isHazardDisabled(meta))
+		// Simple hazards never take turns, so they are listed here instead of
+		// the initiative queue. Disabled complex hazards stay in the queue.
+		.filter(([, meta]) => meta.isSimpleHazard)
 		.map(([uuid, meta]) => {
 			const character = charactersMap[uuid];
 
@@ -399,17 +398,43 @@ function delayedToTrackerParticipants(
 		);
 }
 
-const toPlayerStatus = (
-	state: TrackerParticipant['state']
-): PlayerTrackerParticipant['status'] => {
-	if (state === 'delayed') return 'Delayed';
+/**
+ * The names of taking a participant out of the fight. They follow the
+ * participant type, not what took it out: hazards are disabled or destroyed,
+ * everyone else is knocked out or slain.
+ */
+export function getOutOfFightNames(
+	participant: Pick<TrackerParticipant, 'role'>
+) {
+	return participant.role === 'hazard'
+		? {
+				takeOut: 'Disable',
+				remove: 'Destroy',
+				outState: 'Disabled',
+				removedState: 'Destroyed',
+			}
+		: {
+				takeOut: 'Knock Out',
+				remove: 'Slay',
+				outState: 'Knocked Out',
+				removedState: 'Slain',
+			};
+}
 
-	if (state === 'knocked-out') return 'Knocked Out';
+/** The participant's state as the tracker and the player view name it. */
+export function getParticipantStateLabel(
+	participant: Pick<TrackerParticipant, 'role' | 'state'>
+): PlayerTrackerParticipant['status'] {
+	if (participant.state === 'delayed') return 'Delayed';
 
-	if (state === 'inactive') return 'Inactive';
+	if (participant.state === 'knocked-out') {
+		return participant.role === 'hazard' ? 'Disabled' : 'Knocked Out';
+	}
+
+	if (participant.state === 'inactive') return 'Inactive';
 
 	return 'Ready';
-};
+}
 
 /**
  * A participant's HP as players see it: the HP tier, and that tier's number of
@@ -419,7 +444,10 @@ const toPlayerHealth = (
 	participant: TrackerParticipant
 ): Pick<PlayerTrackerParticipant, 'hpLabel' | 'hpSegments'> => {
 	if (participant.state === 'knocked-out') {
-		return { hpLabel: 'Unconscious', hpSegments: 0 };
+		return {
+			hpLabel: participant.role === 'hazard' ? 'Disabled' : 'Unconscious',
+			hpSegments: 0,
+		};
 	}
 
 	if (
@@ -529,7 +557,7 @@ export function runtimeToPlayerInitiativeQueue(
 	return runtimeToInitiativeQueue(store).map((participant) => ({
 		id: participant.id,
 		name: participant.name,
-		status: toPlayerStatus(participant.state),
+		status: getParticipantStateLabel(participant),
 		isHazard: participant.role === 'hazard',
 		...toPlayerHealth(participant),
 		disableProgress: toPlayerDisableProgress(participant),

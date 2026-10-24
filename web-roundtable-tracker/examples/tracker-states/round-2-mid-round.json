@@ -139,7 +139,7 @@
 				"health": 1,
 				"maxHealth": 1,
 				"tempHealth": 0,
-				"turnState": "normal",
+				"turnState": "knocked-out",
 				"group": "enemies"
 			},
 			"00000000-0000-4000-8000-000000000011": {
@@ -177,9 +177,9 @@
 			"00000000-0000-4000-8000-000000000012",
 			"00000000-0000-4000-8000-000000000003",
 			"pc-ezren",
-			"00000000-0000-4000-8000-000000000008",
 			"pc-valeros",
 			"00000000-0000-4000-8000-000000000001",
+			"00000000-0000-4000-8000-000000000008",
 			"00000000-0000-4000-8000-000000000006"
 		],
 		"trackerMetaMap": {
@@ -407,7 +407,6 @@
 				"00000000-0000-4000-8000-000000000004",
 				"00000000-0000-4000-8000-000000000003",
 				"pc-ezren",
-				"00000000-0000-4000-8000-000000000008",
 				"00000000-0000-4000-8000-000000000011",
 				"00000000-0000-4000-8000-000000000012"
 			]
@@ -1701,6 +1700,143 @@
 				}
 			},
 			{
+				"type": "Command.RecordDisableProgressCommand",
+				"description": "Record Disable Progress",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000006",
+					"value": 1,
+					"originalMeta": {
+						"role": "hazard",
+						"sideTheme": "opponent",
+						"hasHealthData": true,
+						"isSimpleHazard": false,
+						"disableChecksRequired": 3,
+						"disableChecksSucceeded": 0,
+						"notes": "Planks drop away each round.",
+						"hardness": 8,
+						"initiativeBonus": 9,
+						"dcs": [
+							{ "name": "Thievery", "value": 20, "disableSuccesses": 2 },
+							{ "name": "Athletics", "value": 22, "disableSuccesses": 1 }
+						]
+					}
+				}
+			},
+			{
+				"type": "Command.RecordDisableProgressCommand",
+				"description": "Record Disable Progress",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000007",
+					"value": 2,
+					"originalMeta": {
+						"role": "hazard",
+						"sideTheme": "opponent",
+						"hasHealthData": false,
+						"isSimpleHazard": false,
+						"disableChecksRequired": 4,
+						"disableChecksSucceeded": 0,
+						"notes": "",
+						"initiativeBonus": 6,
+						"dcs": [{ "name": "Thievery", "value": 19 }]
+					}
+				}
+			},
+			{
+				"type": "Command.RecordDisableProgressCommand",
+				"description": "Record Disable Progress",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000008",
+					"value": 2,
+					"originalMeta": {
+						"role": "hazard",
+						"sideTheme": "opponent",
+						"hasHealthData": false,
+						"isSimpleHazard": false,
+						"disableChecksRequired": 2,
+						"disableChecksSucceeded": 0,
+						"notes": "",
+						"initiativeBonus": 4,
+						"dcs": [{ "name": "Survival", "value": 17 }]
+					}
+				}
+			},
+			{
+				"type": "Command.KnockOutCharacterCommand",
+				"description": "Knock Out Character Command",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000008",
+					"command": {
+						"type": "Command.CompositeCommand",
+						"description": "Composite Command",
+						"data": {
+							"commands": [
+								{
+									"type": "Command.UpdateCharacterCommand",
+									"description": "Update Character Command",
+									"data": {
+										"uuid": "00000000-0000-4000-8000-000000000008",
+										"newCharacterProps": { "turnState": "knocked-out" },
+										"oldCharacter": {
+											"uuid": "00000000-0000-4000-8000-000000000008",
+											"name": "Rope Snare",
+											"initiative": 5,
+											"health": 1,
+											"maxHealth": 1,
+											"tempHealth": 0,
+											"turnState": "normal",
+											"group": "enemies"
+										}
+									}
+								},
+								{
+									"type": "Command.EndTurnCommand",
+									"description": "End Turn Command",
+									"data": {
+										"uuid": "00000000-0000-4000-8000-000000000008",
+										"original": {
+											"charactersOrder": [
+												"00000000-0000-4000-8000-000000000006",
+												"pc-kyra",
+												"00000000-0000-4000-8000-000000000002",
+												"00000000-0000-4000-8000-000000000010",
+												"00000000-0000-4000-8000-000000000011",
+												"00000000-0000-4000-8000-000000000012",
+												"pc-merisiel",
+												"00000000-0000-4000-8000-000000000007",
+												"00000000-0000-4000-8000-000000000004",
+												"00000000-0000-4000-8000-000000000003",
+												"pc-ezren",
+												"00000000-0000-4000-8000-000000000008",
+												"pc-valeros",
+												"00000000-0000-4000-8000-000000000001"
+											],
+											"charactersWithTurn": {
+												"type": "Set",
+												"data": [
+													"00000000-0000-4000-8000-000000000005",
+													"00000000-0000-4000-8000-000000000010",
+													"00000000-0000-4000-8000-000000000006",
+													"pc-kyra",
+													"00000000-0000-4000-8000-000000000002",
+													"pc-merisiel",
+													"00000000-0000-4000-8000-000000000007",
+													"00000000-0000-4000-8000-000000000004",
+													"00000000-0000-4000-8000-000000000003",
+													"pc-ezren",
+													"00000000-0000-4000-8000-000000000008",
+													"00000000-0000-4000-8000-000000000011",
+													"00000000-0000-4000-8000-000000000012"
+												]
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				}
+			},
+			{
 				"type": "Command.EndTurnCommand",
 				"description": "End Turn Command",
 				"data": {
@@ -1719,9 +1855,9 @@
 							"00000000-0000-4000-8000-000000000012",
 							"00000000-0000-4000-8000-000000000003",
 							"pc-ezren",
-							"00000000-0000-4000-8000-000000000008",
 							"pc-valeros",
-							"00000000-0000-4000-8000-000000000001"
+							"00000000-0000-4000-8000-000000000001",
+							"00000000-0000-4000-8000-000000000008"
 						],
 						"charactersWithTurn": {
 							"type": "Set",
@@ -1736,7 +1872,6 @@
 								"00000000-0000-4000-8000-000000000004",
 								"00000000-0000-4000-8000-000000000003",
 								"pc-ezren",
-								"00000000-0000-4000-8000-000000000008",
 								"00000000-0000-4000-8000-000000000011",
 								"00000000-0000-4000-8000-000000000012"
 							]
