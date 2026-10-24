@@ -22,7 +22,7 @@ type CommandProps = {
 
 export class ReorderCharactersCommand implements Command {
 	readonly type = 'ReorderCharactersCommand';
-	description = 'Reorder charactersOrder order';
+	description = 'Reorder initiative';
 	data: CommandProps;
 	constructor(
 		props: CommandProps,
