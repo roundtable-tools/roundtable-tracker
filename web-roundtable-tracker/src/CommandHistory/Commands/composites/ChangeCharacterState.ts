@@ -55,15 +55,6 @@ export const getChangeCharacterState = (
 			commandDeps
 		),
 	];
-	const moveToEndInInitiative = new ReorderCharactersCommand(
-		{
-			newOrder: deps.charactersOrder
-				.filter((id) => id !== character.uuid)
-				.concat(character.uuid),
-		},
-		commandDeps
-	);
-
 	const additionalCommands: Partial<
 		Record<
 			Character['turnState'],
@@ -88,7 +79,16 @@ export const getChangeCharacterState = (
 			'knocked-out': [getKnockOutCommand(character.uuid, deps, commandDeps)],
 		},
 		'knocked-out': {
-			delayed: [moveToEndInInitiative],
+			delayed: [
+				new ReorderCharactersCommand(
+					{
+						newOrder: deps.charactersOrder
+							.filter((id) => id !== character.uuid)
+							.concat(character.uuid),
+					},
+					commandDeps
+				),
+			],
 		},
 	};
 
