@@ -66,6 +66,9 @@ export function CombatReadyTab({
 								<SelectContent>
 									<SelectItem value="active">Active</SelectItem>
 									<SelectItem value="delayed">Delayed</SelectItem>
+									<SelectItem value="delayed-silent">
+										Delayed (silent)
+									</SelectItem>
 									<SelectItem value="knocked-out">Defeated</SelectItem>
 								</SelectContent>
 							</Select>

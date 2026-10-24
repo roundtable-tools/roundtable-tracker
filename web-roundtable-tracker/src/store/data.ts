@@ -31,6 +31,7 @@ export const characterConfigToCharacter = (
 		maxHealth,
 		tempHealth,
 		turnState: participant.startingState ?? 'normal',
+		silentDelay: participant.silentDelay,
 		group: participant.side === ALIGNMENT.PCs ? 'players' : 'enemies',
 	};
 };
@@ -44,6 +45,13 @@ export interface Character {
 	maxHealth: number;
 	tempHealth: number;
 	tempHealthDescription?: string;
+	/**
+	 * Started the encounter delaying without asking to return: ending a turn
+	 * doesn't open the return prompt for this participant alone. It stops
+	 * mattering once the participant joins the initiative order, so a later
+	 * Delay asks again.
+	 */
+	silentDelay?: boolean;
 	group?: 'players' | 'enemies';
 	level?: number; // Optional level property
 }
@@ -173,6 +181,8 @@ export type CombatantParticipant<
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
 	startingState?: 'normal' | 'delayed' | 'knocked-out';
+	/** With startingState 'delayed': the delay doesn't ask to return on its own. */
+	silentDelay?: boolean;
 	traits?: string[];
 	hiddenFromPlayers?: boolean;
 	initiativeDescription?: string;
@@ -319,6 +329,7 @@ const combatantParticipantSchema = z.object({
 	adjustmentDescription: z.string().optional(),
 	adjustmentLevelModifier: z.number().optional(),
 	startingState: z.enum(['normal', 'delayed', 'knocked-out']).optional(),
+	silentDelay: z.boolean().optional(),
 	traits: z.array(z.string()).optional(),
 	hiddenFromPlayers: z.boolean().optional(),
 	initiativeDescription: z.string().optional(),

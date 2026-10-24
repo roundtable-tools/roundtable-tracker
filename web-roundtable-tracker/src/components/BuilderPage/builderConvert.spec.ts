@@ -237,6 +237,53 @@ describe('combat ready fields round trip', () => {
 		});
 	});
 
+	it('saves a silent delay as a delayed starting state and loads it back', () => {
+		const silentValues: BuilderFormValues = {
+			...values,
+			slots: [
+				slot({ name: 'Lurker', combatReadyState: 'delayed-silent' }),
+				slot({
+					type: 'reinforcement',
+					reinforcementRound: 2,
+					reinforcementParticipants: [
+						{
+							id: 'silent-reinforcement',
+							type: 'creature',
+							name: 'Second phase',
+							side: 'opponent',
+							level: 4,
+							count: 1,
+							successesToDisable: 1,
+							adjustment: 'none',
+							isSimpleHazard: false,
+							combatReadyState: 'delayed-silent',
+						},
+					],
+				}),
+			],
+		};
+		const encounter = toConcreteEncounter(silentValues);
+
+		expect(encounter.participants[0]).toMatchObject({
+			startingState: 'delayed',
+			silentDelay: true,
+		});
+		expect(encounter.narrativeSlots?.[0]?.participants?.[0]).toMatchObject({
+			startingState: 'delayed',
+			silentDelay: true,
+		});
+		expect(toConcreteEncounter(values).participants[1]?.silentDelay).toBe(
+			undefined
+		);
+
+		const loaded = fromConcreteEncounter(encounter);
+
+		expect(loaded.slots[0]?.combatReadyState).toBe('delayed-silent');
+		expect(
+			loaded.slots[1]?.reinforcementParticipants?.[0]?.combatReadyState
+		).toBe('delayed-silent');
+	});
+
 	it('keeps the fields in saved variants', () => {
 		const encounter = toConcreteEncounter({
 			...values,

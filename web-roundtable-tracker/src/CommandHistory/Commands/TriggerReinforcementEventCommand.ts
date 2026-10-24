@@ -122,6 +122,7 @@ const expandSlotParticipants = (
 				name: baseName,
 				initiative,
 				turnState: slotParticipant.startingState ?? 'normal',
+				silentDelay: slotParticipant.silentDelay,
 				health: slotParticipant.health ?? maxHealth,
 				maxHealth,
 				tempHealth: slotParticipant.tempHealth ?? 0,

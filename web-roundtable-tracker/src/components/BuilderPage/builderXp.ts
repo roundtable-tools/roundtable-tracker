@@ -42,10 +42,17 @@ export interface BuilderReinforcementParticipant {
 	adjustmentLevelModifier?: number;
 	isSimpleHazard: boolean;
 	traits?: string[];
-	combatReadyState?: 'active' | 'delayed' | 'knocked-out';
+	combatReadyState?: CombatReadyState;
 	initiativeModifier?: number;
 	hiddenFromPlayers?: boolean;
 }
+
+// 'delayed-silent' starts delayed without asking to return on its own.
+export type CombatReadyState =
+	| 'active'
+	| 'delayed'
+	| 'delayed-silent'
+	| 'knocked-out';
 
 export interface BuilderSlot {
 	id: string;
@@ -71,7 +78,7 @@ export interface BuilderSlot {
 	repeatInterval?: number;
 	accomplishmentLevel?: AccomplishmentLevel;
 	traits?: string[];
-	combatReadyState?: 'active' | 'delayed' | 'knocked-out';
+	combatReadyState?: CombatReadyState;
 	initiativeModifier?: number;
 	hiddenFromPlayers?: boolean;
 }

@@ -1878,6 +1878,9 @@ export function SlotRow({
 																	<SelectItem value="delayed">
 																		Delayed
 																	</SelectItem>
+																	<SelectItem value="delayed-silent">
+																		Delayed (silent)
+																	</SelectItem>
 																	<SelectItem value="knocked-out">
 																		Defeated
 																	</SelectItem>

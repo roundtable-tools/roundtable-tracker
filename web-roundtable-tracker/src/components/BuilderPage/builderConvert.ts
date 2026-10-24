@@ -12,6 +12,7 @@ import {
 	computeBuilderXP,
 	normalizeSideType,
 	type BuilderSlot,
+	type CombatReadyState,
 	type SideType,
 } from './builderXp';
 import { Threat } from '@/models/utility/threat/Threat.class';
@@ -210,7 +211,6 @@ function toSavedTraits(traits: string[] | undefined): string[] | undefined {
 	return traits && traits.length > 0 ? [...traits] : undefined;
 }
 
-type CombatReadyState = NonNullable<BuilderSlot['combatReadyState']>;
 type StartingState = NonNullable<Participant['startingState']>;
 type CombatReadyFields = Pick<
 	BuilderSlot,
@@ -218,23 +218,27 @@ type CombatReadyFields = Pick<
 >;
 type SavedCombatReadyFields = Pick<
 	Participant,
-	'startingState' | 'hiddenFromPlayers' | 'initiativeDescription'
+	| 'startingState'
+	| 'silentDelay'
+	| 'hiddenFromPlayers'
+	| 'initiativeDescription'
 >;
 
 function combatReadyStateToStartingState(
 	state: BuilderSlot['combatReadyState']
 ): StartingState {
-	if (state === 'delayed') return 'delayed';
+	if (state === 'delayed' || state === 'delayed-silent') return 'delayed';
 
 	if (state === 'knocked-out') return 'knocked-out';
 
 	return 'normal';
 }
 
-function startingStateToCombatReadyState(
-	state: Participant['startingState']
-): CombatReadyState {
-	if (state === 'delayed') return 'delayed';
+function startingStateToCombatReadyState({
+	startingState: state,
+	silentDelay,
+}: SavedCombatReadyFields): CombatReadyState {
+	if (state === 'delayed') return silentDelay ? 'delayed-silent' : 'delayed';
 
 	if (state === 'knocked-out') return 'knocked-out';
 
@@ -246,6 +250,7 @@ function toSavedCombatReadyFields(
 ): SavedCombatReadyFields {
 	return {
 		startingState: combatReadyStateToStartingState(source.combatReadyState),
+		silentDelay: source.combatReadyState === 'delayed-silent' || undefined,
 		hiddenFromPlayers: source.hiddenFromPlayers || undefined,
 		initiativeDescription: source.initiativeDescription || undefined,
 	};
@@ -255,9 +260,7 @@ function fromSavedCombatReadyFields(
 	participant: SavedCombatReadyFields
 ): CombatReadyFields {
 	return {
-		combatReadyState: startingStateToCombatReadyState(
-			participant.startingState
-		),
+		combatReadyState: startingStateToCombatReadyState(participant),
 		hiddenFromPlayers: participant.hiddenFromPlayers ?? false,
 		initiativeDescription: participant.initiativeDescription,
 	};
