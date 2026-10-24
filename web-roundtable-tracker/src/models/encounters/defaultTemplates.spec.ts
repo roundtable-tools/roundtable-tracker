@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import encounterTemplates from '@/models/encounters/defaultTemplates';
-import { EncounterTemplateDataSchema } from '@/models/encounters/encounter.schemas';
+import encounterTemplates from './defaultTemplates';
+import { EncounterTemplateDataSchema } from './encounter.schemas';
 
-describe('migratedEncounterTemplates', () => {
+describe('defaultTemplates', () => {
 	it('exports schema-valid template data', () => {
 		expect(encounterTemplates.length).toBeGreaterThan(0);
 

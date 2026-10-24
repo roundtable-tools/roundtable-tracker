@@ -28,7 +28,7 @@ import {
 } from '@tanstack/react-table';
 import { Filter, Plus, Search, Upload, UserRound, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import migratedEncounterTemplates from '../../store/Encounters/migratedEncounterTemplates.ts';
+import defaultTemplates from '@/models/encounters/defaultTemplates';
 import {
 	DIFFICULTY,
 	Encounter,
@@ -149,7 +149,7 @@ export const EncounterDirectory = () => {
 	const data = useMemo(
 		() =>
 			createDirectoryEntries(
-				migratedEncounterTemplates,
+				defaultTemplates,
 				savedEncounters,
 				showTemplates,
 				groupByVariant
