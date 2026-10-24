@@ -1459,6 +1459,8 @@ export function InitiativeTrackerPage() {
 	// A delayer is listed twice in allParticipants (the order and the Delaying
 	// tab), so each id takes only its first match.
 	const takeOutCandidates = useMemo(() => {
+		if (takeOutPromptIds.length === 0) return [];
+
 		const byId = new Map<string, TrackerParticipant>();
 
 		for (const participant of allParticipants) {
