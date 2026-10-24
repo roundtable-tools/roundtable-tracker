@@ -145,4 +145,26 @@ describe('disabling a hazard in the turn order', () => {
 		expect(state.charactersMap[SNEAK].turnState).toBe('delayed');
 		expect(state.charactersMap[TRAP].turnState).toBe('knocked-out');
 	});
+
+	it('leaves a simple hazard out of the order when it is disabled', () => {
+		store.setState({
+			trackerMetaMap: {
+				...store.getState().trackerMetaMap,
+				[TRAP]: { ...meta('hazard'), isSimpleHazard: true },
+			},
+			charactersOrder: [HERO, GOBLIN],
+			charactersWithTurn: new Set([HERO, GOBLIN]),
+		});
+
+		const { command, status } = disable(TRAP);
+		const state = store.getState();
+
+		expect(status).toBe(STATUS.success);
+		expect(state.charactersMap[TRAP].turnState).toBe('knocked-out');
+		expect(state.charactersOrder).toEqual([HERO, GOBLIN]);
+
+		expect(command.undo()).toBe(STATUS.success);
+		expect(store.getState().charactersMap[TRAP].turnState).toBe('normal');
+		expect(store.getState().charactersOrder).toEqual([HERO, GOBLIN]);
+	});
 });

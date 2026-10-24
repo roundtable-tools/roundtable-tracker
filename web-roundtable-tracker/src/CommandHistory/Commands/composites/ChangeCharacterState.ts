@@ -14,28 +14,34 @@ export const canBeDelayed = (
 	return charactersWithTurn.has(character.uuid);
 };
 
-const getKnockOutCommand = (
-	characterId: string,
+// Moves the character to the end of the initiative order. A character outside
+// the order (a simple hazard) stays out of it, so there is nothing to run.
+const getMoveToEndCommands = (
+	characterId: UUID,
+	charactersOrder: UUID[],
+	commandDeps?: CommandDeps
+): Command[] =>
+	charactersOrder.includes(characterId)
+		? [
+				new ReorderCharactersCommand(
+					{
+						newOrder: charactersOrder
+							.filter((id) => id !== characterId)
+							.concat(characterId),
+					},
+					commandDeps
+				),
+			]
+		: [];
+
+const getKnockOutCommands = (
+	characterId: UUID,
 	deps: { charactersWithTurn: Set<UUID>; charactersOrder: UUID[] },
 	commandDeps?: CommandDeps
-) => {
-	const { charactersWithTurn, charactersOrder } = deps;
-
-	const moveToEnd = (value: UUID) => {
-		return charactersOrder.filter((id) => id !== value).concat(value);
-	};
-
-	const hasTurn = charactersWithTurn.has(characterId);
-
-	if (hasTurn) {
-		return new EndTurnCommand({ uuid: characterId }, commandDeps);
-	} else {
-		return new ReorderCharactersCommand(
-			{ newOrder: moveToEnd(characterId) },
-			commandDeps
-		);
-	}
-};
+): Command[] =>
+	deps.charactersWithTurn.has(characterId)
+		? [new EndTurnCommand({ uuid: characterId }, commandDeps)]
+		: getMoveToEndCommands(characterId, deps.charactersOrder, commandDeps);
 
 export const getChangeCharacterState = (
 	character: Character,
@@ -62,7 +68,7 @@ export const getChangeCharacterState = (
 		>
 	> = {
 		normal: {
-			'knocked-out': [getKnockOutCommand(character.uuid, deps, commandDeps)],
+			'knocked-out': getKnockOutCommands(character.uuid, deps, commandDeps),
 			delayed: [new EndTurnCommand({ uuid: character.uuid }, commandDeps)],
 		},
 		delayed: {
@@ -76,19 +82,14 @@ export const getChangeCharacterState = (
 					commandDeps
 				),
 			],
-			'knocked-out': [getKnockOutCommand(character.uuid, deps, commandDeps)],
+			'knocked-out': getKnockOutCommands(character.uuid, deps, commandDeps),
 		},
 		'knocked-out': {
-			delayed: [
-				new ReorderCharactersCommand(
-					{
-						newOrder: deps.charactersOrder
-							.filter((id) => id !== character.uuid)
-							.concat(character.uuid),
-					},
-					commandDeps
-				),
-			],
+			delayed: getMoveToEndCommands(
+				character.uuid,
+				deps.charactersOrder,
+				commandDeps
+			),
 		},
 	};
 
