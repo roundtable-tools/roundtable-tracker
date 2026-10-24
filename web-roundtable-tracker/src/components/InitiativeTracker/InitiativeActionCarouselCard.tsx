@@ -25,7 +25,7 @@ import {
 } from '@/store/trackerMappers';
 import {
 	TAKE_OUT_EFFECT_SHORT_LABEL,
-	TAKE_OUT_EFFECT_TEXT,
+	getTakeOutTitle,
 	type TakeOutEffect,
 } from './takeOut';
 
@@ -157,7 +157,7 @@ export function InitiativeActionCarouselCard({
 	const TakeOutIcon = isHazard ? PowerOff : Ban;
 	const RemoveIcon = isHazard ? Hammer : Skull;
 	const koSideTitle = (effect?: TakeOutEffect) =>
-		`${koSideLabel} ${participant.name}${effect ? `: ${TAKE_OUT_EFFECT_TEXT[effect]}` : ''}`;
+		getTakeOutTitle(koSideLabel, participant.name, effect);
 	const swipeFlashTimeoutRef = useRef<number | null>(null);
 	const actionTriggerTimeoutRef = useRef<number | null>(null);
 	const swipeStateRef = useRef({
@@ -472,7 +472,7 @@ export function InitiativeActionCarouselCard({
 								)}
 								{showKoLabel ? (
 									<span className="pointer-events-none absolute bottom-[calc(100%+0.25rem)] max-h-0 overflow-hidden whitespace-nowrap text-[10px] uppercase tracking-[0.16em] opacity-0 transition-all duration-200 group-hover/action:max-h-6 group-hover/action:opacity-100">
-										{isKnockedOut ? names.remove : isHazard ? 'Disable' : 'KO'}
+										{isKnockedOut ? names.remove : names.takeOutShort}
 									</span>
 								) : null}
 							</button>

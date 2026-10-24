@@ -411,12 +411,14 @@ export function getOutOfFightNames(
 	return participant.role === 'hazard'
 		? {
 				takeOut: 'Disable',
+				takeOutShort: 'Disable',
 				remove: 'Destroy',
 				outState: 'Disabled',
 				removedState: 'Destroyed',
 			}
 		: {
 				takeOut: 'Knock Out',
+				takeOutShort: 'K.O.',
 				remove: 'Slay',
 				outState: 'Knocked Out',
 				removedState: 'Slain',
@@ -469,7 +471,7 @@ const toPlayerHealth = (
 	};
 };
 
-const HAZARD_DISABLE_CHECK_NAMES = [
+const DISABLE_CHECK_NAMES = [
 	'Disrupted',
 	'Compromised',
 	'Fracturing',
@@ -477,42 +479,42 @@ const HAZARD_DISABLE_CHECK_NAMES = [
 	'Disabled',
 ] as const;
 
-function getHazardDisableStageNames(requiredChecks: number) {
+function getDisableStageNames(requiredChecks: number) {
 	const clampedRequiredChecks = Math.min(Math.max(requiredChecks, 1), 5);
 
 	if (clampedRequiredChecks === 5) {
-		return [...HAZARD_DISABLE_CHECK_NAMES];
+		return [...DISABLE_CHECK_NAMES];
 	}
 
 	if (clampedRequiredChecks === 4) {
 		return [
-			HAZARD_DISABLE_CHECK_NAMES[0],
-			HAZARD_DISABLE_CHECK_NAMES[1],
-			HAZARD_DISABLE_CHECK_NAMES[3],
-			HAZARD_DISABLE_CHECK_NAMES[4],
+			DISABLE_CHECK_NAMES[0],
+			DISABLE_CHECK_NAMES[1],
+			DISABLE_CHECK_NAMES[3],
+			DISABLE_CHECK_NAMES[4],
 		];
 	}
 
 	if (clampedRequiredChecks === 3) {
 		return [
-			HAZARD_DISABLE_CHECK_NAMES[0],
-			HAZARD_DISABLE_CHECK_NAMES[2],
-			HAZARD_DISABLE_CHECK_NAMES[4],
+			DISABLE_CHECK_NAMES[0],
+			DISABLE_CHECK_NAMES[2],
+			DISABLE_CHECK_NAMES[4],
 		];
 	}
 
 	if (clampedRequiredChecks === 2) {
-		return [HAZARD_DISABLE_CHECK_NAMES[0], HAZARD_DISABLE_CHECK_NAMES[4]];
+		return [DISABLE_CHECK_NAMES[0], DISABLE_CHECK_NAMES[4]];
 	}
 
-	return [HAZARD_DISABLE_CHECK_NAMES[4]];
+	return [DISABLE_CHECK_NAMES[4]];
 }
 
 /**
- * The tracker's label for a hazard's disable checks: Stable before the first
- * success, then one stage name per success, ending at Disabled.
+ * The tracker's label for disable checks: Stable before the first success,
+ * then one stage name per success, ending at Disabled.
  */
-export function getHazardDisableLabel(
+export function getDisableProgressLabel(
 	participant: Pick<
 		TrackerParticipant,
 		'disableChecksRequired' | 'disableChecksSucceeded'
@@ -525,12 +527,23 @@ export function getHazardDisableLabel(
 		return 'Stable';
 	}
 
-	const stageNames = getHazardDisableStageNames(requiredChecks);
+	const stageNames = getDisableStageNames(requiredChecks);
 	const stageIndex =
 		Math.min(Math.max(successfulChecks, 1), requiredChecks) - 1;
 
 	return stageNames[Math.min(stageIndex, stageNames.length - 1)] ?? 'Disabled';
 }
+
+const hasHpData = (
+	participant: Pick<TrackerParticipant, 'currentHp' | 'maxHp'>
+) =>
+	typeof participant.currentHp === 'number' &&
+	typeof participant.maxHp === 'number';
+
+/** Whether the participant needs disable checks (Disable a Device). */
+export const hasDisableChecks = (
+	participant: Pick<TrackerParticipant, 'disableChecksRequired'>
+) => (participant.disableChecksRequired ?? 0) > 0;
 
 /** Whether a participant with both HP and disable checks has both bars. */
 export function hasHpAndDisableProgress(
@@ -539,11 +552,7 @@ export function hasHpAndDisableProgress(
 		'currentHp' | 'maxHp' | 'disableChecksRequired'
 	>
 ) {
-	return (
-		typeof participant.currentHp === 'number' &&
-		typeof participant.maxHp === 'number' &&
-		(participant.disableChecksRequired ?? 0) > 0
-	);
+	return hasHpData(participant) && hasDisableChecks(participant);
 }
 
 /**
@@ -558,19 +567,17 @@ export function showsDisableProgress(
 		'role' | 'currentHp' | 'maxHp' | 'disableChecksRequired' | 'shownProgress'
 	>
 ) {
-	const hasChecks = (participant.disableChecksRequired ?? 0) > 0;
-	const hasHp =
-		typeof participant.currentHp === 'number' &&
-		typeof participant.maxHp === 'number';
-
-	if (hasChecks && hasHp) {
+	if (hasHpAndDisableProgress(participant)) {
 		return (
 			(participant.shownProgress ??
 				(participant.role === 'hazard' ? 'disable' : 'hp')) === 'disable'
 		);
 	}
 
-	return hasChecks || (participant.role === 'hazard' && !hasHp);
+	return (
+		hasDisableChecks(participant) ||
+		(participant.role === 'hazard' && !hasHpData(participant))
+	);
 }
 
 /** Disable checks as players see them, with the tracker's label. */
@@ -588,7 +595,7 @@ const toPlayerDisableProgress = (
 		required
 	);
 
-	return { succeeded, required, label: getHazardDisableLabel(participant) };
+	return { succeeded, required, label: getDisableProgressLabel(participant) };
 };
 
 export function runtimeToPlayerInitiativeQueue(

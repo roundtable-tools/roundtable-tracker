@@ -6,6 +6,7 @@ import {
 	type EncounterStore,
 	hasFullDisableChecks,
 } from '@/store/encounterRuntimeStore';
+import { hasDisableChecks } from '@/store/trackerMappers';
 import { type UUID } from '@/utils/uuid';
 
 /**
@@ -19,6 +20,13 @@ export const TAKE_OUT_EFFECT_TEXT: Record<TakeOutEffect, string> = {
 	hp: 'sets HP to 0',
 	checks: 'fills the disable checks',
 };
+
+/** The title of a K.O. / Disable (or Slay / Destroy) button. */
+export const getTakeOutTitle = (
+	action: string,
+	name: string,
+	effect?: TakeOutEffect
+) => `${action} ${name}${effect ? `: ${TAKE_OUT_EFFECT_TEXT[effect]}` : ''}`;
 
 export const TAKE_OUT_EFFECT_SHORT_LABEL: Record<TakeOutEffect, string> = {
 	hp: '0 HP',
@@ -40,7 +48,7 @@ export function getTakeOutEffects(
 
 	if (meta?.hasHealthData !== false) effects.push('hp');
 
-	if ((meta?.disableChecksRequired ?? 0) > 0) effects.push('checks');
+	if (meta && hasDisableChecks(meta)) effects.push('checks');
 
 	return effects;
 }

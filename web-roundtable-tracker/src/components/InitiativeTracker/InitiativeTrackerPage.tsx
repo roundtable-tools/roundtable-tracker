@@ -59,7 +59,7 @@ import {
 	healingLeavesZeroHp,
 	inOneUndoStep,
 	TAKE_OUT_EFFECT_SHORT_LABEL,
-	TAKE_OUT_EFFECT_TEXT,
+	getTakeOutTitle,
 	type TakeOutEffect,
 } from './takeOut';
 import { ResumeTimerNotice } from './ResumeTimerNotice';
@@ -85,7 +85,8 @@ import {
 	narrativeSlotsToTimeline,
 	encounterToTrackerHeader,
 	historyToPreviewLines,
-	getHazardDisableLabel,
+	getDisableProgressLabel,
+	hasDisableChecks,
 	getHealthLabelFromPercentage,
 	getOutOfFightNames,
 	getParticipantStateLabel,
@@ -111,10 +112,6 @@ import { Input } from '@/components/ui/input';
 import { type SwipeAction } from './InitiativeActionCarouselCard';
 import { type Command } from '@/CommandHistory/common';
 
-function hasDisableCount(participant: TrackerParticipant) {
-	return (participant.disableChecksRequired ?? 0) > 0;
-}
-
 type DisableChange = { delta: number } | { value: number };
 
 function DisableQuickActions({
@@ -124,7 +121,7 @@ function DisableQuickActions({
 	participant: TrackerParticipant;
 	onRecord: (participantId: string, change: DisableChange) => void;
 }) {
-	if (!hasDisableCount(participant)) {
+	if (!hasDisableChecks(participant)) {
 		return null;
 	}
 
@@ -216,8 +213,6 @@ function OutOfFightRowActions({
 		);
 	}
 
-	const shortName = participant.role === 'hazard' ? 'Disable' : 'K.O.';
-
 	return (effects.length > 0 ? effects : [undefined]).map((effect) => (
 		<Button
 			key={effect ?? 'none'}
@@ -225,10 +220,10 @@ function OutOfFightRowActions({
 			size="sm"
 			variant="destructive"
 			className="h-7 px-2 text-xs"
-			title={`${names.takeOut} ${participant.name}${effect ? `: ${TAKE_OUT_EFFECT_TEXT[effect]}` : ''}`}
+			title={getTakeOutTitle(names.takeOut, participant.name, effect)}
 			onClick={act('ko', effect)}
 		>
-			{shortName}
+			{names.takeOutShort}
 			{effect && ` (${TAKE_OUT_EFFECT_SHORT_LABEL[effect]})`}
 		</Button>
 	));
@@ -236,7 +231,7 @@ function OutOfFightRowActions({
 
 function getParticipantIndicatorLabel(participant: TrackerParticipant) {
 	if (showsDisableProgress(participant)) {
-		return getHazardDisableLabel(participant);
+		return getDisableProgressLabel(participant);
 	}
 
 	if (
@@ -534,10 +529,11 @@ function ParticipantDetails({
 					</Button>
 				</div>
 			)}
-			{(isHazard || hasDisableCount(participant)) && (
+			{(isHazard || hasDisableChecks(participant)) && (
 				<p className="inline-flex items-center gap-1 text-sm text-muted-foreground">
-					<ShieldOff className="h-4 w-4" /> {getHazardDisableLabel(participant)}
-					{hasDisableCount(participant) && (
+					<ShieldOff className="h-4 w-4" />{' '}
+					{getDisableProgressLabel(participant)}
+					{hasDisableChecks(participant) && (
 						<span className="ml-1">
 							({participant.disableChecksSucceeded ?? 0} /{' '}
 							{participant.disableChecksRequired} successes)
@@ -545,7 +541,7 @@ function ParticipantDetails({
 					)}
 				</p>
 			)}
-			{onRecordDisableProgress && hasDisableCount(participant) && (
+			{onRecordDisableProgress && hasDisableChecks(participant) && (
 				<div className="space-y-2 rounded-md border p-3">
 					<h4 className="text-sm font-medium">Disable a Device</h4>
 					<div className="flex gap-2">
