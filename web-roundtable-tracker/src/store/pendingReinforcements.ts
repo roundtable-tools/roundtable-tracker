@@ -250,3 +250,14 @@ export function placePendingReinforcements(
 
 	return { charactersOrder, charactersWithTurn };
 }
+
+/**
+ * The order with each pending reinforcement at the spot it would take if its
+ * slot triggered now, for showing where the arrivals will come in.
+ */
+export function orderWithPendingSpots(
+	state: Parameters<typeof placePendingReinforcements>[0],
+	pending: PendingReinforcement[]
+): UUID[] {
+	return placePendingReinforcements(state, pending).charactersOrder;
+}

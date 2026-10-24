@@ -26,6 +26,7 @@ import {
 import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import { getEncounterStore } from '@/store/encounterRuntimeInstance';
 import {
+	buildPendingReinforcements,
 	buildTrackerMetaMap,
 	participantsToEncounterCharacters,
 } from '@/store/convert';
@@ -36,7 +37,10 @@ import { pauseTimer } from '@/store/encounterTimer';
 import { ChangeHealthCommand } from '@/CommandHistory/Commands/ChangeHealthCommand';
 import { SetTempHealthCommand } from '@/CommandHistory/Commands/SetTempHealthCommand';
 import { TriggerReinforcementEventCommand } from '@/CommandHistory/Commands/TriggerReinforcementEventCommand';
-import { generateParticipants } from '@/components/PreviewDisplay/generateParticipants';
+import {
+	generateParticipants,
+	generateReinforcements,
+} from '@/components/PreviewDisplay/generateParticipants';
 import {
 	generatePartyFromData,
 	toPreviewCharacter,
@@ -235,7 +239,10 @@ const encounter: Encounter = {
 			id: 'town-guard',
 			type: 'reinforcement',
 			description: 'The town guard comes to see what the noise is.',
-			trigger: { round: 3 },
+			// No round: the GM brings them in once the fight is loud enough.
+			// Players may see them coming.
+			trigger: {},
+			visibleBeforeTrigger: true,
 			participants: [
 				{
 					type: 'creature',
@@ -265,6 +272,10 @@ const INITIATIVES: Record<string, number> = {
 	'Goblin Archer B': 10,
 	Ezren: 8,
 	'Rope Snare': 5,
+	// Reinforcements, set in the preview too
+	'Goblin Warrior A': 11,
+	'Goblin Warrior B': 11,
+	'Town Guard': 9,
 };
 
 /** Starts the encounter as Preview → Start → Initiative Tracker does. */
@@ -274,17 +285,30 @@ const startFromPreview = (store: EncounterStoreApi) => {
 		generatePartyFromData(party),
 		...generateParticipants(encounter, partyLevel),
 	];
+	const reinforcementTeams = generateReinforcements(encounter, partyLevel, [
+		...party.members.map(({ name }) => name),
+		...teams.flat().map(({ name }) => name),
+	]);
+	// The preview form holds these rows as PreviewCharacterConfig.
+	const toPrepared = (participant: PreviewCharacterConfig) =>
+		toStartingParticipant({
+			...participant,
+			initiative: INITIATIVES[participant.name] ?? participant.initiative,
+		});
 	const prepared = teams
 		.flat()
-		.map(toPreviewCharacter)
-		// The preview form holds these rows as PreviewCharacterConfig.
-		.map(
-			(participant): PreviewCharacterConfig => ({
-				...(participant as PreviewCharacterConfig),
-				initiative: INITIATIVES[participant.name] ?? participant.initiative,
-			})
-		)
-		.map(toStartingParticipant);
+		.map((participant) =>
+			toPrepared(toPreviewCharacter(participant) as PreviewCharacterConfig)
+		);
+	const reinforcements = reinforcementTeams.flatMap(({ slot, participants }) =>
+		participants.map((participant) => ({
+			...toPrepared({
+				...(toPreviewCharacter(participant) as PreviewCharacterConfig),
+				reinforcementSlotId: slot.id,
+			}),
+			reinforcementSlotId: slot.id,
+		}))
+	);
 
 	store.getState().setEncounterData(encounter);
 	store.getState().setPartyLevel(partyLevel);
@@ -292,7 +316,12 @@ const startFromPreview = (store: EncounterStoreApi) => {
 		.getState()
 		.startEncounter(
 			participantsToEncounterCharacters(prepared),
-			buildTrackerMetaMap(prepared)
+			buildTrackerMetaMap(prepared),
+			buildPendingReinforcements(
+				prepared,
+				reinforcements,
+				encounter.narrativeSlots
+			)
 		);
 };
 

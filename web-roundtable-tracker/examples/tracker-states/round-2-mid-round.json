@@ -145,22 +145,22 @@
 			"00000000-0000-4000-8000-000000000011": {
 				"uuid": "00000000-0000-4000-8000-000000000011",
 				"name": "Goblin Warrior A",
-				"initiative": 16,
-				"turnState": "normal",
+				"initiative": 11,
 				"health": 15,
 				"maxHealth": 15,
 				"tempHealth": 0,
+				"turnState": "normal",
 				"group": "enemies",
 				"level": 2
 			},
 			"00000000-0000-4000-8000-000000000012": {
 				"uuid": "00000000-0000-4000-8000-000000000012",
 				"name": "Goblin Warrior B",
-				"initiative": 16,
-				"turnState": "normal",
+				"initiative": 11,
 				"health": 15,
 				"maxHealth": 15,
 				"tempHealth": 0,
+				"turnState": "normal",
 				"group": "enemies",
 				"level": 2
 			}
@@ -170,11 +170,11 @@
 			"00000000-0000-4000-8000-000000000002",
 			"00000000-0000-4000-8000-000000000005",
 			"00000000-0000-4000-8000-000000000010",
-			"00000000-0000-4000-8000-000000000011",
-			"00000000-0000-4000-8000-000000000012",
 			"pc-merisiel",
 			"00000000-0000-4000-8000-000000000007",
 			"00000000-0000-4000-8000-000000000004",
+			"00000000-0000-4000-8000-000000000011",
+			"00000000-0000-4000-8000-000000000012",
 			"00000000-0000-4000-8000-000000000003",
 			"pc-ezren",
 			"00000000-0000-4000-8000-000000000008",
@@ -347,6 +347,7 @@
 			"00000000-0000-4000-8000-000000000011": {
 				"role": "reinforcement",
 				"sideTheme": "opponent",
+				"hasHealthData": true,
 				"isSimpleHazard": false,
 				"disableChecksRequired": 0,
 				"disableChecksSucceeded": 0,
@@ -358,6 +359,7 @@
 			"00000000-0000-4000-8000-000000000012": {
 				"role": "reinforcement",
 				"sideTheme": "opponent",
+				"hasHealthData": true,
 				"isSimpleHazard": false,
 				"disableChecksRequired": 0,
 				"disableChecksSucceeded": 0,
@@ -367,7 +369,35 @@
 				"reinforcementSlotId": "goblin-reinforcements"
 			}
 		},
-		"pendingReinforcements": [],
+		"pendingReinforcements": [
+			{
+				"slotId": "town-guard",
+				"character": {
+					"uuid": "00000000-0000-4000-8000-000000000013",
+					"name": "Town Guard",
+					"initiative": 9,
+					"health": 40,
+					"maxHealth": 40,
+					"tempHealth": 0,
+					"turnState": "normal",
+					"group": "enemies",
+					"level": 3
+				},
+				"meta": {
+					"role": "reinforcement",
+					"sideTheme": "other",
+					"hasHealthData": true,
+					"isSimpleHazard": false,
+					"disableChecksRequired": 0,
+					"disableChecksSucceeded": 0,
+					"notes": "The town guard comes to see what the noise is.",
+					"initiativeBonus": 7,
+					"reinforcementSlotId": "town-guard"
+				},
+				"above": "00000000-0000-4000-8000-000000000003",
+				"below": "pc-ezren"
+			}
+		],
 		"round": 2,
 		"charactersWithTurn": {
 			"type": "Set",
@@ -1115,17 +1145,18 @@
 							"character": {
 								"uuid": "00000000-0000-4000-8000-000000000011",
 								"name": "Goblin Warrior A",
-								"initiative": 16,
-								"turnState": "normal",
+								"initiative": 11,
 								"health": 15,
 								"maxHealth": 15,
 								"tempHealth": 0,
+								"turnState": "normal",
 								"group": "enemies",
 								"level": 2
 							},
 							"meta": {
 								"role": "reinforcement",
 								"sideTheme": "opponent",
+								"hasHealthData": true,
 								"isSimpleHazard": false,
 								"disableChecksRequired": 0,
 								"disableChecksSucceeded": 0,
@@ -1139,17 +1170,18 @@
 							"character": {
 								"uuid": "00000000-0000-4000-8000-000000000012",
 								"name": "Goblin Warrior B",
-								"initiative": 16,
-								"turnState": "normal",
+								"initiative": 11,
 								"health": 15,
 								"maxHealth": 15,
 								"tempHealth": 0,
+								"turnState": "normal",
 								"group": "enemies",
 								"level": 2
 							},
 							"meta": {
 								"role": "reinforcement",
 								"sideTheme": "opponent",
+								"hasHealthData": true,
 								"isSimpleHazard": false,
 								"disableChecksRequired": 0,
 								"disableChecksSucceeded": 0,
@@ -1500,7 +1532,91 @@
 								"dcs": [{ "name": "Survival", "value": 17 }]
 							}
 						},
-						"pendingReinforcements": []
+						"pendingReinforcements": [
+							{
+								"slotId": "goblin-reinforcements",
+								"character": {
+									"uuid": "00000000-0000-4000-8000-000000000011",
+									"name": "Goblin Warrior A",
+									"initiative": 11,
+									"health": 15,
+									"maxHealth": 15,
+									"tempHealth": 0,
+									"turnState": "normal",
+									"group": "enemies",
+									"level": 2
+								},
+								"meta": {
+									"role": "reinforcement",
+									"sideTheme": "opponent",
+									"hasHealthData": true,
+									"isSimpleHazard": false,
+									"disableChecksRequired": 0,
+									"disableChecksSucceeded": 0,
+									"notes": "More goblins climb up from the gorge.",
+									"initiativeBonus": 5,
+									"traits": ["Goblin"],
+									"reinforcementSlotId": "goblin-reinforcements"
+								},
+								"above": "00000000-0000-4000-8000-000000000004",
+								"below": "00000000-0000-4000-8000-000000000003"
+							},
+							{
+								"slotId": "goblin-reinforcements",
+								"character": {
+									"uuid": "00000000-0000-4000-8000-000000000012",
+									"name": "Goblin Warrior B",
+									"initiative": 11,
+									"health": 15,
+									"maxHealth": 15,
+									"tempHealth": 0,
+									"turnState": "normal",
+									"group": "enemies",
+									"level": 2
+								},
+								"meta": {
+									"role": "reinforcement",
+									"sideTheme": "opponent",
+									"hasHealthData": true,
+									"isSimpleHazard": false,
+									"disableChecksRequired": 0,
+									"disableChecksSucceeded": 0,
+									"notes": "More goblins climb up from the gorge.",
+									"initiativeBonus": 5,
+									"traits": ["Goblin"],
+									"reinforcementSlotId": "goblin-reinforcements"
+								},
+								"above": "00000000-0000-4000-8000-000000000004",
+								"below": "00000000-0000-4000-8000-000000000003"
+							},
+							{
+								"slotId": "town-guard",
+								"character": {
+									"uuid": "00000000-0000-4000-8000-000000000013",
+									"name": "Town Guard",
+									"initiative": 9,
+									"health": 40,
+									"maxHealth": 40,
+									"tempHealth": 0,
+									"turnState": "normal",
+									"group": "enemies",
+									"level": 3
+								},
+								"meta": {
+									"role": "reinforcement",
+									"sideTheme": "other",
+									"hasHealthData": true,
+									"isSimpleHazard": false,
+									"disableChecksRequired": 0,
+									"disableChecksSucceeded": 0,
+									"notes": "The town guard comes to see what the noise is.",
+									"initiativeBonus": 7,
+									"reinforcementSlotId": "town-guard"
+								},
+								"above": "00000000-0000-4000-8000-000000000003",
+								"below": "pc-ezren"
+							}
+						]
 					}
 				}
 			},
@@ -1536,11 +1652,11 @@
 							"00000000-0000-4000-8000-000000000002",
 							"00000000-0000-4000-8000-000000000005",
 							"00000000-0000-4000-8000-000000000010",
-							"00000000-0000-4000-8000-000000000011",
-							"00000000-0000-4000-8000-000000000012",
 							"pc-merisiel",
 							"00000000-0000-4000-8000-000000000007",
 							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000011",
+							"00000000-0000-4000-8000-000000000012",
 							"00000000-0000-4000-8000-000000000003",
 							"pc-ezren",
 							"00000000-0000-4000-8000-000000000008"
@@ -1581,11 +1697,11 @@
 							"00000000-0000-4000-8000-000000000002",
 							"00000000-0000-4000-8000-000000000005",
 							"00000000-0000-4000-8000-000000000010",
-							"00000000-0000-4000-8000-000000000011",
-							"00000000-0000-4000-8000-000000000012",
 							"pc-merisiel",
 							"00000000-0000-4000-8000-000000000007",
 							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000011",
+							"00000000-0000-4000-8000-000000000012",
 							"00000000-0000-4000-8000-000000000003",
 							"pc-ezren",
 							"00000000-0000-4000-8000-000000000008",
@@ -1625,11 +1741,11 @@
 							"00000000-0000-4000-8000-000000000002",
 							"00000000-0000-4000-8000-000000000005",
 							"00000000-0000-4000-8000-000000000010",
-							"00000000-0000-4000-8000-000000000011",
-							"00000000-0000-4000-8000-000000000012",
 							"pc-merisiel",
 							"00000000-0000-4000-8000-000000000007",
 							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000011",
+							"00000000-0000-4000-8000-000000000012",
 							"00000000-0000-4000-8000-000000000003",
 							"pc-ezren",
 							"00000000-0000-4000-8000-000000000008",
@@ -1797,7 +1913,8 @@
 					"id": "town-guard",
 					"type": "reinforcement",
 					"description": "The town guard comes to see what the noise is.",
-					"trigger": { "round": 3 },
+					"trigger": {},
+					"visibleBeforeTrigger": true,
 					"participants": [
 						{
 							"type": "creature",

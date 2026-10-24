@@ -317,7 +317,91 @@
 				"dcs": [{ "name": "Survival", "value": 17 }]
 			}
 		},
-		"pendingReinforcements": [],
+		"pendingReinforcements": [
+			{
+				"slotId": "goblin-reinforcements",
+				"character": {
+					"uuid": "00000000-0000-4000-8000-000000000011",
+					"name": "Goblin Warrior A",
+					"initiative": 11,
+					"health": 15,
+					"maxHealth": 15,
+					"tempHealth": 0,
+					"turnState": "normal",
+					"group": "enemies",
+					"level": 2
+				},
+				"meta": {
+					"role": "reinforcement",
+					"sideTheme": "opponent",
+					"hasHealthData": true,
+					"isSimpleHazard": false,
+					"disableChecksRequired": 0,
+					"disableChecksSucceeded": 0,
+					"notes": "More goblins climb up from the gorge.",
+					"initiativeBonus": 5,
+					"traits": ["Goblin"],
+					"reinforcementSlotId": "goblin-reinforcements"
+				},
+				"above": "00000000-0000-4000-8000-000000000004",
+				"below": "00000000-0000-4000-8000-000000000003"
+			},
+			{
+				"slotId": "goblin-reinforcements",
+				"character": {
+					"uuid": "00000000-0000-4000-8000-000000000012",
+					"name": "Goblin Warrior B",
+					"initiative": 11,
+					"health": 15,
+					"maxHealth": 15,
+					"tempHealth": 0,
+					"turnState": "normal",
+					"group": "enemies",
+					"level": 2
+				},
+				"meta": {
+					"role": "reinforcement",
+					"sideTheme": "opponent",
+					"hasHealthData": true,
+					"isSimpleHazard": false,
+					"disableChecksRequired": 0,
+					"disableChecksSucceeded": 0,
+					"notes": "More goblins climb up from the gorge.",
+					"initiativeBonus": 5,
+					"traits": ["Goblin"],
+					"reinforcementSlotId": "goblin-reinforcements"
+				},
+				"above": "00000000-0000-4000-8000-000000000004",
+				"below": "00000000-0000-4000-8000-000000000003"
+			},
+			{
+				"slotId": "town-guard",
+				"character": {
+					"uuid": "00000000-0000-4000-8000-000000000013",
+					"name": "Town Guard",
+					"initiative": 9,
+					"health": 40,
+					"maxHealth": 40,
+					"tempHealth": 0,
+					"turnState": "normal",
+					"group": "enemies",
+					"level": 3
+				},
+				"meta": {
+					"role": "reinforcement",
+					"sideTheme": "other",
+					"hasHealthData": true,
+					"isSimpleHazard": false,
+					"disableChecksRequired": 0,
+					"disableChecksSucceeded": 0,
+					"notes": "The town guard comes to see what the noise is.",
+					"initiativeBonus": 7,
+					"reinforcementSlotId": "town-guard"
+				},
+				"above": "00000000-0000-4000-8000-000000000003",
+				"below": "pc-ezren"
+			}
+		],
 		"round": 1,
 		"charactersWithTurn": {
 			"type": "Set",
@@ -477,7 +561,8 @@
 					"id": "town-guard",
 					"type": "reinforcement",
 					"description": "The town guard comes to see what the noise is.",
-					"trigger": { "round": 3 },
+					"trigger": {},
+					"visibleBeforeTrigger": true,
 					"participants": [
 						{
 							"type": "creature",

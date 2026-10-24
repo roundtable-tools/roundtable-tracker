@@ -55,10 +55,10 @@ Tracker actions (end turn, delay, knock out, change health, reorder, trigger rei
 
 `examples/tracker-states/` holds saved tracker states for checking the tracker and the player view by hand. Each file is a persisted `encounter-store`:
 
-| File                     | State                                                                                                                                                                                                                      |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `round-1-start.json`     | Round 1, nobody has acted. PCs (one without HP data), elite and weak opponents, two hidden until their first turn, a neutral creature, three complex hazards and a simple one                                              |
-| `round-2-mid-round.json` | Round 2 after a few turns: every HP tier from Uninjured to Near Death, a knocked-out participant, temp HP, two participants delaying, triggered and pending reinforcements, hazards under half, at half and fully disabled |
+| File                     | State                                                                                                                                                                                                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `round-1-start.json`     | Round 1, nobody has acted. PCs (one without HP data), elite and weak opponents, two hidden until their first turn, a neutral creature, three complex hazards and a simple one, two reinforcement slots with initiative set in the preview (one for round 2, one for any round) |
+| `round-2-mid-round.json` | Round 2 after a few turns: every HP tier from Uninjured to Near Death, a knocked-out participant, temp HP, two participants delaying, triggered reinforcements and one still pending, hazards under half, at half and fully disabled                                           |
 
 Both examples are saved with the timer paused, so they show fixed times; resume it in the tracker toolbar. With the dev server (`yarn dev`), open `?example=<file name>` before the hash, e.g. `http://localhost:5173/roundtable-tracker/?example=round-2-mid-round#/initiative_tracker`. The dev server's side menu links each example under "Dev examples". It replaces the running encounter, so undo and redo work from there. Production builds don't include the loader (`src/devTrackerExamples.ts`).
 
