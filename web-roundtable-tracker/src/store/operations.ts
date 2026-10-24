@@ -19,6 +19,27 @@ export const delayingIds = ({
 	charactersMap: TurnStates;
 }) => charactersOrder.filter((uuid) => isDelaying(charactersMap, uuid));
 
+/**
+ * The rotating queue holds the participants still to act first and the ones
+ * that already acted after them, so a round runs from the first one that
+ * acted to the last one still to act. Delaying participants are left out.
+ */
+export function roundOrderOf(
+	currentOrder: UUID[],
+	charactersWithTurn: Set<UUID>,
+	charactersMap: TurnStates,
+	isStillToAct: (uuid: UUID) => boolean = (uuid) => charactersWithTurn.has(uuid)
+): UUID[] {
+	const inRound = currentOrder.filter(
+		(uuid) => !isDelaying(charactersMap, uuid)
+	);
+
+	return [
+		...inRound.filter((uuid) => !isStillToAct(uuid)),
+		...inRound.filter(isStillToAct),
+	];
+}
+
 export const nextRound = (state: {
 	round: number;
 	charactersOrder: UUID[];

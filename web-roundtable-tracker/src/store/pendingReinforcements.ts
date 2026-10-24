@@ -1,10 +1,7 @@
 import { Character } from './data';
 import { TrackerParticipantMeta } from './encounterRuntimeStore';
-import {
-	arrivalActsBefore,
-	effectiveInitiatives,
-	roundOrderOf,
-} from './initiativePlacement';
+import { arrivalActsBefore, effectiveInitiatives } from './initiativePlacement';
+import { roundOrderOf } from './operations';
 import { UUID } from '@/utils/uuid';
 
 /**

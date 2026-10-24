@@ -7,11 +7,10 @@ import {
 import { TrackerParticipantMeta } from '@/store/encounterRuntimeStore';
 import { generateUUID, UUID } from '@/utils/uuid';
 import { uniqueNames } from '@/utils/uniqueNames';
-import { isDelaying } from '@/store/operations';
+import { isDelaying, roundOrderOf } from '@/store/operations';
 import {
 	arrivalActsBefore,
 	effectiveInitiatives,
-	roundOrderOf,
 } from '@/store/initiativePlacement';
 import {
 	PendingReinforcement,

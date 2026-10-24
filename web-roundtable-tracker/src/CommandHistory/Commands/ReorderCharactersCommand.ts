@@ -1,7 +1,6 @@
 import { UUID } from '@/utils/uuid';
 import { Command, CommandDeps, getDeps, STATUS } from '../common';
-import { skipParticipantsWithoutTurn } from '@/store/operations';
-import { roundOrderOf } from '@/store/initiativePlacement';
+import { roundOrderOf, skipParticipantsWithoutTurn } from '@/store/operations';
 import {
 	movedInReorder,
 	PendingReinforcement,
