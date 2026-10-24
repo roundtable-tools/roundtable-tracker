@@ -18,7 +18,7 @@ when the turn flow changes.
 
   | Field | Meaning |
   |---|---|
-  | `charactersOrder: UUID[]` | A **rotating queue**. Index 0 is the current actor. Delayers keep their spot in it; there is no separate delayed list. `delayingIds` (`store/operations.ts`) picks them out by `turnState: 'delayed'`, in queue order (the order they started delaying, unless the GM reorders them) |
+  | `charactersOrder: UUID[]` | A **rotating queue**. Index 0 is the current actor. Delayers keep their spot in it. `delayingIds` (`store/operations.ts`) picks them out by `turnState: 'delayed'`, in queue order (the order they started delaying, unless the GM reorders them) |
   | `charactersWithTurn: Set<UUID>` | Who still has a turn this round |
   | `round` | Starts at 1 |
   | `charactersMap` | Characters by uuid |
@@ -72,7 +72,7 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 |---|---|
 | normal → delayed (`DelayCharacterCommand`) | `EndTurnCommand` (to the end of the queue). Only allowed while the participant still has its turn |
 | normal → knocked-out (`KnockOutCharacterCommand`) | `EndTurnCommand` if it still has a turn, otherwise a move to the end of the queue |
-| delayed → normal (also `ReactivateCharacterCommand` on a delayed participant) | Moved to the front of the queue |
+| delayed → normal (also `ReactivateCharacterCommand` on a delayed participant) | Moved to the front of the queue. Without a turn this round, it is then rotated to the back like any other participant without a turn (`skipParticipantsWithoutTurn`) |
 | delayed → knocked-out | The knock-out step |
 | knocked-out → delayed | Moved to the end of the queue |
 | knocked-out → normal (`ReactivateCharacterCommand`) | Turn state only. The participant doesn't get its turn back |
