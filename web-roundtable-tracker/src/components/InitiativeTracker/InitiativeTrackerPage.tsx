@@ -31,6 +31,7 @@ import {
 	ArrowRight,
 	ArrowUpDown,
 	EyeOff,
+	Heart,
 	History,
 	Redo2,
 	ShieldOff,
@@ -81,6 +82,8 @@ import {
 	getHealthLabelFromPercentage,
 	getOutOfFightNames,
 	getParticipantStateLabel,
+	hasHpAndDisableProgress,
+	showsDisableProgress,
 	resolveParticipantSideTheme,
 	type TrackerParticipant,
 } from '@/store/trackerMappers';
@@ -96,6 +99,7 @@ import { SetTempHealthCommand } from '@/CommandHistory/Commands/SetTempHealthCom
 import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/ReactivateCharacterCommand';
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 import { RecordDisableProgressCommand } from '@/CommandHistory/Commands/RecordDisableProgressCommand';
+import { SetShownProgressCommand } from '@/CommandHistory/Commands/SetShownProgressCommand';
 import { Input } from '@/components/ui/input';
 import { type SwipeAction } from './InitiativeActionCarouselCard';
 import { type Command } from '@/CommandHistory/common';
@@ -224,7 +228,7 @@ function OutOfFightRowActions({
 }
 
 function getParticipantIndicatorLabel(participant: TrackerParticipant) {
-	if (participant.role === 'hazard') {
+	if (showsDisableProgress(participant)) {
 		return getHazardDisableLabel(participant);
 	}
 
@@ -393,6 +397,7 @@ type ParticipantDetailsProps = {
 	onSetTempHp?: (amount: number, description: string) => void;
 	onGiveTurnBack?: () => void;
 	onRecordDisableProgress?: (change: DisableChange) => void;
+	onSetShownProgress?: (shownProgress: 'hp' | 'disable') => void;
 };
 
 function ParticipantDetails({
@@ -402,6 +407,7 @@ function ParticipantDetails({
 	onSetTempHp,
 	onGiveTurnBack,
 	onRecordDisableProgress,
+	onSetShownProgress,
 }: ParticipantDetailsProps) {
 	const [hpAmount, setHpAmount] = useState('');
 	const [disableSuccesses, setDisableSuccesses] = useState('');
@@ -468,6 +474,42 @@ function ParticipantDetails({
 			{hasTraitBadges(participant) && (
 				<div className="flex flex-wrap gap-1">
 					<TraitBadges participant={participant} />
+				</div>
+			)}
+			{onSetShownProgress && hasHpAndDisableProgress(participant) && (
+				<div className="flex items-center justify-between gap-2 rounded-md border p-3">
+					<p className="text-sm text-muted-foreground">
+						Shown in the list and to players
+					</p>
+					<div
+						role="group"
+						aria-label="Shown progress"
+						className="flex shrink-0 gap-1"
+					>
+						{(
+							[
+								['hp', 'HP', Heart],
+								['disable', 'Disable checks', ShieldOff],
+							] as const
+						).map(([value, label, Icon]) => {
+							const pressed =
+								showsDisableProgress(participant) === (value === 'disable');
+
+							return (
+								<Button
+									key={value}
+									size="sm"
+									variant={pressed ? 'secondary' : 'outline'}
+									aria-pressed={pressed}
+									onClick={() => {
+										if (!pressed) onSetShownProgress(value);
+									}}
+								>
+									<Icon className="h-4 w-4" /> {label}
+								</Button>
+							);
+						})}
+					</div>
 				</div>
 			)}
 			{onGiveTurnBack && (
@@ -1665,6 +1707,21 @@ export function InitiativeTrackerPage() {
 				recordDisableProgress(selectedParticipantId, change)
 		: undefined;
 
+	const handleSelectedSetShownProgress = selectedParticipantId
+		? (shownProgress: 'hp' | 'disable') => {
+				try {
+					executeCommand(
+						new SetShownProgressCommand({
+							uuid: selectedParticipantId,
+							shownProgress,
+						})
+					);
+				} catch (error) {
+					console.error('Failed to set the shown progress', error);
+				}
+			}
+		: undefined;
+
 	const handleSelectedSetTempHp = selectedParticipantId
 		? (amount: number, description: string) => {
 				try {
@@ -2177,6 +2234,7 @@ export function InitiativeTrackerPage() {
 								onSetTempHp={handleSelectedSetTempHp}
 								onGiveTurnBack={handleSelectedGiveTurnBack}
 								onRecordDisableProgress={handleSelectedRecordDisableProgress}
+								onSetShownProgress={handleSelectedSetShownProgress}
 							/>
 						</ScrollArea>
 					</Card>
@@ -2525,6 +2583,7 @@ export function InitiativeTrackerPage() {
 								onSetTempHp={handleSelectedSetTempHp}
 								onGiveTurnBack={handleSelectedGiveTurnBack}
 								onRecordDisableProgress={handleSelectedRecordDisableProgress}
+								onSetShownProgress={handleSelectedSetShownProgress}
 							/>
 						</Card>
 					</TabsContent>

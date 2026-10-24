@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/tooltip';
 import {
 	getOutOfFightNames,
+	showsDisableProgress,
 	type TrackerParticipant,
 } from '@/store/trackerMappers';
 import {
@@ -399,7 +400,7 @@ export function InitiativeActionCarouselCard({
 									{participant.name}
 								</p>
 								<p className="inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.14em] text-current/80">
-									{participant.role === 'hazard' ? (
+									{showsDisableProgress(participant) ? (
 										<ShieldOff className="h-3 w-3" />
 									) : (
 										<Heart className="h-3 w-3" />
@@ -430,7 +431,7 @@ export function InitiativeActionCarouselCard({
 									/>
 								)}
 								<span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-current/20 px-2 py-1 text-[11px] uppercase tracking-[0.16em] text-current/85">
-									{participant.role === 'hazard' ? (
+									{showsDisableProgress(participant) ? (
 										<ShieldOff className="h-3 w-3" />
 									) : (
 										<Heart className="h-3 w-3" />

@@ -28,6 +28,7 @@ export type TrackerParticipant = {
 	tempHpDescription?: string;
 	disableChecksSucceeded?: number;
 	disableChecksRequired?: number;
+	shownProgress?: TrackerParticipantMeta['shownProgress'];
 	hardness?: number;
 	initiativeBonus?: number;
 	dcs?: Array<{
@@ -74,7 +75,7 @@ export type PlayerTrackerParticipant = {
 	/** Filled segments of the player HP bar, or null without HP data. */
 	hpSegments: number | null;
 	isHazard: boolean;
-	/** Disable checks of a hazard that needs any, shown instead of HP. */
+	/** Disable checks, when they are shown instead of HP. */
 	disableProgress: PlayerDisableProgress | null;
 	sideTheme: ParticipantSideTheme;
 };
@@ -225,6 +226,7 @@ function characterToTrackerParticipant(
 	if (meta.disableChecksRequired > 0) {
 		base.disableChecksRequired = meta.disableChecksRequired;
 		base.disableChecksSucceeded = meta.disableChecksSucceeded;
+		base.shownProgress = meta.shownProgress;
 	}
 
 	return base;
@@ -530,13 +532,54 @@ export function getHazardDisableLabel(
 	return stageNames[Math.min(stageIndex, stageNames.length - 1)] ?? 'Disabled';
 }
 
-/** A hazard's disable checks as players see them, with the tracker's label. */
+/** Whether a participant with both HP and disable checks has both bars. */
+export function hasHpAndDisableProgress(
+	participant: Pick<
+		TrackerParticipant,
+		'currentHp' | 'maxHp' | 'disableChecksRequired'
+	>
+) {
+	return (
+		typeof participant.currentHp === 'number' &&
+		typeof participant.maxHp === 'number' &&
+		(participant.disableChecksRequired ?? 0) > 0
+	);
+}
+
+/**
+ * Whether the tracker and the player view show the participant's disable
+ * progress instead of its HP. With both, the GM's choice decides (disable
+ * progress for hazards by default); a hazard with neither shows its disable
+ * label.
+ */
+export function showsDisableProgress(
+	participant: Pick<
+		TrackerParticipant,
+		'role' | 'currentHp' | 'maxHp' | 'disableChecksRequired' | 'shownProgress'
+	>
+) {
+	const hasChecks = (participant.disableChecksRequired ?? 0) > 0;
+	const hasHp =
+		typeof participant.currentHp === 'number' &&
+		typeof participant.maxHp === 'number';
+
+	if (hasChecks && hasHp) {
+		return (
+			(participant.shownProgress ??
+				(participant.role === 'hazard' ? 'disable' : 'hp')) === 'disable'
+		);
+	}
+
+	return hasChecks || (participant.role === 'hazard' && !hasHp);
+}
+
+/** Disable checks as players see them, with the tracker's label. */
 const toPlayerDisableProgress = (
 	participant: TrackerParticipant
 ): PlayerDisableProgress | null => {
 	const required = participant.disableChecksRequired ?? 0;
 
-	if (participant.role !== 'hazard' || required <= 0) {
+	if (required <= 0 || !showsDisableProgress(participant)) {
 		return null;
 	}
 

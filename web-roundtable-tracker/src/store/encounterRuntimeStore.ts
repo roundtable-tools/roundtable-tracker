@@ -19,6 +19,12 @@ export type TrackerParticipantMeta = {
 	isSimpleHazard: boolean;
 	disableChecksRequired: number;
 	disableChecksSucceeded: number;
+	/**
+	 * What the tracker and the player view show for a participant with both HP
+	 * and disable checks. Defaults to disable progress for hazards, HP for
+	 * everyone else.
+	 */
+	shownProgress?: 'hp' | 'disable';
 	notes: string;
 	hardness?: number;
 	initiativeBonus?: number;
