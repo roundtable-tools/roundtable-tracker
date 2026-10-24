@@ -48,7 +48,12 @@ import { resumeTimer } from '@/store/encounterTimer';
 import { getHazardStripe, getSideAccent } from './sideAccent';
 import { NextRoundMarkerCard } from './NextRoundMarkerCard';
 import { getRoundBoundaryIndex } from './roundBoundary';
-import { closesRound, getRoundActionCommand } from './roundActionCommand';
+import {
+	asksToReturnFromDelay,
+	closesRound,
+	delayerReturningAfterTurn,
+	getRoundActionCommand,
+} from './roundActionCommand';
 import {
 	getEncounterStore,
 	useEncounterStore,
@@ -775,6 +780,14 @@ export function InitiativeTrackerPage() {
 	// to the participant below them unless that one is dragged.
 	const reorderDraggedIdsRef = useRef(new Set<string>());
 	const delayedSectionParticipants = outOfInitiative.delayed;
+	const returnPromptState = useMemo(() => {
+		const state = { charactersOrder, delayedOrder, charactersMap };
+
+		return {
+			asks: asksToReturnFromDelay(state),
+			returningId: delayerReturningAfterTurn(state),
+		};
+	}, [charactersOrder, delayedOrder, charactersMap]);
 	const hasReinforcements = pendingReinforcementParticipants.length > 0;
 	const hasDelayed = delayedSectionParticipants.length > 0;
 	const hasHazards = outOfInitiative.hazards.length > 0;
@@ -931,7 +944,7 @@ export function InitiativeTrackerPage() {
 			return;
 		}
 
-		if (delayedSectionParticipants.length > 0) {
+		if (returnPromptState.asks) {
 			setReturnPrompt({
 				participantId: currentParticipantId,
 				action: 'end-turn',
@@ -1153,7 +1166,7 @@ export function InitiativeTrackerPage() {
 			participantId === currentInitiativeParticipantId &&
 			charactersWithTurn.has(participantId);
 
-		if (isCurrentActive && delayedSectionParticipants.length > 0) {
+		if (isCurrentActive && returnPromptState.asks) {
 			setReturnPrompt({
 				participantId,
 				action,
@@ -2163,6 +2176,7 @@ export function InitiativeTrackerPage() {
 				<ReturnToInitiativeNotice
 					key={`${returnPrompt.participantId}-${returnPrompt.action}`}
 					participants={delayedSectionParticipants}
+					returningId={returnPromptState.returningId}
 					onReturn={handleReturnPromptSelect}
 					onDismiss={handleReturnPromptSkip}
 				/>

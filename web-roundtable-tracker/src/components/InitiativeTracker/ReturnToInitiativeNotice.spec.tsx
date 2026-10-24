@@ -26,6 +26,23 @@ describe('ReturnToInitiativeNotice', () => {
 		expect(markup).toContain('aria-label="Nobody returns"');
 	});
 
+	it('marks the participant who comes back after this turn anyway', () => {
+		const withReturning = renderToStaticMarkup(
+			createElement(ReturnToInitiativeNotice, {
+				participants: [
+					{ id: 'sneak', name: 'Goblin Sneak' },
+					{ id: 'keeper', name: 'Bridge Keeper' },
+				],
+				returningId: 'keeper',
+				onReturn: () => {},
+				onDismiss: () => {},
+			})
+		);
+
+		expect(markup).not.toContain('after this turn anyway');
+		expect(withReturning.match(/after this turn anyway/g)).toHaveLength(1);
+	});
+
 	it('shows the countdown before nobody returns', () => {
 		expect(markup).toContain('data-slot="notice-countdown"');
 	});

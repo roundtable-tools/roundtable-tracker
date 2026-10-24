@@ -34,6 +34,48 @@ export function closesRound(participantId: string, state: RoundActionState) {
 }
 
 /**
+ * The delaying participant who comes back after the current turn without
+ * being asked: the one whose spot in the order is next. Its entry stays in the
+ * order while it delays, so reaching that entry again means it delayed for a
+ * whole round, and the rules return it to its old spot.
+ */
+export function delayerReturningAfterTurn({
+	charactersOrder,
+	delayedOrder,
+}: Pick<RoundActionState, 'charactersOrder' | 'delayedOrder'>) {
+	const nextId = charactersOrder[1];
+
+	return charactersOrder.length > 1 && delayedOrder.includes(nextId)
+		? nextId
+		: undefined;
+}
+
+/**
+ * Whether ending the current turn first asks if a delaying participant
+ * returns. Two kinds of delayers don't ask on their own: the one returning
+ * after this turn anyway, and one that started the encounter silently delayed
+ * and hasn't joined the order yet. The prompt still lists them when another
+ * delayer asks.
+ */
+export function asksToReturnFromDelay(
+	state: Pick<
+		RoundActionState,
+		'charactersOrder' | 'delayedOrder' | 'charactersMap'
+	>
+) {
+	const returningId = delayerReturningAfterTurn(state);
+
+	return state.delayedOrder.some(
+		(uuid) =>
+			uuid !== returningId &&
+			!(
+				state.charactersMap[uuid]?.silentDelay &&
+				!state.charactersOrder.includes(uuid)
+			)
+	);
+}
+
+/**
  * The command the tracker runs when the GM ends a participant's turn, delays
  * or knocks them out. It also closes the round after the last active
  * participant, and brings back a delaying participant who is next in the
@@ -45,13 +87,10 @@ export function getRoundActionCommand(
 	state: RoundActionState,
 	deps?: CommandDeps
 ): Command {
-	const { charactersOrder, delayedOrder } = state;
 	const shouldAdvanceRound = closesRound(participantId, state);
-	const returningParticipantId = charactersOrder[1];
-	const shouldReturnToInitiative =
-		charactersOrder.length > 1 && delayedOrder.includes(returningParticipantId);
+	const returningParticipantId = delayerReturningAfterTurn(state);
 
-	if (shouldAdvanceRound && shouldReturnToInitiative) {
+	if (shouldAdvanceRound && returningParticipantId) {
 		return new FinalizeTurnAndReturnToInitiativeCommand(
 			{
 				activeUuid: participantId,
@@ -69,7 +108,7 @@ export function getRoundActionCommand(
 		);
 	}
 
-	if (shouldReturnToInitiative) {
+	if (returningParticipantId) {
 		return new ReturnToInitiativeCommand(
 			{
 				activeUuid: participantId,

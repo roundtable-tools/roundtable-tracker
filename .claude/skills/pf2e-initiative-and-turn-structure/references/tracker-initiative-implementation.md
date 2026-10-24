@@ -6,12 +6,12 @@ when the turn flow changes.
 
 ## Data model
 
-- **`Character`** (`store/data.ts`): `uuid`, `name`, `initiative`, `turnState`, `health`, `maxHealth`, `tempHealth`, `tempHealthDescription?`, `group?` (`players` | `enemies`), `level?`.
+- **`Character`** (`store/data.ts`): `uuid`, `name`, `initiative`, `turnState`, `health`, `maxHealth`, `tempHealth`, `tempHealthDescription?`, `silentDelay?`, `group?` (`players` | `enemies`), `level?`.
   - `turnState` is one of `STATE`: `normal`, `delayed`, `knocked-out`.
   - Whether a participant has its turn left is held in the store's `charactersWithTurn` Set, not on `Character`.
 - **Tie priority** `PRIORITY = { PC: 0, NPC: 1, SPECIAL: 2 }`. Higher goes first on a tie, so by default enemies (`NPC`) win ties against PCs, as the rules say. The party form's "Initiative tie advantage" checkbox is ticked by default and maps ticked to `PC`, unticked to `NPC`.
 - **Sides** `ALIGNMENT = { PCs: 0, Opponents: 1, Neutral: 2 }`.
-- **Template participant** (`CombatantParticipant`): `initiativeBonus?`, `tiePriority?`, `startingState?` (`normal` | `delayed` | `knocked-out`), `hiddenFromPlayers?`, `initiativeDescription?`, `count?`. The builder's combat-ready state maps to `startingState` (Active → `normal`, Delayed → `delayed`, Defeated → `knocked-out`). Hazards add `successesToDisable` and `isComplexHazard?`.
+- **Template participant** (`CombatantParticipant`): `initiativeBonus?`, `tiePriority?`, `startingState?` (`normal` | `delayed` | `knocked-out`), `silentDelay?`, `hiddenFromPlayers?`, `initiativeDescription?`, `count?`. The builder's combat-ready state maps to `startingState` (Active → `normal`, Delayed → `delayed`, Delayed (silent) → `delayed` + `silentDelay: true`, Defeated → `knocked-out`). Hazards add `successesToDisable` and `isComplexHazard?`.
 - **Narrative slots** (`NarrativeSlot`): `type` is `default`, `reinforcement` or `ongoing`. `trigger: { round, frequency? }`, plus `participants`. Reinforcements are slots of type `reinforcement`.
 - **Runtime store** (`store/encounterRuntimeStore.ts`, persisted to localStorage as `encounter-store`):
 
@@ -53,7 +53,8 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 | `FinalizeTurnAndReturnToInitiativeCommand {activeUuid, returningUuid, action}` | One undo step: `ReturnToInitiativeCommand` plus `EndRoundCommand` (see quirks) |
 | `GiveAdditionalTurnCommand {uuid}` | Gives the turn back. "Give Turn Back" in the selected-participant panel, for a participant that already acted |
 
-- Before a turn ends while someone is delaying, the UI asks whether a delayed participant returns.
+- **Delaying a whole round.** A delaying participant keeps its entry in `charactersOrder` (shown as an "is delaying" marker), which is its old spot. When the turn before that entry ends, `getRoundActionCommand` returns it there through `ReturnToInitiativeCommand` (`delayerReturningAfterTurn`: `charactersOrder[1]` is delaying). The delayed turn is lost, as the rules say. Participants that start delayed or arrive delayed have no entry, so they are never sent back.
+- **Return prompt.** Before a turn ends, the UI asks whether a delaying participant returns when `asksToReturnFromDelay` is true: some delayer other than the one coming back after this turn anyway and other than a silent starter (`silentDelay` and not yet in `charactersOrder`). The prompt then lists every delayer and marks the one coming back anyway. A silent starter that has joined the order and delays again asks like anyone else.
 - After a round advances, a "Round N" dialog lists that round's narrative and reinforcement slots.
 - **Not modelled:**
   - start-of-turn and end-of-turn steps
@@ -127,5 +128,4 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 Check whether each is still open before relying on it.
 
 - Returning from Delay after the last turn of a round advances the round first. The returner then acts as the first turn of the next round, not the last turn of the current one (#93).
-- Delaying through a whole round doesn't send the participant back to their old spot (#35).
 - Simple hazards stay in the turn bookkeeping. The final-turn checks in the commands count them, while the UI doesn't (#92).
