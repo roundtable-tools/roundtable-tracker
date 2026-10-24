@@ -489,32 +489,18 @@ export function computeEncounterXpUsage(
 	const reinforcementSlots = slots.filter(
 		(slot) => slot.type === 'reinforcement'
 	);
-	const rawReinforcementXp = reinforcementSlots.reduce((sum, slot) => {
-		const hasParticipantList = Array.isArray(slot.reinforcementParticipants);
-		const slotParticipants = hasParticipantList
-			? slot.reinforcementParticipants
-			: [];
-
-		if (!hasParticipantList) {
-			const legacyContribution =
-				resolveSlotBaseXp(slot, partyLevel) ?? new ExperienceBudget(0);
-
-			return sum.sum(legacyContribution);
-		}
-
-		const slotContribution = slotParticipants?.reduce(
-			(participantSum, participant) => {
-				const contribution =
-					resolveReinforcementParticipantXp(participant, partyLevel) ??
-					new ExperienceBudget(0);
-
-				return participantSum.sum(contribution);
-			},
-			new ExperienceBudget(0)
-		);
-
-		return slotContribution != undefined ? sum.sum(slotContribution) : sum;
-	}, new ExperienceBudget(0));
+	const rawReinforcementXp = reinforcementSlots.reduce(
+		(sum, slot) =>
+			(slot.reinforcementParticipants ?? []).reduce(
+				(slotSum, participant) =>
+					slotSum.sum(
+						resolveReinforcementParticipantXp(participant, partyLevel) ??
+							new ExperienceBudget(0)
+					),
+				sum
+			),
+		new ExperienceBudget(0)
+	);
 
 	const rawXp = immediateXp.sum(rawReinforcementXp);
 	const hasSimulatedReinforcement = rawReinforcementXp.valueOf() > 0;
