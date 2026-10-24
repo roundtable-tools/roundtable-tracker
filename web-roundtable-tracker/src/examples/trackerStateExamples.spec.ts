@@ -377,14 +377,21 @@ const changeHealth = (store: EncounterStoreApi, name: string, delta: number) =>
 		)
 	);
 
-/** Every participant in initiative or delaying appears once for players. */
+/**
+ * Every participant in initiative appears once for players. A delayer keeps
+ * its spot in the order, so it is one of them.
+ */
 const expectEachParticipantOnceForPlayers = (store: EncounterStoreApi) => {
 	const state = store.getState();
 	const ids = runtimeToPlayerInitiativeQueue(state).map(({ id }) => id);
 	const expected = new Set(
-		[...state.charactersOrder, ...state.delayedOrder].filter(
+		state.charactersOrder.filter(
 			(uuid) => !state.trackerMetaMap[uuid]?.isSimpleHazard
 		)
+	);
+
+	expect(state.charactersOrder).toEqual(
+		expect.arrayContaining(state.delayedOrder)
 	);
 
 	expect(ids).toHaveLength(expected.size);

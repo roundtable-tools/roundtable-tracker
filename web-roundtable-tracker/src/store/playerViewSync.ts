@@ -8,7 +8,6 @@ export type PlayerViewSnapshot = Pick<
 	| 'encounterData'
 	| 'charactersMap'
 	| 'charactersOrder'
-	| 'delayedOrder'
 	| 'trackerMetaMap'
 	| 'partyLevel'
 	| 'round'
@@ -59,7 +58,6 @@ const isStoredStateShape = (state: unknown): state is Partial<EncounterStore> =>
 	(state.charactersMap === undefined || isRecord(state.charactersMap)) &&
 	(state.charactersOrder === undefined ||
 		isStringArray(state.charactersOrder)) &&
-	(state.delayedOrder === undefined || isStringArray(state.delayedOrder)) &&
 	(state.trackerMetaMap === undefined || isRecord(state.trackerMetaMap)) &&
 	(state.partyLevel === undefined || typeof state.partyLevel === 'number') &&
 	(state.round === undefined || typeof state.round === 'number') &&
@@ -99,7 +97,6 @@ export const parsePlayerViewSnapshot = (
 		encounterData: state.encounterData,
 		charactersMap: state.charactersMap ?? {},
 		charactersOrder: state.charactersOrder ?? [],
-		delayedOrder: state.delayedOrder ?? [],
 		trackerMetaMap: state.trackerMetaMap ?? {},
 		partyLevel: state.partyLevel ?? 1,
 		round: state.round ?? 0,
@@ -114,7 +111,7 @@ export const isEncounterRunning = (
 ): snapshot is PlayerViewSnapshot =>
 	snapshot !== null &&
 	Boolean(snapshot.encounterData) &&
-	(snapshot.charactersOrder.length > 0 || snapshot.delayedOrder.length > 0);
+	snapshot.charactersOrder.length > 0;
 
 /**
  * Follows the tracker in another window or tab of the same browser. The

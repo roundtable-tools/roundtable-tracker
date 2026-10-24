@@ -82,9 +82,10 @@ describe('FinalizeTurnAndAdvanceRoundCommand', () => {
 					turnState: 'delayed',
 				},
 			},
-			charactersOrder: [characters[1].uuid],
+			charactersOrder: [characters[1].uuid, characters[0].uuid],
 			delayedOrder: [characters[0].uuid],
-			charactersWithTurn: new Set([characters[0].uuid, characters[1].uuid]),
+			// Delaying ended the delayer's turn; its spot stays in the order.
+			charactersWithTurn: new Set([characters[1].uuid]),
 		}));
 
 		const command = new FinalizeTurnAndAdvanceRoundCommand(

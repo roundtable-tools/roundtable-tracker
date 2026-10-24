@@ -61,6 +61,32 @@ describe('RemoveCharacterCommand', () => {
 		expect(encounterStore.getState().charactersWithTurn.has(uuid)).toBe(true);
 	});
 
+	it('restores a delaying character to its spot in the order on undo', () => {
+		const first = { ...character, uuid: 'first', name: 'First' };
+		const last = { ...character, uuid: 'last', name: 'Last' };
+		const delayer = { ...character, turnState: 'delayed' as const };
+		encounterStore.getState().setCharacters([first, delayer, last]);
+		encounterStore.setState({ delayedOrder: [uuid] });
+
+		const command = new RemoveCharacterCommand({ uuid }, { encounterStore });
+		command.execute();
+
+		expect(encounterStore.getState().charactersOrder).toEqual([
+			'first',
+			'last',
+		]);
+		expect(encounterStore.getState().delayedOrder).toEqual([]);
+
+		command.undo();
+
+		expect(encounterStore.getState().charactersOrder).toEqual([
+			'first',
+			uuid,
+			'last',
+		]);
+		expect(encounterStore.getState().delayedOrder).toEqual([uuid]);
+	});
+
 	it('should return failure if undo is called without executing', () => {
 		const command = new RemoveCharacterCommand({ uuid }, { encounterStore });
 

@@ -220,7 +220,6 @@ describe('player view sync', () => {
 				);
 
 			expect(stored({ charactersOrder: 'hero' })).toBeNull();
-			expect(stored({ delayedOrder: [1] })).toBeNull();
 			expect(stored({ charactersMap: [] })).toBeNull();
 			expect(stored({ round: '2' })).toBeNull();
 			expect(stored({ charactersWithTurn: ['hero'] })).toBeNull();
