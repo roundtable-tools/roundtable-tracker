@@ -53,7 +53,7 @@ export function defaultSlot(): BuilderSlot {
 		initiativeBonus: undefined,
 		initiativeDescription: undefined,
 		dcs: [],
-		successesToDisable: 1,
+		successesToDisable: 0,
 		adjustment: 'none',
 		adjustmentDescription: undefined,
 		adjustmentLevelModifier: undefined,
@@ -155,7 +155,7 @@ export function fromEncounterTemplate(
 					: undefined,
 			dcs: [],
 			successesToDisable:
-				participant.type === 'hazard' ? participant.successesToDisable : 1,
+				participant.type === 'hazard' ? participant.successesToDisable : 0,
 			adjustment: 'none',
 			adjustmentDescription: undefined,
 			adjustmentLevelModifier: undefined,
@@ -316,6 +316,7 @@ export function toConcreteEncounter(
 					maxHealth: s.maxHealth || undefined,
 					hardness: s.hardness || undefined,
 					initiativeBonus: s.initiativeBonus || undefined,
+					successesToDisable: s.successesToDisable || undefined,
 					dcs:
 						s.dcs && s.dcs.length > 0
 							? s.dcs
@@ -422,6 +423,7 @@ export function toConcreteEncounter(
 								maxHealth: participant.maxHealth || undefined,
 								hardness: participant.hardness || undefined,
 								initiativeBonus: participant.initiativeBonus || undefined,
+								successesToDisable: participant.successesToDisable || undefined,
 								dcs:
 									participant.dcs && participant.dcs.length > 0
 										? participant.dcs
@@ -499,6 +501,7 @@ export function toConcreteEncounter(
 								maxHealth: s.maxHealth || undefined,
 								hardness: s.hardness || undefined,
 								initiativeBonus: s.initiativeBonus || undefined,
+								successesToDisable: s.successesToDisable || undefined,
 								dcs: s.dcs,
 								adjustment:
 									s.adjustment === 'none'
@@ -564,7 +567,7 @@ export function fromConcreteEncounter(
 				hardness: p.hardness,
 				initiativeBonus: p.initiativeBonus,
 				dcs: p.dcs ?? [],
-				successesToDisable: 1,
+				successesToDisable: p.successesToDisable ?? 0,
 				adjustment: p.adjustment ?? 'none',
 				adjustmentDescription: p.adjustmentDescription,
 				adjustmentLevelModifier: p.adjustmentLevelModifier,
@@ -636,10 +639,7 @@ export function fromConcreteEncounter(
 						hardness: participant.hardness,
 						initiativeBonus: participant.initiativeBonus,
 						dcs: participant.dcs ?? [],
-						successesToDisable:
-							participant.type === 'hazard'
-								? participant.successesToDisable
-								: 1,
+						successesToDisable: participant.successesToDisable ?? 0,
 						adjustment:
 							participant.type === 'creature'
 								? (participant.adjustment ?? 'none')
@@ -699,7 +699,7 @@ function participantsToBuilderSlots(
 				hardness: p.hardness,
 				initiativeBonus: p.initiativeBonus,
 				dcs: p.dcs ?? [],
-				successesToDisable: 1,
+				successesToDisable: p.successesToDisable ?? 0,
 				adjustment: p.adjustment ?? 'none',
 				adjustmentDescription: p.adjustmentDescription,
 				adjustmentLevelModifier: p.adjustmentLevelModifier,
@@ -776,7 +776,7 @@ export function templateVariantToFormPartial(
 					: undefined,
 			dcs: [],
 			successesToDisable:
-				participant.type === 'hazard' ? participant.successesToDisable : 1,
+				participant.type === 'hazard' ? participant.successesToDisable : 0,
 			adjustment: 'none',
 			adjustmentDescription: undefined,
 			adjustmentLevelModifier: undefined,

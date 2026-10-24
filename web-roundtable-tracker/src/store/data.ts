@@ -186,6 +186,8 @@ export type Creature<
 > = CombatantParticipant<IsAbstract> & {
 	type: 'creature';
 	adjustment?: ParticipantAdjustment;
+	/** Disable checks of a creature that can be disabled, e.g. a clockwork. */
+	successesToDisable?: number;
 };
 
 export type Hazard<
@@ -339,6 +341,7 @@ const creatureSchema = combatantParticipantSchema.extend({
 	adjustment: z
 		.enum(['weak', 'elite', 'elite-offense', 'elite-defense', 'none'])
 		.optional(),
+	successesToDisable: z.number().optional(),
 });
 
 const hazardSchema = combatantParticipantSchema.extend({

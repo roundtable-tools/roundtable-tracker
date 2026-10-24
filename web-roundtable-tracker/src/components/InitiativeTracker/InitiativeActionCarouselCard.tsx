@@ -1,5 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { Ban, Clock3, Heart, RotateCcw, ShieldOff, Skull } from 'lucide-react';
+import {
+	Ban,
+	Clock3,
+	Hammer,
+	Heart,
+	HeartOff,
+	HeartPulse,
+	Power,
+	PowerOff,
+	ShieldOff,
+	Skull,
+} from 'lucide-react';
 import { type EncounterTimer } from '@/store/encounterTimer';
 import { TurnTimeChip } from './TurnTimeChip';
 import {
@@ -7,8 +18,18 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { type TrackerParticipant } from '@/store/trackerMappers';
+import {
+	getOutOfFightNames,
+	showsDisableProgress,
+	type TrackerParticipant,
+} from '@/store/trackerMappers';
+import {
+	TAKE_OUT_EFFECT_SHORT_LABEL,
+	getTakeOutTitle,
+	type TakeOutEffect,
+} from './takeOut';
 
+/** 'ko' and 'slay' are Disable and Destroy for a hazard. */
 export type SwipeAction = 'delay' | 'ko' | 'reactivate' | 'slay';
 
 export type InitiativeCardDensity = 'desktop' | 'mobile';
@@ -85,17 +106,24 @@ export function InitiativeActionCarouselCard({
 	accent,
 	indicatorLabel,
 	turnTimer,
+	takeOutEffects,
 }: {
 	participant: TrackerParticipant;
 	selected: boolean;
 	onSelect: (id: string) => void;
 	isCurrent: boolean;
-	onSwipeAction: (participantId: string, action: SwipeAction) => void;
+	onSwipeAction: (
+		participantId: string,
+		action: SwipeAction,
+		effect?: TakeOutEffect
+	) => void;
 	density: InitiativeCardDensity;
 	accent: ParticipantAccent;
 	indicatorLabel: string;
 	/** Shown as the running turn time, on the current participant's card. */
 	turnTimer?: EncounterTimer | null;
+	/** What the K.O. / Disable action sets; one button per effect. */
+	takeOutEffects: TakeOutEffect[];
 }) {
 	const {
 		swipeRevealPx,
@@ -115,11 +143,21 @@ export function InitiativeActionCarouselCard({
 		null
 	);
 	const isKnockedOut = participant.state === 'knocked-out';
+	const isHazard = participant.role === 'hazard';
+	const names = getOutOfFightNames(participant);
 	const canUseDelayAction = isKnockedOut || isCurrent;
 	const delaySideAction: SwipeAction = isKnockedOut ? 'reactivate' : 'delay';
 	const koSideAction: SwipeAction = isKnockedOut ? 'slay' : 'ko';
 	const delaySideLabel = isKnockedOut ? 'Reactivate' : 'Delay';
-	const koSideLabel = isKnockedOut ? 'Slay' : 'Knock Out';
+	const koSideLabel = isKnockedOut ? names.remove : names.takeOut;
+	// A swipe takes the first effect; each effect also has its own button.
+	const koSideEffects: (TakeOutEffect | undefined)[] =
+		isKnockedOut || takeOutEffects.length === 0 ? [undefined] : takeOutEffects;
+	const ReactivateIcon = isHazard ? Power : HeartPulse;
+	const TakeOutIcon = isHazard ? PowerOff : Ban;
+	const RemoveIcon = isHazard ? Hammer : Skull;
+	const koSideTitle = (effect?: TakeOutEffect) =>
+		getTakeOutTitle(koSideLabel, participant.name, effect);
 	const swipeFlashTimeoutRef = useRef<number | null>(null);
 	const actionTriggerTimeoutRef = useRef<number | null>(null);
 	const swipeStateRef = useRef({
@@ -142,8 +180,8 @@ export function InitiativeActionCarouselCard({
 		};
 	}, []);
 
-	const registerSwipeInput = (action: SwipeAction) => {
-		onSwipeAction(participant.id, action);
+	const registerSwipeInput = (action: SwipeAction, effect?: TakeOutEffect) => {
+		onSwipeAction(participant.id, action, effect);
 		setSwipeActionFlash(action);
 
 		if (swipeFlashTimeoutRef.current !== null) {
@@ -156,7 +194,10 @@ export function InitiativeActionCarouselCard({
 		}, 320);
 	};
 
-	const triggerActionWithSlide = (action: SwipeAction) => {
+	const triggerActionWithSlide = (
+		action: SwipeAction,
+		effect?: TakeOutEffect
+	) => {
 		setSwipeOffset(
 			action === delaySideAction ? delaySlideTarget : koSlideTarget
 		);
@@ -166,7 +207,7 @@ export function InitiativeActionCarouselCard({
 		}
 
 		actionTriggerTimeoutRef.current = window.setTimeout(() => {
-			registerSwipeInput(action);
+			registerSwipeInput(action, effect);
 			setSwipeOffset(0);
 			actionTriggerTimeoutRef.current = null;
 		}, actionTriggerMs);
@@ -224,7 +265,7 @@ export function InitiativeActionCarouselCard({
 				return;
 
 			case swipeOffset >= swipeSnapPx:
-				triggerActionWithSlide(koSideAction);
+				triggerActionWithSlide(koSideAction, koSideEffects[0]);
 
 				return;
 		}
@@ -300,7 +341,7 @@ export function InitiativeActionCarouselCard({
 								}
 							>
 								{isKnockedOut ? (
-									<RotateCcw className={iconClass} />
+									<ReactivateIcon className={iconClass} />
 								) : (
 									<Clock3 className={iconClass} />
 								)}
@@ -359,7 +400,7 @@ export function InitiativeActionCarouselCard({
 									{participant.name}
 								</p>
 								<p className="inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.14em] text-current/80">
-									{participant.role === 'hazard' ? (
+									{showsDisableProgress(participant) ? (
 										<ShieldOff className="h-3 w-3" />
 									) : (
 										<Heart className="h-3 w-3" />
@@ -390,7 +431,7 @@ export function InitiativeActionCarouselCard({
 									/>
 								)}
 								<span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-current/20 px-2 py-1 text-[11px] uppercase tracking-[0.16em] text-current/85">
-									{participant.role === 'hazard' ? (
+									{showsDisableProgress(participant) ? (
 										<ShieldOff className="h-3 w-3" />
 									) : (
 										<Heart className="h-3 w-3" />
@@ -402,44 +443,94 @@ export function InitiativeActionCarouselCard({
 					</div>
 				</button>
 
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<button
-							type="button"
-							onClick={(event) => {
-								event.stopPropagation();
-								triggerActionWithSlide(koSideAction);
-							}}
-							className={[
-								actionButtonKoClass,
-								swipeActionFlash === koSideAction
-									? 'border-current/60 after:border-current/60'
-									: '',
-							].join(' ')}
-							aria-label={`${koSideLabel} ${participant.name}`}
-							title={
-								density === 'mobile'
-									? koSideLabel
-									: `Press or swipe card here to ${koSideLabel.toLowerCase()} ${participant.name}`
-							}
-						>
-							{isKnockedOut ? (
-								<Skull className={iconClass} />
-							) : (
-								<Ban className={iconClass} />
-							)}
-							{showKoLabel ? (
-								<span className="pointer-events-none absolute bottom-[calc(100%+0.25rem)] max-h-0 overflow-hidden whitespace-nowrap text-[10px] uppercase tracking-[0.16em] opacity-0 transition-all duration-200 group-hover/action:max-h-6 group-hover/action:opacity-100">
-									{isKnockedOut ? 'Slay' : 'KO'}
-								</span>
-							) : null}
-						</button>
-					</TooltipTrigger>
-					<TooltipContent side="top">
-						Press or swipe card here to {koSideLabel.toLowerCase()}{' '}
-						{participant.name}
-					</TooltipContent>
-				</Tooltip>
+				{koSideEffects.length === 1 ? (
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<button
+								type="button"
+								onClick={(event) => {
+									event.stopPropagation();
+									triggerActionWithSlide(koSideAction, koSideEffects[0]);
+								}}
+								className={[
+									actionButtonKoClass,
+									swipeActionFlash === koSideAction
+										? 'border-current/60 after:border-current/60'
+										: '',
+								].join(' ')}
+								aria-label={koSideTitle(koSideEffects[0])}
+								title={
+									density === 'mobile'
+										? koSideLabel
+										: `Press or swipe card here: ${koSideTitle(koSideEffects[0])}`
+								}
+							>
+								{isKnockedOut ? (
+									<RemoveIcon className={iconClass} />
+								) : (
+									<TakeOutIcon className={iconClass} />
+								)}
+								{showKoLabel ? (
+									<span className="pointer-events-none absolute bottom-[calc(100%+0.25rem)] max-h-0 overflow-hidden whitespace-nowrap text-[10px] uppercase tracking-[0.16em] opacity-0 transition-all duration-200 group-hover/action:max-h-6 group-hover/action:opacity-100">
+										{isKnockedOut ? names.remove : names.takeOutShort}
+									</span>
+								) : null}
+							</button>
+						</TooltipTrigger>
+						<TooltipContent side="top">
+							Press or swipe card here: {koSideTitle(koSideEffects[0])}
+						</TooltipContent>
+					</Tooltip>
+				) : (
+					<div
+						className={[
+							actionButtonKoClass,
+							'p-0',
+							isMobileDensity ? 'flex-row' : 'flex-col',
+							swipeActionFlash === koSideAction
+								? 'border-current/60 after:border-current/60'
+								: '',
+						].join(' ')}
+					>
+						{koSideEffects.map((effect, index) => (
+							<Tooltip key={effect}>
+								<TooltipTrigger asChild>
+									<button
+										type="button"
+										onClick={(event) => {
+											event.stopPropagation();
+											triggerActionWithSlide(koSideAction, effect);
+										}}
+										className={[
+											'relative z-10 flex min-h-0 min-w-0 flex-1 items-center justify-center gap-1 self-stretch text-[10px] uppercase tracking-[0.08em] hover:bg-current/10',
+											isMobileDensity ? 'pt-1' : 'pl-1',
+											index > 0
+												? isMobileDensity
+													? 'border-l border-current/25'
+													: 'border-t border-current/25'
+												: '',
+										].join(' ')}
+										aria-label={koSideTitle(effect)}
+										title={koSideTitle(effect)}
+									>
+										{effect === 'checks' ? (
+											<ShieldOff className="h-3.5 w-3.5 shrink-0" />
+										) : (
+											<HeartOff className="h-3.5 w-3.5 shrink-0" />
+										)}
+										{isMobileDensity &&
+											effect &&
+											TAKE_OUT_EFFECT_SHORT_LABEL[effect]}
+									</button>
+								</TooltipTrigger>
+								<TooltipContent side="top">
+									{index === 0 ? 'Press or swipe card here: ' : 'Press: '}
+									{koSideTitle(effect)}
+								</TooltipContent>
+							</Tooltip>
+						))}
+					</div>
+				)}
 			</div>
 		</div>
 	);

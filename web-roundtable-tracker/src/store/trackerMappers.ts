@@ -7,7 +7,6 @@ import {
 	LEVEL_REPRESENTATION,
 } from './data';
 import {
-	isHazardDisabled,
 	type EncounterStore,
 	type TrackerParticipantMeta,
 } from './encounterRuntimeStore';
@@ -29,6 +28,7 @@ export type TrackerParticipant = {
 	tempHpDescription?: string;
 	disableChecksSucceeded?: number;
 	disableChecksRequired?: number;
+	shownProgress?: TrackerParticipantMeta['shownProgress'];
 	hardness?: number;
 	initiativeBonus?: number;
 	dcs?: Array<{
@@ -70,12 +70,12 @@ export type TrackerHeader = {
 export type PlayerTrackerParticipant = {
 	id: string;
 	name: string;
-	status: 'Ready' | 'Delayed' | 'Knocked Out' | 'Inactive';
+	status: 'Ready' | 'Delayed' | 'Knocked Out' | 'Disabled' | 'Inactive';
 	hpLabel: string;
 	/** Filled segments of the player HP bar, or null without HP data. */
 	hpSegments: number | null;
 	isHazard: boolean;
-	/** Disable checks of a hazard that needs any, shown instead of HP. */
+	/** Disable checks, when they are shown instead of HP. */
 	disableProgress: PlayerDisableProgress | null;
 	sideTheme: ParticipantSideTheme;
 };
@@ -226,6 +226,7 @@ function characterToTrackerParticipant(
 	if (meta.disableChecksRequired > 0) {
 		base.disableChecksRequired = meta.disableChecksRequired;
 		base.disableChecksSucceeded = meta.disableChecksSucceeded;
+		base.shownProgress = meta.shownProgress;
 	}
 
 	return base;
@@ -291,9 +292,9 @@ export function runtimeToOutOfInitiativeData(
 	);
 
 	const hazards: TrackerParticipant[] = Object.entries(trackerMetaMap)
-		// Simple hazards never take turns; disabled complex hazards stop taking
-		// turns. Both are listed here instead of the initiative queue.
-		.filter(([, meta]) => meta.isSimpleHazard || isHazardDisabled(meta))
+		// Simple hazards never take turns, so they are listed here instead of
+		// the initiative queue. Disabled complex hazards stay in the queue.
+		.filter(([, meta]) => meta.isSimpleHazard)
 		.map(([uuid, meta]) => {
 			const character = charactersMap[uuid];
 
@@ -399,17 +400,45 @@ function delayedToTrackerParticipants(
 		);
 }
 
-const toPlayerStatus = (
-	state: TrackerParticipant['state']
-): PlayerTrackerParticipant['status'] => {
-	if (state === 'delayed') return 'Delayed';
+/**
+ * The names of taking a participant out of the fight. They follow the
+ * participant type, not what took it out: hazards are disabled or destroyed,
+ * everyone else is knocked out or slain.
+ */
+export function getOutOfFightNames(
+	participant: Pick<TrackerParticipant, 'role'>
+) {
+	return participant.role === 'hazard'
+		? {
+				takeOut: 'Disable',
+				takeOutShort: 'Disable',
+				remove: 'Destroy',
+				outState: 'Disabled',
+				removedState: 'Destroyed',
+			}
+		: {
+				takeOut: 'Knock Out',
+				takeOutShort: 'K.O.',
+				remove: 'Slay',
+				outState: 'Knocked Out',
+				removedState: 'Slain',
+			};
+}
 
-	if (state === 'knocked-out') return 'Knocked Out';
+/** The participant's state as the tracker and the player view name it. */
+export function getParticipantStateLabel(
+	participant: Pick<TrackerParticipant, 'role' | 'state'>
+): PlayerTrackerParticipant['status'] {
+	if (participant.state === 'delayed') return 'Delayed';
 
-	if (state === 'inactive') return 'Inactive';
+	if (participant.state === 'knocked-out') {
+		return participant.role === 'hazard' ? 'Disabled' : 'Knocked Out';
+	}
+
+	if (participant.state === 'inactive') return 'Inactive';
 
 	return 'Ready';
-};
+}
 
 /**
  * A participant's HP as players see it: the HP tier, and that tier's number of
@@ -419,7 +448,10 @@ const toPlayerHealth = (
 	participant: TrackerParticipant
 ): Pick<PlayerTrackerParticipant, 'hpLabel' | 'hpSegments'> => {
 	if (participant.state === 'knocked-out') {
-		return { hpLabel: 'Unconscious', hpSegments: 0 };
+		return {
+			hpLabel: participant.role === 'hazard' ? 'Disabled' : 'Unconscious',
+			hpSegments: 0,
+		};
 	}
 
 	if (
@@ -439,7 +471,7 @@ const toPlayerHealth = (
 	};
 };
 
-const HAZARD_DISABLE_CHECK_NAMES = [
+const DISABLE_CHECK_NAMES = [
 	'Disrupted',
 	'Compromised',
 	'Fracturing',
@@ -447,42 +479,42 @@ const HAZARD_DISABLE_CHECK_NAMES = [
 	'Disabled',
 ] as const;
 
-function getHazardDisableStageNames(requiredChecks: number) {
+function getDisableStageNames(requiredChecks: number) {
 	const clampedRequiredChecks = Math.min(Math.max(requiredChecks, 1), 5);
 
 	if (clampedRequiredChecks === 5) {
-		return [...HAZARD_DISABLE_CHECK_NAMES];
+		return [...DISABLE_CHECK_NAMES];
 	}
 
 	if (clampedRequiredChecks === 4) {
 		return [
-			HAZARD_DISABLE_CHECK_NAMES[0],
-			HAZARD_DISABLE_CHECK_NAMES[1],
-			HAZARD_DISABLE_CHECK_NAMES[3],
-			HAZARD_DISABLE_CHECK_NAMES[4],
+			DISABLE_CHECK_NAMES[0],
+			DISABLE_CHECK_NAMES[1],
+			DISABLE_CHECK_NAMES[3],
+			DISABLE_CHECK_NAMES[4],
 		];
 	}
 
 	if (clampedRequiredChecks === 3) {
 		return [
-			HAZARD_DISABLE_CHECK_NAMES[0],
-			HAZARD_DISABLE_CHECK_NAMES[2],
-			HAZARD_DISABLE_CHECK_NAMES[4],
+			DISABLE_CHECK_NAMES[0],
+			DISABLE_CHECK_NAMES[2],
+			DISABLE_CHECK_NAMES[4],
 		];
 	}
 
 	if (clampedRequiredChecks === 2) {
-		return [HAZARD_DISABLE_CHECK_NAMES[0], HAZARD_DISABLE_CHECK_NAMES[4]];
+		return [DISABLE_CHECK_NAMES[0], DISABLE_CHECK_NAMES[4]];
 	}
 
-	return [HAZARD_DISABLE_CHECK_NAMES[4]];
+	return [DISABLE_CHECK_NAMES[4]];
 }
 
 /**
- * The tracker's label for a hazard's disable checks: Stable before the first
- * success, then one stage name per success, ending at Disabled.
+ * The tracker's label for disable checks: Stable before the first success,
+ * then one stage name per success, ending at Disabled.
  */
-export function getHazardDisableLabel(
+export function getDisableProgressLabel(
 	participant: Pick<
 		TrackerParticipant,
 		'disableChecksRequired' | 'disableChecksSucceeded'
@@ -495,20 +527,67 @@ export function getHazardDisableLabel(
 		return 'Stable';
 	}
 
-	const stageNames = getHazardDisableStageNames(requiredChecks);
+	const stageNames = getDisableStageNames(requiredChecks);
 	const stageIndex =
 		Math.min(Math.max(successfulChecks, 1), requiredChecks) - 1;
 
 	return stageNames[Math.min(stageIndex, stageNames.length - 1)] ?? 'Disabled';
 }
 
-/** A hazard's disable checks as players see them, with the tracker's label. */
+/** Whether the participant has HP to show (current and max). */
+export const hasHpData = (
+	participant: Pick<TrackerParticipant, 'currentHp' | 'maxHp'>
+) =>
+	typeof participant.currentHp === 'number' &&
+	typeof participant.maxHp === 'number';
+
+/** Whether the participant needs disable checks (Disable a Device). */
+export const hasDisableChecks = (
+	participant: Pick<TrackerParticipant, 'disableChecksRequired'>
+) => (participant.disableChecksRequired ?? 0) > 0;
+
+/** Whether a participant with both HP and disable checks has both bars. */
+export function hasHpAndDisableProgress(
+	participant: Pick<
+		TrackerParticipant,
+		'currentHp' | 'maxHp' | 'disableChecksRequired'
+	>
+) {
+	return hasHpData(participant) && hasDisableChecks(participant);
+}
+
+/**
+ * Whether the tracker and the player view show the participant's disable
+ * progress instead of its HP. With both, the GM's choice decides (disable
+ * progress for hazards by default); a hazard with neither shows its disable
+ * label.
+ */
+export function showsDisableProgress(
+	participant: Pick<
+		TrackerParticipant,
+		'role' | 'currentHp' | 'maxHp' | 'disableChecksRequired' | 'shownProgress'
+	>
+) {
+	if (hasHpAndDisableProgress(participant)) {
+		return (
+			(participant.shownProgress ??
+				(participant.role === 'hazard' ? 'disable' : 'hp')) === 'disable'
+		);
+	}
+
+	return (
+		hasDisableChecks(participant) ||
+		(participant.role === 'hazard' && !hasHpData(participant))
+	);
+}
+
+/** Disable checks as players see them, with the tracker's label. */
 const toPlayerDisableProgress = (
 	participant: TrackerParticipant
 ): PlayerDisableProgress | null => {
 	const required = participant.disableChecksRequired ?? 0;
 
-	if (participant.role !== 'hazard' || required <= 0) {
+	if (required <= 0 || !showsDisableProgress(participant)) {
 		return null;
 	}
 
@@ -517,7 +596,7 @@ const toPlayerDisableProgress = (
 		required
 	);
 
-	return { succeeded, required, label: getHazardDisableLabel(participant) };
+	return { succeeded, required, label: getDisableProgressLabel(participant) };
 };
 
 export function runtimeToPlayerInitiativeQueue(
@@ -529,7 +608,7 @@ export function runtimeToPlayerInitiativeQueue(
 	return runtimeToInitiativeQueue(store).map((participant) => ({
 		id: participant.id,
 		name: participant.name,
-		status: toPlayerStatus(participant.state),
+		status: getParticipantStateLabel(participant),
 		isHazard: participant.role === 'hazard',
 		...toPlayerHealth(participant),
 		disableProgress: toPlayerDisableProgress(participant),

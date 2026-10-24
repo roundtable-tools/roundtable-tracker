@@ -19,6 +19,12 @@ export type TrackerParticipantMeta = {
 	isSimpleHazard: boolean;
 	disableChecksRequired: number;
 	disableChecksSucceeded: number;
+	/**
+	 * What the tracker and the player view show for a participant with both HP
+	 * and disable checks. Defaults to disable progress for hazards, HP for
+	 * everyone else.
+	 */
+	shownProgress?: 'hp' | 'disable';
 	notes: string;
 	hardness?: number;
 	initiativeBonus?: number;
@@ -42,14 +48,13 @@ import {
 import { type EncounterTimer, startTimer } from './encounterTimer';
 import { type PendingReinforcement } from './pendingReinforcements';
 
-// A hazard is disabled once its Disable a Device successes reach the required
-// count. Hazards without a required count can't be disabled this way.
-export const isHazardDisabled = (meta: {
-	role: TrackerParticipantRole;
+// Whether a participant's disable checks (Disable a Device on a hazard or a
+// clockwork creature) reached the required count. Participants without a
+// required count never have them full.
+export const hasFullDisableChecks = (meta: {
 	disableChecksRequired?: number;
 	disableChecksSucceeded?: number;
 }) =>
-	meta.role === 'hazard' &&
 	(meta.disableChecksRequired ?? 0) > 0 &&
 	(meta.disableChecksSucceeded ?? 0) >= (meta.disableChecksRequired ?? 0);
 

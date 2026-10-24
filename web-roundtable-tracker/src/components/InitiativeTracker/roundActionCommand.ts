@@ -1,9 +1,11 @@
 import { type Command, type CommandDeps } from '@/CommandHistory/common';
+import { CompositeCommand } from '@/CommandHistory/Commands/CompositeCommand';
 import { DelayCharacterCommand } from '@/CommandHistory/Commands/DelayCharacterCommand';
 import { EndTurnCommand } from '@/CommandHistory/Commands/EndTurnCommand';
 import { FinalizeTurnAndAdvanceRoundCommand } from '@/CommandHistory/Commands/FinalizeTurnAndAdvanceRoundCommand';
 import { FinalizeTurnAndReturnToInitiativeCommand } from '@/CommandHistory/Commands/FinalizeTurnAndReturnToInitiativeCommand';
 import { KnockOutCharacterCommand } from '@/CommandHistory/Commands/KnockOutCharacterCommand';
+import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 import { ReturnToInitiativeCommand } from '@/CommandHistory/Commands/ReturnToInitiativeCommand';
 import { type EncounterStore } from '@/store/encounterRuntimeStore';
 import { delayingIds, isDelaying } from '@/store/operations';
@@ -93,8 +95,25 @@ export function returnPromptEntries({
 }
 
 /**
+ * Whether Slay / Destroy has to end the participant's turn before removing
+ * it: it is the current actor, or the last one left to act this round.
+ * Otherwise the round would stop with nobody left to act.
+ */
+export function removalEndsTurn(
+	participantId: string,
+	state: RoundActionState
+) {
+	return (
+		state.charactersWithTurn.has(participantId) &&
+		!isDelaying(state.charactersMap, participantId) &&
+		(participantId === state.charactersOrder[0] ||
+			closesRound(participantId, state))
+	);
+}
+
+/**
  * The command the tracker runs when the GM ends a participant's turn, delays
- * or knocks them out. It also closes the round after the last active
+ * or knocks them out (Disable for a hazard). It also closes the round after the last active
  * participant. Acting on the current participant also brings back a delaying
  * participant who is next in the order; acting on anyone else (e.g. a K.O.
  * during another participant's turn) leaves the current turn running.
@@ -149,4 +168,27 @@ export function getRoundActionCommand(
 	}
 
 	return new EndTurnCommand({ uuid: participantId }, deps);
+}
+
+/**
+ * The command for Slay / Destroy: the participant leaves the initiative. When
+ * removing it would stop the round with nobody left to act (see
+ * removalEndsTurn), its turn ends first, which also closes the round after
+ * the last actor.
+ */
+export function getRemoveCommand(
+	participantId: string,
+	state: RoundActionState,
+	deps?: CommandDeps
+): Command {
+	const remove = new RemoveCharacterCommand({ uuid: participantId }, deps);
+
+	return removalEndsTurn(participantId, state)
+		? new CompositeCommand({
+				commands: [
+					getRoundActionCommand(participantId, 'end-turn', state, deps),
+					remove,
+				],
+			})
+		: remove;
 }

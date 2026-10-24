@@ -14,7 +14,8 @@ import { ReturnToInitiativeCommand } from './Commands/ReturnToInitiativeCommand'
 import { TriggerReinforcementEventCommand } from './Commands/TriggerReinforcementEventCommand';
 import { UpdateCharacterDataCommand } from './Commands/UpdateCharacterDataCommand';
 import { SetTempHealthCommand } from './Commands/SetTempHealthCommand';
-import { RecordHazardDisableProgressCommand } from './Commands/RecordHazardDisableProgressCommand';
+import { RecordDisableProgressCommand } from './Commands/RecordDisableProgressCommand';
+import { SetShownProgressCommand } from './Commands/SetShownProgressCommand';
 import { Command } from './common';
 
 const commandMap: Record<string, new (data: Command['data']) => Command> = {};
@@ -70,8 +71,6 @@ export const registerSerializableCommands = (classesMap = commandMap) => {
 	register(SetTempHealthCommand, 'SetTempHealthCommand');
 	register(ReturnToInitiativeCommand, 'ReturnToInitiativeCommand');
 	register(GiveAdditionalTurnCommand, 'GiveAdditionalTurnCommand');
-	register(
-		RecordHazardDisableProgressCommand,
-		'RecordHazardDisableProgressCommand'
-	);
+	register(RecordDisableProgressCommand, 'RecordDisableProgressCommand');
+	register(SetShownProgressCommand, 'SetShownProgressCommand');
 };

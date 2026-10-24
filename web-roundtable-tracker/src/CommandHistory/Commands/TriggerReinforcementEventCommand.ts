@@ -135,10 +135,7 @@ const expandSlotParticipants = (
 					slotParticipant.type === 'hazard'
 						? !slotParticipant.isComplexHazard
 						: false,
-				disableChecksRequired:
-					slotParticipant.type === 'hazard'
-						? (slotParticipant.successesToDisable ?? 0)
-						: 0,
+				disableChecksRequired: slotParticipant.successesToDisable ?? 0,
 				disableChecksSucceeded: 0,
 				notes,
 				hardness: slotParticipant.hardness,
