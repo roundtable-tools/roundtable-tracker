@@ -13,6 +13,12 @@ const examples = Object.fromEntries(
 	])
 );
 
+export const trackerExampleNames = Object.keys(examples);
+
+/** The page URL that loads an example into the tracker. */
+export const trackerExampleUrl = (name: string) =>
+	`${import.meta.env.BASE_URL}?example=${encodeURIComponent(name)}#/initiative_tracker`;
+
 /**
  * Dev server only: `?example=<name>` in the URL replaces the running
  * encounter with that example, then drops the parameter so a reload keeps
