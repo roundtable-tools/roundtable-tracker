@@ -11,7 +11,7 @@ when the turn flow changes.
   - Whether a participant has its turn left is held in the store's `charactersWithTurn` Set, not on `Character`.
 - **Tie priority** `PRIORITY = { PC: 0, NPC: 1, SPECIAL: 2 }`. Higher goes first on a tie, so by default enemies (`NPC`) win ties against PCs, as the rules say. The party form's "Initiative tie advantage" checkbox is ticked by default and maps ticked to `PC`, unticked to `NPC`.
 - **Sides** `ALIGNMENT = { PCs: 0, Opponents: 1, Neutral: 2 }`.
-- **Template participant** (`CombatantParticipant`): `initiativeBonus?`, `tiePriority?`, `startingState?` (`normal` | `knocked-out`), `hiddenUntilFirstTurn?`, `initiativeDescription?`, `count?`. The builder's combat-ready state maps to `startingState` (Active → `normal`, Defeated → `knocked-out`); its Visibility toggle ("Always visible" / "Hidden until first turn") maps to `hiddenUntilFirstTurn`, which the tracker copies to `trackerMetaMap` and shows as a badge before the traits. The player view doesn't use it yet. Hazards add `successesToDisable` and `isComplexHazard?`.
+- **Template participant** (`CombatantParticipant`): `initiativeBonus?`, `tiePriority?`, `startingState?` (`normal` | `knocked-out`), `hiddenUntilFirstTurn?`, `initiativeDescription?`, `count?`. The builder's combat-ready state maps to `startingState` (Active → `normal`, Defeated → `knocked-out`); its Visibility toggle ("Always visible" / "Hidden until first turn") maps to `hiddenUntilFirstTurn`, which the tracker copies to `trackerMetaMap` and shows as a badge before the traits. The player view doesn't use it yet. Hazards add `successesToDisable` and `isComplexHazard?`. Creatures can have an optional `successesToDisable` too (disable checks, e.g. a clockwork construct; the builder's "Disable Checks" block).
   - **Nobody starts delayed** (house rule): starting delayed let a participant join right after the first turn of the encounter, which nearly always wins initiative. A participant meant to show up later starts in the order with `hiddenUntilFirstTurn` instead.
 - **Narrative slots** (`NarrativeSlot`): `type` is `default`, `reinforcement` or `ongoing`. `trigger: { round?, frequency? }`, plus `participants`. Reinforcements are slots of type `reinforcement`; one without a `round` (builder: empty "Reinforcement Round", shown as "Any round") can be triggered in any round, stays off the round timeline and the round dialog, and counts as round 1 for XP attrition. `visibleBeforeTrigger?` (builder: "Before Arrival", hidden by default) lets players see a reinforcement's participants before it triggers; the tracker marks pending ones of a hiding slot "Hidden until arrival". A participant's own `hiddenUntilFirstTurn` keeps it hidden until its first turn after the trigger, whatever the slot says.
 - **Runtime store** (`store/encounterRuntimeStore.ts`, persisted to localStorage as `encounter-store`):
@@ -22,7 +22,7 @@ when the turn flow changes.
   | `charactersWithTurn: Set<UUID>` | Who still has a turn this round |
   | `round` | Starts at 1 |
   | `charactersMap` | Characters by uuid |
-  | `trackerMetaMap` | Role (pc / opponent / neutral / ally / hazard / reinforcement), `isSimpleHazard`, `initiativeBonus`, `reinforcementSlotId`, … |
+  | `trackerMetaMap` | Role (pc / opponent / neutral / ally / hazard / reinforcement), `isSimpleHazard`, `initiativeBonus`, `reinforcementSlotId`, `disableChecksRequired` / `disableChecksSucceeded`, `shownProgress` (HP or disable progress in the list and player view, for a participant with both), … |
   | `pendingReinforcements` | Reinforcements given an initiative in the preview and not yet triggered: `slotId`, the prepared `character` and `meta`, and their spot (`above`, `below`). Not in `charactersMap` or the orders, so the tracker's queue and the player view don't show them |
   | `history`, `redoStack` | Command history |
 
@@ -77,15 +77,19 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 | knocked-out → delayed | Moved to the end of the queue |
 | knocked-out → normal (`ReactivateCharacterCommand`) | Turn state only. The participant doesn't get its turn back |
 
-- `ReturnToInitiativeCommand {activeUuid, returningUuid, action}` does the return in one step. It:
+- **Disable is the hazard's K.O.** A disabled hazard has `turnState: 'knocked-out'` and goes through the same round action (`'ko'`) and transitions; only the names differ (`getOutOfFightNames`, `getParticipantStateLabel` in `store/trackerMappers.ts`): hazards are Disabled / Destroyed, everyone else Knocked Out / Slain, whatever took them out. A disabled complex hazard stays in the queue; a simple hazard only changes its `turnState`.
+- **0 HP or full disable checks** (`components/InitiativeTracker/takeOut.ts`, `TakeOutNotice`): damage to 0 HP, or a disable success or correction that fills the checks, of a participant still in the fight opens a timed notice: Knock Out / Slay (Disable / Destroy for a hazard), defaulting to Slain / Destroyed. A PC at 0 HP is knocked out without asking. The HP or check change and the answer run as one `CompositeCommand`, so one undo takes back both.
+- **Manual K.O. / Disable** keeps the data in line: one button per value the participant has, setting HP to 0 (`ChangeHealthCommand`, temp HP included) or filling the checks (`RecordDisableProgressCommand`), run in the same undo step; no extra effect without either.
+- `RecordDisableProgressCommand {uuid, delta | value}` only changes the success count (clamped to the required count), for any participant with one. A correction below the required count of a participant that is out runs `ReactivateCharacterCommand`.
+- `ReturnToInitiativeCommand {activeUuid, returningUuid, action}` does the return in one step. The round action uses it only when the GM acts on the current actor (`charactersOrder[0]`) and the next participant is delaying. It:
   1. ends the active participant's turn,
   2. gives the returner a turn and puts it at index 0 with `turnState: 'normal'`.
 
   It is the rules' "return after another creature's turn".
 - **Knock-out position:** the end of a rotating queue is "directly before the current actor". A knock-out on someone else's turn therefore matches the rule "move to directly before the turn in which you were reduced to 0 HP", whatever caused it. A knock-out on the participant's own turn ends that turn and moves it to the end of the queue, which is the position it already had, as the rule requires.
 - Knocked-out participants keep getting a turn every round, which fits recovery checks; the GM passes the turn.
-- `ChangeHealthCommand` does **not** knock out at 0 HP. Linking the two is a planned feature.
-- `RemoveCharacterCommand` ("Slay") deletes the participant from the map, both orders and the turn Set.
+- `ChangeHealthCommand` itself doesn't knock out at 0 HP; the tracker page asks first (see above).
+- `RemoveCharacterCommand` ("Slay", "Destroy" for a hazard) deletes the participant from the map, both orders and the turn Set.
 
 ## Reinforcements and hazards
 
@@ -103,8 +107,8 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
   - Ties (`arrivalActsBefore`): an opposing arrival goes before a PC it ties with; other ties go after the participants already there.
   - The timeline offers "Trigger Now" once `trigger.round <= round`. The reinforcements panel's Trigger button works in any round, which is how a slot without a round is triggered. A visible slot with visible participants and no round covers what a starting delay was used for (a second phase, a creature waiting to join).
 - **Simple hazards** (`meta.isSimpleHazard`):
-  - They are hidden from the visible queue and shown in a hazards panel.
-  - They still sit in `charactersOrder` and `charactersWithTurn`.
+  - They are hidden from the visible queue and shown in a hazards panel, with disable quick actions, Disable, and Reactivate / Destroy once disabled.
+  - They are not in `charactersOrder` or `charactersWithTurn` (`parseCharacters` leaves them out).
 - **Complex hazards** take turns like creatures.
 - Mid-combat additions are only possible through reinforcement slots.
 - **Not modelled:** Ready, summons, minions, companions, eidolons, multiple slots for one creature.
