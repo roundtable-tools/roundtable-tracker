@@ -429,3 +429,81 @@ describe('traits round trip', () => {
 		expect(metaMap.goblin?.traits).toEqual(['Goblin', 'Small']);
 	});
 });
+
+describe('creature disable checks round trip', () => {
+	const values: BuilderFormValues = {
+		...defaultFormValues(),
+		name: 'Clockwork',
+		partyLevel: 3,
+		slots: [
+			{ ...defaultSlot(), name: 'Clockwork Soldier', successesToDisable: 2 },
+			{ ...defaultSlot(), name: 'Goblin' },
+			{
+				...defaultSlot(),
+				type: 'reinforcement',
+				reinforcementRound: 2,
+				reinforcementParticipants: [
+					{
+						id: 'reinforcement-participant',
+						type: 'creature',
+						name: 'Clockwork Spy',
+						side: 'opponent',
+						level: 2,
+						count: 1,
+						successesToDisable: 3,
+						adjustment: 'none',
+						isSimpleHazard: false,
+					},
+				],
+			},
+		],
+	};
+
+	it('starts a new creature slot without disable checks', () => {
+		expect(defaultSlot().successesToDisable).toBe(0);
+	});
+
+	it('saves only the disable checks a creature has, and loads them back', () => {
+		const encounter = toConcreteEncounter(values);
+		const loaded = fromConcreteEncounter(encounter);
+
+		expect(
+			encounter.participants.map(
+				(participant) => participant.successesToDisable
+			)
+		).toEqual([2, undefined]);
+		expect(
+			encounter.narrativeSlots?.[0]?.participants?.[0]?.successesToDisable
+		).toBe(3);
+		expect(
+			loaded.slots
+				.slice(0, 2)
+				.map(({ successesToDisable }) => successesToDisable)
+		).toEqual([2, 0]);
+		expect(
+			loaded.slots[2]?.reinforcementParticipants?.[0]?.successesToDisable
+		).toBe(3);
+		expect(
+			ConcreteEncounterSchema.shape.participants.parse(encounter.participants)
+		).toEqual(encounter.participants);
+	});
+
+	it('passes a creature disable count to the tracker', () => {
+		const [clockwork, goblin] = toConcreteEncounter(values).participants;
+		const config = {
+			tiePriority: PRIORITY.NPC,
+			initiative: 10,
+			maxHealth: 10,
+			health: 10,
+			tempHealth: 0,
+		};
+		const metaMap = buildTrackerMetaMap([
+			{ ...clockwork, uuid: 'clockwork', ...config },
+			{ ...goblin, uuid: 'goblin', ...config },
+		]);
+
+		expect(metaMap.clockwork?.disableChecksRequired).toBe(2);
+		expect(metaMap.clockwork?.role).toBe('opponent');
+		expect(metaMap.goblin?.disableChecksRequired).toBe(0);
+	});
+});

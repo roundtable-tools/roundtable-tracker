@@ -7,6 +7,7 @@ import { Toggle } from '@/components/ui/toggle';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DcsTab } from './SlotRowTabs/DcsTab';
 import { HpTab } from './SlotRowTabs/HpTab';
+import { DisableChecksTab } from './SlotRowTabs/DisableChecksTab';
 import { InitiativeTab } from './SlotRowTabs/InitiativeTab';
 import { AdjustmentTab } from './SlotRowTabs/AdjustmentTab';
 import { TraitsTab } from './SlotRowTabs/TraitsTab';
@@ -92,6 +93,7 @@ const ACCOMPLISHMENT_OPTIONS: {
 
 export type AdditionalDataBlockKey =
 	| 'hp'
+	| 'disable'
 	| 'dcs'
 	| 'initiative'
 	| 'adjustment'
@@ -101,6 +103,7 @@ export type AdditionalDataBlockKey =
 const COMBAT_TAB_ORDER: AdditionalDataBlockKey[] = [
 	'combat-ready',
 	'hp',
+	'disable',
 	'initiative',
 	'dcs',
 	'adjustment',
@@ -116,6 +119,12 @@ const ADDITIONAL_BLOCKS: Array<{
 		key: 'hp',
 		label: 'HP / Hardness',
 		description: 'Adds HP override, and hardness for hazards.',
+	},
+	{
+		key: 'disable',
+		label: 'Disable Checks',
+		description:
+			'Successes needed to disable a creature, e.g. a clockwork construct. Hazards set them in their row.',
 	},
 	{
 		key: 'dcs',
@@ -160,6 +169,10 @@ function hasAdditionalBlock(
 			typeof slot.maxHealth === 'number' ||
 			(slot.type === 'hazard' && typeof slot.hardness === 'number')
 		);
+	}
+
+	if (key === 'disable') {
+		return slot.type === 'creature' && slot.successesToDisable > 0;
 	}
 
 	if (key === 'dcs') {
@@ -210,6 +223,12 @@ function hasReinforcementAdditionalBlock(
 		);
 	}
 
+	if (key === 'disable') {
+		return (
+			participant.type === 'creature' && participant.successesToDisable > 0
+		);
+	}
+
 	if (key === 'dcs') {
 		return (participant.dcs?.length ?? 0) > 0;
 	}
@@ -254,6 +273,8 @@ function isBlockAllowed(
 ): boolean {
 	if (block === 'adjustment' && slotType !== 'creature') return false;
 
+	if (block === 'disable' && slotType !== 'creature') return false;
+
 	if (block === 'initiative' && isSimpleHazard) return false;
 
 	return true;
@@ -275,6 +296,8 @@ function inferEnabledTabsFromSlot(slot: BuilderSlot): AdditionalDataBlockKey[] {
 	const tabs: AdditionalDataBlockKey[] = [];
 
 	if (hasAdditionalBlock(slot, 'hp')) tabs.push('hp');
+
+	if (hasAdditionalBlock(slot, 'disable')) tabs.push('disable');
 
 	if (hasAdditionalBlock(slot, 'initiative')) tabs.push('initiative');
 
@@ -302,6 +325,10 @@ function inferEnabledTabsFromReinforcementParticipant(
 	const tabs: AdditionalDataBlockKey[] = [];
 
 	if (hasReinforcementAdditionalBlock(participant, 'hp')) tabs.push('hp');
+
+	if (hasReinforcementAdditionalBlock(participant, 'disable')) {
+		tabs.push('disable');
+	}
 
 	if (hasReinforcementAdditionalBlock(participant, 'initiative')) {
 		tabs.push('initiative');
@@ -484,7 +511,7 @@ export function SlotRow({
 			initiativeBonus: undefined,
 			initiativeDescription: undefined,
 			dcs: [],
-			successesToDisable: 1,
+			successesToDisable: 0,
 			adjustment: 'none',
 			adjustmentDescription: undefined,
 			adjustmentLevelModifier: undefined,
@@ -526,6 +553,13 @@ export function SlotRow({
 			}
 		}
 
+		if (block === 'disable' && !(slot.successesToDisable > 0)) {
+			setValue(`slots.${index}.successesToDisable`, 1, {
+				shouldDirty: true,
+				shouldTouch: true,
+			});
+		}
+
 		if (block === 'dcs' && (slot.dcs?.length ?? 0) === 0) {
 			setValue(
 				`slots.${index}.dcs`,
@@ -565,7 +599,12 @@ export function SlotRow({
 		const current = form.getValues(`slots.${index}`);
 		const reset = defaultSlot();
 
-		update(index, { ...reset, id: current.id, type: newType });
+		update(index, {
+			...reset,
+			id: current.id,
+			type: newType,
+			successesToDisable: newType === 'hazard' ? 1 : 0,
+		});
 	};
 
 	const handleRemove = () => {
@@ -614,7 +653,7 @@ export function SlotRow({
 
 		if (changes.type === 'creature') {
 			updatedParticipant.isSimpleHazard = false;
-			updatedParticipant.successesToDisable = 1;
+			updatedParticipant.successesToDisable = 0;
 			updatedParticipant.hardness = undefined;
 		}
 
@@ -711,6 +750,12 @@ export function SlotRow({
 			});
 		}
 
+		if (block === 'disable' && !(participant.successesToDisable > 0)) {
+			handleReinforcementParticipantChange(participantIndex, {
+				successesToDisable: 1,
+			});
+		}
+
 		if (block === 'dcs' && (participant.dcs?.length ?? 0) === 0) {
 			handleReinforcementParticipantChange(participantIndex, {
 				dcs: [
@@ -767,6 +812,12 @@ export function SlotRow({
 
 		if (tab === 'dcs') {
 			handleReinforcementParticipantChange(participantIndex, { dcs: [] });
+		}
+
+		if (tab === 'disable') {
+			handleReinforcementParticipantChange(participantIndex, {
+				successesToDisable: 0,
+			});
 		}
 
 		if (tab === 'hp') {
@@ -1390,6 +1441,7 @@ export function SlotRow({
 												>
 													{tab === 'dcs' && 'DCs'}
 													{tab === 'hp' && 'HP/Hardness'}
+													{tab === 'disable' && 'Disable Checks'}
 													{tab === 'initiative' && 'Initiative'}
 													{tab === 'adjustment' && 'Adjustment'}
 													{tab === 'traits' && 'Traits'}
@@ -1708,6 +1760,46 @@ export function SlotRow({
 													</div>
 												)}
 											{participant.type === 'creature' &&
+												participantVisibleTabs.includes('disable') &&
+												resolvedParticipantActiveTab === 'disable' && (
+													<div className="space-y-2">
+														<div className="flex items-center justify-between gap-2">
+															<p className="text-sm font-medium">
+																Disable Checks
+															</p>
+															<Button
+																type="button"
+																variant="destructive"
+																size="sm"
+																onClick={() =>
+																	handleRemoveReinforcementTab(
+																		participantIndex,
+																		'disable'
+																	)
+																}
+															>
+																<Trash2 className="h-4 w-4" />
+															</Button>
+														</div>
+														<Input
+															type="number"
+															min={1}
+															placeholder="Successes"
+															value={participant.successesToDisable || ''}
+															onChange={(event) =>
+																handleReinforcementParticipantChange(
+																	participantIndex,
+																	{
+																		successesToDisable: Number(
+																			event.target.value || 0
+																		),
+																	}
+																)
+															}
+														/>
+													</div>
+												)}
+											{participant.type === 'creature' &&
 												participantVisibleTabs.includes('adjustment') &&
 												resolvedParticipantActiveTab === 'adjustment' && (
 													<div className="space-y-2">
@@ -1966,6 +2058,7 @@ export function SlotRow({
 								>
 									{tab === 'dcs' && 'DCs'}
 									{tab === 'hp' && 'HP/Hardness'}
+									{tab === 'disable' && 'Disable Checks'}
 									{tab === 'initiative' && 'Initiative'}
 									{tab === 'adjustment' && 'Adjustment'}
 									{tab === 'traits' && 'Traits'}
@@ -2069,6 +2162,31 @@ export function SlotRow({
 										);
 
 										if (activeTab === 'hp') {
+											setActiveTab('');
+										}
+									}}
+								/>
+							)}
+
+							{visibleTabs.includes('disable') && slotType === 'creature' && (
+								<DisableChecksTab
+									index={index}
+									control={control}
+									onRemove={() => {
+										setValue(`slots.${index}.successesToDisable`, 0, {
+											shouldDirty: true,
+											shouldTouch: true,
+										});
+										setEnabledBlocks((current) =>
+											current.filter(
+												(block) => getTabForBlock(block) !== 'disable'
+											)
+										);
+										setActiveTabs((current) =>
+											current.filter((tab) => tab !== 'disable')
+										);
+
+										if (activeTab === 'disable') {
 											setActiveTab('');
 										}
 									}}
