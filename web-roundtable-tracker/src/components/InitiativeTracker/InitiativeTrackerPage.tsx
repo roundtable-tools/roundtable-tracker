@@ -46,6 +46,7 @@ import { EncounterTimerControls } from './EncounterTimerControls';
 import { TurnStatsPanel } from './TurnStatsPanel';
 import { ReturnToInitiativeNotice } from './ReturnToInitiativeNotice';
 import { BringBackNotice } from './BringBackNotice';
+import { TakeOutNotice } from './TakeOutNotice';
 import {
 	damageDropsToZeroHp,
 	disableProgressFillsChecks,
@@ -53,11 +54,10 @@ import {
 	getBringBackEffectCommand,
 	getOtherValuesAtTakeOutLevel,
 	getTakeOutEffectCommand,
-	getTakeOutEffects,
+	getApplicableTakeOutEffects,
 	getValuesAtTakeOutLevel,
 	healingLeavesZeroHp,
 	inOneUndoStep,
-	TAKE_OUT_EFFECT_SHORT_LABEL,
 	getTakeOutTitle,
 	type TakeOutEffect,
 } from './takeOut';
@@ -165,29 +165,21 @@ function DisableQuickActions({
 }
 
 /**
- * K.O. / Disable buttons for a row outside the initiative carousel, one per
- * take-out effect; Reactivate and Slay / Destroy once it is out.
+ * The K.O. / Disable button for a row outside the initiative carousel;
+ * Reactivate and Slay / Destroy once it is out.
  */
 function OutOfFightRowActions({
 	participant,
-	effects,
 	onAction,
 }: {
 	participant: TrackerParticipant;
-	effects: TakeOutEffect[];
-	onAction: (
-		participantId: string,
-		action: SwipeAction,
-		effect?: TakeOutEffect
-	) => void;
+	onAction: (participantId: string, action: SwipeAction) => void;
 }) {
 	const names = getOutOfFightNames(participant);
-	const act =
-		(action: SwipeAction, effect?: TakeOutEffect) =>
-		(event: React.MouseEvent) => {
-			event.stopPropagation();
-			onAction(participant.id, action, effect);
-		};
+	const act = (action: SwipeAction) => (event: React.MouseEvent) => {
+		event.stopPropagation();
+		onAction(participant.id, action);
+	};
 
 	if (participant.state === 'knocked-out') {
 		return (
@@ -216,20 +208,18 @@ function OutOfFightRowActions({
 		);
 	}
 
-	return (effects.length > 0 ? effects : [undefined]).map((effect) => (
+	return (
 		<Button
-			key={effect ?? 'none'}
 			type="button"
 			size="sm"
 			variant="destructive"
 			className="h-7 px-2 text-xs"
-			title={getTakeOutTitle(names.takeOut, participant.name, effect)}
-			onClick={act('ko', effect)}
+			title={getTakeOutTitle(names.takeOut, participant.name)}
+			onClick={act('ko')}
 		>
 			{names.takeOutShort}
-			{effect && ` (${TAKE_OUT_EFFECT_SHORT_LABEL[effect]})`}
 		</Button>
-	));
+	);
 }
 
 function getParticipantIndicatorLabel(participant: TrackerParticipant) {
@@ -1038,6 +1028,9 @@ export function InitiativeTrackerPage() {
 	};
 	const [bringBackPrompt, setBringBackPrompt] =
 		useState<BringBackPromptState | null>(null);
+	// A manual K.O. / Disable waiting for the GM to pick how the participant
+	// is taken out (TakeOutNotice).
+	const [takeOutPromptId, setTakeOutPromptId] = useState<string | null>(null);
 	const [returnPrompt, setReturnPrompt] = useState<ReturnPromptState | null>(
 		null
 	);
@@ -1463,19 +1456,10 @@ export function InitiativeTrackerPage() {
 
 	const handleParticipantSwipeAction = (
 		participantId: string,
-		action: SwipeAction,
-		effect?: TakeOutEffect
+		action: SwipeAction
 	) => {
-		const before =
-			action === 'ko' && effect
-				? getTakeOutEffectCommand(participantId, effect, {
-						charactersMap,
-						trackerMetaMap,
-					})
-				: null;
-
 		if (action === 'ko') {
-			takeOutParticipant(participantId, before ?? undefined);
+			setTakeOutPromptId(participantId);
 
 			return;
 		}
@@ -1547,6 +1531,35 @@ export function InitiativeTrackerPage() {
 		}
 
 		executeRoundAction({ participantId, action: 'remove' });
+	};
+
+	// The GM's answer to a manual K.O. / Disable: taken out with the `effects`
+	// values set to match, or slain / destroyed.
+	const handleTakeOutPromptAnswer = (
+		answer: { remove: true } | { remove: false; effects: TakeOutEffect[] }
+	) => {
+		const participantId = takeOutPromptId;
+		setTakeOutPromptId(null);
+
+		if (!participantId) return;
+
+		if (answer.remove) {
+			removeParticipant(participantId);
+
+			return;
+		}
+
+		const state = { charactersMap, trackerMetaMap };
+		const effectCommands = answer.effects.map((effect) =>
+			getTakeOutEffectCommand(participantId, effect, state)
+		);
+
+		takeOutParticipant(
+			participantId,
+			effectCommands.some(Boolean)
+				? inOneUndoStep(...effectCommands)
+				: undefined
+		);
 	};
 
 	// K.O., or Disable for a hazard (and Delay, which ends the turn the same
@@ -2096,12 +2109,6 @@ export function InitiativeTrackerPage() {
 														currentInitiativeParticipantId
 													}
 													onSwipeAction={handleParticipantSwipeAction}
-													takeOutEffects={getTakeOutEffects(
-														item.participant.id,
-														{
-															trackerMetaMap,
-														}
-													)}
 													density="desktop"
 													accent={getParticipantAccent(item.participant)}
 													turnTimer={timer}
@@ -2194,9 +2201,6 @@ export function InitiativeTrackerPage() {
 														actionSlot={
 															<OutOfFightRowActions
 																participant={participant}
-																effects={getTakeOutEffects(participant.id, {
-																	trackerMetaMap,
-																})}
 																onAction={handleParticipantSwipeAction}
 															/>
 														}
@@ -2224,9 +2228,6 @@ export function InitiativeTrackerPage() {
 																/>
 																<OutOfFightRowActions
 																	participant={participant}
-																	effects={getTakeOutEffects(participant.id, {
-																		trackerMetaMap,
-																	})}
 																	onAction={handleParticipantSwipeAction}
 																/>
 															</>
@@ -2491,9 +2492,6 @@ export function InitiativeTrackerPage() {
 														actionSlot={
 															<OutOfFightRowActions
 																participant={participant}
-																effects={getTakeOutEffects(participant.id, {
-																	trackerMetaMap,
-																})}
 																onAction={handleParticipantSwipeAction}
 															/>
 														}
@@ -2519,9 +2517,6 @@ export function InitiativeTrackerPage() {
 																/>
 																<OutOfFightRowActions
 																	participant={participant}
-																	effects={getTakeOutEffects(participant.id, {
-																		trackerMetaMap,
-																	})}
 																	onAction={handleParticipantSwipeAction}
 																/>
 															</>
@@ -2578,12 +2573,6 @@ export function InitiativeTrackerPage() {
 														currentInitiativeParticipantId
 													}
 													onSwipeAction={handleParticipantSwipeAction}
-													takeOutEffects={getTakeOutEffects(
-														item.participant.id,
-														{
-															trackerMetaMap,
-														}
-													)}
 													density="mobile"
 													accent={getParticipantAccent(item.participant)}
 													turnTimer={timer}
@@ -2750,6 +2739,7 @@ export function InitiativeTrackerPage() {
 				isTimerPaused &&
 				!returnPrompt &&
 				!bringBackPrompt &&
+				!takeOutPromptId &&
 				// The round dialog traps the focus too; the notice waits for it.
 				nextRoundAnnouncement === null && (
 					<ResumeTimerNotice
@@ -2763,6 +2753,25 @@ export function InitiativeTrackerPage() {
 						}}
 					/>
 				)}
+
+			{takeOutPromptId && charactersMap[takeOutPromptId] && (
+				<TakeOutNotice
+					key={`take-out-${takeOutPromptId}`}
+					participant={{
+						name: charactersMap[takeOutPromptId].name,
+						role: trackerMetaMap[takeOutPromptId]?.role ?? 'opponent',
+						sideTheme: trackerMetaMap[takeOutPromptId]?.sideTheme,
+					}}
+					effects={getApplicableTakeOutEffects(takeOutPromptId, {
+						charactersMap,
+						trackerMetaMap,
+					})}
+					onTakeOut={(effects) =>
+						handleTakeOutPromptAnswer({ remove: false, effects })
+					}
+					onRemove={() => handleTakeOutPromptAnswer({ remove: true })}
+				/>
+			)}
 
 			{bringBackPrompt && (
 				<BringBackNotice

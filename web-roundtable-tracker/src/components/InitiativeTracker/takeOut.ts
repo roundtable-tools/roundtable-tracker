@@ -10,32 +10,37 @@ import {
 	type EncounterStore,
 	hasFullDisableChecks,
 } from '@/store/encounterRuntimeStore';
-import { hasDisableChecks } from '@/store/trackerMappers';
+import {
+	hasDisableChecks,
+	resolveParticipantSideTheme,
+	type TrackerParticipant,
+} from '@/store/trackerMappers';
 import { type UUID } from '@/utils/uuid';
 
 /**
- * What a manual K.O. or Disable sets so the participant's data matches its
- * new state: HP to 0, or the disable checks to full.
+ * What a manual K.O. or Disable can also set so the participant's data
+ * matches its new state: HP to 0, or the disable checks to full.
  */
 export type TakeOutEffect = 'hp' | 'checks';
 
-/** What each effect sets, as the K.O. / Disable buttons say it. */
+/** What each effect sets, as the take-out notice's buttons say it. */
 export const TAKE_OUT_EFFECT_TEXT: Record<TakeOutEffect, string> = {
-	hp: 'sets HP to 0',
-	checks: 'fills the disable checks',
+	hp: 'set HP to 0',
+	checks: 'fill the disable checks',
 };
 
 /** The title of a K.O. / Disable (or Slay / Destroy) button. */
-export const getTakeOutTitle = (
-	action: string,
-	name: string,
-	effect?: TakeOutEffect
-) => `${action} ${name}${effect ? `: ${TAKE_OUT_EFFECT_TEXT[effect]}` : ''}`;
+export const getTakeOutTitle = (action: string, name: string) =>
+	`${action} ${name}`;
 
-export const TAKE_OUT_EFFECT_SHORT_LABEL: Record<TakeOutEffect, string> = {
-	hp: '0 HP',
-	checks: 'Checks',
-};
+/**
+ * The take-out notice's default answer: opponents (hazards included) are
+ * slain or destroyed, everyone else is knocked out or disabled.
+ */
+export const getDefaultTakeOut = (
+	participant: Pick<TrackerParticipant, 'role' | 'sideTheme'>
+): 'out' | 'remove' =>
+	resolveParticipantSideTheme(participant) === 'opponent' ? 'remove' : 'out';
 
 type TakeOutState = Pick<EncounterStore, 'charactersMap' | 'trackerMetaMap'>;
 
@@ -55,6 +60,19 @@ export function getTakeOutEffects(
 	if (meta && hasDisableChecks(meta)) effects.push('checks');
 
 	return effects;
+}
+
+/**
+ * The effects a manual K.O. or Disable can offer: those that would change a
+ * value, e.g. not 'hp' for a participant already at 0 HP.
+ */
+export function getApplicableTakeOutEffects(
+	uuid: UUID,
+	state: TakeOutState
+): TakeOutEffect[] {
+	return getTakeOutEffects(uuid, state).filter(
+		(effect) => getTakeOutEffectCommand(uuid, effect, state) !== null
+	);
 }
 
 /** The command that applies a take-out effect, or null if nothing changes. */
