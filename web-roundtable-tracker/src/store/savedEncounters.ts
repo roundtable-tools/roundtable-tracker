@@ -67,7 +67,7 @@ export const createSavedEncountersStore = () =>
 				name: 'saved-encounters-store',
 				storage: createJSONStorage(() => localStorage),
 				// Without a migrate function, zustand drops stored state whose
-				// version differs, so lowering this would wipe saved encounters.
+				// version differs, so changing this would wipe saved encounters.
 				version: 1,
 			}
 		)

@@ -23,6 +23,7 @@ function creature(overrides: Partial<BuilderSlot> = {}): BuilderSlot {
 		reinforcementRound: 1,
 		eventRound: 1,
 		repeatInterval: undefined,
+		reinforcementParticipants: [],
 		...overrides,
 	};
 }
@@ -245,10 +246,7 @@ describe('computeEncounterXpUsage', () => {
 		expect(usage.simulation).toBeNull();
 	});
 
-	it.each([
-		['an empty participant list', []],
-		['no participant list', undefined],
-	])('treats a reinforcement slot with %s as 0 XP', (_, participants) => {
+	it('treats a reinforcement slot without participants as 0 XP', () => {
 		const usage = computeEncounterXpUsage(
 			[
 				creature({ level: 5, count: 2 }),
@@ -256,7 +254,7 @@ describe('computeEncounterXpUsage', () => {
 					type: 'reinforcement',
 					level: 5,
 					reinforcementRound: 3,
-					reinforcementParticipants: participants,
+					reinforcementParticipants: [],
 				}),
 			],
 			5,

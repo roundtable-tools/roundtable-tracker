@@ -807,11 +807,10 @@ export function InitiativeTrackerPage() {
 		() =>
 			runtimeToInitiativeQueue({
 				charactersOrder,
-				delayedOrder,
 				charactersMap,
 				trackerMetaMap,
 			}),
-		[charactersOrder, delayedOrder, charactersMap, trackerMetaMap]
+		[charactersOrder, charactersMap, trackerMetaMap]
 	);
 
 	const outOfInitiative = useMemo(

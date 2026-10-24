@@ -232,7 +232,7 @@ function characterToTrackerParticipant(
 export function runtimeToInitiativeQueue(
 	store: Pick<
 		EncounterStore,
-		'charactersOrder' | 'delayedOrder' | 'charactersMap' | 'trackerMetaMap'
+		'charactersOrder' | 'charactersMap' | 'trackerMetaMap'
 	>
 ): TrackerParticipant[] {
 	const { charactersOrder, charactersMap, trackerMetaMap } = store;
@@ -523,7 +523,7 @@ const toPlayerDisableProgress = (
 export function runtimeToPlayerInitiativeQueue(
 	store: Pick<
 		EncounterStore,
-		'charactersOrder' | 'delayedOrder' | 'charactersMap' | 'trackerMetaMap'
+		'charactersOrder' | 'charactersMap' | 'trackerMetaMap'
 	>
 ): PlayerTrackerParticipant[] {
 	return runtimeToInitiativeQueue(store).map((participant) => ({

@@ -369,10 +369,7 @@ export function SlotRow({
 	const availableSlotTypes = SLOT_TYPES.filter(({ value }) =>
 		allowedTypes.includes(value)
 	);
-	const reinforcementParticipants = useMemo(
-		() => slot.reinforcementParticipants ?? [],
-		[slot.reinforcementParticipants]
-	);
+	const reinforcementParticipants = slot.reinforcementParticipants;
 	const availableCombatTabs = useMemo(
 		() =>
 			COMBAT_TAB_ORDER.filter((tab) =>

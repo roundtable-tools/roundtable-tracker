@@ -71,7 +71,7 @@ export interface BuilderSlot {
 	reinforcementRound?: number;
 	/** Players may see the participants before the slot triggers. */
 	reinforcementVisibleBeforeTrigger?: boolean;
-	reinforcementParticipants?: BuilderReinforcementParticipant[];
+	reinforcementParticipants: BuilderReinforcementParticipant[];
 	eventRound: number;
 	repeatInterval?: number;
 	accomplishmentLevel?: AccomplishmentLevel;
@@ -491,7 +491,7 @@ export function computeEncounterXpUsage(
 	);
 	const rawReinforcementXp = reinforcementSlots.reduce(
 		(sum, slot) =>
-			(slot.reinforcementParticipants ?? []).reduce(
+			slot.reinforcementParticipants.reduce(
 				(slotSum, participant) =>
 					slotSum.sum(
 						resolveReinforcementParticipantXp(participant, partyLevel) ??
