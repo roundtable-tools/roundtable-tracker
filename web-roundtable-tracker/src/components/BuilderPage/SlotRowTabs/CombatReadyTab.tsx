@@ -65,10 +65,6 @@ export function CombatReadyTab({
 								</FormControl>
 								<SelectContent>
 									<SelectItem value="active">Active</SelectItem>
-									<SelectItem value="delayed">Delayed</SelectItem>
-									<SelectItem value="delayed-silent">
-										Delayed (silent)
-									</SelectItem>
 									<SelectItem value="knocked-out">Defeated</SelectItem>
 								</SelectContent>
 							</Select>
@@ -78,17 +74,17 @@ export function CombatReadyTab({
 				/>
 				<FormField
 					control={control}
-					name={`slots.${index}.hiddenFromPlayers` as const}
+					name={`slots.${index}.hiddenUntilFirstTurn` as const}
 					render={({ field }) => (
 						<FormItem className="space-y-1 flex flex-col justify-center">
-							<FormLabel>Hidden from Players</FormLabel>
+							<FormLabel>Visibility</FormLabel>
 							<FormControl>
 								<Toggle
 									pressed={field.value ?? false}
 									onPressedChange={field.onChange}
 									className="w-fit"
 								>
-									{field.value ? 'Hidden' : 'Visible'}
+									{field.value ? 'Hidden until first turn' : 'Always visible'}
 								</Toggle>
 							</FormControl>
 							<FormMessage />

@@ -52,41 +52,29 @@ export function delayerReturningAfterTurn({
 
 /**
  * Whether ending the current turn first asks if a delaying participant
- * returns. Two kinds of delayers don't ask on their own: the one returning
- * after this turn anyway, and one that started the encounter silently delayed
- * and hasn't joined the order yet. The prompt still lists them when another
- * delayer asks.
+ * returns. The one returning after this turn anyway doesn't ask on its own;
+ * the prompt still lists it when another delayer asks.
  */
 export function asksToReturnFromDelay(
-	state: Pick<
-		RoundActionState,
-		'charactersOrder' | 'delayedOrder' | 'charactersMap'
-	>
+	state: Pick<RoundActionState, 'charactersOrder' | 'delayedOrder'>
 ) {
 	const returningId = delayerReturningAfterTurn(state);
 
-	return state.delayedOrder.some(
-		(uuid) =>
-			uuid !== returningId &&
-			!(
-				state.charactersMap[uuid]?.silentDelay &&
-				!state.charactersOrder.includes(uuid)
-			)
-	);
+	return state.delayedOrder.some((uuid) => uuid !== returningId);
 }
 
 export type ReturnPromptEntry = {
 	id: string;
 	/** Turns before the old spot comes up; 0 when it is right after this one. */
 	distance?: number;
-	/** Has no spot yet (started or arrived delayed): it joins the order. */
-	joins: boolean;
 };
 
 /**
- * The delayers the return prompt lists: nearest old spot first, then the ones
- * that join the order for the first time. Only participants that take a turn
- * count towards the distance, not other delayers' spots.
+ * The delayers the return prompt lists, nearest old spot first. Only
+ * participants that take a turn count towards the distance, not other
+ * delayers' spots. A delayer without a spot in the order (left from an
+ * encounter started when participants could still start delayed) comes last,
+ * without a distance.
  */
 export function returnPromptEntries({
 	charactersOrder,
@@ -103,13 +91,12 @@ export function returnPromptEntries({
 			distance: charactersOrder
 				.slice(1, charactersOrder.indexOf(id))
 				.filter((other) => !delayed.has(other)).length,
-			joins: false,
 		}));
-	const joining = delayedOrder
+	const withoutSpot = delayedOrder
 		.filter((id) => !charactersOrder.includes(id))
-		.map((id) => ({ id, joins: true }));
+		.map((id) => ({ id }));
 
-	return [...withSpot, ...joining];
+	return [...withSpot, ...withoutSpot];
 }
 
 /**

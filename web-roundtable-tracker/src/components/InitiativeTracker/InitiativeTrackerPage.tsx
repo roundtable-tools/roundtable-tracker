@@ -30,6 +30,7 @@ import {
 import {
 	ArrowRight,
 	ArrowUpDown,
+	EyeOff,
 	History,
 	Redo2,
 	ShieldOff,
@@ -150,16 +151,30 @@ function getParticipantAccent(participant: TrackerParticipant) {
 	};
 }
 
+const hasTraitBadges = (participant: TrackerParticipant) =>
+	(participant.traits?.length ?? 0) > 0 ||
+	participant.hiddenUntilFirstTurn === true;
+
 function TraitBadges({ participant }: { participant: TrackerParticipant }) {
-	return participant.traits?.map((trait, index) => (
-		<Badge
-			key={`${participant.id}-trait-${index}`}
-			variant="outline"
-			className={`text-[10px] ${getTraitBadgeClassName(trait)}`}
-		>
-			{trait}
-		</Badge>
-	));
+	return (
+		<>
+			{participant.hiddenUntilFirstTurn && (
+				<Badge variant="outline" className="gap-1 text-[10px]">
+					<EyeOff className="size-3" />
+					Hidden until first turn
+				</Badge>
+			)}
+			{participant.traits?.map((trait, index) => (
+				<Badge
+					key={`${participant.id}-trait-${index}`}
+					variant="outline"
+					className={`text-[10px] ${getTraitBadgeClassName(trait)}`}
+				>
+					{trait}
+				</Badge>
+			))}
+		</>
+	);
 }
 
 function ParticipantRow({
@@ -289,7 +304,7 @@ function ParticipantDetails({
 				<Badge>{getParticipantRoleLabel(participant)}</Badge>
 				<Badge variant="secondary">{participant.state}</Badge>
 			</div>
-			{(participant.traits?.length ?? 0) > 0 && (
+			{hasTraitBadges(participant) && (
 				<div className="flex flex-wrap gap-1">
 					<TraitBadges participant={participant} />
 				</div>
@@ -786,21 +801,12 @@ export function InitiativeTrackerPage() {
 		);
 
 		return {
-			asks: asksToReturnFromDelay({
-				charactersOrder,
-				delayedOrder,
-				charactersMap,
-			}),
+			asks: asksToReturnFromDelay({ charactersOrder, delayedOrder }),
 			participants: returnPromptEntries({ charactersOrder, delayedOrder })
 				.filter((entry) => names.has(entry.id))
 				.map((entry) => ({ ...entry, name: names.get(entry.id) ?? '' })),
 		};
-	}, [
-		charactersOrder,
-		delayedOrder,
-		charactersMap,
-		delayedSectionParticipants,
-	]);
+	}, [charactersOrder, delayedOrder, delayedSectionParticipants]);
 	const hasReinforcements = pendingReinforcementParticipants.length > 0;
 	const hasDelayed = delayedSectionParticipants.length > 0;
 	const hasHazards = outOfInitiative.hazards.length > 0;

@@ -38,6 +38,8 @@ export type TrackerParticipant = {
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
 	traits?: string[];
+	/** Kept from the players until the participant's first turn starts. */
+	hiddenUntilFirstTurn?: boolean;
 	notes: string;
 };
 
@@ -213,6 +215,7 @@ function characterToTrackerParticipant(
 		adjustmentDescription: meta.adjustmentDescription,
 		adjustmentLevelModifier: meta.adjustmentLevelModifier,
 		traits: meta.traits,
+		hiddenUntilFirstTurn: meta.hiddenUntilFirstTurn,
 	};
 
 	if (meta.disableChecksRequired > 0) {
@@ -350,6 +353,7 @@ export function runtimeToOutOfInitiativeData(
 					adjustmentDescription: participant.adjustmentDescription,
 					adjustmentLevelModifier: participant.adjustmentLevelModifier,
 					traits: participant.traits,
+					hiddenUntilFirstTurn: participant.hiddenUntilFirstTurn,
 					notes: slot.description ?? '',
 				} satisfies TrackerParticipant;
 			});

@@ -93,8 +93,8 @@ const party: Party = {
 
 /**
  * One participant of each kind the encounter builder makes: opponents with
- * elite and weak adjustments, a hidden one, a neutral creature, a complex and
- * a simple hazard, one that starts delayed, and two reinforcement events.
+ * elite and weak adjustments, two hidden until their first turn, a neutral
+ * creature, a complex and a simple hazard, and two reinforcement events.
  */
 const encounter: Encounter = {
 	id: 'example-bridge-ambush',
@@ -145,7 +145,7 @@ const encounter: Encounter = {
 			maxHealth: 17,
 			initiativeBonus: 6,
 			traits: ['Animal'],
-			hiddenFromPlayers: true,
+			hiddenUntilFirstTurn: true,
 		},
 		{
 			type: 'creature',
@@ -154,7 +154,7 @@ const encounter: Encounter = {
 			side: ALIGNMENT.Opponents,
 			maxHealth: 25,
 			initiativeBonus: 8,
-			startingState: 'delayed',
+			hiddenUntilFirstTurn: true,
 			initiativeDescription: 'Waits in the rigging to ambush',
 		},
 		{
@@ -411,7 +411,10 @@ describe('tracker state examples', () => {
 		const state = store.getState();
 
 		expect(state.round).toBe(1);
-		expect(state.delayedOrder).toEqual([uuidOf(store, 'Goblin Sneak')]);
+		expect(state.delayedOrder).toEqual([]);
+		expect(
+			state.trackerMetaMap[uuidOf(store, 'Goblin Sneak')].hiddenUntilFirstTurn
+		).toBe(true);
 		expect(
 			Object.values(state.trackerMetaMap).some((meta) => meta.isSimpleHazard)
 		).toBe(true);
@@ -423,7 +426,7 @@ describe('tracker state examples', () => {
 		);
 	});
 
-	it('round-2-mid-round: damage, temp HP, delay, knock-out, reinforcements and disable progress', async () => {
+	it('round-2-mid-round: damage, temp HP, two delays, knock-out, reinforcements and disable progress', async () => {
 		// Round 1
 		changeHealth(store, 'Goblin Warchief', -14);
 		act(store, 'Valeros', 'end-turn');
@@ -444,6 +447,7 @@ describe('tracker state examples', () => {
 		act(store, 'Kyra', 'end-turn');
 		changeHealth(store, 'Merisiel', -28);
 		act(store, 'Goblin Archer A', 'end-turn');
+		act(store, 'Goblin Sneak', 'delay');
 		act(store, 'Bridge Keeper', 'delay');
 		act(store, 'Merisiel', 'end-turn');
 		act(store, 'Swinging Log', 'end-turn');

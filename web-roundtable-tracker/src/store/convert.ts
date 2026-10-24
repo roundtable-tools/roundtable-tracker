@@ -103,6 +103,7 @@ export const buildTrackerMetaMap = (
 			adjustmentDescription: runtime.adjustmentDescription,
 			adjustmentLevelModifier: runtime.adjustmentLevelModifier,
 			traits: runtime.traits,
+			hiddenUntilFirstTurn: runtime.hiddenUntilFirstTurn,
 		};
 	}
 
@@ -124,12 +125,7 @@ export const buildPendingReinforcements = (
 	const takesTurns = (participant: CharacterConfig) =>
 		!(participant as RuntimeParticipantFields).isSimpleHazard;
 	const startingOrderIds = new Set(
-		startingParticipants
-			.filter(
-				(participant) =>
-					takesTurns(participant) && participant.startingState !== 'delayed'
-			)
-			.map(({ uuid }) => uuid)
+		startingParticipants.filter(takesTurns).map(({ uuid }) => uuid)
 	);
 	const reinforcementIds = new Set(reinforcements.map(({ uuid }) => uuid));
 	const sorted = [...startingParticipants, ...reinforcements]

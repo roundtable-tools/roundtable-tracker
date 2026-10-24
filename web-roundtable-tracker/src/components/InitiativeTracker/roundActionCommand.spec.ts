@@ -103,36 +103,14 @@ describe('delaying through a whole round', () => {
 		expect(state().charactersOrder[0]).toBe('x');
 		expect(state().charactersMap.x.turnState).toBe('normal');
 	});
-
-	it('never sends back a participant that started silently delayed', () => {
-		state().startEncounter([
-			character('a'),
-			character('s', { turnState: 'delayed', silentDelay: true }),
-			character('b'),
-		]);
-
-		for (let turn = 0; turn < 6; turn++) act();
-
-		expect(state().round).toBe(4);
-		expect(state().delayedOrder).toEqual(['s']);
-		expect(state().charactersMap.s.turnState).toBe('delayed');
-	});
 });
 
 describe('asksToReturnFromDelay', () => {
-	const characters = (...list: Character[]) =>
-		Object.fromEntries(list.map((entry) => [entry.uuid, entry]));
-
 	it('skips the prompt when the only delayer comes back after this turn anyway', () => {
 		expect(
 			asksToReturnFromDelay({
 				charactersOrder: ['a', 'x', 'b'],
 				delayedOrder: ['x'],
-				charactersMap: characters(
-					character('a'),
-					character('x', { turnState: 'delayed' }),
-					character('b')
-				),
 			})
 		).toBe(false);
 	});
@@ -142,12 +120,6 @@ describe('asksToReturnFromDelay', () => {
 			asksToReturnFromDelay({
 				charactersOrder: ['a', 'x', 'b', 'y'],
 				delayedOrder: ['x', 'y'],
-				charactersMap: characters(
-					character('a'),
-					character('x', { turnState: 'delayed' }),
-					character('b'),
-					character('y', { turnState: 'delayed' })
-				),
 			})
 		).toBe(true);
 	});
@@ -157,69 +129,24 @@ describe('asksToReturnFromDelay', () => {
 			asksToReturnFromDelay({
 				charactersOrder: ['a', 'b', 'x'],
 				delayedOrder: ['x'],
-				charactersMap: characters(
-					character('a'),
-					character('b'),
-					character('x', { turnState: 'delayed' })
-				),
-			})
-		).toBe(true);
-	});
-
-	it('does not ask for a silent starting delay on its own', () => {
-		const charactersMap = characters(
-			character('a'),
-			character('b'),
-			character('s', { turnState: 'delayed', silentDelay: true })
-		);
-
-		expect(
-			asksToReturnFromDelay({
-				charactersOrder: ['a', 'b'],
-				delayedOrder: ['s'],
-				charactersMap,
-			})
-		).toBe(false);
-		expect(
-			asksToReturnFromDelay({
-				charactersOrder: ['a', 'b'],
-				delayedOrder: ['s', 'x'],
-				charactersMap: {
-					...charactersMap,
-					x: character('x', { turnState: 'delayed' }),
-				},
-			})
-		).toBe(true);
-	});
-
-	it('asks again once a silent starter has joined the order and delays', () => {
-		expect(
-			asksToReturnFromDelay({
-				charactersOrder: ['a', 'b', 's'],
-				delayedOrder: ['s'],
-				charactersMap: characters(
-					character('a'),
-					character('b'),
-					character('s', { turnState: 'delayed', silentDelay: true })
-				),
 			})
 		).toBe(true);
 	});
 });
 
 describe('returnPromptEntries', () => {
-	it('lists the nearest old spot first and the joining participants last', () => {
+	it('lists the nearest old spot first and delayers without a spot last', () => {
 		expect(
 			returnPromptEntries({
 				charactersOrder: ['a', 'b', 'y', 'c', 'x', 'z'],
 				delayedOrder: ['s', 'x', 'y', 'z'],
 			})
 		).toEqual([
-			{ id: 'y', distance: 1, joins: false },
-			{ id: 'x', distance: 2, joins: false },
+			{ id: 'y', distance: 1 },
+			{ id: 'x', distance: 2 },
 			// Spots of other delayers aren't turns, so they don't count
-			{ id: 'z', distance: 2, joins: false },
-			{ id: 's', joins: true },
+			{ id: 'z', distance: 2 },
+			{ id: 's' },
 		]);
 	});
 
@@ -229,6 +156,6 @@ describe('returnPromptEntries', () => {
 				charactersOrder: ['a', 'x', 'b'],
 				delayedOrder: ['x'],
 			})
-		).toEqual([{ id: 'x', distance: 0, joins: false }]);
+		).toEqual([{ id: 'x', distance: 0 }]);
 	});
 });

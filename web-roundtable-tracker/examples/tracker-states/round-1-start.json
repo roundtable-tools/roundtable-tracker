@@ -58,7 +58,7 @@
 				"health": 25,
 				"maxHealth": 25,
 				"tempHealth": 0,
-				"turnState": "delayed",
+				"turnState": "normal",
 				"group": "enemies"
 			},
 			"00000000-0000-4000-8000-000000000010": {
@@ -148,6 +148,7 @@
 			"00000000-0000-4000-8000-000000000006",
 			"pc-kyra",
 			"00000000-0000-4000-8000-000000000002",
+			"00000000-0000-4000-8000-000000000005",
 			"00000000-0000-4000-8000-000000000010",
 			"pc-merisiel",
 			"00000000-0000-4000-8000-000000000007",
@@ -156,7 +157,7 @@
 			"pc-ezren",
 			"00000000-0000-4000-8000-000000000008"
 		],
-		"delayedOrder": ["00000000-0000-4000-8000-000000000005"],
+		"delayedOrder": [],
 		"trackerMetaMap": {
 			"pc-valeros": {
 				"role": "pc",
@@ -226,7 +227,8 @@
 				"disableChecksRequired": 0,
 				"disableChecksSucceeded": 0,
 				"notes": "",
-				"initiativeBonus": 8
+				"initiativeBonus": 8,
+				"hiddenUntilFirstTurn": true
 			},
 			"00000000-0000-4000-8000-000000000010": {
 				"role": "neutral",
@@ -268,7 +270,8 @@
 				"disableChecksSucceeded": 0,
 				"notes": "",
 				"initiativeBonus": 6,
-				"traits": ["Animal"]
+				"traits": ["Animal"],
+				"hiddenUntilFirstTurn": true
 			},
 			"00000000-0000-4000-8000-000000000009": {
 				"role": "hazard",
@@ -319,12 +322,12 @@
 		"charactersWithTurn": {
 			"type": "Set",
 			"data": [
-				"00000000-0000-4000-8000-000000000005",
 				"pc-valeros",
 				"00000000-0000-4000-8000-000000000001",
 				"00000000-0000-4000-8000-000000000006",
 				"pc-kyra",
 				"00000000-0000-4000-8000-000000000002",
+				"00000000-0000-4000-8000-000000000005",
 				"00000000-0000-4000-8000-000000000010",
 				"pc-merisiel",
 				"00000000-0000-4000-8000-000000000007",
@@ -384,7 +387,7 @@
 					"maxHealth": 17,
 					"initiativeBonus": 6,
 					"traits": ["Animal"],
-					"hiddenFromPlayers": true
+					"hiddenUntilFirstTurn": true
 				},
 				{
 					"type": "creature",
@@ -393,7 +396,7 @@
 					"side": 1,
 					"maxHealth": 25,
 					"initiativeBonus": 8,
-					"startingState": "delayed",
+					"hiddenUntilFirstTurn": true,
 					"initiativeDescription": "Waits in the rigging to ambush"
 				},
 				{

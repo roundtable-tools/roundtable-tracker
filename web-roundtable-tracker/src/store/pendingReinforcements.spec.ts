@@ -279,24 +279,4 @@ describe('placePendingReinforcements', () => {
 
 		expect(placed.charactersOrder).toEqual(['a', 'b', 'r1', 'r2', 'c', 'd']);
 	});
-
-	it('sends arrivals that come in delayed to the delayed list, with a turn only when their spot is ahead', () => {
-		const placed = placePendingReinforcements(
-			{
-				charactersOrder: ['b', 'c', 'a'],
-				delayedOrder: [],
-				charactersWithTurn: new Set(['b', 'c']),
-				charactersMap,
-			},
-			[
-				pending('early', null, 'a', { turnState: 'delayed' }),
-				pending('late', 'c', null, { turnState: 'delayed' }),
-			]
-		);
-
-		expect(placed.charactersOrder).toEqual(['b', 'c', 'a']);
-		expect(placed.delayedOrder).toEqual(['early', 'late']);
-		expect(placed.charactersWithTurn.has('early')).toBe(false);
-		expect(placed.charactersWithTurn.has('late')).toBe(true);
-	});
 });

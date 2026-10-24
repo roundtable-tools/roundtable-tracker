@@ -37,6 +37,17 @@ const characters: Character[] = [
 	},
 ];
 
+// The Rogue has delayed out of the order and can return.
+const startWithRogueDelaying = (
+	store: ReturnType<typeof createEncounterStore>
+) => {
+	store.getState().startEncounter(characters);
+	store.setState({
+		charactersOrder: [characters[0].uuid],
+		delayedOrder: [characters[1].uuid],
+	});
+};
+
 const giveTurn = (uuid: string) =>
 	new GiveAdditionalTurnCommand({ uuid: uuid as Character['uuid'] });
 
@@ -62,7 +73,7 @@ describe('encounter store persistence', () => {
 
 	it('restores a history with a ReturnToInitiativeCommand after a reload', () => {
 		const store = createEncounterStore();
-		store.getState().startEncounter(characters);
+		startWithRogueDelaying(store);
 		const command = new ReturnToInitiativeCommand(
 			{
 				activeUuid: characters[0].uuid,
@@ -88,7 +99,7 @@ describe('encounter store persistence', () => {
 	it('drops an unknown stored command and the commands undo or redo cannot reach past it', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const store = createEncounterStore();
-		store.getState().startEncounter(characters);
+		startWithRogueDelaying(store);
 		store
 			.getState()
 			.setHistory([
@@ -197,6 +208,7 @@ describe('encounter store persistence', () => {
 			{
 				name: 'ReactivateCharacterCommand',
 				start: () => characters,
+				setUp: () => startWithRogueDelaying(getEncounterStore()),
 				command: () => new ReactivateCharacterCommand({ uuid: rogue.uuid }),
 			},
 			{
@@ -215,6 +227,7 @@ describe('encounter store persistence', () => {
 			{
 				name: 'FinalizeTurnAndReturnToInitiativeCommand',
 				start: () => characters,
+				setUp: () => startWithRogueDelaying(getEncounterStore()),
 				command: () =>
 					new FinalizeTurnAndReturnToInitiativeCommand({
 						activeUuid: hero.uuid,

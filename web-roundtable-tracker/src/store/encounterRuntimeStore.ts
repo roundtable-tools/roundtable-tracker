@@ -26,6 +26,8 @@ export type TrackerParticipantMeta = {
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
 	traits?: string[];
+	/** Kept from the players until the participant's first turn starts. */
+	hiddenUntilFirstTurn?: boolean;
 	reinforcementSlotId?: string;
 };
 import { persist, createJSONStorage } from 'zustand/middleware';
@@ -37,7 +39,6 @@ import {
 	keepRedoableCommands,
 	keepUndoableCommands,
 } from '@/CommandHistory/serialization';
-import { splitArray } from '@/utils/array';
 import { type EncounterTimer, startTimer } from './encounterTimer';
 import { type PendingReinforcement } from './pendingReinforcements';
 
@@ -125,18 +126,15 @@ const parseCharacters = (
 		{} as Record<UUID, Character>
 	);
 
-	const charactersId = characters
+	// Everyone starts in the order: nobody starts the encounter delayed.
+	const charactersOrder = characters
 		.map((character) => character.uuid)
 		.filter((uuid) => !isSimpleHazardId(trackerMetaMap, uuid));
-	const [delayedOrder, charactersOrder] = splitArray(
-		charactersId,
-		(uuid) => charactersMap[uuid].turnState === 'delayed'
-	);
 
 	return {
 		charactersMap,
 		charactersOrder,
-		delayedOrder,
+		delayedOrder: [],
 	};
 };
 
@@ -147,7 +145,7 @@ const startEncounter = (
 	trackerMetaMap: Record<UUID, TrackerParticipantMeta> = {},
 	pendingReinforcements: PendingReinforcement[] = []
 ): Partial<EncounterStore> => {
-	const { charactersMap, charactersOrder, delayedOrder } = parseCharacters(
+	const { charactersMap, charactersOrder } = parseCharacters(
 		characters,
 		trackerMetaMap
 	);
@@ -155,15 +153,13 @@ const startEncounter = (
 	return {
 		charactersMap,
 		charactersOrder,
-		delayedOrder,
+		delayedOrder: [],
 		trackerMetaMap,
 		pendingReinforcements,
 		round: 1,
-		// Starting out delayed doesn't cost the round-1 turn: a delaying
-		// participant can still return to the order and act this round.
-		charactersWithTurn: new Set(delayedOrder.concat(charactersOrder)),
+		charactersWithTurn: new Set(charactersOrder),
 		timer:
-			charactersOrder.length > 0 || delayedOrder.length > 0
+			charactersOrder.length > 0
 				? startTimer(
 						{ participantId: charactersOrder[0] ?? null, round: 1 },
 						Date.now()

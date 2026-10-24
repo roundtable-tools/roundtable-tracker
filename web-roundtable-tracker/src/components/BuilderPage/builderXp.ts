@@ -44,15 +44,10 @@ export interface BuilderReinforcementParticipant {
 	traits?: string[];
 	combatReadyState?: CombatReadyState;
 	initiativeModifier?: number;
-	hiddenFromPlayers?: boolean;
+	hiddenUntilFirstTurn?: boolean;
 }
 
-// 'delayed-silent' starts delayed without asking to return on its own.
-export type CombatReadyState =
-	| 'active'
-	| 'delayed'
-	| 'delayed-silent'
-	| 'knocked-out';
+export type CombatReadyState = 'active' | 'knocked-out';
 
 export interface BuilderSlot {
 	id: string;
@@ -80,7 +75,7 @@ export interface BuilderSlot {
 	traits?: string[];
 	combatReadyState?: CombatReadyState;
 	initiativeModifier?: number;
-	hiddenFromPlayers?: boolean;
+	hiddenUntilFirstTurn?: boolean;
 }
 
 export interface DelayedReinforcementConfig {

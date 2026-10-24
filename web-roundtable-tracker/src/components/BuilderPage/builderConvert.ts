@@ -66,7 +66,7 @@ export function defaultSlot(): BuilderSlot {
 		traits: [],
 		combatReadyState: 'active',
 		initiativeModifier: undefined,
-		hiddenFromPlayers: false,
+		hiddenUntilFirstTurn: false,
 	};
 }
 
@@ -214,35 +214,23 @@ function toSavedTraits(traits: string[] | undefined): string[] | undefined {
 type StartingState = NonNullable<Participant['startingState']>;
 type CombatReadyFields = Pick<
 	BuilderSlot,
-	'combatReadyState' | 'hiddenFromPlayers' | 'initiativeDescription'
+	'combatReadyState' | 'hiddenUntilFirstTurn' | 'initiativeDescription'
 >;
 type SavedCombatReadyFields = Pick<
 	Participant,
-	| 'startingState'
-	| 'silentDelay'
-	| 'hiddenFromPlayers'
-	| 'initiativeDescription'
+	'startingState' | 'hiddenUntilFirstTurn' | 'initiativeDescription'
 >;
 
 function combatReadyStateToStartingState(
 	state: BuilderSlot['combatReadyState']
 ): StartingState {
-	if (state === 'delayed' || state === 'delayed-silent') return 'delayed';
-
-	if (state === 'knocked-out') return 'knocked-out';
-
-	return 'normal';
+	return state === 'knocked-out' ? 'knocked-out' : 'normal';
 }
 
-function startingStateToCombatReadyState({
-	startingState: state,
-	silentDelay,
-}: SavedCombatReadyFields): CombatReadyState {
-	if (state === 'delayed') return silentDelay ? 'delayed-silent' : 'delayed';
-
-	if (state === 'knocked-out') return 'knocked-out';
-
-	return 'active';
+function startingStateToCombatReadyState(
+	state: Participant['startingState']
+): CombatReadyState {
+	return state === 'knocked-out' ? 'knocked-out' : 'active';
 }
 
 function toSavedCombatReadyFields(
@@ -250,8 +238,7 @@ function toSavedCombatReadyFields(
 ): SavedCombatReadyFields {
 	return {
 		startingState: combatReadyStateToStartingState(source.combatReadyState),
-		silentDelay: source.combatReadyState === 'delayed-silent' || undefined,
-		hiddenFromPlayers: source.hiddenFromPlayers || undefined,
+		hiddenUntilFirstTurn: source.hiddenUntilFirstTurn || undefined,
 		initiativeDescription: source.initiativeDescription || undefined,
 	};
 }
@@ -260,8 +247,10 @@ function fromSavedCombatReadyFields(
 	participant: SavedCombatReadyFields
 ): CombatReadyFields {
 	return {
-		combatReadyState: startingStateToCombatReadyState(participant),
-		hiddenFromPlayers: participant.hiddenFromPlayers ?? false,
+		combatReadyState: startingStateToCombatReadyState(
+			participant.startingState
+		),
+		hiddenUntilFirstTurn: participant.hiddenUntilFirstTurn ?? false,
 		initiativeDescription: participant.initiativeDescription,
 	};
 }

@@ -31,7 +31,6 @@ export const characterConfigToCharacter = (
 		maxHealth,
 		tempHealth,
 		turnState: participant.startingState ?? 'normal',
-		silentDelay: participant.silentDelay,
 		group: participant.side === ALIGNMENT.PCs ? 'players' : 'enemies',
 	};
 };
@@ -45,13 +44,6 @@ export interface Character {
 	maxHealth: number;
 	tempHealth: number;
 	tempHealthDescription?: string;
-	/**
-	 * Started the encounter delaying without asking to return: ending a turn
-	 * doesn't open the return prompt for this participant alone. It stops
-	 * mattering once the participant joins the initiative order, so a later
-	 * Delay asks again.
-	 */
-	silentDelay?: boolean;
 	group?: 'players' | 'enemies';
 	level?: number; // Optional level property
 }
@@ -180,11 +172,10 @@ export type CombatantParticipant<
 	hardness?: number;
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
-	startingState?: 'normal' | 'delayed' | 'knocked-out';
-	/** With startingState 'delayed': the delay doesn't ask to return on its own. */
-	silentDelay?: boolean;
+	startingState?: 'normal' | 'knocked-out';
 	traits?: string[];
-	hiddenFromPlayers?: boolean;
+	/** Kept from the players until the participant's first turn starts. */
+	hiddenUntilFirstTurn?: boolean;
 	initiativeDescription?: string;
 	description?: string;
 	dcs?: ParticipantDcEntry[];
@@ -328,9 +319,11 @@ const combatantParticipantSchema = z.object({
 	hardness: z.number().optional(),
 	adjustmentDescription: z.string().optional(),
 	adjustmentLevelModifier: z.number().optional(),
+	// 'delayed' and hiddenFromPlayers come from older exports; importing
+	// rewrites them (migrateLegacyEncounter).
 	startingState: z.enum(['normal', 'delayed', 'knocked-out']).optional(),
-	silentDelay: z.boolean().optional(),
 	traits: z.array(z.string()).optional(),
+	hiddenUntilFirstTurn: z.boolean().optional(),
 	hiddenFromPlayers: z.boolean().optional(),
 	initiativeDescription: z.string().optional(),
 	description: z.string().optional(),
