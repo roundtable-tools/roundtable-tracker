@@ -8,6 +8,7 @@ import {
 	respotAfterReorder,
 	spotIndex,
 	spotsFromSortedRoster,
+	orderWithPendingSpots,
 } from './pendingReinforcements';
 
 const character = (
@@ -279,24 +280,25 @@ describe('placePendingReinforcements', () => {
 
 		expect(placed.charactersOrder).toEqual(['a', 'b', 'r1', 'r2', 'c', 'd']);
 	});
+});
 
-	it('sends arrivals that come in delayed to the delayed list, with a turn only when their spot is ahead', () => {
-		const placed = placePendingReinforcements(
-			{
-				charactersOrder: ['b', 'c', 'a'],
-				delayedOrder: [],
-				charactersWithTurn: new Set(['b', 'c']),
-				charactersMap,
-			},
-			[
-				pending('early', null, 'a', { turnState: 'delayed' }),
-				pending('late', 'c', null, { turnState: 'delayed' }),
-			]
-		);
+describe('orderWithPendingSpots', () => {
+	it('shows each pending arrival at the spot it would take now, without placing it', () => {
+		const state = {
+			charactersOrder: ['b', 'c', 'd', 'a'],
+			delayedOrder: [],
+			charactersWithTurn: new Set(['b', 'c', 'd']),
+			charactersMap,
+		};
 
-		expect(placed.charactersOrder).toEqual(['b', 'c', 'a']);
-		expect(placed.delayedOrder).toEqual(['early', 'late']);
-		expect(placed.charactersWithTurn.has('early')).toBe(false);
-		expect(placed.charactersWithTurn.has('late')).toBe(true);
+		expect(
+			orderWithPendingSpots(state, [
+				// Still to come this round: before its neighbour
+				pending('soon', 'b', 'c'),
+				// Its spot at the top has passed: after the participant who acted
+				pending('next-round', null, 'a'),
+			])
+		).toEqual(['b', 'soon', 'c', 'd', 'next-round', 'a']);
+		expect(state.charactersOrder).toEqual(['b', 'c', 'd', 'a']);
 	});
 });

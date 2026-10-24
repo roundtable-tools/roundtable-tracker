@@ -12,6 +12,7 @@ import {
 	computeBuilderXP,
 	normalizeSideType,
 	type BuilderSlot,
+	type CombatReadyState,
 	type SideType,
 } from './builderXp';
 import { Threat } from '@/models/utility/threat/Threat.class';
@@ -65,7 +66,7 @@ export function defaultSlot(): BuilderSlot {
 		traits: [],
 		combatReadyState: 'active',
 		initiativeModifier: undefined,
-		hiddenFromPlayers: false,
+		hiddenUntilFirstTurn: false,
 	};
 }
 
@@ -210,35 +211,26 @@ function toSavedTraits(traits: string[] | undefined): string[] | undefined {
 	return traits && traits.length > 0 ? [...traits] : undefined;
 }
 
-type CombatReadyState = NonNullable<BuilderSlot['combatReadyState']>;
 type StartingState = NonNullable<Participant['startingState']>;
 type CombatReadyFields = Pick<
 	BuilderSlot,
-	'combatReadyState' | 'hiddenFromPlayers' | 'initiativeDescription'
+	'combatReadyState' | 'hiddenUntilFirstTurn' | 'initiativeDescription'
 >;
 type SavedCombatReadyFields = Pick<
 	Participant,
-	'startingState' | 'hiddenFromPlayers' | 'initiativeDescription'
+	'startingState' | 'hiddenUntilFirstTurn' | 'initiativeDescription'
 >;
 
 function combatReadyStateToStartingState(
 	state: BuilderSlot['combatReadyState']
 ): StartingState {
-	if (state === 'delayed') return 'delayed';
-
-	if (state === 'knocked-out') return 'knocked-out';
-
-	return 'normal';
+	return state === 'knocked-out' ? 'knocked-out' : 'normal';
 }
 
 function startingStateToCombatReadyState(
 	state: Participant['startingState']
 ): CombatReadyState {
-	if (state === 'delayed') return 'delayed';
-
-	if (state === 'knocked-out') return 'knocked-out';
-
-	return 'active';
+	return state === 'knocked-out' ? 'knocked-out' : 'active';
 }
 
 function toSavedCombatReadyFields(
@@ -246,7 +238,7 @@ function toSavedCombatReadyFields(
 ): SavedCombatReadyFields {
 	return {
 		startingState: combatReadyStateToStartingState(source.combatReadyState),
-		hiddenFromPlayers: source.hiddenFromPlayers || undefined,
+		hiddenUntilFirstTurn: source.hiddenUntilFirstTurn || undefined,
 		initiativeDescription: source.initiativeDescription || undefined,
 	};
 }
@@ -258,7 +250,7 @@ function fromSavedCombatReadyFields(
 		combatReadyState: startingStateToCombatReadyState(
 			participant.startingState
 		),
-		hiddenFromPlayers: participant.hiddenFromPlayers ?? false,
+		hiddenUntilFirstTurn: participant.hiddenUntilFirstTurn ?? false,
 		initiativeDescription: participant.initiativeDescription,
 	};
 }
@@ -362,6 +354,9 @@ export function toConcreteEncounter(
 			description: s.description || undefined,
 			accomplishmentLevel:
 				s.type === 'reinforcement' ? undefined : s.accomplishmentLevel,
+			visibleBeforeTrigger:
+				(s.type === 'reinforcement' && s.reinforcementVisibleBeforeTrigger) ||
+				undefined,
 			trigger: {
 				round: s.type === 'reinforcement' ? s.reinforcementRound : s.eventRound,
 				frequency:
@@ -626,6 +621,7 @@ export function fromConcreteEncounter(
 			adjustment: 'none',
 			isSimpleHazard: false,
 			reinforcementRound: ns.trigger.round,
+			reinforcementVisibleBeforeTrigger: ns.visibleBeforeTrigger ?? false,
 			reinforcementParticipants: isReinforcement
 				? (ns.participants ?? []).map((participant) => ({
 						id: uuidv4(),
@@ -656,7 +652,7 @@ export function fromConcreteEncounter(
 								: false,
 					}))
 				: [],
-			eventRound: ns.trigger.round,
+			eventRound: ns.trigger.round ?? 1,
 			repeatInterval: ns.trigger.frequency,
 			accomplishmentLevel: isReinforcement
 				? undefined

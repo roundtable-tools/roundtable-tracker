@@ -191,7 +191,7 @@ function hasAdditionalBlock(
 
 	if (key === 'combat-ready') {
 		return (
-			slot.combatReadyState !== 'active' || slot.hiddenFromPlayers === true
+			slot.combatReadyState !== 'active' || slot.hiddenUntilFirstTurn === true
 		);
 	}
 
@@ -240,7 +240,7 @@ function hasReinforcementAdditionalBlock(
 	if (key === 'combat-ready') {
 		return (
 			participant.combatReadyState !== 'active' ||
-			participant.hiddenFromPlayers === true
+			participant.hiddenUntilFirstTurn === true
 		);
 	}
 
@@ -288,7 +288,7 @@ function inferEnabledTabsFromSlot(slot: BuilderSlot): AdditionalDataBlockKey[] {
 
 	if (
 		slot.combatReadyState &&
-		(slot.combatReadyState !== 'active' || slot.hiddenFromPlayers)
+		(slot.combatReadyState !== 'active' || slot.hiddenUntilFirstTurn)
 	) {
 		tabs.push('combat-ready');
 	}
@@ -495,7 +495,7 @@ export function SlotRow({
 			traits: [],
 			combatReadyState: 'active',
 			initiativeModifier: undefined,
-			hiddenFromPlayers: false,
+			hiddenUntilFirstTurn: false,
 		});
 
 	const applyAdditionalBlock = (block: AdditionalDataBlockKey) => {
@@ -753,7 +753,7 @@ export function SlotRow({
 		if (block === 'combat-ready') {
 			handleReinforcementParticipantChange(participantIndex, {
 				combatReadyState: participant.combatReadyState ?? 'active',
-				hiddenFromPlayers: participant.hiddenFromPlayers ?? false,
+				hiddenUntilFirstTurn: participant.hiddenUntilFirstTurn ?? false,
 			});
 		}
 	};
@@ -802,7 +802,7 @@ export function SlotRow({
 		if (tab === 'combat-ready') {
 			handleReinforcementParticipantChange(participantIndex, {
 				combatReadyState: 'active',
-				hiddenFromPlayers: false,
+				hiddenUntilFirstTurn: false,
 			});
 		}
 
@@ -1036,30 +1036,54 @@ export function SlotRow({
 				)}
 
 				{slotType === 'reinforcement' && (
-					<FormField
-						control={control}
-						name={`slots.${index}.reinforcementRound` as const}
-						render={({ field }) => (
-							<FormItem className="space-y-1">
-								<FormLabel>Reinforcement Round</FormLabel>
-								<FormControl>
-									<Input
-										type="number"
-										min={1}
-										value={field.value ?? ''}
-										onChange={(event) => {
-											const value = event.target.value;
-											field.onChange(value === '' ? undefined : Number(value));
-										}}
-										onBlur={field.onBlur}
-										name={field.name}
-										ref={field.ref}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
+					<>
+						<FormField
+							control={control}
+							name={`slots.${index}.reinforcementRound` as const}
+							render={({ field }) => (
+								<FormItem className="space-y-1">
+									<FormLabel>Reinforcement Round</FormLabel>
+									<FormControl>
+										<Input
+											type="number"
+											min={1}
+											placeholder="Any round"
+											value={field.value ?? ''}
+											onChange={(event) => {
+												const value = event.target.value;
+												field.onChange(
+													value === '' ? undefined : Number(value)
+												);
+											}}
+											onBlur={field.onBlur}
+											name={field.name}
+											ref={field.ref}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={control}
+							name={`slots.${index}.reinforcementVisibleBeforeTrigger` as const}
+							render={({ field }) => (
+								<FormItem className="space-y-1 flex flex-col justify-center">
+									<FormLabel>Before Arrival</FormLabel>
+									<FormControl>
+										<Toggle
+											pressed={field.value ?? false}
+											onPressedChange={field.onChange}
+											className="w-fit"
+										>
+											{field.value ? 'Visible' : 'Hidden until arrival'}
+										</Toggle>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+					</>
 				)}
 
 				{slotType === 'narrative' && (
@@ -1875,29 +1899,28 @@ export function SlotRow({
 																</SelectTrigger>
 																<SelectContent>
 																	<SelectItem value="active">Active</SelectItem>
-																	<SelectItem value="delayed">
-																		Delayed
-																	</SelectItem>
 																	<SelectItem value="knocked-out">
 																		Defeated
 																	</SelectItem>
 																</SelectContent>
 															</Select>
 															<Toggle
-																pressed={participant.hiddenFromPlayers ?? false}
+																pressed={
+																	participant.hiddenUntilFirstTurn ?? false
+																}
 																onPressedChange={(pressed) =>
 																	handleReinforcementParticipantChange(
 																		participantIndex,
 																		{
-																			hiddenFromPlayers: pressed,
+																			hiddenUntilFirstTurn: pressed,
 																		}
 																	)
 																}
 																className="w-fit"
 															>
-																{participant.hiddenFromPlayers
-																	? 'Hidden'
-																	: 'Visible'}
+																{participant.hiddenUntilFirstTurn
+																	? 'Hidden until first turn'
+																	: 'Always visible'}
 															</Toggle>
 														</div>
 													</div>
@@ -2169,7 +2192,7 @@ export function SlotRow({
 											shouldDirty: true,
 											shouldTouch: true,
 										});
-										setValue(`slots.${index}.hiddenFromPlayers`, false, {
+										setValue(`slots.${index}.hiddenUntilFirstTurn`, false, {
 											shouldDirty: true,
 											shouldTouch: true,
 										});

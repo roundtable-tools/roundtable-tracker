@@ -17,6 +17,7 @@ import {
 	type Participant,
 } from '@/store/data';
 import { generateUUID } from '@/utils/uuid';
+import { migrateLegacyEncounter } from '@/store/legacyEncounterFields';
 
 type RelativeParticipant = Participant<typeof LEVEL_REPRESENTATION.Relative>;
 
@@ -222,7 +223,7 @@ export function validateImportedEncounter(dataString: string): ImportResult {
 		});
 
 		if (parsedConcrete.success) {
-			return [parsedConcrete.data as Encounter, '', []];
+			return [migrateLegacyEncounter(parsedConcrete.data) as Encounter, '', []];
 		}
 
 		return [null, formatZodError(parsedConcrete.error), []];

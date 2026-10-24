@@ -26,6 +26,7 @@ import {
 import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import { getEncounterStore } from '@/store/encounterRuntimeInstance';
 import {
+	buildPendingReinforcements,
 	buildTrackerMetaMap,
 	participantsToEncounterCharacters,
 } from '@/store/convert';
@@ -36,7 +37,10 @@ import { pauseTimer } from '@/store/encounterTimer';
 import { ChangeHealthCommand } from '@/CommandHistory/Commands/ChangeHealthCommand';
 import { SetTempHealthCommand } from '@/CommandHistory/Commands/SetTempHealthCommand';
 import { TriggerReinforcementEventCommand } from '@/CommandHistory/Commands/TriggerReinforcementEventCommand';
-import { generateParticipants } from '@/components/PreviewDisplay/generateParticipants';
+import {
+	generateParticipants,
+	generateReinforcements,
+} from '@/components/PreviewDisplay/generateParticipants';
 import {
 	generatePartyFromData,
 	toPreviewCharacter,
@@ -93,8 +97,8 @@ const party: Party = {
 
 /**
  * One participant of each kind the encounter builder makes: opponents with
- * elite and weak adjustments, a hidden one, a neutral creature, a complex and
- * a simple hazard, one that starts delayed, and two reinforcement events.
+ * elite and weak adjustments, two hidden until their first turn, a neutral
+ * creature, a complex and a simple hazard, and two reinforcement events.
  */
 const encounter: Encounter = {
 	id: 'example-bridge-ambush',
@@ -145,7 +149,7 @@ const encounter: Encounter = {
 			maxHealth: 17,
 			initiativeBonus: 6,
 			traits: ['Animal'],
-			hiddenFromPlayers: true,
+			hiddenUntilFirstTurn: true,
 		},
 		{
 			type: 'creature',
@@ -154,7 +158,7 @@ const encounter: Encounter = {
 			side: ALIGNMENT.Opponents,
 			maxHealth: 25,
 			initiativeBonus: 8,
-			startingState: 'delayed',
+			hiddenUntilFirstTurn: true,
 			initiativeDescription: 'Waits in the rigging to ambush',
 		},
 		{
@@ -235,7 +239,10 @@ const encounter: Encounter = {
 			id: 'town-guard',
 			type: 'reinforcement',
 			description: 'The town guard comes to see what the noise is.',
-			trigger: { round: 3 },
+			// No round: the GM brings them in once the fight is loud enough.
+			// Players may see them coming.
+			trigger: {},
+			visibleBeforeTrigger: true,
 			participants: [
 				{
 					type: 'creature',
@@ -265,6 +272,10 @@ const INITIATIVES: Record<string, number> = {
 	'Goblin Archer B': 10,
 	Ezren: 8,
 	'Rope Snare': 5,
+	// Reinforcements, set in the preview too
+	'Goblin Warrior A': 11,
+	'Goblin Warrior B': 11,
+	'Town Guard': 9,
 };
 
 /** Starts the encounter as Preview → Start → Initiative Tracker does. */
@@ -274,17 +285,30 @@ const startFromPreview = (store: EncounterStoreApi) => {
 		generatePartyFromData(party),
 		...generateParticipants(encounter, partyLevel),
 	];
+	const reinforcementTeams = generateReinforcements(encounter, partyLevel, [
+		...party.members.map(({ name }) => name),
+		...teams.flat().map(({ name }) => name),
+	]);
+	// The preview form holds these rows as PreviewCharacterConfig.
+	const toPrepared = (participant: PreviewCharacterConfig) =>
+		toStartingParticipant({
+			...participant,
+			initiative: INITIATIVES[participant.name] ?? participant.initiative,
+		});
 	const prepared = teams
 		.flat()
-		.map(toPreviewCharacter)
-		// The preview form holds these rows as PreviewCharacterConfig.
-		.map(
-			(participant): PreviewCharacterConfig => ({
-				...(participant as PreviewCharacterConfig),
-				initiative: INITIATIVES[participant.name] ?? participant.initiative,
-			})
-		)
-		.map(toStartingParticipant);
+		.map((participant) =>
+			toPrepared(toPreviewCharacter(participant) as PreviewCharacterConfig)
+		);
+	const reinforcements = reinforcementTeams.flatMap(({ slot, participants }) =>
+		participants.map((participant) => ({
+			...toPrepared({
+				...(toPreviewCharacter(participant) as PreviewCharacterConfig),
+				reinforcementSlotId: slot.id,
+			}),
+			reinforcementSlotId: slot.id,
+		}))
+	);
 
 	store.getState().setEncounterData(encounter);
 	store.getState().setPartyLevel(partyLevel);
@@ -292,7 +316,12 @@ const startFromPreview = (store: EncounterStoreApi) => {
 		.getState()
 		.startEncounter(
 			participantsToEncounterCharacters(prepared),
-			buildTrackerMetaMap(prepared)
+			buildTrackerMetaMap(prepared),
+			buildPendingReinforcements(
+				prepared,
+				reinforcements,
+				encounter.narrativeSlots
+			)
 		);
 };
 
@@ -411,7 +440,10 @@ describe('tracker state examples', () => {
 		const state = store.getState();
 
 		expect(state.round).toBe(1);
-		expect(state.delayedOrder).toEqual([uuidOf(store, 'Goblin Sneak')]);
+		expect(state.delayedOrder).toEqual([]);
+		expect(
+			state.trackerMetaMap[uuidOf(store, 'Goblin Sneak')].hiddenUntilFirstTurn
+		).toBe(true);
 		expect(
 			Object.values(state.trackerMetaMap).some((meta) => meta.isSimpleHazard)
 		).toBe(true);
@@ -423,7 +455,7 @@ describe('tracker state examples', () => {
 		);
 	});
 
-	it('round-2-mid-round: damage, temp HP, delay, knock-out, reinforcements and disable progress', async () => {
+	it('round-2-mid-round: damage, temp HP, two delays, knock-out, reinforcements and disable progress', async () => {
 		// Round 1
 		changeHealth(store, 'Goblin Warchief', -14);
 		act(store, 'Valeros', 'end-turn');
@@ -444,6 +476,7 @@ describe('tracker state examples', () => {
 		act(store, 'Kyra', 'end-turn');
 		changeHealth(store, 'Merisiel', -28);
 		act(store, 'Goblin Archer A', 'end-turn');
+		act(store, 'Goblin Sneak', 'delay');
 		act(store, 'Bridge Keeper', 'delay');
 		act(store, 'Merisiel', 'end-turn');
 		act(store, 'Swinging Log', 'end-turn');

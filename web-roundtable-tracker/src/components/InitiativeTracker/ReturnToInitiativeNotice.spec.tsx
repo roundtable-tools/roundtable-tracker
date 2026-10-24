@@ -7,8 +7,8 @@ describe('ReturnToInitiativeNotice', () => {
 	const markup = renderToStaticMarkup(
 		createElement(ReturnToInitiativeNotice, {
 			participants: [
-				{ id: 'sneak', name: 'Goblin Sneak' },
-				{ id: 'keeper', name: 'Bridge Keeper' },
+				{ id: 'sneak', name: 'Goblin Sneak', distance: 0 },
+				{ id: 'keeper', name: 'Bridge Keeper', distance: 2 },
 			],
 			onReturn: () => {},
 			onDismiss: () => {},
@@ -19,6 +19,11 @@ describe('ReturnToInitiativeNotice', () => {
 		expect(markup).toContain('Goblin Sneak');
 		expect(markup).toContain('Bridge Keeper');
 		expect(markup.match(/>Return<\/button>/g)).toHaveLength(2);
+	});
+
+	it('shows the distance from each old spot', () => {
+		expect(markup).toContain('> (0)</span>');
+		expect(markup).toContain('> (2)</span>');
 	});
 
 	it('closes with an icon button instead of a Nobody returns button', () => {

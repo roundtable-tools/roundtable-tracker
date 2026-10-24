@@ -1,4 +1,5 @@
 import { ConcreteEncounter } from './data';
+import { migrateLegacyEncounter } from './legacyEncounterFields';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 
@@ -66,6 +67,21 @@ export const createSavedEncountersStore = () =>
 			{
 				name: 'saved-encounters-store',
 				storage: createJSONStorage(() => localStorage),
+				// 1: participants no longer start delayed or carry hiddenFromPlayers
+				version: 1,
+				migrate: (persistedState) => {
+					const state = persistedState as Pick<
+						SavedEncountersStore,
+						'savedEncounters'
+					>;
+
+					return {
+						...state,
+						savedEncounters: (state?.savedEncounters ?? []).map(
+							migrateLegacyEncounter
+						),
+					} as SavedEncountersStore;
+				},
 			}
 		)
 	);

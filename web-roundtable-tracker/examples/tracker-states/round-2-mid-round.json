@@ -145,22 +145,22 @@
 			"00000000-0000-4000-8000-000000000011": {
 				"uuid": "00000000-0000-4000-8000-000000000011",
 				"name": "Goblin Warrior A",
-				"initiative": 16,
-				"turnState": "normal",
+				"initiative": 11,
 				"health": 15,
 				"maxHealth": 15,
 				"tempHealth": 0,
+				"turnState": "normal",
 				"group": "enemies",
 				"level": 2
 			},
 			"00000000-0000-4000-8000-000000000012": {
 				"uuid": "00000000-0000-4000-8000-000000000012",
 				"name": "Goblin Warrior B",
-				"initiative": 16,
-				"turnState": "normal",
+				"initiative": 11,
 				"health": 15,
 				"maxHealth": 15,
 				"tempHealth": 0,
+				"turnState": "normal",
 				"group": "enemies",
 				"level": 2
 			}
@@ -168,12 +168,13 @@
 		"charactersOrder": [
 			"pc-kyra",
 			"00000000-0000-4000-8000-000000000002",
+			"00000000-0000-4000-8000-000000000005",
 			"00000000-0000-4000-8000-000000000010",
-			"00000000-0000-4000-8000-000000000011",
-			"00000000-0000-4000-8000-000000000012",
 			"pc-merisiel",
 			"00000000-0000-4000-8000-000000000007",
 			"00000000-0000-4000-8000-000000000004",
+			"00000000-0000-4000-8000-000000000011",
+			"00000000-0000-4000-8000-000000000012",
 			"00000000-0000-4000-8000-000000000003",
 			"pc-ezren",
 			"00000000-0000-4000-8000-000000000008",
@@ -254,7 +255,8 @@
 				"disableChecksRequired": 0,
 				"disableChecksSucceeded": 0,
 				"notes": "",
-				"initiativeBonus": 8
+				"initiativeBonus": 8,
+				"hiddenUntilFirstTurn": true
 			},
 			"00000000-0000-4000-8000-000000000010": {
 				"role": "neutral",
@@ -296,7 +298,8 @@
 				"disableChecksSucceeded": 0,
 				"notes": "",
 				"initiativeBonus": 6,
-				"traits": ["Animal"]
+				"traits": ["Animal"],
+				"hiddenUntilFirstTurn": true
 			},
 			"00000000-0000-4000-8000-000000000009": {
 				"role": "hazard",
@@ -344,6 +347,7 @@
 			"00000000-0000-4000-8000-000000000011": {
 				"role": "reinforcement",
 				"sideTheme": "opponent",
+				"hasHealthData": true,
 				"isSimpleHazard": false,
 				"disableChecksRequired": 0,
 				"disableChecksSucceeded": 0,
@@ -355,6 +359,7 @@
 			"00000000-0000-4000-8000-000000000012": {
 				"role": "reinforcement",
 				"sideTheme": "opponent",
+				"hasHealthData": true,
 				"isSimpleHazard": false,
 				"disableChecksRequired": 0,
 				"disableChecksSucceeded": 0,
@@ -364,7 +369,35 @@
 				"reinforcementSlotId": "goblin-reinforcements"
 			}
 		},
-		"pendingReinforcements": [],
+		"pendingReinforcements": [
+			{
+				"slotId": "town-guard",
+				"character": {
+					"uuid": "00000000-0000-4000-8000-000000000013",
+					"name": "Town Guard",
+					"initiative": 9,
+					"health": 40,
+					"maxHealth": 40,
+					"tempHealth": 0,
+					"turnState": "normal",
+					"group": "enemies",
+					"level": 3
+				},
+				"meta": {
+					"role": "reinforcement",
+					"sideTheme": "other",
+					"hasHealthData": true,
+					"isSimpleHazard": false,
+					"disableChecksRequired": 0,
+					"disableChecksSucceeded": 0,
+					"notes": "The town guard comes to see what the noise is.",
+					"initiativeBonus": 7,
+					"reinforcementSlotId": "town-guard"
+				},
+				"above": "00000000-0000-4000-8000-000000000003",
+				"below": "pc-ezren"
+			}
+		],
 		"round": 2,
 		"charactersWithTurn": {
 			"type": "Set",
@@ -414,6 +447,7 @@
 							"00000000-0000-4000-8000-000000000006",
 							"pc-kyra",
 							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000005",
 							"00000000-0000-4000-8000-000000000010",
 							"pc-merisiel",
 							"00000000-0000-4000-8000-000000000007",
@@ -425,12 +459,12 @@
 						"charactersWithTurn": {
 							"type": "Set",
 							"data": [
-								"00000000-0000-4000-8000-000000000005",
 								"pc-valeros",
 								"00000000-0000-4000-8000-000000000001",
 								"00000000-0000-4000-8000-000000000006",
 								"pc-kyra",
 								"00000000-0000-4000-8000-000000000002",
+								"00000000-0000-4000-8000-000000000005",
 								"00000000-0000-4000-8000-000000000010",
 								"pc-merisiel",
 								"00000000-0000-4000-8000-000000000007",
@@ -472,6 +506,7 @@
 							"00000000-0000-4000-8000-000000000006",
 							"pc-kyra",
 							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000005",
 							"00000000-0000-4000-8000-000000000010",
 							"pc-merisiel",
 							"00000000-0000-4000-8000-000000000007",
@@ -484,11 +519,11 @@
 						"charactersWithTurn": {
 							"type": "Set",
 							"data": [
-								"00000000-0000-4000-8000-000000000005",
 								"00000000-0000-4000-8000-000000000001",
 								"00000000-0000-4000-8000-000000000006",
 								"pc-kyra",
 								"00000000-0000-4000-8000-000000000002",
+								"00000000-0000-4000-8000-000000000005",
 								"00000000-0000-4000-8000-000000000010",
 								"pc-merisiel",
 								"00000000-0000-4000-8000-000000000007",
@@ -511,6 +546,7 @@
 							"00000000-0000-4000-8000-000000000006",
 							"pc-kyra",
 							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000005",
 							"00000000-0000-4000-8000-000000000010",
 							"pc-merisiel",
 							"00000000-0000-4000-8000-000000000007",
@@ -524,10 +560,10 @@
 						"charactersWithTurn": {
 							"type": "Set",
 							"data": [
-								"00000000-0000-4000-8000-000000000005",
 								"00000000-0000-4000-8000-000000000006",
 								"pc-kyra",
 								"00000000-0000-4000-8000-000000000002",
+								"00000000-0000-4000-8000-000000000005",
 								"00000000-0000-4000-8000-000000000010",
 								"pc-merisiel",
 								"00000000-0000-4000-8000-000000000007",
@@ -568,6 +604,7 @@
 						"charactersOrder": [
 							"pc-kyra",
 							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000005",
 							"00000000-0000-4000-8000-000000000010",
 							"pc-merisiel",
 							"00000000-0000-4000-8000-000000000007",
@@ -582,9 +619,9 @@
 						"charactersWithTurn": {
 							"type": "Set",
 							"data": [
-								"00000000-0000-4000-8000-000000000005",
 								"pc-kyra",
 								"00000000-0000-4000-8000-000000000002",
+								"00000000-0000-4000-8000-000000000005",
 								"00000000-0000-4000-8000-000000000010",
 								"pc-merisiel",
 								"00000000-0000-4000-8000-000000000007",
@@ -623,6 +660,7 @@
 					"original": {
 						"charactersOrder": [
 							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000005",
 							"00000000-0000-4000-8000-000000000010",
 							"pc-merisiel",
 							"00000000-0000-4000-8000-000000000007",
@@ -638,8 +676,8 @@
 						"charactersWithTurn": {
 							"type": "Set",
 							"data": [
-								"00000000-0000-4000-8000-000000000005",
 								"00000000-0000-4000-8000-000000000002",
+								"00000000-0000-4000-8000-000000000005",
 								"00000000-0000-4000-8000-000000000010",
 								"pc-merisiel",
 								"00000000-0000-4000-8000-000000000007",
@@ -647,6 +685,85 @@
 								"00000000-0000-4000-8000-000000000003",
 								"pc-ezren",
 								"00000000-0000-4000-8000-000000000008"
+							]
+						}
+					}
+				}
+			},
+			{
+				"type": "Command.DelayCharacterCommand",
+				"description": "Delay Character Command",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000005",
+					"command": {
+						"type": "Command.CompositeCommand",
+						"description": "Composite Command",
+						"data": {
+							"commands": [
+								{
+									"type": "Command.UpdateCharacterCommand",
+									"description": "Update Character Command",
+									"data": {
+										"uuid": "00000000-0000-4000-8000-000000000005",
+										"newCharacterProps": { "turnState": "delayed" },
+										"oldCharacter": {
+											"uuid": "00000000-0000-4000-8000-000000000005",
+											"name": "Goblin Sneak",
+											"initiative": 16,
+											"health": 25,
+											"maxHealth": 25,
+											"tempHealth": 0,
+											"turnState": "normal",
+											"group": "enemies"
+										}
+									}
+								},
+								{
+									"type": "Command.EndTurnCommand",
+									"description": "End Turn Command",
+									"data": {
+										"uuid": "00000000-0000-4000-8000-000000000005",
+										"original": {
+											"charactersOrder": [
+												"00000000-0000-4000-8000-000000000005",
+												"00000000-0000-4000-8000-000000000010",
+												"pc-merisiel",
+												"00000000-0000-4000-8000-000000000007",
+												"00000000-0000-4000-8000-000000000004",
+												"00000000-0000-4000-8000-000000000003",
+												"pc-ezren",
+												"00000000-0000-4000-8000-000000000008",
+												"pc-valeros",
+												"00000000-0000-4000-8000-000000000001",
+												"00000000-0000-4000-8000-000000000006",
+												"pc-kyra",
+												"00000000-0000-4000-8000-000000000002"
+											],
+											"charactersWithTurn": {
+												"type": "Set",
+												"data": [
+													"00000000-0000-4000-8000-000000000005",
+													"00000000-0000-4000-8000-000000000010",
+													"pc-merisiel",
+													"00000000-0000-4000-8000-000000000007",
+													"00000000-0000-4000-8000-000000000004",
+													"00000000-0000-4000-8000-000000000003",
+													"pc-ezren",
+													"00000000-0000-4000-8000-000000000008"
+												]
+											}
+										}
+									}
+								},
+								{
+									"type": "Command.ReorderCharactersCommand",
+									"description": "Reorder delayedOrder order",
+									"data": {
+										"newOrder": ["00000000-0000-4000-8000-000000000005"],
+										"type": "delay",
+										"oldOrder": []
+									}
+								}
 							]
 						}
 					}
@@ -698,12 +815,12 @@
 												"00000000-0000-4000-8000-000000000001",
 												"00000000-0000-4000-8000-000000000006",
 												"pc-kyra",
-												"00000000-0000-4000-8000-000000000002"
+												"00000000-0000-4000-8000-000000000002",
+												"00000000-0000-4000-8000-000000000005"
 											],
 											"charactersWithTurn": {
 												"type": "Set",
 												"data": [
-													"00000000-0000-4000-8000-000000000005",
 													"00000000-0000-4000-8000-000000000010",
 													"pc-merisiel",
 													"00000000-0000-4000-8000-000000000007",
@@ -751,12 +868,12 @@
 							"00000000-0000-4000-8000-000000000006",
 							"pc-kyra",
 							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000005",
 							"00000000-0000-4000-8000-000000000010"
 						],
 						"charactersWithTurn": {
 							"type": "Set",
 							"data": [
-								"00000000-0000-4000-8000-000000000005",
 								"pc-merisiel",
 								"00000000-0000-4000-8000-000000000007",
 								"00000000-0000-4000-8000-000000000004",
@@ -785,13 +902,13 @@
 							"00000000-0000-4000-8000-000000000006",
 							"pc-kyra",
 							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000005",
 							"00000000-0000-4000-8000-000000000010",
 							"pc-merisiel"
 						],
 						"charactersWithTurn": {
 							"type": "Set",
 							"data": [
-								"00000000-0000-4000-8000-000000000005",
 								"00000000-0000-4000-8000-000000000007",
 								"00000000-0000-4000-8000-000000000004",
 								"00000000-0000-4000-8000-000000000003",
@@ -864,6 +981,7 @@
 												"00000000-0000-4000-8000-000000000006",
 												"pc-kyra",
 												"00000000-0000-4000-8000-000000000002",
+												"00000000-0000-4000-8000-000000000005",
 												"00000000-0000-4000-8000-000000000010",
 												"pc-merisiel",
 												"00000000-0000-4000-8000-000000000007"
@@ -871,7 +989,6 @@
 											"charactersWithTurn": {
 												"type": "Set",
 												"data": [
-													"00000000-0000-4000-8000-000000000005",
 													"00000000-0000-4000-8000-000000000004",
 													"00000000-0000-4000-8000-000000000003",
 													"pc-ezren",
@@ -919,6 +1036,7 @@
 							"00000000-0000-4000-8000-000000000006",
 							"pc-kyra",
 							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000005",
 							"00000000-0000-4000-8000-000000000010",
 							"pc-merisiel",
 							"00000000-0000-4000-8000-000000000007",
@@ -927,7 +1045,6 @@
 						"charactersWithTurn": {
 							"type": "Set",
 							"data": [
-								"00000000-0000-4000-8000-000000000005",
 								"00000000-0000-4000-8000-000000000003",
 								"pc-ezren",
 								"00000000-0000-4000-8000-000000000008"
@@ -950,6 +1067,7 @@
 							"00000000-0000-4000-8000-000000000006",
 							"pc-kyra",
 							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000005",
 							"00000000-0000-4000-8000-000000000010",
 							"pc-merisiel",
 							"00000000-0000-4000-8000-000000000007",
@@ -958,11 +1076,7 @@
 						],
 						"charactersWithTurn": {
 							"type": "Set",
-							"data": [
-								"00000000-0000-4000-8000-000000000005",
-								"pc-ezren",
-								"00000000-0000-4000-8000-000000000008"
-							]
+							"data": ["pc-ezren", "00000000-0000-4000-8000-000000000008"]
 						}
 					}
 				}
@@ -991,6 +1105,7 @@
 												"00000000-0000-4000-8000-000000000006",
 												"pc-kyra",
 												"00000000-0000-4000-8000-000000000002",
+												"00000000-0000-4000-8000-000000000005",
 												"00000000-0000-4000-8000-000000000010",
 												"pc-merisiel",
 												"00000000-0000-4000-8000-000000000007",
@@ -1000,10 +1115,7 @@
 											],
 											"charactersWithTurn": {
 												"type": "Set",
-												"data": [
-													"00000000-0000-4000-8000-000000000005",
-													"00000000-0000-4000-8000-000000000008"
-												]
+												"data": ["00000000-0000-4000-8000-000000000008"]
 											}
 										}
 									}
@@ -1014,10 +1126,7 @@
 									"data": {
 										"original": {
 											"round": 1,
-											"charactersWithTurn": {
-												"type": "Set",
-												"data": ["00000000-0000-4000-8000-000000000005"]
-											}
+											"charactersWithTurn": { "type": "Set", "data": [] }
 										}
 									}
 								}
@@ -1036,17 +1145,18 @@
 							"character": {
 								"uuid": "00000000-0000-4000-8000-000000000011",
 								"name": "Goblin Warrior A",
-								"initiative": 16,
-								"turnState": "normal",
+								"initiative": 11,
 								"health": 15,
 								"maxHealth": 15,
 								"tempHealth": 0,
+								"turnState": "normal",
 								"group": "enemies",
 								"level": 2
 							},
 							"meta": {
 								"role": "reinforcement",
 								"sideTheme": "opponent",
+								"hasHealthData": true,
 								"isSimpleHazard": false,
 								"disableChecksRequired": 0,
 								"disableChecksSucceeded": 0,
@@ -1060,17 +1170,18 @@
 							"character": {
 								"uuid": "00000000-0000-4000-8000-000000000012",
 								"name": "Goblin Warrior B",
-								"initiative": 16,
-								"turnState": "normal",
+								"initiative": 11,
 								"health": 15,
 								"maxHealth": 15,
 								"tempHealth": 0,
+								"turnState": "normal",
 								"group": "enemies",
 								"level": 2
 							},
 							"meta": {
 								"role": "reinforcement",
 								"sideTheme": "opponent",
+								"hasHealthData": true,
 								"isSimpleHazard": false,
 								"disableChecksRequired": 0,
 								"disableChecksSucceeded": 0,
@@ -1231,6 +1342,7 @@
 							"00000000-0000-4000-8000-000000000006",
 							"pc-kyra",
 							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000005",
 							"00000000-0000-4000-8000-000000000010",
 							"pc-merisiel",
 							"00000000-0000-4000-8000-000000000007",
@@ -1330,7 +1442,8 @@
 								"disableChecksRequired": 0,
 								"disableChecksSucceeded": 0,
 								"notes": "",
-								"initiativeBonus": 8
+								"initiativeBonus": 8,
+								"hiddenUntilFirstTurn": true
 							},
 							"00000000-0000-4000-8000-000000000010": {
 								"role": "neutral",
@@ -1372,7 +1485,8 @@
 								"disableChecksSucceeded": 0,
 								"notes": "",
 								"initiativeBonus": 6,
-								"traits": ["Animal"]
+								"traits": ["Animal"],
+								"hiddenUntilFirstTurn": true
 							},
 							"00000000-0000-4000-8000-000000000009": {
 								"role": "hazard",
@@ -1418,7 +1532,91 @@
 								"dcs": [{ "name": "Survival", "value": 17 }]
 							}
 						},
-						"pendingReinforcements": []
+						"pendingReinforcements": [
+							{
+								"slotId": "goblin-reinforcements",
+								"character": {
+									"uuid": "00000000-0000-4000-8000-000000000011",
+									"name": "Goblin Warrior A",
+									"initiative": 11,
+									"health": 15,
+									"maxHealth": 15,
+									"tempHealth": 0,
+									"turnState": "normal",
+									"group": "enemies",
+									"level": 2
+								},
+								"meta": {
+									"role": "reinforcement",
+									"sideTheme": "opponent",
+									"hasHealthData": true,
+									"isSimpleHazard": false,
+									"disableChecksRequired": 0,
+									"disableChecksSucceeded": 0,
+									"notes": "More goblins climb up from the gorge.",
+									"initiativeBonus": 5,
+									"traits": ["Goblin"],
+									"reinforcementSlotId": "goblin-reinforcements"
+								},
+								"above": "00000000-0000-4000-8000-000000000004",
+								"below": "00000000-0000-4000-8000-000000000003"
+							},
+							{
+								"slotId": "goblin-reinforcements",
+								"character": {
+									"uuid": "00000000-0000-4000-8000-000000000012",
+									"name": "Goblin Warrior B",
+									"initiative": 11,
+									"health": 15,
+									"maxHealth": 15,
+									"tempHealth": 0,
+									"turnState": "normal",
+									"group": "enemies",
+									"level": 2
+								},
+								"meta": {
+									"role": "reinforcement",
+									"sideTheme": "opponent",
+									"hasHealthData": true,
+									"isSimpleHazard": false,
+									"disableChecksRequired": 0,
+									"disableChecksSucceeded": 0,
+									"notes": "More goblins climb up from the gorge.",
+									"initiativeBonus": 5,
+									"traits": ["Goblin"],
+									"reinforcementSlotId": "goblin-reinforcements"
+								},
+								"above": "00000000-0000-4000-8000-000000000004",
+								"below": "00000000-0000-4000-8000-000000000003"
+							},
+							{
+								"slotId": "town-guard",
+								"character": {
+									"uuid": "00000000-0000-4000-8000-000000000013",
+									"name": "Town Guard",
+									"initiative": 9,
+									"health": 40,
+									"maxHealth": 40,
+									"tempHealth": 0,
+									"turnState": "normal",
+									"group": "enemies",
+									"level": 3
+								},
+								"meta": {
+									"role": "reinforcement",
+									"sideTheme": "other",
+									"hasHealthData": true,
+									"isSimpleHazard": false,
+									"disableChecksRequired": 0,
+									"disableChecksSucceeded": 0,
+									"notes": "The town guard comes to see what the noise is.",
+									"initiativeBonus": 7,
+									"reinforcementSlotId": "town-guard"
+								},
+								"above": "00000000-0000-4000-8000-000000000003",
+								"below": "pc-ezren"
+							}
+						]
 					}
 				}
 			},
@@ -1452,12 +1650,13 @@
 							"00000000-0000-4000-8000-000000000006",
 							"pc-kyra",
 							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000005",
 							"00000000-0000-4000-8000-000000000010",
-							"00000000-0000-4000-8000-000000000011",
-							"00000000-0000-4000-8000-000000000012",
 							"pc-merisiel",
 							"00000000-0000-4000-8000-000000000007",
 							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000011",
+							"00000000-0000-4000-8000-000000000012",
 							"00000000-0000-4000-8000-000000000003",
 							"pc-ezren",
 							"00000000-0000-4000-8000-000000000008"
@@ -1496,12 +1695,13 @@
 							"00000000-0000-4000-8000-000000000006",
 							"pc-kyra",
 							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000005",
 							"00000000-0000-4000-8000-000000000010",
-							"00000000-0000-4000-8000-000000000011",
-							"00000000-0000-4000-8000-000000000012",
 							"pc-merisiel",
 							"00000000-0000-4000-8000-000000000007",
 							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000011",
+							"00000000-0000-4000-8000-000000000012",
 							"00000000-0000-4000-8000-000000000003",
 							"pc-ezren",
 							"00000000-0000-4000-8000-000000000008",
@@ -1539,12 +1739,13 @@
 							"00000000-0000-4000-8000-000000000006",
 							"pc-kyra",
 							"00000000-0000-4000-8000-000000000002",
+							"00000000-0000-4000-8000-000000000005",
 							"00000000-0000-4000-8000-000000000010",
-							"00000000-0000-4000-8000-000000000011",
-							"00000000-0000-4000-8000-000000000012",
 							"pc-merisiel",
 							"00000000-0000-4000-8000-000000000007",
 							"00000000-0000-4000-8000-000000000004",
+							"00000000-0000-4000-8000-000000000011",
+							"00000000-0000-4000-8000-000000000012",
 							"00000000-0000-4000-8000-000000000003",
 							"pc-ezren",
 							"00000000-0000-4000-8000-000000000008",
@@ -1622,7 +1823,7 @@
 					"maxHealth": 17,
 					"initiativeBonus": 6,
 					"traits": ["Animal"],
-					"hiddenFromPlayers": true
+					"hiddenUntilFirstTurn": true
 				},
 				{
 					"type": "creature",
@@ -1631,7 +1832,7 @@
 					"side": 1,
 					"maxHealth": 25,
 					"initiativeBonus": 8,
-					"startingState": "delayed",
+					"hiddenUntilFirstTurn": true,
 					"initiativeDescription": "Waits in the rigging to ambush"
 				},
 				{
@@ -1712,7 +1913,8 @@
 					"id": "town-guard",
 					"type": "reinforcement",
 					"description": "The town guard comes to see what the noise is.",
-					"trigger": { "round": 3 },
+					"trigger": {},
+					"visibleBeforeTrigger": true,
 					"participants": [
 						{
 							"type": "creature",
@@ -1728,10 +1930,10 @@
 		},
 		"timer": {
 			"round": 2,
-			"roundStartedAt": 1767294575000,
+			"roundStartedAt": 1767294600000,
 			"turnParticipantId": "pc-kyra",
-			"turnStartedAt": 1767294715000,
-			"pausedAt": 1767294765000,
+			"turnStartedAt": 1767294740000,
+			"pausedAt": 1767294790000,
 			"turnLog": [
 				{ "participantId": "pc-valeros", "round": 1, "durationMs": 75000 },
 				{
@@ -1747,6 +1949,11 @@
 				{ "participantId": "pc-kyra", "round": 1, "durationMs": 95000 },
 				{
 					"participantId": "00000000-0000-4000-8000-000000000002",
+					"round": 1,
+					"durationMs": 25000
+				},
+				{
+					"participantId": "00000000-0000-4000-8000-000000000005",
 					"round": 1,
 					"durationMs": 25000
 				},
@@ -1789,7 +1996,7 @@
 					"durationMs": 25000
 				}
 			],
-			"roundLog": [{ "round": 1, "durationMs": 575000 }]
+			"roundLog": [{ "round": 1, "durationMs": 600000 }]
 		}
 	},
 	"version": 0

@@ -42,10 +42,12 @@ export interface BuilderReinforcementParticipant {
 	adjustmentLevelModifier?: number;
 	isSimpleHazard: boolean;
 	traits?: string[];
-	combatReadyState?: 'active' | 'delayed' | 'knocked-out';
+	combatReadyState?: CombatReadyState;
 	initiativeModifier?: number;
-	hiddenFromPlayers?: boolean;
+	hiddenUntilFirstTurn?: boolean;
 }
+
+export type CombatReadyState = 'active' | 'knocked-out';
 
 export interface BuilderSlot {
 	id: string;
@@ -65,15 +67,18 @@ export interface BuilderSlot {
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
 	isSimpleHazard: boolean;
-	reinforcementRound: number;
+	/** Empty: the reinforcement can be triggered in any round. */
+	reinforcementRound?: number;
+	/** Players may see the participants before the slot triggers. */
+	reinforcementVisibleBeforeTrigger?: boolean;
 	reinforcementParticipants?: BuilderReinforcementParticipant[];
 	eventRound: number;
 	repeatInterval?: number;
 	accomplishmentLevel?: AccomplishmentLevel;
 	traits?: string[];
-	combatReadyState?: 'active' | 'delayed' | 'knocked-out';
+	combatReadyState?: CombatReadyState;
 	initiativeModifier?: number;
-	hiddenFromPlayers?: boolean;
+	hiddenUntilFirstTurn?: boolean;
 }
 
 export interface DelayedReinforcementConfig {
@@ -513,6 +518,9 @@ export function computeEncounterXpUsage(
 
 	const rawXp = immediateXp.sum(rawReinforcementXp);
 	const hasSimulatedReinforcement = rawReinforcementXp.valueOf() > 0;
+	// A reinforcement without a round counts as arriving in round 1, the worst
+	// case for the threat. The rules leave reinforcements to the GM, so this
+	// is a house rule.
 	const reinforcementRound = reinforcementSlots.length
 		? Math.min(
 				...reinforcementSlots.map((slot) => slot.reinforcementRound || 1)

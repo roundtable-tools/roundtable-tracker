@@ -187,9 +187,7 @@ export function respotAfterReorder(
  * Places triggered reinforcements at their spots. One whose spot comes after
  * the current turn acts this round; so does one whose spot is at the very
  * start of a round nobody has acted in yet, which makes it the current actor.
- * One whose spot has already passed waits for the next round (house rule, as
- * for arrivals that come in delayed). Arrivals that come in delayed go to the
- * delayed list instead of the order, with the same turn rule.
+ * One whose spot has already passed waits for the next round (house rule).
  *
  * `arrivals` are in initiative order, so ones sharing a spot keep it.
  */
@@ -203,12 +201,10 @@ export function placePendingReinforcements(
 	arrivals: PendingReinforcement[]
 ): {
 	charactersOrder: UUID[];
-	delayedOrder: UUID[];
 	charactersWithTurn: Set<UUID>;
 } {
 	const charactersOrder = [...state.charactersOrder];
 	const charactersWithTurn = new Set(state.charactersWithTurn);
-	const arrivingDelayed: UUID[] = [];
 	const placed = new Set<UUID>();
 	// Arrivals placed earlier are compared by their own initiative when a
 	// later one falls back to placing by initiative.
@@ -237,11 +233,6 @@ export function placePendingReinforcements(
 			charactersWithTurn.add(uuid);
 		}
 
-		if (arrival.character.turnState === 'delayed') {
-			arrivingDelayed.push(uuid);
-			continue;
-		}
-
 		// The order rotates: the participants still to act come first and the
 		// ones that acted follow them, so the spot right before the current
 		// actor is after the last one that acted.
@@ -257,9 +248,16 @@ export function placePendingReinforcements(
 		placed.add(uuid);
 	}
 
-	return {
-		charactersOrder,
-		delayedOrder: [...state.delayedOrder, ...arrivingDelayed],
-		charactersWithTurn,
-	};
+	return { charactersOrder, charactersWithTurn };
+}
+
+/**
+ * The order with each pending reinforcement at the spot it would take if its
+ * slot triggered now, for showing where the arrivals will come in.
+ */
+export function orderWithPendingSpots(
+	state: Parameters<typeof placePendingReinforcements>[0],
+	pending: PendingReinforcement[]
+): UUID[] {
+	return placePendingReinforcements(state, pending).charactersOrder;
 }

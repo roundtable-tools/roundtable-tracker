@@ -17,6 +17,11 @@ import {
 	SidebarRail,
 } from '@/components/ui/sidebar';
 
+// Dev server only, so production builds leave the examples out.
+const DevExamplesGroup = import.meta.env.DEV
+	? React.lazy(() => import('./DevExamplesGroup'))
+	: null;
+
 function MenuItem({ item }: { item: NavItem }) {
 	const matchRoute = useMatchRoute();
 	const openPlayerView = useOpenPlayerView();
@@ -67,6 +72,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 						</SidebarGroupContent>
 					</SidebarGroup>
 				))}
+				{DevExamplesGroup && (
+					<React.Suspense fallback={null}>
+						<DevExamplesGroup />
+					</React.Suspense>
+				)}
 			</SidebarContent>
 			<SidebarRail />
 		</Sidebar>

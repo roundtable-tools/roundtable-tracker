@@ -110,15 +110,16 @@ describe('combat ready fields round trip', () => {
 		slots: [
 			slot({ name: 'Active', combatReadyState: 'active' }),
 			slot({
-				name: 'Delayed',
-				combatReadyState: 'delayed',
+				name: 'Hidden',
+				combatReadyState: 'active',
+				hiddenUntilFirstTurn: true,
 				initiativeDescription: 'Rolls Stealth',
 			}),
 			slot({
 				name: 'Defeated',
 				type: 'hazard',
 				combatReadyState: 'knocked-out',
-				hiddenFromPlayers: true,
+				hiddenUntilFirstTurn: true,
 			}),
 			slot({
 				type: 'reinforcement',
@@ -134,8 +135,8 @@ describe('combat ready fields round trip', () => {
 						successesToDisable: 1,
 						adjustment: 'none',
 						isSimpleHazard: false,
-						combatReadyState: 'delayed',
-						hiddenFromPlayers: true,
+						combatReadyState: 'knocked-out',
+						hiddenUntilFirstTurn: true,
 						initiativeDescription: 'Fortune',
 					},
 				],
@@ -151,12 +152,12 @@ describe('combat ready fields round trip', () => {
 				({
 					name,
 					startingState,
-					hiddenFromPlayers,
+					hiddenUntilFirstTurn,
 					initiativeDescription,
 				}) => ({
 					name,
 					startingState,
-					hiddenFromPlayers,
+					hiddenUntilFirstTurn,
 					initiativeDescription,
 				})
 			)
@@ -164,25 +165,25 @@ describe('combat ready fields round trip', () => {
 			{
 				name: 'Active',
 				startingState: 'normal',
-				hiddenFromPlayers: undefined,
+				hiddenUntilFirstTurn: undefined,
 				initiativeDescription: undefined,
 			},
 			{
-				name: 'Delayed',
-				startingState: 'delayed',
-				hiddenFromPlayers: undefined,
+				name: 'Hidden',
+				startingState: 'normal',
+				hiddenUntilFirstTurn: true,
 				initiativeDescription: 'Rolls Stealth',
 			},
 			{
 				name: 'Defeated',
 				startingState: 'knocked-out',
-				hiddenFromPlayers: true,
+				hiddenUntilFirstTurn: true,
 				initiativeDescription: undefined,
 			},
 		]);
 		expect(encounter.narrativeSlots?.[0]?.participants?.[0]).toMatchObject({
-			startingState: 'delayed',
-			hiddenFromPlayers: true,
+			startingState: 'knocked-out',
+			hiddenUntilFirstTurn: true,
 			initiativeDescription: 'Fortune',
 		});
 	});
@@ -195,12 +196,12 @@ describe('combat ready fields round trip', () => {
 				({
 					name,
 					combatReadyState,
-					hiddenFromPlayers,
+					hiddenUntilFirstTurn,
 					initiativeDescription,
 				}) => ({
 					name,
 					combatReadyState,
-					hiddenFromPlayers,
+					hiddenUntilFirstTurn,
 					initiativeDescription,
 				})
 			)
@@ -208,33 +209,67 @@ describe('combat ready fields round trip', () => {
 			{
 				name: 'Active',
 				combatReadyState: 'active',
-				hiddenFromPlayers: false,
+				hiddenUntilFirstTurn: false,
 				initiativeDescription: undefined,
 			},
 			{
-				name: 'Delayed',
-				combatReadyState: 'delayed',
-				hiddenFromPlayers: false,
+				name: 'Hidden',
+				combatReadyState: 'active',
+				hiddenUntilFirstTurn: true,
 				initiativeDescription: 'Rolls Stealth',
 			},
 			{
 				name: 'Defeated',
 				combatReadyState: 'knocked-out',
-				hiddenFromPlayers: true,
+				hiddenUntilFirstTurn: true,
 				initiativeDescription: undefined,
 			},
 			{
 				name: '',
 				combatReadyState: undefined,
-				hiddenFromPlayers: undefined,
+				hiddenUntilFirstTurn: undefined,
 				initiativeDescription: undefined,
 			},
 		]);
 		expect(loaded.slots[3]?.reinforcementParticipants?.[0]).toMatchObject({
-			combatReadyState: 'delayed',
-			hiddenFromPlayers: true,
+			combatReadyState: 'knocked-out',
+			hiddenUntilFirstTurn: true,
 			initiativeDescription: 'Fortune',
 		});
+	});
+
+	it('saves a reinforcement without a round as triggerable in any round', () => {
+		const encounter = toConcreteEncounter({
+			...values,
+			slots: [slot({ type: 'reinforcement', reinforcementRound: undefined })],
+		});
+
+		expect(encounter.narrativeSlots?.[0]?.trigger.round).toBeUndefined();
+		expect(
+			fromConcreteEncounter(encounter).slots[0]?.reinforcementRound
+		).toBeUndefined();
+	});
+
+	it('saves whether a reinforcement shows its participants before arrival', () => {
+		const encounter = toConcreteEncounter({
+			...values,
+			slots: [
+				slot({
+					type: 'reinforcement',
+					reinforcementVisibleBeforeTrigger: true,
+				}),
+				slot({ type: 'reinforcement' }),
+			],
+		});
+
+		expect(
+			encounter.narrativeSlots?.map((slot) => slot.visibleBeforeTrigger)
+		).toEqual([true, undefined]);
+		expect(
+			fromConcreteEncounter(encounter).slots.map(
+				(slot) => slot.reinforcementVisibleBeforeTrigger
+			)
+		).toEqual([true, false]);
 	});
 
 	it('keeps the fields in saved variants', () => {
@@ -253,12 +288,13 @@ describe('combat ready fields round trip', () => {
 		const loaded = fromConcreteEncounter(encounter);
 
 		expect(encounter.variants?.[0]?.participants[1]).toMatchObject({
-			startingState: 'delayed',
+			startingState: 'normal',
+			hiddenUntilFirstTurn: true,
 			initiativeDescription: 'Rolls Stealth',
 		});
 		expect(loaded.variants[0]?.slots[2]).toMatchObject({
 			combatReadyState: 'knocked-out',
-			hiddenFromPlayers: true,
+			hiddenUntilFirstTurn: true,
 		});
 	});
 
@@ -286,7 +322,7 @@ describe('combat ready fields round trip', () => {
 						tempHealth: 0,
 					}).turnState
 			)
-		).toEqual(['normal', 'delayed', 'knocked-out']);
+		).toEqual(['normal', 'normal', 'knocked-out']);
 	});
 });
 

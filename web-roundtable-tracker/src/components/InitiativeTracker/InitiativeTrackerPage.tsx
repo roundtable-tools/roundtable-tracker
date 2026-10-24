@@ -30,6 +30,7 @@ import {
 import {
 	ArrowRight,
 	ArrowUpDown,
+	EyeOff,
 	History,
 	Redo2,
 	ShieldOff,
@@ -48,7 +49,12 @@ import { resumeTimer } from '@/store/encounterTimer';
 import { getHazardStripe, getSideAccent } from './sideAccent';
 import { NextRoundMarkerCard } from './NextRoundMarkerCard';
 import { getRoundBoundaryIndex } from './roundBoundary';
-import { closesRound, getRoundActionCommand } from './roundActionCommand';
+import {
+	asksToReturnFromDelay,
+	closesRound,
+	getRoundActionCommand,
+	returnPromptEntries,
+} from './roundActionCommand';
 import {
 	getEncounterStore,
 	useEncounterStore,
@@ -65,6 +71,7 @@ import {
 	resolveParticipantSideTheme,
 	type TrackerParticipant,
 } from '@/store/trackerMappers';
+import { orderWithPendingSpots } from '@/store/pendingReinforcements';
 import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
 import { GiveAdditionalTurnCommand } from '@/CommandHistory/Commands/GiveAdditionalTurnCommand';
 import { TriggerReinforcementEventCommand } from '@/CommandHistory/Commands/TriggerReinforcementEventCommand';
@@ -203,16 +210,37 @@ function getParticipantAccent(participant: TrackerParticipant) {
 	};
 }
 
+const hasTraitBadges = (participant: TrackerParticipant) =>
+	(participant.traits?.length ?? 0) > 0 ||
+	participant.hiddenUntilFirstTurn === true ||
+	participant.hiddenUntilArrival === true;
+
 function TraitBadges({ participant }: { participant: TrackerParticipant }) {
-	return participant.traits?.map((trait, index) => (
-		<Badge
-			key={`${participant.id}-trait-${index}`}
-			variant="outline"
-			className={`text-[10px] ${getTraitBadgeClassName(trait)}`}
-		>
-			{trait}
-		</Badge>
-	));
+	return (
+		<>
+			{participant.hiddenUntilArrival && (
+				<Badge variant="outline" className="gap-1 text-[10px]">
+					<EyeOff className="size-3" />
+					Hidden until arrival
+				</Badge>
+			)}
+			{participant.hiddenUntilFirstTurn && (
+				<Badge variant="outline" className="gap-1 text-[10px]">
+					<EyeOff className="size-3" />
+					Hidden until first turn
+				</Badge>
+			)}
+			{participant.traits?.map((trait, index) => (
+				<Badge
+					key={`${participant.id}-trait-${index}`}
+					variant="outline"
+					className={`text-[10px] ${getTraitBadgeClassName(trait)}`}
+				>
+					{trait}
+				</Badge>
+			))}
+		</>
+	);
 }
 
 function ParticipantRow({
@@ -353,7 +381,7 @@ function ParticipantDetails({
 				<Badge>{getParticipantRoleLabel(participant)}</Badge>
 				<Badge variant="secondary">{participant.state}</Badge>
 			</div>
-			{(participant.traits?.length ?? 0) > 0 && (
+			{hasTraitBadges(participant) && (
 				<div className="flex flex-wrap gap-1">
 					<TraitBadges participant={participant} />
 				</div>
@@ -610,11 +638,15 @@ function TrackerDescriptionSections({
 	);
 }
 
+// A dashed row in the initiative list for a participant that holds a spot
+// without acting there: one delaying, or a reinforcement that hasn't arrived.
 function DelayedMarkerCard({
 	participant,
+	label = `${participant.name} is delaying`,
 	compact = false,
 }: {
 	participant: TrackerParticipant;
+	label?: string;
 	compact?: boolean;
 }) {
 	const sideTheme = resolveParticipantSideTheme(participant);
@@ -656,7 +688,7 @@ function DelayedMarkerCard({
 					theme.label,
 				].join(' ')}
 			>
-				{participant.name} is delaying
+				{label}
 			</p>
 		</div>
 	);
@@ -669,41 +701,61 @@ type InitiativeCarouselItemData =
 	  }
 	| {
 			key: string;
-			type: 'participant';
+			type: 'participant' | 'arrival';
 			participant: TrackerParticipant;
 	  };
 
+type InitiativeListEntry = {
+	type: 'participant' | 'arrival';
+	participant: TrackerParticipant;
+};
+
+const arrivalLabel = ({ name, eventRound }: TrackerParticipant) =>
+	`${name} arrives${eventRound === undefined ? '' : ` · round ${eventRound}`}`;
+
+// Delaying participants and pending arrivals take the slim marker row.
+const isMarkerRow = (item: InitiativeCarouselItemData) =>
+	item.type === 'arrival' ||
+	(item.type === 'participant' && item.participant.state === 'delayed');
+
+// `markerIndex` counts only the participants in the order, not the arrivals:
+// the next-round marker goes right before the participant at that index.
 function buildInitiativeCarouselItems(
-	participants: TrackerParticipant[],
+	entries: InitiativeListEntry[],
 	markerIndex: number,
 	nextRound: number
 ): InitiativeCarouselItemData[] {
-	if (participants.length === 0) {
+	const participantCount = entries.filter(
+		({ type }) => type === 'participant'
+	).length;
+
+	if (participantCount === 0) {
 		return [];
 	}
 
 	const clampedMarkerIndex = Math.min(
 		Math.max(markerIndex, 0),
-		participants.length
+		participantCount
 	);
 	const items: InitiativeCarouselItemData[] = [];
+	let participantIndex = 0;
 
-	participants.forEach((participant, index) => {
-		if (index === clampedMarkerIndex) {
-			items.push({
-				key: `next-round-marker-${nextRound}`,
-				type: 'marker',
-			});
+	entries.forEach(({ type, participant }) => {
+		if (type === 'participant') {
+			if (participantIndex === clampedMarkerIndex) {
+				items.push({
+					key: `next-round-marker-${nextRound}`,
+					type: 'marker',
+				});
+			}
+
+			participantIndex += 1;
 		}
 
-		items.push({
-			key: participant.id,
-			type: 'participant',
-			participant,
-		});
+		items.push({ key: participant.id, type, participant });
 	});
 
-	if (clampedMarkerIndex === participants.length) {
+	if (clampedMarkerIndex === participantCount) {
 		items.push({
 			key: `next-round-marker-${nextRound}`,
 			type: 'marker',
@@ -897,6 +949,18 @@ export function InitiativeTrackerPage() {
 	// to the participant below them unless that one is dragged.
 	const reorderDraggedIdsRef = useRef(new Set<string>());
 	const delayedSectionParticipants = outOfInitiative.delayed;
+	const returnPromptState = useMemo(() => {
+		const names = new Map(
+			delayedSectionParticipants.map(({ id, name }) => [id, name])
+		);
+
+		return {
+			asks: asksToReturnFromDelay({ charactersOrder, delayedOrder }),
+			participants: returnPromptEntries({ charactersOrder, delayedOrder })
+				.filter((entry) => names.has(entry.id))
+				.map((entry) => ({ ...entry, name: names.get(entry.id) ?? '' })),
+		};
+	}, [charactersOrder, delayedOrder, delayedSectionParticipants]);
 	const hasReinforcements = pendingReinforcementParticipants.length > 0;
 	const hasDelayed = delayedSectionParticipants.length > 0;
 	const hasHazards = outOfInitiative.hazards.length > 0;
@@ -1053,7 +1117,7 @@ export function InitiativeTrackerPage() {
 			return;
 		}
 
-		if (delayedSectionParticipants.length > 0) {
+		if (returnPromptState.asks) {
 			setReturnPrompt({
 				participantId: currentParticipantId,
 				action: 'end-turn',
@@ -1275,7 +1339,7 @@ export function InitiativeTrackerPage() {
 			participantId === currentInitiativeParticipantId &&
 			charactersWithTurn.has(participantId);
 
-		if (isCurrentActive && delayedSectionParticipants.length > 0) {
+		if (isCurrentActive && returnPromptState.asks) {
 			setReturnPrompt({
 				participantId,
 				action,
@@ -1330,23 +1394,6 @@ export function InitiativeTrackerPage() {
 			console.error('Failed to trigger reinforcement event', error);
 		}
 	};
-
-	const reinforcementEventsByRound = useMemo(
-		() =>
-			reinforcementEvents.reduce(
-				(acc, slot) => {
-					if (!acc[slot.trigger.round]) {
-						acc[slot.trigger.round] = [];
-					}
-
-					acc[slot.trigger.round].push(slot);
-
-					return acc;
-				},
-				{} as Record<number, typeof reinforcementEvents>
-			),
-		[reinforcementEvents]
-	);
 
 	const roundAnnouncementEvents = useMemo(() => {
 		if (!nextRoundAnnouncement || !encounterData) {
@@ -1467,14 +1514,47 @@ export function InitiativeTrackerPage() {
 		pinnedMarkerRound === round
 			? initiativeParticipants.length
 			: activeRoundBoundaryIndex;
+	// Reinforcements given a spot in the preview show where they will arrive.
+	const initiativeListEntries = useMemo(() => {
+		const inOrder = new Map(
+			initiativeParticipants.map((participant) => [participant.id, participant])
+		);
+		const arriving = new Map(
+			pendingReinforcementParticipants.map((participant) => [
+				participant.id,
+				participant,
+			])
+		);
+
+		return orderWithPendingSpots(
+			{ charactersOrder, delayedOrder, charactersWithTurn, charactersMap },
+			pendingReinforcements
+		).flatMap((id): InitiativeListEntry[] => {
+			const participant = inOrder.get(id);
+
+			if (participant) return [{ type: 'participant', participant }];
+
+			const arrival = arriving.get(id);
+
+			return arrival ? [{ type: 'arrival', participant: arrival }] : [];
+		});
+	}, [
+		initiativeParticipants,
+		pendingReinforcementParticipants,
+		charactersOrder,
+		delayedOrder,
+		charactersWithTurn,
+		charactersMap,
+		pendingReinforcements,
+	]);
 	const initiativeCarouselItems = useMemo(
 		() =>
 			buildInitiativeCarouselItems(
-				initiativeParticipants,
+				initiativeListEntries,
 				nextRoundMarkerIndex,
 				nextRound
 			),
-		[initiativeParticipants, nextRoundMarkerIndex, nextRound]
+		[initiativeListEntries, nextRoundMarkerIndex, nextRound]
 	);
 
 	// Not memoised: it calls triggerReinforcementEvent, which is recreated every
@@ -1491,9 +1571,8 @@ export function InitiativeTrackerPage() {
 		const isTriggered = triggeredReinforcementSlotIds.has(event.id);
 		const canTrigger = event.round <= round && !isTriggered;
 		const participantCount =
-			reinforcementEventsByRound[event.round]?.find(
-				(slot) => slot.id === event.id
-			)?.participants?.length ?? 0;
+			reinforcementEvents.find((slot) => slot.id === event.id)?.participants
+				?.length ?? 0;
 
 		return {
 			id: event.id,
@@ -1660,13 +1739,18 @@ export function InitiativeTrackerPage() {
 												'min-w-0 pt-2 -mb-3',
 												item.type === 'marker'
 													? 'basis-[2rem]'
-													: item.participant.state === 'delayed'
+													: isMarkerRow(item)
 														? 'basis-[2.5rem]'
 														: 'basis-[5rem]',
 											].join(' ')}
 										>
 											{item.type === 'marker' ? (
 												<NextRoundMarkerCard nextRound={nextRound} />
+											) : item.type === 'arrival' ? (
+												<DelayedMarkerCard
+													participant={item.participant}
+													label={arrivalLabel(item.participant)}
+												/>
 											) : item.participant.state === 'delayed' ? (
 												<DelayedMarkerCard participant={item.participant} />
 											) : (
@@ -2120,13 +2204,19 @@ export function InitiativeTrackerPage() {
 											className={[
 												item.type === 'marker'
 													? 'h-full min-w-20 basis-[28%] pl-2'
-													: item.participant.state === 'delayed'
+													: isMarkerRow(item)
 														? 'h-full min-w-24 basis-[30%] pl-2'
 														: 'h-full min-w-30 basis-[41%] pl-2',
 											].join(' ')}
 										>
 											{item.type === 'marker' ? (
 												<NextRoundMarkerCard nextRound={nextRound} compact />
+											) : item.type === 'arrival' ? (
+												<DelayedMarkerCard
+													participant={item.participant}
+													label={arrivalLabel(item.participant)}
+													compact
+												/>
 											) : item.participant.state === 'delayed' ? (
 												<DelayedMarkerCard
 													participant={item.participant}
@@ -2319,7 +2409,7 @@ export function InitiativeTrackerPage() {
 			{returnPrompt && (
 				<ReturnToInitiativeNotice
 					key={`${returnPrompt.participantId}-${returnPrompt.action}`}
-					participants={delayedSectionParticipants}
+					participants={returnPromptState.participants}
 					onReturn={handleReturnPromptSelect}
 					onDismiss={handleReturnPromptSkip}
 				/>

@@ -286,9 +286,17 @@ describe('PreviewDisplay form defaulting path', () => {
 			'John C',
 			'John D',
 		]);
+		// An exported starting delay now starts in the order, hidden until its
+		// first turn
 		expect(participants.flat().map((p) => p.startingState)).toEqual([
-			'delayed',
-			'delayed',
+			'normal',
+			'normal',
+			undefined,
+			undefined,
+		]);
+		expect(participants.flat().map((p) => p.hiddenUntilFirstTurn)).toEqual([
+			true,
+			true,
 			undefined,
 			undefined,
 		]);

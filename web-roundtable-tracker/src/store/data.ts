@@ -172,9 +172,10 @@ export type CombatantParticipant<
 	hardness?: number;
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
-	startingState?: 'normal' | 'delayed' | 'knocked-out';
+	startingState?: 'normal' | 'knocked-out';
 	traits?: string[];
-	hiddenFromPlayers?: boolean;
+	/** Kept from the players until the participant's first turn starts. */
+	hiddenUntilFirstTurn?: boolean;
 	initiativeDescription?: string;
 	description?: string;
 	dcs?: ParticipantDcEntry[];
@@ -242,9 +243,16 @@ export type NarrativeSlot = {
 	description?: string;
 	accomplishmentLevel?: 'story' | 'minor' | 'moderate' | 'major';
 	trigger: {
-		round: number;
+		/** Reinforcements without one can be triggered in any round. */
+		round?: number;
 		frequency?: number;
 	};
+	/**
+	 * Reinforcements: players may see the participants before the slot
+	 * triggers. Otherwise they stay hidden until it does; a participant's own
+	 * hiddenUntilFirstTurn keeps it hidden longer either way.
+	 */
+	visibleBeforeTrigger?: boolean;
 	participants?: Participant<typeof LEVEL_REPRESENTATION.Relative>[];
 };
 
@@ -318,8 +326,11 @@ const combatantParticipantSchema = z.object({
 	hardness: z.number().optional(),
 	adjustmentDescription: z.string().optional(),
 	adjustmentLevelModifier: z.number().optional(),
+	// 'delayed' and hiddenFromPlayers come from older exports; importing
+	// rewrites them (migrateLegacyEncounter).
 	startingState: z.enum(['normal', 'delayed', 'knocked-out']).optional(),
 	traits: z.array(z.string()).optional(),
+	hiddenUntilFirstTurn: z.boolean().optional(),
 	hiddenFromPlayers: z.boolean().optional(),
 	initiativeDescription: z.string().optional(),
 	description: z.string().optional(),
@@ -351,9 +362,10 @@ const narrativeSlotSchema = z.object({
 		.enum(['story', 'minor', 'moderate', 'major'])
 		.optional(),
 	trigger: z.object({
-		round: z.number(),
+		round: z.number().optional(),
 		frequency: z.number().optional(),
 	}),
+	visibleBeforeTrigger: z.boolean().optional(),
 	participants: z.array(participantSchema).optional(),
 });
 

@@ -1,11 +1,13 @@
 import { Button } from '@/components/ui/button';
 import { TimedNotice } from './TimedNotice';
+import { type ReturnPromptEntry } from './roundActionCommand';
 
-type DelayedParticipant = { id: string; name: string };
+type DelayedParticipant = ReturnPromptEntry & { name: string };
 
 /**
- * Asks whether a delaying participant returns before the turn ends. Picking
- * one returns it; anything else (see TimedNotice) means nobody returns.
+ * Asks whether a delaying participant returns before the turn ends, listing
+ * each one's distance from its old spot. Picking one returns it; anything
+ * else (see TimedNotice) means nobody returns.
  */
 export function ReturnToInitiativeNotice({
 	participants,
@@ -30,7 +32,14 @@ export function ReturnToInitiativeNotice({
 							key={participant.id}
 							className="flex items-center justify-between gap-2 rounded-md border p-2 pl-3"
 						>
-							<p className="text-sm font-semibold">{participant.name}</p>
+							<p className="text-sm font-semibold">
+								{participant.name}
+								{participant.distance !== undefined && (
+									<span className="font-normal text-muted-foreground">
+										{` (${participant.distance})`}
+									</span>
+								)}
+							</p>
 							<Button
 								size="sm"
 								onClick={() => settle(() => onReturn(participant.id))}
