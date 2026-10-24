@@ -44,6 +44,17 @@ import { OpenPlayerViewButton } from './OpenPlayerViewButton';
 import { EncounterTimerControls } from './EncounterTimerControls';
 import { TurnStatsPanel } from './TurnStatsPanel';
 import { ReturnToInitiativeNotice } from './ReturnToInitiativeNotice';
+import { TakeOutNotice } from './TakeOutNotice';
+import {
+	damageDropsToZeroHp,
+	disableProgressFillsChecks,
+	getTakeOutEffectCommand,
+	getTakeOutEffects,
+	TAKE_OUT_EFFECT_SHORT_LABEL,
+	TAKE_OUT_EFFECT_TEXT,
+	type TakeOutEffect,
+	withPrecedingCommand,
+} from './takeOut';
 import { ResumeTimerNotice } from './ResumeTimerNotice';
 import { resumeTimer } from '@/store/encounterTimer';
 import { getHazardStripe, getSideAccent } from './sideAccent';
@@ -68,6 +79,8 @@ import {
 	historyToPreviewLines,
 	getHazardDisableLabel,
 	getHealthLabelFromPercentage,
+	getOutOfFightNames,
+	getParticipantStateLabel,
 	resolveParticipantSideTheme,
 	type TrackerParticipant,
 } from '@/store/trackerMappers';
@@ -85,24 +98,22 @@ import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacte
 import { RecordDisableProgressCommand } from '@/CommandHistory/Commands/RecordDisableProgressCommand';
 import { Input } from '@/components/ui/input';
 import { type SwipeAction } from './InitiativeActionCarouselCard';
+import { type Command } from '@/CommandHistory/common';
 
-function hasHazardDisableCount(participant: TrackerParticipant) {
-	return (
-		participant.role === 'hazard' &&
-		(participant.disableChecksRequired ?? 0) > 0
-	);
+function hasDisableCount(participant: TrackerParticipant) {
+	return (participant.disableChecksRequired ?? 0) > 0;
 }
 
-type HazardDisableChange = { delta: number } | { value: number };
+type DisableChange = { delta: number } | { value: number };
 
-function HazardDisableQuickActions({
+function DisableQuickActions({
 	participant,
 	onRecord,
 }: {
 	participant: TrackerParticipant;
-	onRecord: (participantId: string, change: HazardDisableChange) => void;
+	onRecord: (participantId: string, change: DisableChange) => void;
 }) {
-	if (!hasHazardDisableCount(participant)) {
+	if (!hasDisableCount(participant)) {
 		return null;
 	}
 
@@ -140,6 +151,76 @@ function HazardDisableQuickActions({
 			</Button>
 		</>
 	);
+}
+
+/**
+ * K.O. / Disable buttons for a row outside the initiative carousel, one per
+ * take-out effect; Reactivate and Slay / Destroy once it is out.
+ */
+function OutOfFightRowActions({
+	participant,
+	effects,
+	onAction,
+}: {
+	participant: TrackerParticipant;
+	effects: TakeOutEffect[];
+	onAction: (
+		participantId: string,
+		action: SwipeAction,
+		effect?: TakeOutEffect
+	) => void;
+}) {
+	const names = getOutOfFightNames(participant);
+	const act =
+		(action: SwipeAction, effect?: TakeOutEffect) =>
+		(event: React.MouseEvent) => {
+			event.stopPropagation();
+			onAction(participant.id, action, effect);
+		};
+
+	if (participant.state === 'knocked-out') {
+		return (
+			<>
+				<Button
+					type="button"
+					size="sm"
+					variant="outline"
+					className="h-7 px-2 text-xs"
+					title={`Reactivate ${participant.name}`}
+					onClick={act('reactivate')}
+				>
+					Reactivate
+				</Button>
+				<Button
+					type="button"
+					size="sm"
+					variant="destructive"
+					className="h-7 px-2 text-xs"
+					title={`${names.remove} ${participant.name}`}
+					onClick={act('slay')}
+				>
+					{names.remove}
+				</Button>
+			</>
+		);
+	}
+
+	const shortName = participant.role === 'hazard' ? 'Disable' : 'K.O.';
+
+	return (effects.length > 0 ? effects : [undefined]).map((effect) => (
+		<Button
+			key={effect ?? 'none'}
+			type="button"
+			size="sm"
+			variant="destructive"
+			className="h-7 px-2 text-xs"
+			title={`${names.takeOut} ${participant.name}${effect ? `: ${TAKE_OUT_EFFECT_TEXT[effect]}` : ''}`}
+			onClick={act('ko', effect)}
+		>
+			{shortName}
+			{effect && ` (${TAKE_OUT_EFFECT_SHORT_LABEL[effect]})`}
+		</Button>
+	));
 }
 
 function getParticipantIndicatorLabel(participant: TrackerParticipant) {
@@ -273,7 +354,7 @@ function ParticipantRow({
 			<div>
 				<p className="text-sm font-semibold">{participant.name}</p>
 				<p className="text-xs text-muted-foreground">
-					{participant.state}
+					{getParticipantStateLabel(participant)}
 					{typeof participant.initiative === 'number'
 						? ` | Init ${participant.initiative}`
 						: ''}
@@ -311,7 +392,7 @@ type ParticipantDetailsProps = {
 	onDamage?: (amount: number) => void;
 	onSetTempHp?: (amount: number, description: string) => void;
 	onGiveTurnBack?: () => void;
-	onRecordDisableProgress?: (change: HazardDisableChange) => void;
+	onRecordDisableProgress?: (change: DisableChange) => void;
 };
 
 function ParticipantDetails({
@@ -380,7 +461,9 @@ function ParticipantDetails({
 			<div className="flex flex-wrap items-center gap-2">
 				<h3 className="text-lg font-semibold">{participant.name}</h3>
 				<Badge>{getParticipantRoleLabel(participant)}</Badge>
-				<Badge variant="secondary">{participant.state}</Badge>
+				<Badge variant="secondary">
+					{getParticipantStateLabel(participant)}
+				</Badge>
 			</div>
 			{hasTraitBadges(participant) && (
 				<div className="flex flex-wrap gap-1">
@@ -402,10 +485,10 @@ function ParticipantDetails({
 					</Button>
 				</div>
 			)}
-			{isHazard && (
+			{(isHazard || hasDisableCount(participant)) && (
 				<p className="inline-flex items-center gap-1 text-sm text-muted-foreground">
-					<ShieldOff className="h-4 w-4" /> {indicatorLabel}
-					{hasHazardDisableCount(participant) && (
+					<ShieldOff className="h-4 w-4" /> {getHazardDisableLabel(participant)}
+					{hasDisableCount(participant) && (
 						<span className="ml-1">
 							({participant.disableChecksSucceeded ?? 0} /{' '}
 							{participant.disableChecksRequired} successes)
@@ -413,7 +496,7 @@ function ParticipantDetails({
 					)}
 				</p>
 			)}
-			{onRecordDisableProgress && hasHazardDisableCount(participant) && (
+			{onRecordDisableProgress && hasDisableCount(participant) && (
 				<div className="space-y-2 rounded-md border p-3">
 					<h4 className="text-sm font-medium">Disable a Device</h4>
 					<div className="flex gap-2">
@@ -895,7 +978,19 @@ export function InitiativeTrackerPage() {
 		participantId: string;
 		action: 'end-turn' | 'delay' | 'ko';
 		focusCurrentOnSuccess: boolean;
+		/** Runs in the same undo step, e.g. the damage that caused a K.O. */
+		before?: Command;
 	};
+	// A participant dropped to 0 HP or had its disable checks filled; `before`
+	// is that change, run together with the GM's answer.
+	type TakeOutPromptState = {
+		participantId: string;
+		reason: TakeOutEffect;
+		before: Command;
+	};
+	const [takeOutPrompt, setTakeOutPrompt] = useState<TakeOutPromptState | null>(
+		null
+	);
 	const [returnPrompt, setReturnPrompt] = useState<ReturnPromptState | null>(
 		null
 	);
@@ -1039,10 +1134,12 @@ export function InitiativeTrackerPage() {
 		participantId,
 		action,
 		focusCurrentOnSuccess = false,
+		before,
 	}: {
 		participantId: string;
 		action: 'end-turn' | 'delay' | 'ko';
 		focusCurrentOnSuccess?: boolean;
+		before?: Command;
 	}) => {
 		clearPinnedMarkerForCurrentRound();
 
@@ -1053,7 +1150,10 @@ export function InitiativeTrackerPage() {
 			charactersWithTurn,
 		};
 		const shouldAdvanceRound = closesRound(participantId, roundState);
-		const command = getRoundActionCommand(participantId, action, roundState);
+		const command = withPrecedingCommand(
+			before,
+			getRoundActionCommand(participantId, action, roundState)
+		);
 
 		try {
 			executeCommand(command);
@@ -1306,8 +1406,23 @@ export function InitiativeTrackerPage() {
 
 	const handleParticipantSwipeAction = (
 		participantId: string,
-		action: SwipeAction
+		action: SwipeAction,
+		effect?: TakeOutEffect
 	) => {
+		const before =
+			action === 'ko' && effect
+				? getTakeOutEffectCommand(participantId, effect, {
+						charactersMap,
+						trackerMetaMap,
+					})
+				: null;
+
+		if (action === 'ko') {
+			takeOutParticipant(participantId, before ?? undefined);
+
+			return;
+		}
+
 		if (action === 'reactivate') {
 			try {
 				executeCommand(new ReactivateCharacterCommand({ uuid: participantId }));
@@ -1320,15 +1435,35 @@ export function InitiativeTrackerPage() {
 		}
 
 		if (action === 'slay') {
-			try {
-				executeCommand(new RemoveCharacterCommand({ uuid: participantId }));
-			} catch (error) {
-				console.error('Failed to slay participant', error);
-			}
+			removeParticipant(participantId);
 
 			return;
 		}
 
+		takeOutParticipant(participantId, undefined, action);
+	};
+
+	// Slay, or Destroy for a hazard: the participant leaves the initiative.
+	const removeParticipant = (participantId: string, before?: Command) => {
+		try {
+			executeCommand(
+				withPrecedingCommand(
+					before,
+					new RemoveCharacterCommand({ uuid: participantId })
+				)
+			);
+		} catch (error) {
+			console.error('Failed to slay participant', error);
+		}
+	};
+
+	// K.O., or Disable for a hazard (and Delay, which ends the turn the same
+	// way). `before` runs in the same undo step.
+	const takeOutParticipant = (
+		participantId: string,
+		before?: Command,
+		action: 'ko' | 'delay' = 'ko'
+	) => {
 		const isCurrentActive =
 			participantId === currentInitiativeParticipantId &&
 			charactersWithTurn.has(participantId);
@@ -1338,12 +1473,43 @@ export function InitiativeTrackerPage() {
 				participantId,
 				action,
 				focusCurrentOnSuccess: true,
+				before,
 			});
 
 			return;
 		}
 
-		executeRoundAction({ participantId, action });
+		executeRoundAction({ participantId, action, before });
+	};
+
+	// A PC at 0 HP is knocked out; anyone else is asked about.
+	const handleTakeOutTrigger = (
+		participantId: string,
+		reason: TakeOutEffect,
+		before: Command
+	) => {
+		if (trackerMetaMap[participantId]?.role === 'pc') {
+			takeOutParticipant(participantId, before);
+
+			return;
+		}
+
+		setTakeOutPrompt({ participantId, reason, before });
+	};
+
+	const handleTakeOutPromptAnswer = (answer: 'take-out' | 'remove') => {
+		if (!takeOutPrompt) {
+			return;
+		}
+
+		const { participantId, before } = takeOutPrompt;
+		setTakeOutPrompt(null);
+
+		if (answer === 'take-out') {
+			takeOutParticipant(participantId, before);
+		} else {
+			removeParticipant(participantId, before);
+		}
 	};
 
 	const handleReturnPromptSelect = (returningParticipantId: string) => {
@@ -1351,17 +1517,20 @@ export function InitiativeTrackerPage() {
 			return;
 		}
 
-		const { participantId, action } = returnPrompt;
+		const { participantId, action, before } = returnPrompt;
 		setReturnPrompt(null);
 		clearPinnedMarkerForCurrentRound();
 
 		try {
 			executeCommand(
-				new ReturnToInitiativeCommand({
-					activeUuid: participantId,
-					returningUuid: returningParticipantId,
-					action,
-				})
+				withPrecedingCommand(
+					before,
+					new ReturnToInitiativeCommand({
+						activeUuid: participantId,
+						returningUuid: returningParticipantId,
+						action,
+					})
+				)
 			);
 			queueFocusCurrentParticipant();
 		} catch (error) {
@@ -1374,10 +1543,16 @@ export function InitiativeTrackerPage() {
 			return;
 		}
 
-		const { participantId, action, focusCurrentOnSuccess } = returnPrompt;
+		const { participantId, action, focusCurrentOnSuccess, before } =
+			returnPrompt;
 		setReturnPrompt(null);
 
-		executeRoundAction({ participantId, action, focusCurrentOnSuccess });
+		executeRoundAction({
+			participantId,
+			action,
+			focusCurrentOnSuccess,
+			before,
+		});
 	};
 
 	const triggerReinforcementEvent = (slotId: string) => {
@@ -1434,38 +1609,60 @@ export function InitiativeTrackerPage() {
 
 	const handleSelectedDamage = selectedParticipantId
 		? (amount: number) => {
+				const command = new ChangeHealthCommand({
+					uuid: selectedParticipantId,
+					delta: -amount,
+				});
+
+				if (
+					damageDropsToZeroHp(selectedParticipantId, amount, {
+						charactersMap,
+						trackerMetaMap,
+					})
+				) {
+					handleTakeOutTrigger(selectedParticipantId, 'hp', command);
+
+					return;
+				}
+
 				try {
-					executeCommand(
-						new ChangeHealthCommand({
-							uuid: selectedParticipantId,
-							delta: -amount,
-						})
-					);
+					executeCommand(command);
 				} catch (error) {
 					console.error('Failed to apply damage', error);
 				}
 			}
 		: undefined;
 
-	const recordHazardDisableProgress = (
+	const recordDisableProgress = (
 		participantId: string,
-		change: HazardDisableChange
+		change: DisableChange
 	) => {
+		const command = new RecordDisableProgressCommand({
+			uuid: participantId,
+			...change,
+		});
+
+		if (
+			disableProgressFillsChecks(participantId, change, {
+				charactersMap,
+				trackerMetaMap,
+			})
+		) {
+			handleTakeOutTrigger(participantId, 'checks', command);
+
+			return;
+		}
+
 		try {
-			executeCommand(
-				new RecordDisableProgressCommand({
-					uuid: participantId,
-					...change,
-				})
-			);
+			executeCommand(command);
 		} catch (error) {
 			console.error('Failed to record hazard disable progress', error);
 		}
 	};
 
 	const handleSelectedRecordDisableProgress = selectedParticipantId
-		? (change: HazardDisableChange) =>
-				recordHazardDisableProgress(selectedParticipantId, change)
+		? (change: DisableChange) =>
+				recordDisableProgress(selectedParticipantId, change)
 		: undefined;
 
 	const handleSelectedSetTempHp = selectedParticipantId
@@ -1758,6 +1955,12 @@ export function InitiativeTrackerPage() {
 														currentInitiativeParticipantId
 													}
 													onSwipeAction={handleParticipantSwipeAction}
+													takeOutEffects={getTakeOutEffects(
+														item.participant.id,
+														{
+															trackerMetaMap,
+														}
+													)}
 													density="desktop"
 													accent={getParticipantAccent(item.participant)}
 													turnTimer={timer}
@@ -1848,19 +2051,13 @@ export function InitiativeTrackerPage() {
 														onSelect={setSelectedParticipantId}
 														selected={participant.id === selectedParticipantId}
 														actionSlot={
-															<Button
-																size="sm"
-																variant="destructive"
-																onClick={(e) => {
-																	e.stopPropagation();
-																	handleParticipantSwipeAction(
-																		participant.id,
-																		'ko'
-																	);
-																}}
-															>
-																K.O.
-															</Button>
+															<OutOfFightRowActions
+																participant={participant}
+																effects={getTakeOutEffects(participant.id, {
+																	trackerMetaMap,
+																})}
+																onAction={handleParticipantSwipeAction}
+															/>
 														}
 													/>
 												))}
@@ -1879,10 +2076,19 @@ export function InitiativeTrackerPage() {
 														onSelect={setSelectedParticipantId}
 														selected={participant.id === selectedParticipantId}
 														actionSlot={
-															<HazardDisableQuickActions
-																participant={participant}
-																onRecord={recordHazardDisableProgress}
-															/>
+															<>
+																<DisableQuickActions
+																	participant={participant}
+																	onRecord={recordDisableProgress}
+																/>
+																<OutOfFightRowActions
+																	participant={participant}
+																	effects={getTakeOutEffects(participant.id, {
+																		trackerMetaMap,
+																	})}
+																	onAction={handleParticipantSwipeAction}
+																/>
+															</>
 														}
 													/>
 												))}
@@ -2141,19 +2347,13 @@ export function InitiativeTrackerPage() {
 														onSelect={setSelectedParticipantId}
 														selected={participant.id === selectedParticipantId}
 														actionSlot={
-															<Button
-																size="sm"
-																variant="destructive"
-																onClick={(e) => {
-																	e.stopPropagation();
-																	handleParticipantSwipeAction(
-																		participant.id,
-																		'ko'
-																	);
-																}}
-															>
-																K.O.
-															</Button>
+															<OutOfFightRowActions
+																participant={participant}
+																effects={getTakeOutEffects(participant.id, {
+																	trackerMetaMap,
+																})}
+																onAction={handleParticipantSwipeAction}
+															/>
 														}
 													/>
 												))}
@@ -2170,10 +2370,19 @@ export function InitiativeTrackerPage() {
 														onSelect={setSelectedParticipantId}
 														selected={participant.id === selectedParticipantId}
 														actionSlot={
-															<HazardDisableQuickActions
-																participant={participant}
-																onRecord={recordHazardDisableProgress}
-															/>
+															<>
+																<DisableQuickActions
+																	participant={participant}
+																	onRecord={recordDisableProgress}
+																/>
+																<OutOfFightRowActions
+																	participant={participant}
+																	effects={getTakeOutEffects(participant.id, {
+																		trackerMetaMap,
+																	})}
+																	onAction={handleParticipantSwipeAction}
+																/>
+															</>
 														}
 													/>
 												))}
@@ -2227,6 +2436,12 @@ export function InitiativeTrackerPage() {
 														currentInitiativeParticipantId
 													}
 													onSwipeAction={handleParticipantSwipeAction}
+													takeOutEffects={getTakeOutEffects(
+														item.participant.id,
+														{
+															trackerMetaMap,
+														}
+													)}
 													density="mobile"
 													accent={getParticipantAccent(item.participant)}
 													turnTimer={timer}
@@ -2388,7 +2603,7 @@ export function InitiativeTrackerPage() {
 				</DialogContent>
 			</Dialog>
 
-			{resumePrompt && isTimerPaused && !returnPrompt && (
+			{resumePrompt && isTimerPaused && !returnPrompt && !takeOutPrompt && (
 				<ResumeTimerNotice
 					key={resumePrompt}
 					onStayPaused={() => setResumePrompt(null)}
@@ -2399,7 +2614,21 @@ export function InitiativeTrackerPage() {
 				/>
 			)}
 
-			{returnPrompt && (
+			{takeOutPrompt && charactersMap[takeOutPrompt.participantId] && (
+				<TakeOutNotice
+					key={`${takeOutPrompt.participantId}-${takeOutPrompt.reason}`}
+					participant={{
+						name: charactersMap[takeOutPrompt.participantId].name,
+						role:
+							trackerMetaMap[takeOutPrompt.participantId]?.role ?? 'opponent',
+					}}
+					reason={takeOutPrompt.reason}
+					onTakeOut={() => handleTakeOutPromptAnswer('take-out')}
+					onRemove={() => handleTakeOutPromptAnswer('remove')}
+				/>
+			)}
+
+			{returnPrompt && !takeOutPrompt && (
 				<ReturnToInitiativeNotice
 					key={`${returnPrompt.participantId}-${returnPrompt.action}`}
 					participants={returnPromptState.participants}
