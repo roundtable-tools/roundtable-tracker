@@ -19,7 +19,7 @@ when the turn flow changes.
   | Field | Meaning |
   |---|---|
   | `charactersOrder: UUID[]` | A **rotating queue**. Index 0 is the current actor |
-  | `delayedOrder: UUID[]` | Participants currently delaying |
+  | `delayedOrder: UUID[]` | Participants currently delaying. Each keeps its spot in `charactersOrder` too |
   | `charactersWithTurn: Set<UUID>` | Who still has a turn this round |
   | `round` | Starts at 1 |
   | `charactersMap` | Characters by uuid |
@@ -49,7 +49,7 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 | Command | Effect |
 |---|---|
 | `EndTurnCommand {uuid}` | Removes the turn, moves the participant to the end of `charactersOrder` and skips participants without a turn. Fails if it has no turn |
-| `EndRoundCommand` | `round + 1`. Every participant in `charactersOrder` and `delayedOrder` gets a turn again, including knocked-out ones. No reordering |
+| `EndRoundCommand` | `round + 1`. Every participant in `charactersOrder` gets a turn again, delayers too, including knocked-out ones. No reordering |
 | `FinalizeTurnAndAdvanceRoundCommand {uuid, action: 'end-turn' \| 'delay' \| 'ko'}` | One undo step: the action plus `EndRoundCommand`. Valid only when `uuid` is the last participant with a turn |
 | `FinalizeTurnAndReturnToInitiativeCommand {activeUuid, returningUuid, action}` | One undo step: `ReturnToInitiativeCommand` plus `EndRoundCommand` (see quirks) |
 | `GiveAdditionalTurnCommand {uuid}` | Gives the turn back. "Give Turn Back" in the selected-participant panel, for a participant that already acted |
