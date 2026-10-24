@@ -518,6 +518,9 @@ export function computeEncounterXpUsage(
 
 	const rawXp = immediateXp.sum(rawReinforcementXp);
 	const hasSimulatedReinforcement = rawReinforcementXp.valueOf() > 0;
+	// A reinforcement without a round counts as arriving in round 1, the worst
+	// case for the threat. The rules leave reinforcements to the GM, so this
+	// is a house rule.
 	const reinforcementRound = reinforcementSlots.length
 		? Math.min(
 				...reinforcementSlots.map((slot) => slot.reinforcementRound || 1)
