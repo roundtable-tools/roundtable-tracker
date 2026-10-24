@@ -1,8 +1,7 @@
 import { UUID } from '@/utils/uuid';
 import { Command, CommandDeps, STATUS, getDeps } from '../common';
 import { FinalizeTurnAction } from './FinalizeTurnAndAdvanceRoundCommand';
-import { isDelaying } from '@/store/operations';
-import { Character } from '@/store/data';
+import { isDelaying, type TurnStates } from '@/store/operations';
 
 type CommandData = {
 	activeUuid: UUID;
@@ -11,7 +10,7 @@ type CommandData = {
 	original?: {
 		charactersOrder: UUID[];
 		charactersWithTurn: Set<UUID>;
-		charactersMap: Record<UUID, Pick<Character, 'turnState'>>;
+		charactersMap: TurnStates;
 	};
 };
 

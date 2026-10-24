@@ -1,7 +1,7 @@
 import { type UUID } from '@/utils/uuid';
 import { type Character } from './data';
 
-type TurnStates = Record<UUID, Pick<Character, 'turnState'>>;
+export type TurnStates = Record<UUID, Pick<Character, 'turnState'>>;
 
 /** Whether the participant is delaying. A delayer keeps its spot in the order. */
 export const isDelaying = (charactersMap: TurnStates, uuid: UUID) =>
@@ -44,7 +44,6 @@ export function roundOrderOf(
 export const nextRound = (state: {
 	round: number;
 	charactersOrder: UUID[];
-	charactersWithTurn: Set<UUID>;
 }) => {
 	const charactersWithTurn = new Set(state.charactersOrder);
 

@@ -131,7 +131,6 @@ export class RecordHazardDisableProgressCommand implements Command {
 						...nextRound({
 							round: current.round,
 							charactersOrder,
-							charactersWithTurn,
 						}),
 					};
 				}
