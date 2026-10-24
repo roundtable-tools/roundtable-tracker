@@ -63,7 +63,7 @@ function toTemplateParticipant(
 function toTemplateEvent(slot: NarrativeSlot): Event {
 	const base = {
 		id: slot.id,
-		turnIndex: slot.trigger.round - 1,
+		turnIndex: (slot.trigger.round ?? 1) - 1,
 		...(slot.tag === undefined ? {} : { tag: slot.tag }),
 	};
 

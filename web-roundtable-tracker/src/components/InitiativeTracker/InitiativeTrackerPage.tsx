@@ -1248,23 +1248,6 @@ export function InitiativeTrackerPage() {
 		}
 	};
 
-	const reinforcementEventsByRound = useMemo(
-		() =>
-			reinforcementEvents.reduce(
-				(acc, slot) => {
-					if (!acc[slot.trigger.round]) {
-						acc[slot.trigger.round] = [];
-					}
-
-					acc[slot.trigger.round].push(slot);
-
-					return acc;
-				},
-				{} as Record<number, typeof reinforcementEvents>
-			),
-		[reinforcementEvents]
-	);
-
 	const roundAnnouncementEvents = useMemo(() => {
 		if (!nextRoundAnnouncement || !encounterData) {
 			return [] as Array<{
@@ -1387,9 +1370,8 @@ export function InitiativeTrackerPage() {
 		const isTriggered = triggeredReinforcementSlotIds.has(event.id);
 		const canTrigger = event.round <= round && !isTriggered;
 		const participantCount =
-			reinforcementEventsByRound[event.round]?.find(
-				(slot) => slot.id === event.id
-			)?.participants?.length ?? 0;
+			reinforcementEvents.find((slot) => slot.id === event.id)?.participants
+				?.length ?? 0;
 
 		return {
 			id: event.id,

@@ -67,7 +67,8 @@ export interface BuilderSlot {
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
 	isSimpleHazard: boolean;
-	reinforcementRound: number;
+	/** Empty: the reinforcement can be triggered in any round. */
+	reinforcementRound?: number;
 	/** Players may see the participants before the slot triggers. */
 	reinforcementVisibleBeforeTrigger?: boolean;
 	reinforcementParticipants?: BuilderReinforcementParticipant[];

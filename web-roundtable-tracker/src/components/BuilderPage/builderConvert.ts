@@ -652,7 +652,7 @@ export function fromConcreteEncounter(
 								: false,
 					}))
 				: [],
-			eventRound: ns.trigger.round,
+			eventRound: ns.trigger.round ?? 1,
 			repeatInterval: ns.trigger.frequency,
 			accomplishmentLevel: isReinforcement
 				? undefined

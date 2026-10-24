@@ -243,7 +243,8 @@ export type NarrativeSlot = {
 	description?: string;
 	accomplishmentLevel?: 'story' | 'minor' | 'moderate' | 'major';
 	trigger: {
-		round: number;
+		/** Reinforcements without one can be triggered in any round. */
+		round?: number;
 		frequency?: number;
 	};
 	/**
@@ -361,7 +362,7 @@ const narrativeSlotSchema = z.object({
 		.enum(['story', 'minor', 'moderate', 'major'])
 		.optional(),
 	trigger: z.object({
-		round: z.number(),
+		round: z.number().optional(),
 		frequency: z.number().optional(),
 	}),
 	visibleBeforeTrigger: z.boolean().optional(),

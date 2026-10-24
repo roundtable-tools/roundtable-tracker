@@ -545,18 +545,29 @@ export function runtimeToPlayerInitiativeQueue(
 	);
 }
 
+/**
+ * The slots with a round, for the round timeline and the round dialog. A
+ * reinforcement without a round has no place there; it waits in the
+ * reinforcements panel until the GM triggers it.
+ */
 export function narrativeSlotsToTimeline(
 	slots: NarrativeSlot[] | undefined
 ): TimelineEvent[] {
 	if (!slots) return [];
 
-	return slots.map((slot) => ({
-		id: slot.id,
-		round: slot.trigger.round,
-		title: slot.type.charAt(0).toUpperCase() + slot.type.slice(1),
-		detail: slot.description ?? '',
-		type: slot.type,
-	}));
+	return slots.flatMap((slot) =>
+		slot.trigger.round === undefined
+			? []
+			: [
+					{
+						id: slot.id,
+						round: slot.trigger.round,
+						title: slot.type.charAt(0).toUpperCase() + slot.type.slice(1),
+						detail: slot.description ?? '',
+						type: slot.type,
+					},
+				]
+	);
 }
 
 function stableInitiativeFromId(id: string): number {
@@ -589,7 +600,10 @@ export function encounterToTrackerHeader(
 
 	const narrativeDetails = (encounterData.narrativeSlots ?? [])
 		.filter((slot) => slot.description)
-		.map((slot) => `Round ${slot.trigger.round}: ${slot.description}`);
+		.map(
+			(slot) =>
+				`${slot.trigger.round === undefined ? 'Any round' : `Round ${slot.trigger.round}`}: ${slot.description}`
+		);
 
 	const descriptionSections = [
 		{ label: 'Description', content: encounterData.description },

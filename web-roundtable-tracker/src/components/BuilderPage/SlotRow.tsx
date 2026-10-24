@@ -1047,6 +1047,7 @@ export function SlotRow({
 										<Input
 											type="number"
 											min={1}
+											placeholder="Any round"
 											value={field.value ?? ''}
 											onChange={(event) => {
 												const value = event.target.value;

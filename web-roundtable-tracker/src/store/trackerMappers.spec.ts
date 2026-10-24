@@ -6,6 +6,8 @@ import {
 	type Character,
 } from './data';
 import {
+	encounterToTrackerHeader,
+	narrativeSlotsToTimeline,
 	runtimeToInitiativeQueue,
 	runtimeToOutOfInitiativeData,
 	runtimeToPlayerInitiativeQueue,
@@ -452,5 +454,51 @@ describe('trackerMappers', () => {
 				hiddenUntilFirstTurn: true,
 			},
 		]);
+	});
+
+	describe('a reinforcement without a trigger round', () => {
+		const slots = [
+			{
+				id: 'second-phase',
+				type: 'reinforcement' as const,
+				description: 'The lich rises',
+				trigger: {},
+			},
+			{
+				id: 'bell',
+				type: 'default' as const,
+				description: 'The bell tolls',
+				trigger: { round: 3 },
+			},
+		];
+
+		it('has no place on the round timeline', () => {
+			expect(narrativeSlotsToTimeline(slots).map(({ id }) => id)).toEqual([
+				'bell',
+			]);
+		});
+
+		it('is listed for any round in the narrative details', () => {
+			const header = encounterToTrackerHeader(
+				{
+					id: 'lair',
+					name: 'Lair',
+					description: '',
+					difficulty: DIFFICULTY.Moderate,
+					partySize: 4,
+					levelRepresentation: LEVEL_REPRESENTATION.Exact,
+					level: 3,
+					participants: [],
+					narrativeSlots: slots,
+				},
+				3,
+				1
+			);
+
+			expect(header.narrativeDetails).toEqual([
+				'Any round: The lich rises',
+				'Round 3: The bell tolls',
+			]);
+		});
 	});
 });

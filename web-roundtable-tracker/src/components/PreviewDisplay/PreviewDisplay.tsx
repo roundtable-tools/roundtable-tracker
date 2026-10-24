@@ -142,7 +142,7 @@ export type Inputs = {
 		side: number;
 		isParty: boolean;
 		/** Set on a reinforcement slot's team. */
-		reinforcement?: { slotId: string; round: number };
+		reinforcement?: { slotId: string; round?: number };
 		characters: PreviewCharacterConfig[];
 	}[];
 };
@@ -429,7 +429,11 @@ export const PreviewDisplay = (): JSX.Element => {
 									sideTitle={
 										teamField.reinforcement ? (
 											<span className="flex flex-col gap-0.5">
-												<span>{`${appearance.label} · round ${teamField.reinforcement.round}`}</span>
+												<span>{`${appearance.label} · ${
+													teamField.reinforcement.round === undefined
+														? 'any round'
+														: `round ${teamField.reinforcement.round}`
+												}`}</span>
 												<span className="text-xs font-normal">
 													Join at this initiative when triggered
 												</span>

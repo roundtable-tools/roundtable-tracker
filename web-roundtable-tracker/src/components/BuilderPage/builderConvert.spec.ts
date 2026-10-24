@@ -238,6 +238,18 @@ describe('combat ready fields round trip', () => {
 		});
 	});
 
+	it('saves a reinforcement without a round as triggerable in any round', () => {
+		const encounter = toConcreteEncounter({
+			...values,
+			slots: [slot({ type: 'reinforcement', reinforcementRound: undefined })],
+		});
+
+		expect(encounter.narrativeSlots?.[0]?.trigger.round).toBeUndefined();
+		expect(
+			fromConcreteEncounter(encounter).slots[0]?.reinforcementRound
+		).toBeUndefined();
+	});
+
 	it('saves whether a reinforcement shows its participants before arrival', () => {
 		const encounter = toConcreteEncounter({
 			...values,
