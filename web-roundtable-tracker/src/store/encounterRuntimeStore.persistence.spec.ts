@@ -1,8 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import {
-	createEncounterStore,
-	type TrackerParticipantMeta,
-} from './encounterRuntimeStore';
+import { createEncounterStore } from './encounterRuntimeStore';
 import { getEncounterStore } from './encounterRuntimeInstance';
 import { Character } from './data';
 import { Command, STATUS } from '@/CommandHistory/common';
@@ -16,7 +13,6 @@ import { KnockOutCharacterCommand } from '@/CommandHistory/Commands/KnockOutChar
 import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/ReactivateCharacterCommand';
 import { FinalizeTurnAndAdvanceRoundCommand } from '@/CommandHistory/Commands/FinalizeTurnAndAdvanceRoundCommand';
 import { FinalizeTurnAndReturnToInitiativeCommand } from '@/CommandHistory/Commands/FinalizeTurnAndReturnToInitiativeCommand';
-import { RecordDisableProgressCommand } from '@/CommandHistory/Commands/RecordDisableProgressCommand';
 
 const characters: Character[] = [
 	{
@@ -51,18 +47,6 @@ const startWithRogueDelaying = (
 		charactersWithTurn: new Set([characters[0].uuid]),
 	});
 };
-
-const hazardMeta = (
-	overrides: Partial<TrackerParticipantMeta> = {}
-): TrackerParticipantMeta => ({
-	role: 'hazard',
-	sideTheme: 'opponent',
-	isSimpleHazard: false,
-	disableChecksRequired: 2,
-	disableChecksSucceeded: 0,
-	notes: '',
-	...overrides,
-});
 
 const giveTurn = (uuid: string) =>
 	new GiveAdditionalTurnCommand({ uuid: uuid as Character['uuid'] });
@@ -225,22 +209,6 @@ describe('encounter store persistence', () => {
 				start: () => characters,
 				setUp: () => startWithRogueDelaying(getEncounterStore()),
 				command: () => new ReactivateCharacterCommand({ uuid: rogue.uuid }),
-			},
-			{
-				name: 'RecordDisableProgressCommand re-enabling a participant',
-				start: bothNormal,
-				setUp: () => {
-					getEncounterStore()
-						.getState()
-						.setTrackerMetaMap({
-							[hero.uuid]: hazardMeta({ disableChecksSucceeded: 2 }),
-						});
-					expect(
-						new KnockOutCharacterCommand({ uuid: hero.uuid }).execute()
-					).toBe(STATUS.success);
-				},
-				command: () =>
-					new RecordDisableProgressCommand({ uuid: hero.uuid, value: 0 }),
 			},
 			{
 				name: 'FinalizeTurnAndAdvanceRoundCommand',

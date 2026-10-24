@@ -8,7 +8,6 @@ import {
 	runtimeToInitiativeQueue,
 	runtimeToOutOfInitiativeData,
 } from '@/store/trackerMappers';
-import { delayingIds } from '@/store/operations';
 import { STATUS } from '../common';
 import { KnockOutCharacterCommand } from './KnockOutCharacterCommand';
 import { RecordDisableProgressCommand } from './RecordDisableProgressCommand';
@@ -174,7 +173,7 @@ describe('RecordDisableProgressCommand', () => {
 		).not.toContain(TRAP);
 	});
 
-	it('brings a disabled hazard back when corrected below the required count, and undoes it', () => {
+	it('leaves a disabled participant out when its checks are corrected below full', () => {
 		run({ uuid: TRAP, value: 3 });
 		knockOut(TRAP);
 
@@ -182,56 +181,24 @@ describe('RecordDisableProgressCommand', () => {
 		const { command } = run({ uuid: TRAP, value: 1 });
 
 		expect(successes(TRAP)).toBe(1);
-		expect(turnState(TRAP)).toBe('normal');
+		expect(turnState(TRAP)).toBe('knocked-out');
 		expect(encounterStore.getState().charactersOrder).toEqual(disabledOrder);
-		expect(encounterStore.getState().charactersWithTurn.has(TRAP)).toBe(false);
 
 		expect(command.undo()).toBe(STATUS.success);
 		expect(successes(TRAP)).toBe(3);
 		expect(turnState(TRAP)).toBe('knocked-out');
 	});
 
-	it('brings back a hazard disabled while delaying without a delayed state', () => {
-		encounterStore.setState({
-			charactersMap: {
-				...encounterStore.getState().charactersMap,
-				[TRAP]: { ...createCharacter(TRAP, 'Trap'), turnState: 'delayed' },
-			},
-			charactersOrder: [HERO, CLOCKWORK, TRAP],
-		});
-		run({ uuid: TRAP, value: 3 });
-		knockOut(TRAP);
-		run({ uuid: TRAP, value: 2 });
-
-		const state = encounterStore.getState();
-
-		expect(turnState(TRAP)).toBe('normal');
-		expect(delayingIds(state)).toEqual([]);
-		expect(state.charactersOrder).toEqual([HERO, CLOCKWORK, TRAP]);
-	});
-
-	it('leaves a participant that is not out alone when its checks are corrected', () => {
-		run({ uuid: TRAP, value: 3 });
-		const { command } = run({ uuid: TRAP, value: 2 });
-
-		expect(turnState(TRAP)).toBe('normal');
-		expect(command.data.reactivate).toBeUndefined();
-	});
-
-	it('undoes and redoes a re-enabling correction after being rebuilt from its data', () => {
-		run({ uuid: TRAP, value: 3 });
-		knockOut(TRAP);
-		const { command } = run({ uuid: TRAP, value: 0 });
+	it('undoes and redoes after being rebuilt from its data', () => {
+		const { command } = run({ uuid: TRAP, delta: 2 });
 		const rebuilt = new RecordDisableProgressCommand(command.data, {
 			encounterStore,
 		});
 
 		expect(rebuilt.undo()).toBe(STATUS.success);
-		expect(successes(TRAP)).toBe(3);
-		expect(turnState(TRAP)).toBe('knocked-out');
+		expect(successes(TRAP)).toBe(0);
 
 		expect(rebuilt.execute()).toBe(STATUS.success);
-		expect(successes(TRAP)).toBe(0);
-		expect(turnState(TRAP)).toBe('normal');
+		expect(successes(TRAP)).toBe(2);
 	});
 });

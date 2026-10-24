@@ -126,12 +126,123 @@ export function disableProgressFillsChecks(
 	return succeeded >= meta.disableChecksRequired;
 }
 
-/** Runs `before` and `command` as one undo step. */
-export function withPrecedingCommand(
-	before: Command | null | undefined,
-	command: Command
+/** Runs the commands, skipping missing ones, as one undo step. */
+export function inOneUndoStep(
+	...commands: (Command | null | undefined)[]
 ): Command {
-	return before
-		? new CompositeCommand({ commands: [before, command] })
-		: command;
+	const present = commands.filter((command) => command != null);
+
+	return present.length === 1
+		? present[0]
+		: new CompositeCommand({ commands: present });
+}
+
+/**
+ * The values that keep a participant out of the fight: 0 HP, full disable
+ * checks.
+ */
+export function getValuesAtTakeOutLevel(
+	uuid: UUID,
+	{ charactersMap, trackerMetaMap }: TakeOutState
+): TakeOutEffect[] {
+	const character = charactersMap[uuid];
+	const meta = trackerMetaMap[uuid];
+
+	return getTakeOutEffects(uuid, { trackerMetaMap }).filter((effect) =>
+		effect === 'hp'
+			? (character?.health ?? 0) <= 0
+			: meta !== undefined && hasFullDisableChecks(meta)
+	);
+}
+
+/** What bringing each value back from its take-out level sets it to. */
+export const BRING_BACK_EFFECT_TEXT: Record<TakeOutEffect, string> = {
+	hp: 'sets HP to 1',
+	checks: 'takes one disable check off',
+};
+
+/**
+ * The command that brings a value back from its take-out level (HP to 1, the
+ * disable checks to one below full), or null if it isn't there.
+ */
+export function getBringBackEffectCommand(
+	uuid: UUID,
+	effect: TakeOutEffect,
+	state: TakeOutState,
+	deps?: CommandDeps
+): Command | null {
+	if (!getValuesAtTakeOutLevel(uuid, state).includes(effect)) return null;
+
+	if (effect === 'hp') {
+		const health = state.charactersMap[uuid]?.health ?? 0;
+
+		return new ChangeHealthCommand({ uuid, delta: 1 - health }, deps);
+	}
+
+	return new RecordDisableProgressCommand(
+		{ uuid, value: state.trackerMetaMap[uuid].disableChecksRequired - 1 },
+		deps
+	);
+}
+
+/**
+ * The other values (besides `changed`) still keeping a knocked-out or
+ * disabled participant out of the fight, after `changed` left its take-out
+ * level. With none, the participant comes back without asking.
+ */
+export function getOtherValuesAtTakeOutLevel(
+	uuid: UUID,
+	changed: TakeOutEffect,
+	state: TakeOutState
+) {
+	return getValuesAtTakeOutLevel(uuid, state).filter(
+		(effect) => effect !== changed
+	);
+}
+
+/**
+ * Whether healing takes a knocked-out or disabled participant from 0 HP
+ * above it.
+ */
+export function healingLeavesZeroHp(
+	uuid: UUID,
+	amount: number,
+	state: TakeOutState
+) {
+	const character = state.charactersMap[uuid];
+
+	return (
+		character?.turnState === 'knocked-out' &&
+		amount > 0 &&
+		character.maxHealth > 0 &&
+		getValuesAtTakeOutLevel(uuid, state).includes('hp')
+	);
+}
+
+/**
+ * Whether a disable progress change takes a knocked-out or disabled
+ * participant's checks below full.
+ */
+export function disableProgressLeavesFullChecks(
+	uuid: UUID,
+	change: { delta: number } | { value: number },
+	state: TakeOutState
+) {
+	const character = state.charactersMap[uuid];
+	const meta = state.trackerMetaMap[uuid];
+
+	if (
+		character?.turnState !== 'knocked-out' ||
+		!meta ||
+		!hasFullDisableChecks(meta)
+	) {
+		return false;
+	}
+
+	const succeeded =
+		'value' in change
+			? change.value
+			: meta.disableChecksSucceeded + change.delta;
+
+	return succeeded < meta.disableChecksRequired;
 }

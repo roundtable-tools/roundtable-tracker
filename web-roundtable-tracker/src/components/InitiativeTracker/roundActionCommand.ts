@@ -93,6 +93,23 @@ export function returnPromptEntries({
 }
 
 /**
+ * Whether Slay / Destroy has to end the participant's turn before removing
+ * it: it is the current actor, or the last one left to act this round.
+ * Otherwise the round would stop with nobody left to act.
+ */
+export function removalEndsTurn(
+	participantId: string,
+	state: RoundActionState
+) {
+	return (
+		state.charactersWithTurn.has(participantId) &&
+		state.charactersMap[participantId]?.turnState !== 'delayed' &&
+		(participantId === state.charactersOrder[0] ||
+			closesRound(participantId, state))
+	);
+}
+
+/**
  * The command the tracker runs when the GM ends a participant's turn, delays
  * or knocks them out (Disable for a hazard). It also closes the round after the last active
  * participant. Acting on the current participant also brings back a delaying

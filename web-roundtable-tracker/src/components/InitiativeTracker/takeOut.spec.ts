@@ -8,13 +8,19 @@ import { STATUS } from '@/CommandHistory/common';
 import { ChangeHealthCommand } from '@/CommandHistory/Commands/ChangeHealthCommand';
 import { RecordDisableProgressCommand } from '@/CommandHistory/Commands/RecordDisableProgressCommand';
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
-import { getRoundActionCommand } from './roundActionCommand';
+import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/ReactivateCharacterCommand';
+import { getRoundActionCommand, removalEndsTurn } from './roundActionCommand';
 import {
 	damageDropsToZeroHp,
 	disableProgressFillsChecks,
+	disableProgressLeavesFullChecks,
+	getBringBackEffectCommand,
+	getOtherValuesAtTakeOutLevel,
 	getTakeOutEffectCommand,
 	getTakeOutEffects,
-	withPrecedingCommand,
+	getValuesAtTakeOutLevel,
+	healingLeavesZeroHp,
+	inOneUndoStep,
 } from './takeOut';
 
 const HERO = '00000000-0000-0000-0000-000000000001';
@@ -201,7 +207,7 @@ describe('taking a participant out of the fight', () => {
 
 	describe('one undo step with the change that caused it', () => {
 		it('undoes the damage and the K.O. together', () => {
-			const command = withPrecedingCommand(
+			const command = inOneUndoStep(
 				new ChangeHealthCommand({ uuid: HERO, delta: -10 }, deps()),
 				getRoundActionCommand(HERO, 'ko', store.getState(), deps())
 			);
@@ -222,7 +228,7 @@ describe('taking a participant out of the fight', () => {
 		});
 
 		it('undoes the filled checks and the Destroy together', () => {
-			const command = withPrecedingCommand(
+			const command = inOneUndoStep(
 				new RecordDisableProgressCommand({ uuid: TRAP, value: 3 }, deps()),
 				new RemoveCharacterCommand({ uuid: TRAP }, deps())
 			);
@@ -242,7 +248,151 @@ describe('taking a participant out of the fight', () => {
 		it('runs the command alone without a preceding change', () => {
 			const command = new RemoveCharacterCommand({ uuid: TRAP }, deps());
 
-			expect(withPrecedingCommand(null, command)).toBe(command);
+			expect(inOneUndoStep(null, command)).toBe(command);
+		});
+	});
+
+	describe('Slay / Destroy of a participant whose turn it is', () => {
+		it('ends the turn first only for the current actor or the last to act', () => {
+			const state = store.getState();
+
+			expect(removalEndsTurn(HERO, state)).toBe(true);
+			expect(removalEndsTurn(CLOCKWORK, state)).toBe(false);
+
+			store.setState({
+				charactersOrder: [HERO, CLOCKWORK, TRAP, GHOST],
+				charactersWithTurn: new Set([GHOST]),
+			});
+
+			expect(removalEndsTurn(GHOST, store.getState())).toBe(true);
+			expect(removalEndsTurn(TRAP, store.getState())).toBe(false);
+		});
+
+		it('moves on to the next round when the last one to act is slain', () => {
+			store.setState({
+				charactersOrder: [GHOST, HERO, CLOCKWORK, TRAP],
+				charactersWithTurn: new Set([GHOST]),
+			});
+			const command = inOneUndoStep(
+				getRoundActionCommand(GHOST, 'end-turn', store.getState(), deps()),
+				new RemoveCharacterCommand({ uuid: GHOST }, deps())
+			);
+
+			expect(command.execute()).toBe(STATUS.success);
+			expect(store.getState()).toMatchObject({
+				round: 2,
+				charactersOrder: [HERO, CLOCKWORK, TRAP],
+				charactersWithTurn: new Set([HERO, CLOCKWORK, TRAP]),
+			});
+
+			expect(command.undo()).toBe(STATUS.success);
+			expect(store.getState()).toMatchObject({
+				round: 1,
+				charactersOrder: [GHOST, HERO, CLOCKWORK, TRAP],
+				charactersWithTurn: new Set([GHOST]),
+			});
+		});
+	});
+
+	describe('bringing a participant back', () => {
+		const knockOut = (uuid: string, health: number, succeeded: number) =>
+			store.setState({
+				charactersMap: {
+					...store.getState().charactersMap,
+					[uuid]: {
+						...store.getState().charactersMap[uuid],
+						health,
+						tempHealth: 0,
+						turnState: 'knocked-out',
+					},
+				},
+				trackerMetaMap: {
+					...store.getState().trackerMetaMap,
+					[uuid]: {
+						...store.getState().trackerMetaMap[uuid],
+						disableChecksSucceeded: succeeded,
+					},
+				},
+			});
+
+		it('lists only the values at their take-out level', () => {
+			knockOut(CLOCKWORK, 0, 2);
+			knockOut(HERO, 4, 0);
+			knockOut(TRAP, 10, 3);
+			const state = store.getState();
+
+			expect(getValuesAtTakeOutLevel(CLOCKWORK, state)).toEqual([
+				'hp',
+				'checks',
+			]);
+			expect(getValuesAtTakeOutLevel(HERO, state)).toEqual([]);
+			expect(getValuesAtTakeOutLevel(TRAP, state)).toEqual(['checks']);
+			expect(getOtherValuesAtTakeOutLevel(CLOCKWORK, 'hp', state)).toEqual([
+				'checks',
+			]);
+			expect(getOtherValuesAtTakeOutLevel(TRAP, 'checks', state)).toEqual([]);
+		});
+
+		it('notices healing from 0 HP of a participant that is out', () => {
+			knockOut(CLOCKWORK, 0, 2);
+			knockOut(HERO, 4, 0);
+			const state = store.getState();
+
+			expect(healingLeavesZeroHp(CLOCKWORK, 3, state)).toBe(true);
+			expect(healingLeavesZeroHp(CLOCKWORK, 0, state)).toBe(false);
+			expect(healingLeavesZeroHp(HERO, 3, state)).toBe(false);
+			expect(healingLeavesZeroHp(GHOST, 3, state)).toBe(false);
+		});
+
+		it('notices disable checks lowered from full of a participant that is out', () => {
+			knockOut(CLOCKWORK, 0, 2);
+			const state = store.getState();
+
+			expect(
+				disableProgressLeavesFullChecks(CLOCKWORK, { value: 1 }, state)
+			).toBe(true);
+			expect(
+				disableProgressLeavesFullChecks(CLOCKWORK, { delta: 1 }, state)
+			).toBe(false);
+			expect(disableProgressLeavesFullChecks(TRAP, { value: 0 }, state)).toBe(
+				false
+			);
+		});
+
+		it('sets HP to 1 and the checks to one below full, with the reactivation in one step', () => {
+			knockOut(CLOCKWORK, 0, 2);
+			const state = store.getState();
+			const command = inOneUndoStep(
+				getBringBackEffectCommand(CLOCKWORK, 'hp', state, deps()),
+				getBringBackEffectCommand(CLOCKWORK, 'checks', state, deps()),
+				new ReactivateCharacterCommand({ uuid: CLOCKWORK }, deps())
+			);
+
+			expect(command.execute()).toBe(STATUS.success);
+			expect(store.getState().charactersMap[CLOCKWORK]).toMatchObject({
+				health: 1,
+				turnState: 'normal',
+			});
+			expect(
+				store.getState().trackerMetaMap[CLOCKWORK].disableChecksSucceeded
+			).toBe(1);
+
+			expect(command.undo()).toBe(STATUS.success);
+			expect(store.getState().charactersMap[CLOCKWORK]).toMatchObject({
+				health: 0,
+				turnState: 'knocked-out',
+			});
+			expect(
+				store.getState().trackerMetaMap[CLOCKWORK].disableChecksSucceeded
+			).toBe(2);
+		});
+
+		it('leaves a value alone when it is not at its take-out level', () => {
+			knockOut(CLOCKWORK, 5, 2);
+
+			expect(
+				getBringBackEffectCommand(CLOCKWORK, 'hp', store.getState())
+			).toBeNull();
 		});
 	});
 });
