@@ -2,6 +2,7 @@ import { UUID } from '@/utils/uuid';
 import { Command, CommandDeps, STATUS, getDeps } from '../common';
 import { FinalizeTurnAction } from './FinalizeTurnAndAdvanceRoundCommand';
 import { isDelaying } from '@/store/operations';
+import { Character } from '@/store/data';
 
 type CommandData = {
 	activeUuid: UUID;
@@ -10,7 +11,7 @@ type CommandData = {
 	original?: {
 		charactersOrder: UUID[];
 		charactersWithTurn: Set<UUID>;
-		charactersMap: Record<UUID, { turnState: string }>;
+		charactersMap: Record<UUID, Pick<Character, 'turnState'>>;
 	};
 };
 
@@ -73,16 +74,15 @@ export class ReturnToInitiativeCommand implements Command {
 			// Returning participant gains a turn in the current round
 			newCharactersWithTurn.add(this.data.returningUuid);
 
-			// The active participant stays in the order but moves to the end,
-			// whether it ends its turn, delays or is knocked out.
-			let newCharactersOrder = state.charactersOrder
-				.filter((id) => id !== this.data.activeUuid)
-				.concat(this.data.activeUuid);
-
-			// Insert the returning participant at the front of the initiative queue
-			newCharactersOrder = [
+			// The returning participant goes to the front of the queue. The active
+			// participant stays in the order but moves to the end, whether it ends
+			// its turn, delays or is knocked out.
+			const newCharactersOrder = [
 				this.data.returningUuid,
-				...newCharactersOrder.filter((id) => id !== this.data.returningUuid),
+				...state.charactersOrder.filter(
+					(id) => id !== this.data.activeUuid && id !== this.data.returningUuid
+				),
+				this.data.activeUuid,
 			];
 
 			// Update turnState in charactersMap
@@ -132,7 +132,7 @@ export class ReturnToInitiativeCommand implements Command {
 				if (restoredMap[id]) {
 					restoredMap[id] = {
 						...restoredMap[id],
-						turnState: partial.turnState as never,
+						turnState: partial.turnState,
 					};
 				}
 			}
