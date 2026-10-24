@@ -53,6 +53,7 @@ import {
 	getEncounterStore,
 	useEncounterStore,
 } from '@/store/encounterRuntimeInstance';
+import { isHazardDisabled } from '@/store/encounterRuntimeStore';
 import {
 	runtimeToInitiativeQueue,
 	runtimeToOutOfInitiativeData,
@@ -84,14 +85,6 @@ function hasHazardDisableCount(participant: TrackerParticipant) {
 	);
 }
 
-function isParticipantHazardDisabled(participant: TrackerParticipant) {
-	return (
-		hasHazardDisableCount(participant) &&
-		(participant.disableChecksSucceeded ?? 0) >=
-			(participant.disableChecksRequired ?? 0)
-	);
-}
-
 type HazardDisableChange = { delta: number } | { value: number };
 
 function HazardDisableQuickActions({
@@ -105,7 +98,7 @@ function HazardDisableQuickActions({
 		return null;
 	}
 
-	const disabled = isParticipantHazardDisabled(participant);
+	const disabled = isHazardDisabled(participant);
 
 	return (
 		<>
@@ -399,7 +392,7 @@ function ParticipantDetails({
 							size="sm"
 							variant="outline"
 							className="flex-1"
-							disabled={isParticipantHazardDisabled(participant)}
+							disabled={isHazardDisabled(participant)}
 							onClick={() => onRecordDisableProgress({ delta: 1 })}
 						>
 							Success +1
@@ -408,7 +401,7 @@ function ParticipantDetails({
 							size="sm"
 							variant="outline"
 							className="flex-1"
-							disabled={isParticipantHazardDisabled(participant)}
+							disabled={isHazardDisabled(participant)}
 							onClick={() => onRecordDisableProgress({ delta: 2 })}
 						>
 							Critical +2
