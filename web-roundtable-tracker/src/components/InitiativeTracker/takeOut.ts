@@ -163,11 +163,18 @@ export function getValuesAtTakeOutLevel(
 	);
 }
 
-/** What bringing each value back from its take-out level sets it to. */
-export const BRING_BACK_EFFECT_TEXT: Record<TakeOutEffect, string> = {
-	hp: 'sets HP to 1',
-	checks: 'takes one disable check off',
-};
+/**
+ * What bringing a value back from its take-out level sets it to, e.g. "set
+ * disable checks to 2/3".
+ */
+export function getBringBackEffectText(
+	effect: TakeOutEffect,
+	disableChecksRequired = 0
+) {
+	return effect === 'hp'
+		? 'set HP to 1'
+		: `set disable checks to ${disableChecksRequired - 1}/${disableChecksRequired}`;
+}
 
 /**
  * The command that brings a value back from its take-out level (HP to 1, the
