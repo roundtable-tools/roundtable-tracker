@@ -4,7 +4,7 @@ import {
 	buildTrackerMetaMap,
 	participantsToEncounterCharacters,
 } from './convert';
-import { PRIORITY, type CharacterConfig } from './data';
+import { PRIORITY, type CharacterConfig, type Encounter } from './data';
 import { createEncounterStore } from './encounterRuntimeStore';
 import {
 	migrateLegacyEncounter,
@@ -203,6 +203,37 @@ describe('Saved encounters from before the migration', () => {
 			{ name: 'Guard', hiddenUntilFirstTurn: true },
 		]);
 		expect(encounter.narrativeSlots?.[0]?.participants).toEqual([
+			{ name: 'Late', startingState: 'normal', hiddenUntilFirstTurn: true },
+		]);
+	});
+});
+
+describe('The running encounter from before the migration', () => {
+	beforeEach(() => {
+		localStorage.clear();
+	});
+
+	it('is migrated when the encounter store loads it', () => {
+		const legacy = {
+			name: 'Old',
+			participants: [{ name: 'Joe', startingState: 'delayed' }],
+			narrativeSlots: [
+				{
+					id: 'slot',
+					participants: [{ name: 'Late', startingState: 'delayed' }],
+				},
+			],
+		};
+		createEncounterStore()
+			.getState()
+			.setEncounterData(legacy as unknown as Encounter);
+
+		const encounter = createEncounterStore().getState().encounterData;
+
+		expect(encounter?.participants).toEqual([
+			{ name: 'Joe', startingState: 'normal', hiddenUntilFirstTurn: true },
+		]);
+		expect(encounter?.narrativeSlots?.[0]?.participants).toEqual([
 			{ name: 'Late', startingState: 'normal', hiddenUntilFirstTurn: true },
 		]);
 	});

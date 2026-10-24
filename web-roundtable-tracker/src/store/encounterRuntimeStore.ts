@@ -34,6 +34,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { Encounter } from './data';
 import { Command } from '@/CommandHistory/common';
 import { jsonConfiguration } from './serializer';
+import { migrateLegacyEncounter } from './legacyEncounterFields';
 import {
 	CommandJSON,
 	keepRedoableCommands,
@@ -238,6 +239,11 @@ export const createEncounterStore = () =>
 					return {
 						...currentState,
 						...persisted,
+						// An encounter loaded by an older version can still start
+						// participants delayed.
+						encounterData: persisted?.encounterData
+							? migrateLegacyEncounter(persisted.encounterData)
+							: currentState.encounterData,
 						history: keepUndoableCommands(persisted?.history ?? []),
 						redoStack: keepRedoableCommands(persisted?.redoStack ?? []),
 					};
