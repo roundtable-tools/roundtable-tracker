@@ -1,7 +1,11 @@
 import { type Command, type CommandDeps } from '@/CommandHistory/common';
 import { ChangeHealthCommand } from '@/CommandHistory/Commands/ChangeHealthCommand';
 import { CompositeCommand } from '@/CommandHistory/Commands/CompositeCommand';
-import { RecordDisableProgressCommand } from '@/CommandHistory/Commands/RecordDisableProgressCommand';
+import {
+	type DisableProgressChange,
+	nextDisableChecksSucceeded,
+	RecordDisableProgressCommand,
+} from '@/CommandHistory/Commands/RecordDisableProgressCommand';
 import {
 	type EncounterStore,
 	hasFullDisableChecks,
@@ -81,7 +85,7 @@ export function getTakeOutEffectCommand(
 
 /**
  * Whether damage takes a participant that is still in the fight to 0 HP,
- * which asks the GM whether it is knocked out or slain.
+ * which knocks it out.
  */
 export function damageDropsToZeroHp(
 	uuid: UUID,
@@ -105,12 +109,11 @@ export function damageDropsToZeroHp(
 
 /**
  * Whether a disable progress change fills the checks of a participant that
- * is still in the fight, which asks the GM whether it is taken out or
- * removed.
+ * is still in the fight, which knocks it out (disables a hazard).
  */
 export function disableProgressFillsChecks(
 	uuid: UUID,
-	change: { delta: number } | { value: number },
+	change: DisableProgressChange,
 	{ charactersMap, trackerMetaMap }: TakeOutState
 ) {
 	const character = charactersMap[uuid];
@@ -126,12 +129,7 @@ export function disableProgressFillsChecks(
 		return false;
 	}
 
-	const succeeded =
-		'value' in change
-			? change.value
-			: meta.disableChecksSucceeded + change.delta;
-
-	return succeeded >= meta.disableChecksRequired;
+	return nextDisableChecksSucceeded(meta, change) >= meta.disableChecksRequired;
 }
 
 /** Runs the commands, skipping missing ones, as one undo step. */
@@ -240,7 +238,7 @@ export function healingLeavesZeroHp(
  */
 export function disableProgressLeavesFullChecks(
 	uuid: UUID,
-	change: { delta: number } | { value: number },
+	change: DisableProgressChange,
 	state: TakeOutState
 ) {
 	const character = state.charactersMap[uuid];
@@ -254,10 +252,5 @@ export function disableProgressLeavesFullChecks(
 		return false;
 	}
 
-	const succeeded =
-		'value' in change
-			? change.value
-			: meta.disableChecksSucceeded + change.delta;
-
-	return succeeded < meta.disableChecksRequired;
+	return nextDisableChecksSucceeded(meta, change) < meta.disableChecksRequired;
 }

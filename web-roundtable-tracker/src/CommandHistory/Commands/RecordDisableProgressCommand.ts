@@ -2,9 +2,7 @@ import { UUID } from '@/utils/uuid';
 import { TrackerParticipantMeta } from '@/store/encounterRuntimeStore';
 import { Command, CommandDeps, getDeps, STATUS } from '../common';
 
-type CommandProps = {
-	uuid: UUID;
-} & (
+export type DisableProgressChange =
 	| {
 			/** Successes to add: 1 for a success, 2 for a critical success. */
 			delta: number;
@@ -12,8 +10,32 @@ type CommandProps = {
 	| {
 			/** Manual correction: the new success count. */
 			value: number;
-	  }
-);
+	  };
+
+type CommandProps = {
+	uuid: UUID;
+} & DisableProgressChange;
+
+/**
+ * The success count a change leaves, clamped to 0…disableChecksRequired, or
+ * NaN when the change isn't a number.
+ */
+export function nextDisableChecksSucceeded(
+	meta: Pick<
+		TrackerParticipantMeta,
+		'disableChecksSucceeded' | 'disableChecksRequired'
+	>,
+	change: DisableProgressChange
+) {
+	const requested =
+		'value' in change
+			? change.value
+			: meta.disableChecksSucceeded + change.delta;
+
+	return Number.isFinite(requested)
+		? Math.min(Math.max(Math.trunc(requested), 0), meta.disableChecksRequired)
+		: NaN;
+}
 
 type CommandData = CommandProps & {
 	originalMeta?: TrackerParticipantMeta;
@@ -59,23 +81,17 @@ export class RecordDisableProgressCommand implements Command {
 			return STATUS.failure;
 		}
 
-		const requested =
-			'value' in this.data
-				? this.data.value
-				: meta.disableChecksSucceeded + this.data.delta;
+		const disableChecksSucceeded = nextDisableChecksSucceeded(meta, this.data);
 
-		if (!Number.isFinite(requested)) {
-			console.error(`Invalid disable success count: ${requested}`);
+		if (Number.isNaN(disableChecksSucceeded)) {
+			console.error('Invalid disable success count');
 
 			return STATUS.failure;
 		}
 
 		const nextMeta: TrackerParticipantMeta = {
 			...meta,
-			disableChecksSucceeded: Math.min(
-				Math.max(Math.trunc(requested), 0),
-				meta.disableChecksRequired
-			),
+			disableChecksSucceeded,
 		};
 
 		this.data.originalMeta = structuredClone(meta);

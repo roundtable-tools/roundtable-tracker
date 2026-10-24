@@ -10,7 +10,10 @@ import {
 } from '@/store/trackerMappers';
 import { STATUS } from '../common';
 import { KnockOutCharacterCommand } from './KnockOutCharacterCommand';
-import { RecordDisableProgressCommand } from './RecordDisableProgressCommand';
+import {
+	nextDisableChecksSucceeded,
+	RecordDisableProgressCommand,
+} from './RecordDisableProgressCommand';
 
 const HERO = '00000000-0000-0000-0000-000000000001';
 const TRAP = '00000000-0000-0000-0000-000000000002';
@@ -200,5 +203,20 @@ describe('RecordDisableProgressCommand', () => {
 
 		expect(rebuilt.execute()).toBe(STATUS.success);
 		expect(successes(TRAP)).toBe(2);
+	});
+});
+
+describe('nextDisableChecksSucceeded', () => {
+	const counts = { disableChecksSucceeded: 1, disableChecksRequired: 3 };
+
+	it('adds a delta or takes a value, whole and within 0…required', () => {
+		expect(nextDisableChecksSucceeded(counts, { delta: 1 })).toBe(2);
+		expect(nextDisableChecksSucceeded(counts, { delta: 5 })).toBe(3);
+		expect(nextDisableChecksSucceeded(counts, { value: -2 })).toBe(0);
+		expect(nextDisableChecksSucceeded(counts, { value: 2.9 })).toBe(2);
+	});
+
+	it('gives NaN for a change that is not a number', () => {
+		expect(nextDisableChecksSucceeded(counts, { value: NaN })).toBeNaN();
 	});
 });
