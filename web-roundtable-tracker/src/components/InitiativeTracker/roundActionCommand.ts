@@ -57,7 +57,7 @@ export function asksToReturnFromDelay(
 ) {
 	const returningId = delayerReturningAfterTurn(state);
 
-	return returnPromptEntries(state).some(({ id }) => id !== returningId);
+	return delayingIds(state).some((id) => id !== returningId);
 }
 
 export type ReturnPromptEntry = {
