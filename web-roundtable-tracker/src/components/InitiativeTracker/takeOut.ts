@@ -145,7 +145,8 @@ export function inOneUndoStep(
 
 /**
  * The values that keep a participant out of the fight: 0 HP, full disable
- * checks.
+ * checks. A participant with 0 max HP can't leave 0 HP, so its HP never
+ * keeps it out.
  */
 export function getValuesAtTakeOutLevel(
 	uuid: UUID,
@@ -156,7 +157,7 @@ export function getValuesAtTakeOutLevel(
 
 	return getTakeOutEffects(uuid, { trackerMetaMap }).filter((effect) =>
 		effect === 'hp'
-			? (character?.health ?? 0) <= 0
+			? (character?.maxHealth ?? 0) > 0 && character.health <= 0
 			: meta !== undefined && hasFullDisableChecks(meta)
 	);
 }
@@ -227,7 +228,6 @@ export function healingLeavesZeroHp(
 	return (
 		character?.turnState === 'knocked-out' &&
 		amount > 0 &&
-		character.maxHealth > 0 &&
 		getValuesAtTakeOutLevel(uuid, state).includes('hp')
 	);
 }

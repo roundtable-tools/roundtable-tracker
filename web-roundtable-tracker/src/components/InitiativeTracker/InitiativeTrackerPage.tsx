@@ -239,10 +239,7 @@ function getParticipantIndicatorLabel(participant: TrackerParticipant) {
 }
 
 function getHealthIndicatorLabel(participant: TrackerParticipant) {
-	if (
-		typeof participant.maxHp !== 'number' ||
-		typeof participant.currentHp !== 'number'
-	) {
+	if (!hasHpData(participant)) {
 		return 'No HP Data';
 	}
 
@@ -1204,9 +1201,9 @@ export function InitiativeTrackerPage() {
 	}) => {
 		clearPinnedMarkerForCurrentRound();
 
-		const shouldAdvanceRound =
-			closesRound(participantId, roundState) &&
-			(action !== 'remove' || removalEndsTurn(participantId, roundState));
+		// A removal that closes the round always ends the turn first (see
+		// removalEndsTurn), so it advances the round like the other actions.
+		const shouldAdvanceRound = closesRound(participantId, roundState);
 		const command = inOneUndoStep(
 			before,
 			action === 'remove'
@@ -2749,16 +2746,23 @@ export function InitiativeTrackerPage() {
 				</DialogContent>
 			</Dialog>
 
-			{resumePrompt && isTimerPaused && !returnPrompt && !bringBackPrompt && (
-				<ResumeTimerNotice
-					key={resumePrompt}
-					onStayPaused={() => setResumePrompt(null)}
-					onResume={() => {
-						setResumePrompt(null);
-						setTimer((current) => current && resumeTimer(current, Date.now()));
-					}}
-				/>
-			)}
+			{resumePrompt &&
+				isTimerPaused &&
+				!returnPrompt &&
+				!bringBackPrompt &&
+				// The round dialog traps the focus too; the notice waits for it.
+				nextRoundAnnouncement === null && (
+					<ResumeTimerNotice
+						key={resumePrompt}
+						onStayPaused={() => setResumePrompt(null)}
+						onResume={() => {
+							setResumePrompt(null);
+							setTimer(
+								(current) => current && resumeTimer(current, Date.now())
+							);
+						}}
+					/>
+				)}
 
 			{bringBackPrompt && (
 				<BringBackNotice

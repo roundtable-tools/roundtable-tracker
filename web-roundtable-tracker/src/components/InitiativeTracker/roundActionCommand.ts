@@ -105,7 +105,7 @@ export function removalEndsTurn(
 ) {
 	return (
 		state.charactersWithTurn.has(participantId) &&
-		state.charactersMap[participantId]?.turnState !== 'delayed' &&
+		!isDelaying(state.charactersMap, participantId) &&
 		(participantId === state.charactersOrder[0] ||
 			closesRound(participantId, state))
 	);

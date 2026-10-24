@@ -9,7 +9,7 @@ export const NOTICE_TIMEOUT_MS = 10_000;
  * A question shown like a notification in the corner. Nothing else on the
  * page can be used while it is open, so no other change runs before it is
  * answered. Its actions answer it through `settle`. Anything else takes the
- * default answer, `onDismiss`: the close button, Escape, a press outside
+ * default answer, `onDismiss`: the close button, Escape, a click outside
  * (which does nothing else) or no answer within NOTICE_TIMEOUT_MS, shown by a
  * countdown line. It answers once, even if a timeout or a second event arrives before
  * the notice is removed.
@@ -120,12 +120,14 @@ export function TimedNotice({
 	return (
 		<>
 			{/* Takes every press outside the notice, so nothing behind it (a
-			button, a swipe) acts until it is answered. */}
+			button, a swipe) acts until it is answered. It answers on the click,
+			not the press: removed on the press, it would let the click of a tap
+			land on what is behind it. */}
 			<div
 				data-slot="notice-backdrop"
 				aria-hidden
 				className="fixed inset-0 z-50"
-				onPointerDown={dismiss}
+				onClick={dismiss}
 			/>
 			<div
 				ref={noticeRef}
