@@ -1028,9 +1028,9 @@ export function InitiativeTrackerPage() {
 	};
 	const [bringBackPrompt, setBringBackPrompt] =
 		useState<BringBackPromptState | null>(null);
-	// A manual K.O. / Disable waiting for the GM to pick how the participant
-	// is taken out (TakeOutNotice).
-	const [takeOutPromptId, setTakeOutPromptId] = useState<string | null>(null);
+	// Manual K.O.s / Disables waiting for the GM to pick how the participant
+	// is taken out (TakeOutNotice), asked one at a time in order.
+	const [takeOutPromptIds, setTakeOutPromptIds] = useState<string[]>([]);
 	const [returnPrompt, setReturnPrompt] = useState<ReturnPromptState | null>(
 		null
 	);
@@ -1454,12 +1454,34 @@ export function InitiativeTrackerPage() {
 		}
 	}, [allParticipants, selectedParticipantId]);
 
+	// A queued K.O. / Disable is asked only while its participant is still in
+	// the tracker and not already out (e.g. dropped to 0 HP in between).
+	const takeOutCandidates = useMemo(
+		() =>
+			takeOutPromptIds.flatMap((id) =>
+				allParticipants.filter(
+					(participant) =>
+						participant.id === id && participant.state !== 'knocked-out'
+				)
+			),
+		[allParticipants, takeOutPromptIds]
+	);
+	const takeOutPromptParticipant = takeOutCandidates[0] ?? null;
+
+	useEffect(() => {
+		if (takeOutCandidates.length !== takeOutPromptIds.length) {
+			setTakeOutPromptIds(takeOutCandidates.map(({ id }) => id));
+		}
+	}, [takeOutCandidates, takeOutPromptIds]);
+
 	const handleParticipantSwipeAction = (
 		participantId: string,
 		action: SwipeAction
 	) => {
 		if (action === 'ko') {
-			setTakeOutPromptId(participantId);
+			setTakeOutPromptIds((ids) =>
+				ids.includes(participantId) ? ids : [...ids, participantId]
+			);
 
 			return;
 		}
@@ -1533,24 +1555,19 @@ export function InitiativeTrackerPage() {
 		executeRoundAction({ participantId, action: 'remove' });
 	};
 
-	// The GM's answer to a manual K.O. / Disable: taken out with the `effects`
-	// values set to match, or slain / destroyed.
-	const handleTakeOutPromptAnswer = (
-		answer: { remove: true } | { remove: false; effects: TakeOutEffect[] }
+	// The GM's answers to a manual K.O. / Disable (TakeOutNotice): taken out
+	// with the `effects` values set to match, or slain / destroyed.
+	const settleTakeOutPrompt = (participantId: string) =>
+		setTakeOutPromptIds((ids) => ids.filter((id) => id !== participantId));
+
+	const handleTakeOutPromptTakeOut = (
+		participantId: string,
+		effects: TakeOutEffect[]
 	) => {
-		const participantId = takeOutPromptId;
-		setTakeOutPromptId(null);
-
-		if (!participantId) return;
-
-		if (answer.remove) {
-			removeParticipant(participantId);
-
-			return;
-		}
+		settleTakeOutPrompt(participantId);
 
 		const state = { charactersMap, trackerMetaMap };
-		const effectCommands = answer.effects.map((effect) =>
+		const effectCommands = effects.map((effect) =>
 			getTakeOutEffectCommand(participantId, effect, state)
 		);
 
@@ -1560,6 +1577,11 @@ export function InitiativeTrackerPage() {
 				? inOneUndoStep(...effectCommands)
 				: undefined
 		);
+	};
+
+	const handleTakeOutPromptRemove = (participantId: string) => {
+		settleTakeOutPrompt(participantId);
+		removeParticipant(participantId);
 	};
 
 	// K.O., or Disable for a hazard (and Delay, which ends the turn the same
@@ -2739,7 +2761,7 @@ export function InitiativeTrackerPage() {
 				isTimerPaused &&
 				!returnPrompt &&
 				!bringBackPrompt &&
-				!takeOutPromptId &&
+				!takeOutPromptParticipant &&
 				// The round dialog traps the focus too; the notice waits for it.
 				nextRoundAnnouncement === null && (
 					<ResumeTimerNotice
@@ -2754,22 +2776,21 @@ export function InitiativeTrackerPage() {
 					/>
 				)}
 
-			{takeOutPromptId && charactersMap[takeOutPromptId] && (
+			{/* An answer can open the return prompt; the next K.O. waits for it. */}
+			{takeOutPromptParticipant && !returnPrompt && !bringBackPrompt && (
 				<TakeOutNotice
-					key={`take-out-${takeOutPromptId}`}
-					participant={{
-						name: charactersMap[takeOutPromptId].name,
-						role: trackerMetaMap[takeOutPromptId]?.role ?? 'opponent',
-						sideTheme: trackerMetaMap[takeOutPromptId]?.sideTheme,
-					}}
-					effects={getApplicableTakeOutEffects(takeOutPromptId, {
+					key={`take-out-${takeOutPromptParticipant.id}`}
+					participant={takeOutPromptParticipant}
+					effects={getApplicableTakeOutEffects(takeOutPromptParticipant.id, {
 						charactersMap,
 						trackerMetaMap,
 					})}
 					onTakeOut={(effects) =>
-						handleTakeOutPromptAnswer({ remove: false, effects })
+						handleTakeOutPromptTakeOut(takeOutPromptParticipant.id, effects)
 					}
-					onRemove={() => handleTakeOutPromptAnswer({ remove: true })}
+					onRemove={() =>
+						handleTakeOutPromptRemove(takeOutPromptParticipant.id)
+					}
 				/>
 			)}
 
