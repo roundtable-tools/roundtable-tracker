@@ -3,6 +3,7 @@ import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import { Character } from '@/store/data';
 import { STATUS } from '../common';
 import { ReturnToInitiativeCommand } from './ReturnToInitiativeCommand';
+import { delayingIds } from '@/store/operations';
 
 describe('ReturnToInitiativeCommand', () => {
 	let encounterStore: ReturnType<typeof createEncounterStore>;
@@ -54,7 +55,6 @@ describe('ReturnToInitiativeCommand', () => {
 				characters[1].uuid,
 				characters[2].uuid,
 			],
-			delayedOrder: [characters[1].uuid],
 			charactersWithTurn: new Set([characters[0].uuid, characters[2].uuid]),
 			charactersMap: {
 				...encounterStore.getState().charactersMap,
@@ -90,7 +90,7 @@ describe('ReturnToInitiativeCommand', () => {
 				(id) => id === characters[1].uuid
 			)
 		).toHaveLength(1);
-		expect(stateAfterExecute.delayedOrder).toEqual([characters[0].uuid]);
+		expect(delayingIds(stateAfterExecute)).toEqual([characters[0].uuid]);
 		expect(stateAfterExecute.charactersWithTurn).toEqual(
 			new Set([characters[1].uuid, characters[2].uuid])
 		);
@@ -110,7 +110,7 @@ describe('ReturnToInitiativeCommand', () => {
 			characters[1].uuid,
 			characters[2].uuid,
 		]);
-		expect(stateAfterUndo.delayedOrder).toEqual([characters[1].uuid]);
+		expect(delayingIds(stateAfterUndo)).toEqual([characters[1].uuid]);
 		expect(stateAfterUndo.charactersWithTurn).toEqual(
 			new Set([characters[0].uuid, characters[2].uuid])
 		);

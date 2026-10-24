@@ -21,7 +21,7 @@ import { useEncounterStore } from '@/store/encounterRuntimeInstance';
 import { useNavigate } from '@tanstack/react-router';
 import { Pencil, Play, Trash2, UserRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import encounterTemplates from '@/store/Encounters/migratedEncounterTemplates';
+import encounterTemplates from '@/models/encounters/defaultTemplates';
 import type { EncounterVariant } from '@/models/encounters/encounter.types';
 import { saveImportedEncounterDraft } from '@/store/importedEncounterDraft';
 import { buildSavedVariantEncounter } from './savedVariantEncounter';

@@ -43,7 +43,6 @@ export const getChangeCharacterState = (
 	deps: {
 		charactersWithTurn: Set<UUID>;
 		charactersOrder: UUID[];
-		delayedOrder: UUID[];
 	},
 	commandDeps?: CommandDeps
 ) => {
@@ -56,33 +55,6 @@ export const getChangeCharacterState = (
 			commandDeps
 		),
 	];
-	const moveToEndInInitiative = new ReorderCharactersCommand(
-		{
-			newOrder: deps.charactersOrder
-				.filter((id) => id !== character.uuid)
-				.concat(character.uuid),
-		},
-		commandDeps
-	);
-
-	const removeFromDelayed = new ReorderCharactersCommand(
-		{
-			newOrder: deps.delayedOrder.filter((id) => id !== character.uuid),
-			type: 'delay',
-		},
-		commandDeps
-	);
-
-	const addToDelayed = new ReorderCharactersCommand(
-		{
-			newOrder: deps.delayedOrder.includes(character.uuid)
-				? deps.delayedOrder
-				: deps.delayedOrder.concat(character.uuid),
-			type: 'delay',
-		},
-		commandDeps
-	);
-
 	const additionalCommands: Partial<
 		Record<
 			Character['turnState'],
@@ -91,14 +63,10 @@ export const getChangeCharacterState = (
 	> = {
 		normal: {
 			'knocked-out': [getKnockOutCommand(character.uuid, deps, commandDeps)],
-			delayed: [
-				new EndTurnCommand({ uuid: character.uuid }, commandDeps),
-				addToDelayed,
-			],
+			delayed: [new EndTurnCommand({ uuid: character.uuid }, commandDeps)],
 		},
 		delayed: {
 			normal: [
-				removeFromDelayed,
 				new ReorderCharactersCommand(
 					{
 						newOrder: [character.uuid].concat(
@@ -108,13 +76,19 @@ export const getChangeCharacterState = (
 					commandDeps
 				),
 			],
-			'knocked-out': [
-				removeFromDelayed,
-				getKnockOutCommand(character.uuid, deps, commandDeps),
-			],
+			'knocked-out': [getKnockOutCommand(character.uuid, deps, commandDeps)],
 		},
 		'knocked-out': {
-			delayed: [moveToEndInInitiative, addToDelayed],
+			delayed: [
+				new ReorderCharactersCommand(
+					{
+						newOrder: deps.charactersOrder
+							.filter((id) => id !== character.uuid)
+							.concat(character.uuid),
+					},
+					commandDeps
+				),
+			],
 		},
 	};
 

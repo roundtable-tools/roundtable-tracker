@@ -40,7 +40,6 @@ export class KnockOutCharacterCommand implements Command {
 				{
 					charactersWithTurn: state.charactersWithTurn,
 					charactersOrder: state.charactersOrder,
-					delayedOrder: state.delayedOrder,
 				},
 				this.deps
 			);

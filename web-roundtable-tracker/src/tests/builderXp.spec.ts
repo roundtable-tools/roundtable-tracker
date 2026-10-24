@@ -3,6 +3,7 @@ import {
 	computeBuilderXP,
 	computeEncounterXpUsage,
 	computeThreat,
+	type BuilderReinforcementParticipant,
 	type BuilderSlot,
 } from '@/components/BuilderPage/builderXp';
 import { ExperienceBudget } from '@/models/utility/experienceBudget/ExperienceBudget';
@@ -22,8 +23,39 @@ function creature(overrides: Partial<BuilderSlot> = {}): BuilderSlot {
 		reinforcementRound: 1,
 		eventRound: 1,
 		repeatInterval: undefined,
+		reinforcementParticipants: [],
 		...overrides,
 	};
+}
+
+function participant(
+	overrides: Partial<BuilderReinforcementParticipant> = {}
+): BuilderReinforcementParticipant {
+	return {
+		id: 'participant',
+		type: 'creature',
+		name: 'Test',
+		side: 'enemy',
+		level: 5,
+		count: 1,
+		successesToDisable: 1,
+		adjustment: 'none',
+		isSimpleHazard: false,
+		...overrides,
+	};
+}
+
+/** A reinforcement slot with one participant of the given level and count. */
+function reinforcement({
+	level = 5,
+	count = 1,
+	...overrides
+}: Partial<BuilderSlot> = {}): BuilderSlot {
+	return creature({
+		type: 'reinforcement',
+		reinforcementParticipants: [participant({ level, count })],
+		...overrides,
+	});
 }
 
 describe('computeBuilderXP', () => {
@@ -55,7 +87,7 @@ describe('computeBuilderXP', () => {
 	});
 
 	it('ignores reinforcement type slots', () => {
-		const slots = [creature({ type: 'reinforcement', level: 5 })];
+		const slots = [reinforcement({ level: 5 })];
 		expect(computeBuilderXP(slots, 5).valueOf()).toBe(0);
 	});
 
@@ -214,7 +246,7 @@ describe('computeEncounterXpUsage', () => {
 		expect(usage.simulation).toBeNull();
 	});
 
-	it('treats reinforcement slots with explicit empty participants as 0 XP', () => {
+	it('treats a reinforcement slot without participants as 0 XP', () => {
 		const usage = computeEncounterXpUsage(
 			[
 				creature({ level: 5, count: 2 }),
@@ -239,7 +271,7 @@ describe('computeEncounterXpUsage', () => {
 	it('simulates delayed reinforcements using round-by-round attrition and max rounded threat', () => {
 		const slots = [
 			creature({ type: 'creature', level: 5, count: 2 }),
-			creature({ type: 'reinforcement', level: 5, reinforcementRound: 3 }),
+			reinforcement({ level: 5, reinforcementRound: 3 }),
 		];
 
 		const usage = computeEncounterXpUsage(slots, 5, 4);
@@ -274,14 +306,12 @@ describe('computeEncounterXpUsage', () => {
 	it('sums multiple reinforcement slots into the same wave budget', () => {
 		const usage = computeEncounterXpUsage(
 			[
-				creature({
-					type: 'reinforcement',
+				reinforcement({
 					level: 5,
 					count: 2,
 					reinforcementRound: 2,
 				}),
-				creature({
-					type: 'reinforcement',
+				reinforcement({
 					level: 5,
 					count: 1,
 					reinforcementRound: 2,
@@ -301,8 +331,7 @@ describe('computeEncounterXpUsage', () => {
 	it('scales party output by party size during simulation', () => {
 		const slots = [
 			creature({ type: 'creature', level: 5, count: 2 }),
-			creature({
-				type: 'reinforcement',
+			reinforcement({
 				level: 5,
 				count: 1,
 				reinforcementRound: 3,
@@ -357,7 +386,7 @@ describe('Wave Interaction Threat', () => {
 		const moreUsage = computeEncounterXpUsage(
 			[
 				creature({ level: 5, count: 1 }),
-				creature({ type: 'reinforcement', level: 5, count: 1, id: 'wave1' }),
+				reinforcement({ level: 5, count: 1, id: 'wave1' }),
 			],
 			5
 		);
@@ -370,8 +399,7 @@ describe('Wave Interaction Threat', () => {
 		const earlyUsage = computeEncounterXpUsage(
 			[
 				creature({ level: 5, count: 1, id: 'wave0' }),
-				creature({
-					type: 'reinforcement',
+				reinforcement({
 					level: 5,
 					count: 1,
 					reinforcementRound: 2,
@@ -384,8 +412,7 @@ describe('Wave Interaction Threat', () => {
 		const lateUsage = computeEncounterXpUsage(
 			[
 				creature({ level: 5, count: 1, id: 'wave0' }),
-				creature({
-					type: 'reinforcement',
+				reinforcement({
 					level: 5,
 					count: 1,
 					reinforcementRound: 4,
@@ -405,8 +432,7 @@ describe('Wave Interaction Threat', () => {
 		const roundOneUsage = computeEncounterXpUsage(
 			[
 				creature({ level: 8, count: 1, id: 'wave0' }),
-				creature({
-					type: 'reinforcement',
+				reinforcement({
 					level: 8,
 					count: 1,
 					reinforcementRound: 1,
@@ -419,8 +445,7 @@ describe('Wave Interaction Threat', () => {
 		const roundTwoUsage = computeEncounterXpUsage(
 			[
 				creature({ level: 8, count: 1, id: 'wave0' }),
-				creature({
-					type: 'reinforcement',
+				reinforcement({
 					level: 8,
 					count: 1,
 					reinforcementRound: 2,
@@ -433,8 +458,7 @@ describe('Wave Interaction Threat', () => {
 		const roundThreeUsage = computeEncounterXpUsage(
 			[
 				creature({ level: 8, count: 1, id: 'wave0' }),
-				creature({
-					type: 'reinforcement',
+				reinforcement({
 					level: 8,
 					count: 1,
 					reinforcementRound: 3,
@@ -453,8 +477,7 @@ describe('Wave Interaction Threat', () => {
 		const roundFourUsage = computeEncounterXpUsage(
 			[
 				creature({ level: 8, count: 1, id: 'wave0' }),
-				creature({
-					type: 'reinforcement',
+				reinforcement({
 					level: 8,
 					count: 1,
 					reinforcementRound: 4,

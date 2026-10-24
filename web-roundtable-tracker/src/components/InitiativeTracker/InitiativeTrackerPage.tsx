@@ -72,6 +72,7 @@ import {
 	type TrackerParticipant,
 } from '@/store/trackerMappers';
 import { orderWithPendingSpots } from '@/store/pendingReinforcements';
+import { isDelaying } from '@/store/operations';
 import { CommandHistoryContext } from '@/CommandHistory/CommandHistoryContext';
 import { GiveAdditionalTurnCommand } from '@/CommandHistory/Commands/GiveAdditionalTurnCommand';
 import { TriggerReinforcementEventCommand } from '@/CommandHistory/Commands/TriggerReinforcementEventCommand';
@@ -775,7 +776,6 @@ export function InitiativeTrackerPage() {
 		CommandHistoryContext
 	);
 	const charactersOrder = useEncounterStore((state) => state.charactersOrder);
-	const delayedOrder = useEncounterStore((state) => state.delayedOrder);
 	const timer = useEncounterStore((state) => state.timer);
 	const setTimer = useEncounterStore((state) => state.setTimer);
 	const charactersMap = useEncounterStore((state) => state.charactersMap);
@@ -807,18 +807,16 @@ export function InitiativeTrackerPage() {
 		() =>
 			runtimeToInitiativeQueue({
 				charactersOrder,
-				delayedOrder,
 				charactersMap,
 				trackerMetaMap,
 			}),
-		[charactersOrder, delayedOrder, charactersMap, trackerMetaMap]
+		[charactersOrder, charactersMap, trackerMetaMap]
 	);
 
 	const outOfInitiative = useMemo(
 		() =>
 			runtimeToOutOfInitiativeData({
 				charactersOrder,
-				delayedOrder,
 				charactersMap,
 				trackerMetaMap,
 				encounterData,
@@ -827,7 +825,6 @@ export function InitiativeTrackerPage() {
 			}),
 		[
 			charactersOrder,
-			delayedOrder,
 			charactersMap,
 			trackerMetaMap,
 			encounterData,
@@ -955,12 +952,12 @@ export function InitiativeTrackerPage() {
 		);
 
 		return {
-			asks: asksToReturnFromDelay({ charactersOrder, delayedOrder }),
-			participants: returnPromptEntries({ charactersOrder, delayedOrder })
+			asks: asksToReturnFromDelay({ charactersOrder, charactersMap }),
+			participants: returnPromptEntries({ charactersOrder, charactersMap })
 				.filter((entry) => names.has(entry.id))
 				.map((entry) => ({ ...entry, name: names.get(entry.id) ?? '' })),
 		};
-	}, [charactersOrder, delayedOrder, delayedSectionParticipants]);
+	}, [charactersOrder, charactersMap, delayedSectionParticipants]);
 	const hasReinforcements = pendingReinforcementParticipants.length > 0;
 	const hasDelayed = delayedSectionParticipants.length > 0;
 	const hasHazards = outOfInitiative.hazards.length > 0;
@@ -1051,7 +1048,6 @@ export function InitiativeTrackerPage() {
 
 		const roundState = {
 			charactersOrder,
-			delayedOrder,
 			charactersMap,
 			trackerMetaMap,
 			charactersWithTurn,
@@ -1090,9 +1086,7 @@ export function InitiativeTrackerPage() {
 		}
 
 		if (!charactersWithTurn.has(currentParticipantId)) {
-			const currentCharacter = charactersMap[currentParticipantId];
-
-			if (currentCharacter?.turnState === 'delayed') {
+			if (isDelaying(charactersMap, currentParticipantId)) {
 				setReturnPrompt({
 					participantId: currentParticipantId,
 					action: 'end-turn',
@@ -1493,7 +1487,7 @@ export function InitiativeTrackerPage() {
 	const canGiveSelectedTurnBack =
 		selectedParticipantId !== null &&
 		charactersOrder.includes(selectedParticipantId) &&
-		!delayedOrder.includes(selectedParticipantId) &&
+		!isDelaying(charactersMap, selectedParticipantId) &&
 		!charactersWithTurn.has(selectedParticipantId);
 
 	const handleSelectedGiveTurnBack =
@@ -1527,7 +1521,7 @@ export function InitiativeTrackerPage() {
 		);
 
 		return orderWithPendingSpots(
-			{ charactersOrder, delayedOrder, charactersWithTurn, charactersMap },
+			{ charactersOrder, charactersWithTurn, charactersMap },
 			pendingReinforcements
 		).flatMap((id): InitiativeListEntry[] => {
 			const participant = inOrder.get(id);
@@ -1542,7 +1536,6 @@ export function InitiativeTrackerPage() {
 		initiativeParticipants,
 		pendingReinforcementParticipants,
 		charactersOrder,
-		delayedOrder,
 		charactersWithTurn,
 		charactersMap,
 		pendingReinforcements,

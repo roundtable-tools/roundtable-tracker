@@ -3,6 +3,7 @@ import { RemoveCharacterCommand } from './RemoveCharacterCommand';
 import { createEncounterStore } from '../../store/encounterRuntimeStore';
 import { Character } from '../../store/data';
 import { STATUS } from '../common';
+import { delayingIds } from '@/store/operations';
 
 describe('RemoveCharacterCommand', () => {
 	let uuid: string;
@@ -59,6 +60,31 @@ describe('RemoveCharacterCommand', () => {
 		expect(encounterStore.getState().charactersMap[uuid]).toEqual(character);
 		expect(encounterStore.getState().charactersOrder).toContain(uuid);
 		expect(encounterStore.getState().charactersWithTurn.has(uuid)).toBe(true);
+	});
+
+	it('restores a delaying character to its spot in the order on undo', () => {
+		const first = { ...character, uuid: 'first', name: 'First' };
+		const last = { ...character, uuid: 'last', name: 'Last' };
+		const delayer = { ...character, turnState: 'delayed' as const };
+		encounterStore.getState().setCharacters([first, delayer, last]);
+
+		const command = new RemoveCharacterCommand({ uuid }, { encounterStore });
+		command.execute();
+
+		expect(encounterStore.getState().charactersOrder).toEqual([
+			'first',
+			'last',
+		]);
+		expect(delayingIds(encounterStore.getState())).toEqual([]);
+
+		command.undo();
+
+		expect(encounterStore.getState().charactersOrder).toEqual([
+			'first',
+			uuid,
+			'last',
+		]);
+		expect(delayingIds(encounterStore.getState())).toEqual([uuid]);
 	});
 
 	it('should return failure if undo is called without executing', () => {

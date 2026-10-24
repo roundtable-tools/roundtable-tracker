@@ -1,11 +1,11 @@
-import type { Character } from '@/store/data';
+import { isDelaying, type TurnStates } from '@/store/operations';
 
 type RoundState = {
 	// Participants in the initiative queue that aren't delaying and still have
 	// their turn this round.
 	activeParticipantCount: number;
 	charactersWithTurn: Set<string>;
-	charactersMap: Record<string, Pick<Character, 'turnState'>>;
+	charactersMap: TurnStates;
 };
 
 // Whether acting on this participant (end turn, delay, K.O.) closes the round.
@@ -18,6 +18,6 @@ export function isFinalActiveParticipant(
 	return (
 		activeParticipantCount === 1 &&
 		charactersWithTurn.has(participantId) &&
-		charactersMap[participantId]?.turnState !== 'delayed'
+		!isDelaying(charactersMap, participantId)
 	);
 }

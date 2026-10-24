@@ -145,6 +145,7 @@ function lackeys(count: number): BuilderSlot[] {
 			isSimpleHazard: false,
 			reinforcementRound: 1,
 			eventRound: 1,
+			reinforcementParticipants: [],
 		},
 	];
 }

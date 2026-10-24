@@ -38,7 +38,7 @@ const createMeta = (
 });
 
 describe('trackerMappers', () => {
-	it('preserves runtime initiative order without duplicating delayed participants', () => {
+	it('keeps a delayed participant at its spot in the runtime initiative order', () => {
 		const charactersMap = {
 			bravo: createCharacter({
 				uuid: 'bravo',
@@ -65,7 +65,6 @@ describe('trackerMappers', () => {
 
 		const queue = runtimeToInitiativeQueue({
 			charactersOrder: ['bravo', 'alpha', 'delta'],
-			delayedOrder: ['delta'],
 			charactersMap,
 			trackerMetaMap,
 		});
@@ -90,8 +89,7 @@ describe('trackerMappers', () => {
 		};
 
 		const outOfInitiative = runtimeToOutOfInitiativeData({
-			charactersOrder: [],
-			delayedOrder: ['delayed'],
+			charactersOrder: ['delayed'],
 			charactersMap,
 			trackerMetaMap,
 			encounterData: undefined,
@@ -134,7 +132,6 @@ describe('trackerMappers', () => {
 
 		const queue = runtimeToPlayerInitiativeQueue({
 			charactersOrder: ['healthy', 'wounded', 'defeated'],
-			delayedOrder: [],
 			charactersMap,
 			trackerMetaMap,
 		});
@@ -191,7 +188,6 @@ describe('trackerMappers', () => {
 
 		const queue = runtimeToPlayerInitiativeQueue({
 			charactersOrder: participants.map(([uuid]) => uuid),
-			delayedOrder: [],
 			charactersMap,
 			trackerMetaMap: {},
 		});
@@ -234,7 +230,6 @@ describe('trackerMappers', () => {
 
 		const queue = runtimeToPlayerInitiativeQueue({
 			charactersOrder: hazards.map(([uuid]) => uuid),
-			delayedOrder: [],
 			charactersMap,
 			trackerMetaMap,
 		});
@@ -255,7 +250,6 @@ describe('trackerMappers', () => {
 	it('shows HP for a creature even with disable checks set', () => {
 		const queue = runtimeToPlayerInitiativeQueue({
 			charactersOrder: ['ogre'],
-			delayedOrder: [],
 			charactersMap: { ogre: createCharacter({ uuid: 'ogre' }) },
 			trackerMetaMap: {
 				ogre: createMeta({ role: 'opponent', disableChecksRequired: 2 }),
@@ -264,38 +258,6 @@ describe('trackerMappers', () => {
 
 		expect(queue[0].disableProgress).toBeNull();
 		expect(queue[0].hpLabel).toBe('Uninjured');
-	});
-
-	it('adds delaying participants without a spot after the order in the player queue', () => {
-		const charactersMap = {
-			hero: createCharacter({ uuid: 'hero', name: 'Hero' }),
-			rogue: createCharacter({
-				uuid: 'rogue',
-				name: 'Rogue',
-				turnState: 'delayed',
-			}),
-			trap: createCharacter({
-				uuid: 'trap',
-				name: 'Trap',
-				turnState: 'delayed',
-			}),
-		};
-
-		const queue = runtimeToPlayerInitiativeQueue({
-			charactersOrder: ['hero'],
-			delayedOrder: ['rogue', 'trap'],
-			charactersMap,
-			trackerMetaMap: {
-				hero: createMeta({ role: 'pc', sideTheme: 'pc' }),
-				rogue: createMeta({ role: 'pc', sideTheme: 'pc' }),
-				trap: createMeta({ role: 'hazard', isSimpleHazard: true }),
-			},
-		});
-
-		expect(queue.map(({ id, status }) => ({ id, status }))).toEqual([
-			{ id: 'hero', status: 'Ready' },
-			{ id: 'rogue', status: 'Delayed' },
-		]);
 	});
 
 	it('maps additional participant metadata into tracker participants', () => {
@@ -326,7 +288,6 @@ describe('trackerMappers', () => {
 
 		const queue = runtimeToInitiativeQueue({
 			charactersOrder: ['alpha'],
-			delayedOrder: [],
 			charactersMap,
 			trackerMetaMap,
 		});
@@ -348,7 +309,6 @@ describe('trackerMappers', () => {
 	it('shows the traits of reinforcements that have not arrived yet', () => {
 		const outOfInitiative = runtimeToOutOfInitiativeData({
 			charactersOrder: [],
-			delayedOrder: [],
 			charactersMap: {},
 			trackerMetaMap: {},
 			encounterData: {
@@ -408,7 +368,6 @@ describe('trackerMappers', () => {
 		});
 		const outOfInitiative = runtimeToOutOfInitiativeData({
 			charactersOrder: [],
-			delayedOrder: [],
 			charactersMap: {},
 			trackerMetaMap: {},
 			encounterData: {

@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getSavedEncountersStore } from '@/store/savedEncounterInstance';
 import { useSavedEncountersStore } from '@/store/savedEncounterInstance';
 import type { ConcreteEncounter } from '@/store/data';
-import encounterTemplates from '@/store/Encounters/migratedEncounterTemplates';
+import encounterTemplates from '@/models/encounters/defaultTemplates';
 import { ThreatTracker } from './ThreatTracker';
 import { SlotRow } from './SlotRow.tsx';
 import { EVENT_SLOT_TYPES, PARTICIPANT_SLOT_TYPES } from './slotSections';

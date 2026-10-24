@@ -1,8 +1,6 @@
 import { UUID } from '@/utils/uuid';
 import { Command, CommandDeps, getDeps, STATUS } from '../common';
-import { EncounterStore } from '@/store/encounterRuntimeStore';
-import { skipParticipantsWithoutTurn } from '@/store/operations';
-import { roundOrderOf } from '@/store/initiativePlacement';
+import { roundOrderOf, skipParticipantsWithoutTurn } from '@/store/operations';
 import {
 	movedInReorder,
 	PendingReinforcement,
@@ -12,7 +10,6 @@ import {
 type CommandProps = {
 	newOrder: UUID[];
 	oldOrder?: UUID[];
-	type?: 'initiative' | 'delay';
 	/**
 	 * The participants the user dragged. Without it, the ones outside the
 	 * longest run that kept its order count as moved.
@@ -24,58 +21,51 @@ type CommandProps = {
 
 export class ReorderCharactersCommand implements Command {
 	readonly type = 'ReorderCharactersCommand';
-	description = 'Reorder Characters Command';
+	description = 'Reorder initiative';
 	data: CommandProps;
 	constructor(
 		props: CommandProps,
 		private deps?: CommandDeps
 	) {
 		this.data = structuredClone(props);
-		this.description = `Reorder ${getOrderName(this.data)} order`;
 	}
 
 	execute() {
 		getDeps(this.deps).encounterStore.setState((state) => {
-			const currentOrder = getOrder(this.data, state);
+			const currentOrder = state.charactersOrder;
 			this.data.oldOrder = structuredClone(currentOrder);
 
-			const newOrder = unique(this.data.newOrder);
-			const orderName = getOrderName(this.data);
-
-			if (orderName === 'charactersOrder') {
-				const charactersOrder = skipParticipantsWithoutTurn({
-					charactersOrder: reconcileWithCurrentOrder(newOrder, currentOrder),
-					charactersWithTurn: state.charactersWithTurn,
-					delayedOrder: state.delayedOrder,
-				});
-				const pendingReinforcements = state.pendingReinforcements ?? [];
-				this.data.oldPendingSpots = Object.fromEntries(
-					pendingReinforcements.map(({ character, above, below }) => [
-						character.uuid,
-						{ above, below },
-					])
-				);
-				const roundOrder = (order: UUID[]) =>
-					roundOrderOf(order, state.charactersWithTurn, state.delayedOrder);
-				const oldRoundOrder = roundOrder(currentOrder);
-				const newRoundOrder = roundOrder(charactersOrder);
-
-				return {
-					charactersOrder,
-					pendingReinforcements: respotAfterReorder(
-						pendingReinforcements,
-						oldRoundOrder,
-						newRoundOrder,
-						this.data.movedIds
-							? new Set(this.data.movedIds)
-							: movedInReorder(oldRoundOrder, newRoundOrder),
-						state.charactersMap
-					),
-				};
-			}
+			const charactersOrder = skipParticipantsWithoutTurn({
+				charactersOrder: reconcileWithCurrentOrder(
+					unique(this.data.newOrder),
+					currentOrder
+				),
+				charactersWithTurn: state.charactersWithTurn,
+				charactersMap: state.charactersMap,
+			});
+			const pendingReinforcements = state.pendingReinforcements ?? [];
+			this.data.oldPendingSpots = Object.fromEntries(
+				pendingReinforcements.map(({ character, above, below }) => [
+					character.uuid,
+					{ above, below },
+				])
+			);
+			const roundOrder = (order: UUID[]) =>
+				roundOrderOf(order, state.charactersWithTurn, state.charactersMap);
+			const oldRoundOrder = roundOrder(currentOrder);
+			const newRoundOrder = roundOrder(charactersOrder);
 
 			return {
-				[orderName]: newOrder,
+				charactersOrder,
+				pendingReinforcements: respotAfterReorder(
+					pendingReinforcements,
+					oldRoundOrder,
+					newRoundOrder,
+					this.data.movedIds
+						? new Set(this.data.movedIds)
+						: movedInReorder(oldRoundOrder, newRoundOrder),
+					state.charactersMap
+				),
 			};
 		});
 
@@ -93,7 +83,7 @@ export class ReorderCharactersCommand implements Command {
 		const spotsToRestore = this.data.oldPendingSpots;
 
 		getDeps(this.deps).encounterStore.setState((state) => ({
-			[getOrderName(this.data)]: structuredClone(orderToRestore),
+			charactersOrder: structuredClone(orderToRestore),
 			...(spotsToRestore && {
 				pendingReinforcements: (state.pendingReinforcements ?? []).map(
 					(reinforcement) => ({
@@ -107,22 +97,6 @@ export class ReorderCharactersCommand implements Command {
 		return STATUS.success;
 	}
 }
-
-const getOrderName = (props: CommandProps) => {
-	const type = props.type || 'initiative';
-
-	if (type === 'initiative') {
-		return 'charactersOrder';
-	} else {
-		return 'delayedOrder';
-	}
-};
-
-const getOrder = (props: CommandProps, state: EncounterStore) => {
-	const orderName = getOrderName(props);
-
-	return state[orderName];
-};
 
 const unique = (order: UUID[]) => Array.from(new Set(order));
 

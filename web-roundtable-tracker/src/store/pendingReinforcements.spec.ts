@@ -189,7 +189,6 @@ describe('placePendingReinforcements', () => {
 		const placed = placePendingReinforcements(
 			{
 				charactersOrder: ['b', 'c', 'd', 'a'],
-				delayedOrder: [],
 				charactersWithTurn: new Set(['b', 'c', 'd']),
 				charactersMap,
 			},
@@ -203,7 +202,6 @@ describe('placePendingReinforcements', () => {
 	it('places an arrival whose spot has passed without a turn this round', () => {
 		const state = {
 			charactersOrder: ['c', 'd', 'a', 'b'],
-			delayedOrder: [],
 			charactersWithTurn: new Set(['c', 'd']),
 			charactersMap,
 		};
@@ -222,7 +220,6 @@ describe('placePendingReinforcements', () => {
 		const placed = placePendingReinforcements(
 			{
 				charactersOrder: ['a', 'b'],
-				delayedOrder: [],
 				charactersWithTurn: new Set(['a', 'b']),
 				charactersMap,
 			},
@@ -237,7 +234,6 @@ describe('placePendingReinforcements', () => {
 		const placed = placePendingReinforcements(
 			{
 				charactersOrder: ['a', 'b', 'c'],
-				delayedOrder: [],
 				charactersWithTurn: new Set(['a', 'b', 'c']),
 				charactersMap,
 			},
@@ -252,7 +248,6 @@ describe('placePendingReinforcements', () => {
 		const placed = placePendingReinforcements(
 			{
 				charactersOrder: ['a', 'b'],
-				delayedOrder: [],
 				charactersWithTurn: new Set(['a', 'b']),
 				charactersMap,
 			},
@@ -268,7 +263,6 @@ describe('placePendingReinforcements', () => {
 		const placed = placePendingReinforcements(
 			{
 				charactersOrder: ['a', 'b', 'c', 'd'],
-				delayedOrder: [],
 				charactersWithTurn: new Set(['a', 'b', 'c', 'd']),
 				charactersMap,
 			},
@@ -286,7 +280,6 @@ describe('orderWithPendingSpots', () => {
 	it('shows each pending arrival at the spot it would take now, without placing it', () => {
 		const state = {
 			charactersOrder: ['b', 'c', 'd', 'a'],
-			delayedOrder: [],
 			charactersWithTurn: new Set(['b', 'c', 'd']),
 			charactersMap,
 		};

@@ -34,11 +34,9 @@ export function ReturnToInitiativeNotice({
 						>
 							<p className="text-sm font-semibold">
 								{participant.name}
-								{participant.distance !== undefined && (
-									<span className="font-normal text-muted-foreground">
-										{` (${participant.distance})`}
-									</span>
-								)}
+								<span className="font-normal text-muted-foreground">
+									{` (${participant.distance})`}
+								</span>
 							</p>
 							<Button
 								size="sm"

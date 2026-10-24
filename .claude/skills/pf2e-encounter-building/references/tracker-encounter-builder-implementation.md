@@ -79,7 +79,6 @@ math changes.
 
 - Party-size variants are picked by `partySize`, not computed.
 - There is no Pathfinder Society Challenge Points mode.
-- The migration helper `inferCreatureRole` (`models/encounters/migrate.adapter.ts`) guesses a role from the name.
 
 ## Accomplishment XP, narrative slots, allies
 
@@ -132,4 +131,3 @@ Check the code before relying on these.
 - Several reinforcement waves collapse into one, at the earliest round, and the saved difficulty ignores reinforcements. Tracked as a missing feature in #139.
 - Weak on a level 0 or –1 creature gives –1 or –2. The rules don't cover weak at those levels.
 - The default template "Lieutenant and Lackeys" variant texts say "(-3) lackeys" or "Weak Lackey", where the data is –4.
-- `migrateOldTemplate` drops adjustments and events. It isn't used at runtime.

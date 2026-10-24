@@ -10,7 +10,7 @@ The Roundtable Tracker web app: React 18, TypeScript and Vite, styled with Tailw
 | `src/components/`     | Page components (builder, directories, preview, tracker) and `ui/` shadcn components |
 | `src/store/`          | Zustand stores, encounter data types, converters and the bundled encounter templates |
 | `src/CommandHistory/` | Undo/redo: commands, their registry and serialization                                |
-| `src/models/`         | PF2e domain logic: encounter templates and migration, XP budget, threat, levels, HP  |
+| `src/models/`         | PF2e domain logic: encounter templates, XP budget, threat, levels, HP                |
 | `src/storage/`        | Supabase client and generated types, kept for the planned live player view (unused)  |
 
 Specs (`*.spec.ts`, Vitest) sit next to the code they test; cross-cutting ones are in `src/tests/`.

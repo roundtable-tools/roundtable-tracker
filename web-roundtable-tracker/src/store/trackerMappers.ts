@@ -11,6 +11,8 @@ import {
 	type EncounterStore,
 	type TrackerParticipantMeta,
 } from './encounterRuntimeStore';
+import { delayingIds } from './operations';
+import { type UUID } from '@/utils/uuid';
 
 export type TrackerParticipant = {
 	id: string;
@@ -232,7 +234,7 @@ function characterToTrackerParticipant(
 export function runtimeToInitiativeQueue(
 	store: Pick<
 		EncounterStore,
-		'charactersOrder' | 'delayedOrder' | 'charactersMap' | 'trackerMetaMap'
+		'charactersOrder' | 'charactersMap' | 'trackerMetaMap'
 	>
 ): TrackerParticipant[] {
 	const { charactersOrder, charactersMap, trackerMetaMap } = store;
@@ -263,7 +265,6 @@ export function runtimeToOutOfInitiativeData(
 	store: Pick<
 		EncounterStore,
 		| 'charactersOrder'
-		| 'delayedOrder'
 		| 'charactersMap'
 		| 'trackerMetaMap'
 		| 'encounterData'
@@ -280,7 +281,6 @@ export function runtimeToOutOfInitiativeData(
 		trackerMetaMap,
 		encounterData,
 		partyLevel,
-		delayedOrder,
 		pendingReinforcements = [],
 	} = store;
 
@@ -367,7 +367,7 @@ export function runtimeToOutOfInitiativeData(
 		});
 
 	const delayed = delayedToTrackerParticipants(
-		delayedOrder,
+		delayingIds(store),
 		charactersMap,
 		trackerMetaMap
 	);
@@ -376,7 +376,7 @@ export function runtimeToOutOfInitiativeData(
 }
 
 function delayedToTrackerParticipants(
-	delayedIds: EncounterStore['delayedOrder'],
+	delayedIds: UUID[],
 	charactersMap: EncounterStore['charactersMap'],
 	trackerMetaMap: EncounterStore['trackerMetaMap']
 ): TrackerParticipant[] {
@@ -523,29 +523,18 @@ const toPlayerDisableProgress = (
 export function runtimeToPlayerInitiativeQueue(
 	store: Pick<
 		EncounterStore,
-		'charactersOrder' | 'delayedOrder' | 'charactersMap' | 'trackerMetaMap'
+		'charactersOrder' | 'charactersMap' | 'trackerMetaMap'
 	>
 ): PlayerTrackerParticipant[] {
-	// Delaying on a turn keeps a participant in the order; one that starts
-	// the encounter delaying is only in delayedOrder, so it is added after.
-	const inOrder = new Set(store.charactersOrder);
-	const delayedOutsideOrder = delayedToTrackerParticipants(
-		store.delayedOrder.filter((uuid) => !inOrder.has(uuid)),
-		store.charactersMap,
-		store.trackerMetaMap
-	);
-
-	return [...runtimeToInitiativeQueue(store), ...delayedOutsideOrder].map(
-		(participant) => ({
-			id: participant.id,
-			name: participant.name,
-			status: toPlayerStatus(participant.state),
-			isHazard: participant.role === 'hazard',
-			...toPlayerHealth(participant),
-			disableProgress: toPlayerDisableProgress(participant),
-			sideTheme: resolveParticipantSideTheme(participant),
-		})
-	);
+	return runtimeToInitiativeQueue(store).map((participant) => ({
+		id: participant.id,
+		name: participant.name,
+		status: toPlayerStatus(participant.state),
+		isHazard: participant.role === 'hazard',
+		...toPlayerHealth(participant),
+		disableProgress: toPlayerDisableProgress(participant),
+		sideTheme: resolveParticipantSideTheme(participant),
+	}));
 }
 
 /**

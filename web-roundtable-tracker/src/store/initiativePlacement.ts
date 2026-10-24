@@ -64,26 +64,6 @@ export function effectiveInitiatives(
 }
 
 /**
- * The rotating queue holds the participants still to act first and the ones
- * that already acted after them, so a round runs from the first one that
- * acted to the last one still to act. Delaying participants are left out.
- */
-export function roundOrderOf(
-	currentOrder: UUID[],
-	charactersWithTurn: Set<UUID>,
-	delayedOrder: UUID[],
-	isStillToAct: (uuid: UUID) => boolean = (uuid) => charactersWithTurn.has(uuid)
-): UUID[] {
-	const delayed = new Set(delayedOrder);
-	const inRound = currentOrder.filter((uuid) => !delayed.has(uuid));
-
-	return [
-		...inRound.filter((uuid) => !isStillToAct(uuid)),
-		...inRound.filter(isStillToAct),
-	];
-}
-
-/**
  * Whether an arrival acts before a participant already in the order, given
  * that participant's initiative. Higher initiative goes first. On a tie with a
  * PC, an opposing arrival goes first ("If your result is tied with an enemy's

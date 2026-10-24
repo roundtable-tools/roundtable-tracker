@@ -6,6 +6,7 @@ import { FinalizeTurnAndReturnToInitiativeCommand } from '@/CommandHistory/Comma
 import { KnockOutCharacterCommand } from '@/CommandHistory/Commands/KnockOutCharacterCommand';
 import { ReturnToInitiativeCommand } from '@/CommandHistory/Commands/ReturnToInitiativeCommand';
 import { type EncounterStore } from '@/store/encounterRuntimeStore';
+import { delayingIds, isDelaying } from '@/store/operations';
 import { runtimeToInitiativeQueue } from '@/store/trackerMappers';
 import { isFinalActiveParticipant } from './isFinalActiveParticipant';
 import { countParticipantsWithTurn } from './roundBoundary';
@@ -14,11 +15,7 @@ export type RoundAction = 'end-turn' | 'delay' | 'ko';
 
 export type RoundActionState = Pick<
 	EncounterStore,
-	| 'charactersOrder'
-	| 'delayedOrder'
-	| 'charactersMap'
-	| 'trackerMetaMap'
-	| 'charactersWithTurn'
+	'charactersOrder' | 'charactersMap' | 'trackerMetaMap' | 'charactersWithTurn'
 >;
 
 /** Whether acting on this participant closes the round. */
@@ -41,11 +38,11 @@ export function closesRound(participantId: string, state: RoundActionState) {
  */
 export function delayerReturningAfterTurn({
 	charactersOrder,
-	delayedOrder,
-}: Pick<RoundActionState, 'charactersOrder' | 'delayedOrder'>) {
+	charactersMap,
+}: Pick<RoundActionState, 'charactersOrder' | 'charactersMap'>) {
 	const nextId = charactersOrder[1];
 
-	return charactersOrder.length > 1 && delayedOrder.includes(nextId)
+	return charactersOrder.length > 1 && isDelaying(charactersMap, nextId)
 		? nextId
 		: undefined;
 }
@@ -56,47 +53,43 @@ export function delayerReturningAfterTurn({
  * the prompt still lists it when another delayer asks.
  */
 export function asksToReturnFromDelay(
-	state: Pick<RoundActionState, 'charactersOrder' | 'delayedOrder'>
+	state: Pick<RoundActionState, 'charactersOrder' | 'charactersMap'>
 ) {
 	const returningId = delayerReturningAfterTurn(state);
 
-	return state.delayedOrder.some((uuid) => uuid !== returningId);
+	return delayingIds(state).some((id) => id !== returningId);
 }
 
 export type ReturnPromptEntry = {
 	id: string;
 	/** Turns before the old spot comes up; 0 when it is right after this one. */
-	distance?: number;
+	distance: number;
 };
 
 /**
  * The delayers the return prompt lists, nearest old spot first. Only
  * participants that take a turn count towards the distance, not other
- * delayers' spots. A delayer without a spot in the order (left from an
- * encounter started when participants could still start delayed) comes last,
- * without a distance.
+ * delayers' spots.
  */
 export function returnPromptEntries({
 	charactersOrder,
-	delayedOrder,
+	charactersMap,
 }: Pick<
 	RoundActionState,
-	'charactersOrder' | 'delayedOrder'
+	'charactersOrder' | 'charactersMap'
 >): ReturnPromptEntry[] {
-	const delayed = new Set(delayedOrder);
-	const withSpot = charactersOrder
-		.filter((id) => delayed.has(id))
-		.map((id) => ({
-			id,
-			distance: charactersOrder
-				.slice(1, charactersOrder.indexOf(id))
-				.filter((other) => !delayed.has(other)).length,
-		}));
-	const withoutSpot = delayedOrder
-		.filter((id) => !charactersOrder.includes(id))
-		.map((id) => ({ id }));
+	const entries: ReturnPromptEntry[] = [];
+	let turnsBefore = 0;
 
-	return [...withSpot, ...withoutSpot];
+	charactersOrder.forEach((id, index) => {
+		if (isDelaying(charactersMap, id)) {
+			entries.push({ id, distance: turnsBefore });
+		} else if (index > 0) {
+			turnsBefore++;
+		}
+	});
+
+	return entries;
 }
 
 /**

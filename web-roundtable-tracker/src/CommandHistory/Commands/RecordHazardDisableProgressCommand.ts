@@ -29,7 +29,6 @@ type CommandData = CommandProps & {
 	original?: {
 		trackerMetaMap: Record<UUID, TrackerParticipantMeta>;
 		charactersOrder: UUID[];
-		delayedOrder: UUID[];
 		charactersWithTurn: Set<UUID>;
 		round: number;
 	};
@@ -97,7 +96,6 @@ export class RecordHazardDisableProgressCommand implements Command {
 		this.data.original = {
 			trackerMetaMap: structuredClone(state.trackerMetaMap),
 			charactersOrder: structuredClone(state.charactersOrder),
-			delayedOrder: structuredClone(state.delayedOrder),
 			charactersWithTurn: structuredClone(state.charactersWithTurn),
 			round: state.round,
 		};
@@ -119,9 +117,6 @@ export class RecordHazardDisableProgressCommand implements Command {
 				const charactersOrder = current.charactersOrder.filter(
 					(uuid) => uuid !== this.data.uuid
 				);
-				const delayedOrder = current.delayedOrder.filter(
-					(uuid) => uuid !== this.data.uuid
-				);
 				const charactersWithTurn = new Set(current.charactersWithTurn);
 				charactersWithTurn.delete(this.data.uuid);
 
@@ -133,12 +128,9 @@ export class RecordHazardDisableProgressCommand implements Command {
 					return {
 						trackerMetaMap,
 						charactersOrder,
-						delayedOrder,
 						...nextRound({
 							round: current.round,
 							charactersOrder,
-							delayedOrder,
-							charactersWithTurn,
 						}),
 					};
 				}
@@ -146,7 +138,6 @@ export class RecordHazardDisableProgressCommand implements Command {
 				return {
 					trackerMetaMap,
 					charactersOrder,
-					delayedOrder,
 					charactersWithTurn,
 				};
 			}

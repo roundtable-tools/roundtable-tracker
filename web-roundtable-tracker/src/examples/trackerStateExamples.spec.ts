@@ -53,6 +53,7 @@ import {
 } from '@/components/InitiativeTracker/roundActionCommand';
 import { ENCOUNTER_STORE_KEY } from '@/store/playerViewSync';
 import { runtimeToPlayerInitiativeQueue } from '@/store/trackerMappers';
+import { delayingIds } from '@/store/operations';
 
 // Stable ids, so the files only change when the state does.
 const uuidCounter = vi.hoisted(() => ({ next: 0 }));
@@ -377,12 +378,15 @@ const changeHealth = (store: EncounterStoreApi, name: string, delta: number) =>
 		)
 	);
 
-/** Every participant in initiative or delaying appears once for players. */
+/**
+ * Every participant in initiative appears once for players. A delayer keeps
+ * its spot in the order, so it is one of them.
+ */
 const expectEachParticipantOnceForPlayers = (store: EncounterStoreApi) => {
 	const state = store.getState();
 	const ids = runtimeToPlayerInitiativeQueue(state).map(({ id }) => id);
 	const expected = new Set(
-		[...state.charactersOrder, ...state.delayedOrder].filter(
+		state.charactersOrder.filter(
 			(uuid) => !state.trackerMetaMap[uuid]?.isSimpleHazard
 		)
 	);
@@ -440,7 +444,7 @@ describe('tracker state examples', () => {
 		const state = store.getState();
 
 		expect(state.round).toBe(1);
-		expect(state.delayedOrder).toEqual([]);
+		expect(delayingIds(state)).toEqual([]);
 		expect(
 			state.trackerMetaMap[uuidOf(store, 'Goblin Sneak')].hiddenUntilFirstTurn
 		).toBe(true);
@@ -523,7 +527,7 @@ describe('tracker state examples', () => {
 		expect(state.charactersMap[uuidOf(store, 'Goblin Dog')].turnState).toBe(
 			'knocked-out'
 		);
-		expect(state.delayedOrder).toEqual(
+		expect(delayingIds(state)).toEqual(
 			expect.arrayContaining([
 				uuidOf(store, 'Goblin Sneak'),
 				uuidOf(store, 'Bridge Keeper'),

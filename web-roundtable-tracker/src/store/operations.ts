@@ -1,14 +1,51 @@
 import { type UUID } from '@/utils/uuid';
+import { type Character } from './data';
+
+export type TurnStates = Record<UUID, Pick<Character, 'turnState'>>;
+
+/** Whether the participant is delaying. A delayer keeps its spot in the order. */
+export const isDelaying = (charactersMap: TurnStates, uuid: UUID) =>
+	charactersMap[uuid]?.turnState === 'delayed';
+
+/**
+ * The delaying participants, in queue order. That is the order they started
+ * delaying (only the current participant can delay, and it moves to the end of
+ * the queue) unless the GM reorders them.
+ */
+export const delayingIds = ({
+	charactersOrder,
+	charactersMap,
+}: {
+	charactersOrder: UUID[];
+	charactersMap: TurnStates;
+}) => charactersOrder.filter((uuid) => isDelaying(charactersMap, uuid));
+
+/**
+ * The rotating queue holds the participants still to act first and the ones
+ * that already acted after them, so a round runs from the first one that
+ * acted to the last one still to act. Delaying participants are left out.
+ */
+export function roundOrderOf(
+	currentOrder: UUID[],
+	charactersWithTurn: Set<UUID>,
+	charactersMap: TurnStates,
+	isStillToAct: (uuid: UUID) => boolean = (uuid) => charactersWithTurn.has(uuid)
+): UUID[] {
+	const inRound = currentOrder.filter(
+		(uuid) => !isDelaying(charactersMap, uuid)
+	);
+
+	return [
+		...inRound.filter((uuid) => !isStillToAct(uuid)),
+		...inRound.filter(isStillToAct),
+	];
+}
 
 export const nextRound = (state: {
 	round: number;
 	charactersOrder: UUID[];
-	charactersWithTurn: Set<UUID>;
-	delayedOrder: UUID[];
 }) => {
-	const charactersWithTurn = new Set(
-		state.delayedOrder.concat(state.charactersOrder)
-	);
+	const charactersWithTurn = new Set(state.charactersOrder);
 
 	return {
 		round: state.round + 1,
@@ -29,16 +66,16 @@ export const nextRound = (state: {
 export const skipParticipantsWithoutTurn = (state: {
 	charactersOrder: UUID[];
 	charactersWithTurn: Set<UUID>;
-	delayedOrder: UUID[];
+	charactersMap: TurnStates;
 }) => {
-	const { charactersOrder, charactersWithTurn, delayedOrder } = state;
+	const { charactersOrder, charactersWithTurn, charactersMap } = state;
 
 	if (!charactersOrder.some((uuid) => charactersWithTurn.has(uuid))) {
 		return charactersOrder;
 	}
 
 	const firstActorIndex = charactersOrder.findIndex(
-		(uuid) => charactersWithTurn.has(uuid) || delayedOrder.includes(uuid)
+		(uuid) => charactersWithTurn.has(uuid) || isDelaying(charactersMap, uuid)
 	);
 
 	if (firstActorIndex <= 0) {

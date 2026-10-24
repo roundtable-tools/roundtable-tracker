@@ -1,6 +1,7 @@
 import { UUID } from '@/utils/uuid';
 import { Command, CommandDeps, STATUS, getDeps } from '../common';
 import { FinalizeTurnAction } from './FinalizeTurnAndAdvanceRoundCommand';
+import { isDelaying, type TurnStates } from '@/store/operations';
 
 type CommandData = {
 	activeUuid: UUID;
@@ -9,8 +10,7 @@ type CommandData = {
 	original?: {
 		charactersOrder: UUID[];
 		charactersWithTurn: Set<UUID>;
-		delayedOrder: UUID[];
-		charactersMap: Record<UUID, { turnState: string }>;
+		charactersMap: TurnStates;
 	};
 };
 
@@ -46,9 +46,9 @@ export class ReturnToInitiativeCommand implements Command {
 			return STATUS.failure;
 		}
 
-		if (!state.delayedOrder.includes(this.data.returningUuid)) {
+		if (!isDelaying(state.charactersMap, this.data.returningUuid)) {
 			console.error(
-				`ReturnToInitiativeCommand: returning character ${this.data.returningUuid} is not in delayedOrder`
+				`ReturnToInitiativeCommand: returning character ${this.data.returningUuid} is not delaying`
 			);
 
 			return STATUS.failure;
@@ -58,7 +58,6 @@ export class ReturnToInitiativeCommand implements Command {
 		this.data.original = {
 			charactersOrder: structuredClone(state.charactersOrder),
 			charactersWithTurn: new Set(state.charactersWithTurn),
-			delayedOrder: structuredClone(state.delayedOrder),
 			charactersMap: Object.fromEntries(
 				Object.entries(state.charactersMap).map(([id, char]) => [
 					id,
@@ -74,33 +73,15 @@ export class ReturnToInitiativeCommand implements Command {
 			// Returning participant gains a turn in the current round
 			newCharactersWithTurn.add(this.data.returningUuid);
 
-			// Remove returning participant from delayedOrder
-			const newDelayedOrder = state.delayedOrder.filter(
-				(id) => id !== this.data.returningUuid
-			);
-
-			let newCharactersOrder: UUID[];
-
-			if (this.data.action === 'delay') {
-				// Active participant delays and remains in initiative order, moving to the end.
-				newCharactersOrder = state.charactersOrder
-					.filter((id) => id !== this.data.activeUuid)
-					.concat(this.data.activeUuid);
-
-				if (!newDelayedOrder.includes(this.data.activeUuid)) {
-					newDelayedOrder.push(this.data.activeUuid);
-				}
-			} else {
-				// end-turn or ko: active stays in order but moves to the end
-				newCharactersOrder = state.charactersOrder
-					.filter((id) => id !== this.data.activeUuid)
-					.concat(this.data.activeUuid);
-			}
-
-			// Insert the returning participant at the front of the initiative queue
-			newCharactersOrder = [
+			// The returning participant goes to the front of the queue. The active
+			// participant stays in the order but moves to the end, whether it ends
+			// its turn, delays or is knocked out.
+			const newCharactersOrder = [
 				this.data.returningUuid,
-				...newCharactersOrder.filter((id) => id !== this.data.returningUuid),
+				...state.charactersOrder.filter(
+					(id) => id !== this.data.activeUuid && id !== this.data.returningUuid
+				),
+				this.data.activeUuid,
 			];
 
 			// Update turnState in charactersMap
@@ -126,7 +107,6 @@ export class ReturnToInitiativeCommand implements Command {
 			return {
 				charactersOrder: newCharactersOrder,
 				charactersWithTurn: newCharactersWithTurn,
-				delayedOrder: newDelayedOrder,
 				charactersMap: newCharactersMap,
 			};
 		});
@@ -151,7 +131,7 @@ export class ReturnToInitiativeCommand implements Command {
 				if (restoredMap[id]) {
 					restoredMap[id] = {
 						...restoredMap[id],
-						turnState: partial.turnState as never,
+						turnState: partial.turnState,
 					};
 				}
 			}
@@ -159,7 +139,6 @@ export class ReturnToInitiativeCommand implements Command {
 			return {
 				charactersOrder: structuredClone(original.charactersOrder),
 				charactersWithTurn: new Set(original.charactersWithTurn),
-				delayedOrder: structuredClone(original.delayedOrder),
 				charactersMap: restoredMap,
 			};
 		});
