@@ -260,7 +260,6 @@ describe('PreviewDisplay form defaulting path', () => {
 						level: 1,
 						side: 1,
 						count: 2,
-						startingState: 'delayed',
 						maxHealth: 2,
 						health: 1,
 					},
@@ -285,20 +284,6 @@ describe('PreviewDisplay form defaulting path', () => {
 			'John B',
 			'John C',
 			'John D',
-		]);
-		// An exported starting delay now starts in the order, hidden until its
-		// first turn
-		expect(participants.flat().map((p) => p.startingState)).toEqual([
-			'normal',
-			'normal',
-			undefined,
-			undefined,
-		]);
-		expect(participants.flat().map((p) => p.hiddenUntilFirstTurn)).toEqual([
-			true,
-			true,
-			undefined,
-			undefined,
 		]);
 	});
 

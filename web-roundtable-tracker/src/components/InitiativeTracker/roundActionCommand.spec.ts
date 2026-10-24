@@ -135,18 +135,17 @@ describe('asksToReturnFromDelay', () => {
 });
 
 describe('returnPromptEntries', () => {
-	it('lists the nearest old spot first and delayers without a spot last', () => {
+	it('lists the nearest old spot first', () => {
 		expect(
 			returnPromptEntries({
 				charactersOrder: ['a', 'b', 'y', 'c', 'x', 'z'],
-				delayedOrder: ['s', 'x', 'y', 'z'],
+				delayedOrder: ['x', 'y', 'z'],
 			})
 		).toEqual([
 			{ id: 'y', distance: 1 },
 			{ id: 'x', distance: 2 },
 			// Spots of other delayers aren't turns, so they don't count
 			{ id: 'z', distance: 2 },
-			{ id: 's' },
 		]);
 	});
 

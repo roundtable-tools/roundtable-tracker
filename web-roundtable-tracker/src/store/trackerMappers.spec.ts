@@ -266,38 +266,6 @@ describe('trackerMappers', () => {
 		expect(queue[0].hpLabel).toBe('Uninjured');
 	});
 
-	it('adds delaying participants without a spot after the order in the player queue', () => {
-		const charactersMap = {
-			hero: createCharacter({ uuid: 'hero', name: 'Hero' }),
-			rogue: createCharacter({
-				uuid: 'rogue',
-				name: 'Rogue',
-				turnState: 'delayed',
-			}),
-			trap: createCharacter({
-				uuid: 'trap',
-				name: 'Trap',
-				turnState: 'delayed',
-			}),
-		};
-
-		const queue = runtimeToPlayerInitiativeQueue({
-			charactersOrder: ['hero'],
-			delayedOrder: ['rogue', 'trap'],
-			charactersMap,
-			trackerMetaMap: {
-				hero: createMeta({ role: 'pc', sideTheme: 'pc' }),
-				rogue: createMeta({ role: 'pc', sideTheme: 'pc' }),
-				trap: createMeta({ role: 'hazard', isSimpleHazard: true }),
-			},
-		});
-
-		expect(queue.map(({ id, status }) => ({ id, status }))).toEqual([
-			{ id: 'hero', status: 'Ready' },
-			{ id: 'rogue', status: 'Delayed' },
-		]);
-	});
-
 	it('maps additional participant metadata into tracker participants', () => {
 		const charactersMap = {
 			alpha: createCharacter({

@@ -326,12 +326,9 @@ const combatantParticipantSchema = z.object({
 	hardness: z.number().optional(),
 	adjustmentDescription: z.string().optional(),
 	adjustmentLevelModifier: z.number().optional(),
-	// 'delayed' and hiddenFromPlayers come from older exports; importing
-	// rewrites them (migrateLegacyEncounter).
-	startingState: z.enum(['normal', 'delayed', 'knocked-out']).optional(),
+	startingState: z.enum(['normal', 'knocked-out']).optional(),
 	traits: z.array(z.string()).optional(),
 	hiddenUntilFirstTurn: z.boolean().optional(),
-	hiddenFromPlayers: z.boolean().optional(),
 	initiativeDescription: z.string().optional(),
 	description: z.string().optional(),
 	dcs: dcsSchema.optional(),

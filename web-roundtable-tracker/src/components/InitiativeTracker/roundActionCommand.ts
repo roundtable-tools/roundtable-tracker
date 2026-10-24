@@ -66,15 +66,13 @@ export function asksToReturnFromDelay(
 export type ReturnPromptEntry = {
 	id: string;
 	/** Turns before the old spot comes up; 0 when it is right after this one. */
-	distance?: number;
+	distance: number;
 };
 
 /**
  * The delayers the return prompt lists, nearest old spot first. Only
  * participants that take a turn count towards the distance, not other
- * delayers' spots. A delayer without a spot in the order (left from an
- * encounter started when participants could still start delayed) comes last,
- * without a distance.
+ * delayers' spots.
  */
 export function returnPromptEntries({
 	charactersOrder,
@@ -84,7 +82,8 @@ export function returnPromptEntries({
 	'charactersOrder' | 'delayedOrder'
 >): ReturnPromptEntry[] {
 	const delayed = new Set(delayedOrder);
-	const withSpot = charactersOrder
+
+	return charactersOrder
 		.filter((id) => delayed.has(id))
 		.map((id) => ({
 			id,
@@ -92,11 +91,6 @@ export function returnPromptEntries({
 				.slice(1, charactersOrder.indexOf(id))
 				.filter((other) => !delayed.has(other)).length,
 		}));
-	const withoutSpot = delayedOrder
-		.filter((id) => !charactersOrder.includes(id))
-		.map((id) => ({ id }));
-
-	return [...withSpot, ...withoutSpot];
 }
 
 /**

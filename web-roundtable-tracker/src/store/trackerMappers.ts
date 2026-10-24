@@ -526,26 +526,15 @@ export function runtimeToPlayerInitiativeQueue(
 		'charactersOrder' | 'delayedOrder' | 'charactersMap' | 'trackerMetaMap'
 	>
 ): PlayerTrackerParticipant[] {
-	// Delaying on a turn keeps a participant in the order; one that starts
-	// the encounter delaying is only in delayedOrder, so it is added after.
-	const inOrder = new Set(store.charactersOrder);
-	const delayedOutsideOrder = delayedToTrackerParticipants(
-		store.delayedOrder.filter((uuid) => !inOrder.has(uuid)),
-		store.charactersMap,
-		store.trackerMetaMap
-	);
-
-	return [...runtimeToInitiativeQueue(store), ...delayedOutsideOrder].map(
-		(participant) => ({
-			id: participant.id,
-			name: participant.name,
-			status: toPlayerStatus(participant.state),
-			isHazard: participant.role === 'hazard',
-			...toPlayerHealth(participant),
-			disableProgress: toPlayerDisableProgress(participant),
-			sideTheme: resolveParticipantSideTheme(participant),
-		})
-	);
+	return runtimeToInitiativeQueue(store).map((participant) => ({
+		id: participant.id,
+		name: participant.name,
+		status: toPlayerStatus(participant.state),
+		isHazard: participant.role === 'hazard',
+		...toPlayerHealth(participant),
+		disableProgress: toPlayerDisableProgress(participant),
+		sideTheme: resolveParticipantSideTheme(participant),
+	}));
 }
 
 /**
