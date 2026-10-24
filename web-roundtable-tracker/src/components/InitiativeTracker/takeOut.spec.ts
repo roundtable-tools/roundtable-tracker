@@ -77,7 +77,6 @@ describe('taking a participant out of the fight', () => {
 				[GHOST]: meta({ hasHealthData: false }),
 			},
 			charactersOrder: [HERO, CLOCKWORK, TRAP, GHOST],
-			delayedOrder: [],
 			charactersWithTurn: new Set([HERO, CLOCKWORK, TRAP, GHOST]),
 			round: 1,
 		});

@@ -44,7 +44,6 @@ describe('SetShownProgressCommand', () => {
 			},
 			trackerMetaMap: { [CLOCKWORK]: meta('opponent'), [TRAP]: meta('hazard') },
 			charactersOrder: [CLOCKWORK, TRAP],
-			delayedOrder: [],
 			charactersWithTurn: new Set([CLOCKWORK, TRAP]),
 		});
 	});
