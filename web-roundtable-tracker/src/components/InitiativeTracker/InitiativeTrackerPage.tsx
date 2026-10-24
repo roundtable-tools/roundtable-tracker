@@ -153,11 +153,18 @@ function getParticipantAccent(participant: TrackerParticipant) {
 
 const hasTraitBadges = (participant: TrackerParticipant) =>
 	(participant.traits?.length ?? 0) > 0 ||
-	participant.hiddenUntilFirstTurn === true;
+	participant.hiddenUntilFirstTurn === true ||
+	participant.hiddenUntilArrival === true;
 
 function TraitBadges({ participant }: { participant: TrackerParticipant }) {
 	return (
 		<>
+			{participant.hiddenUntilArrival && (
+				<Badge variant="outline" className="gap-1 text-[10px]">
+					<EyeOff className="size-3" />
+					Hidden until arrival
+				</Badge>
+			)}
 			{participant.hiddenUntilFirstTurn && (
 				<Badge variant="outline" className="gap-1 text-[10px]">
 					<EyeOff className="size-3" />

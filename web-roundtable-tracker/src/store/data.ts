@@ -246,6 +246,12 @@ export type NarrativeSlot = {
 		round: number;
 		frequency?: number;
 	};
+	/**
+	 * Reinforcements: players may see the participants before the slot
+	 * triggers. Otherwise they stay hidden until it does; a participant's own
+	 * hiddenUntilFirstTurn keeps it hidden longer either way.
+	 */
+	visibleBeforeTrigger?: boolean;
 	participants?: Participant<typeof LEVEL_REPRESENTATION.Relative>[];
 };
 
@@ -358,6 +364,7 @@ const narrativeSlotSchema = z.object({
 		round: z.number(),
 		frequency: z.number().optional(),
 	}),
+	visibleBeforeTrigger: z.boolean().optional(),
 	participants: z.array(participantSchema).optional(),
 });
 

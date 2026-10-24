@@ -238,6 +238,28 @@ describe('combat ready fields round trip', () => {
 		});
 	});
 
+	it('saves whether a reinforcement shows its participants before arrival', () => {
+		const encounter = toConcreteEncounter({
+			...values,
+			slots: [
+				slot({
+					type: 'reinforcement',
+					reinforcementVisibleBeforeTrigger: true,
+				}),
+				slot({ type: 'reinforcement' }),
+			],
+		});
+
+		expect(
+			encounter.narrativeSlots?.map((slot) => slot.visibleBeforeTrigger)
+		).toEqual([true, undefined]);
+		expect(
+			fromConcreteEncounter(encounter).slots.map(
+				(slot) => slot.reinforcementVisibleBeforeTrigger
+			)
+		).toEqual([true, false]);
+	});
+
 	it('keeps the fields in saved variants', () => {
 		const encounter = toConcreteEncounter({
 			...values,

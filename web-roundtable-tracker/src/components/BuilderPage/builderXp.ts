@@ -68,6 +68,8 @@ export interface BuilderSlot {
 	adjustmentLevelModifier?: number;
 	isSimpleHazard: boolean;
 	reinforcementRound: number;
+	/** Players may see the participants before the slot triggers. */
+	reinforcementVisibleBeforeTrigger?: boolean;
 	reinforcementParticipants?: BuilderReinforcementParticipant[];
 	eventRound: number;
 	repeatInterval?: number;

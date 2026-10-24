@@ -40,6 +40,8 @@ export type TrackerParticipant = {
 	traits?: string[];
 	/** Kept from the players until the participant's first turn starts. */
 	hiddenUntilFirstTurn?: boolean;
+	/** A pending reinforcement kept from the players until its slot triggers. */
+	hiddenUntilArrival?: boolean;
 	notes: string;
 };
 
@@ -321,6 +323,7 @@ export function runtimeToOutOfInitiativeData(
 					initiative: character.initiative,
 					eventId: slot.id,
 					eventRound: slot.trigger.round,
+					hiddenUntilArrival: !slot.visibleBeforeTrigger,
 				}));
 			}
 
@@ -354,6 +357,7 @@ export function runtimeToOutOfInitiativeData(
 					adjustmentLevelModifier: participant.adjustmentLevelModifier,
 					traits: participant.traits,
 					hiddenUntilFirstTurn: participant.hiddenUntilFirstTurn,
+					hiddenUntilArrival: !slot.visibleBeforeTrigger,
 					notes: slot.description ?? '',
 				} satisfies TrackerParticipant;
 			});

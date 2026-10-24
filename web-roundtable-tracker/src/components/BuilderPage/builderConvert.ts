@@ -354,6 +354,9 @@ export function toConcreteEncounter(
 			description: s.description || undefined,
 			accomplishmentLevel:
 				s.type === 'reinforcement' ? undefined : s.accomplishmentLevel,
+			visibleBeforeTrigger:
+				(s.type === 'reinforcement' && s.reinforcementVisibleBeforeTrigger) ||
+				undefined,
 			trigger: {
 				round: s.type === 'reinforcement' ? s.reinforcementRound : s.eventRound,
 				frequency:
@@ -618,6 +621,7 @@ export function fromConcreteEncounter(
 			adjustment: 'none',
 			isSimpleHazard: false,
 			reinforcementRound: ns.trigger.round,
+			reinforcementVisibleBeforeTrigger: ns.visibleBeforeTrigger ?? false,
 			reinforcementParticipants: isReinforcement
 				? (ns.participants ?? []).map((participant) => ({
 						id: uuidv4(),

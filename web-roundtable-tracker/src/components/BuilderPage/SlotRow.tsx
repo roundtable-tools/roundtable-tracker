@@ -1036,30 +1036,53 @@ export function SlotRow({
 				)}
 
 				{slotType === 'reinforcement' && (
-					<FormField
-						control={control}
-						name={`slots.${index}.reinforcementRound` as const}
-						render={({ field }) => (
-							<FormItem className="space-y-1">
-								<FormLabel>Reinforcement Round</FormLabel>
-								<FormControl>
-									<Input
-										type="number"
-										min={1}
-										value={field.value ?? ''}
-										onChange={(event) => {
-											const value = event.target.value;
-											field.onChange(value === '' ? undefined : Number(value));
-										}}
-										onBlur={field.onBlur}
-										name={field.name}
-										ref={field.ref}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
+					<>
+						<FormField
+							control={control}
+							name={`slots.${index}.reinforcementRound` as const}
+							render={({ field }) => (
+								<FormItem className="space-y-1">
+									<FormLabel>Reinforcement Round</FormLabel>
+									<FormControl>
+										<Input
+											type="number"
+											min={1}
+											value={field.value ?? ''}
+											onChange={(event) => {
+												const value = event.target.value;
+												field.onChange(
+													value === '' ? undefined : Number(value)
+												);
+											}}
+											onBlur={field.onBlur}
+											name={field.name}
+											ref={field.ref}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={control}
+							name={`slots.${index}.reinforcementVisibleBeforeTrigger` as const}
+							render={({ field }) => (
+								<FormItem className="space-y-1 flex flex-col justify-center">
+									<FormLabel>Before Arrival</FormLabel>
+									<FormControl>
+										<Toggle
+											pressed={field.value ?? false}
+											onPressedChange={field.onChange}
+											className="w-fit"
+										>
+											{field.value ? 'Visible' : 'Hidden until arrival'}
+										</Toggle>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+					</>
 				)}
 
 				{slotType === 'narrative' && (

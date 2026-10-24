@@ -264,7 +264,7 @@ describe('trackerMappers', () => {
 		expect(queue[0].hpLabel).toBe('Uninjured');
 	});
 
-	it('adds participants that start delaying after the order in the player queue', () => {
+	it('adds delaying participants without a spot after the order in the player queue', () => {
 		const charactersMap = {
 			hero: createCharacter({ uuid: 'hero', name: 'Hero' }),
 			rogue: createCharacter({
@@ -381,6 +381,76 @@ describe('trackerMappers', () => {
 		expect(outOfInitiative.reinforcements[0]?.traits).toEqual([
 			'Human',
 			'Medium',
+		]);
+	});
+
+	it('marks what pending reinforcements keep from the players', () => {
+		const slot = (
+			id: string,
+			visibleBeforeTrigger: boolean | undefined,
+			hiddenUntilFirstTurn: boolean | undefined
+		) => ({
+			id,
+			type: 'reinforcement' as const,
+			trigger: { round: 2 },
+			visibleBeforeTrigger,
+			participants: [
+				{
+					type: 'creature' as const,
+					name: id,
+					level: '+0' as const,
+					side: ALIGNMENT.Opponents,
+					hiddenUntilFirstTurn,
+				},
+			],
+		});
+		const outOfInitiative = runtimeToOutOfInitiativeData({
+			charactersOrder: [],
+			delayedOrder: [],
+			charactersMap: {},
+			trackerMetaMap: {},
+			encounterData: {
+				id: 'ambush',
+				name: 'Ambush',
+				description: '',
+				difficulty: DIFFICULTY.Moderate,
+				partySize: 4,
+				levelRepresentation: LEVEL_REPRESENTATION.Exact,
+				level: 3,
+				participants: [],
+				narrativeSlots: [
+					slot('hidden-slot', undefined, undefined),
+					slot('visible-slot', true, undefined),
+					slot('hidden-participant', true, true),
+				],
+			},
+			partyLevel: 3,
+		});
+
+		expect(
+			outOfInitiative.reinforcements.map(
+				({ name, hiddenUntilArrival, hiddenUntilFirstTurn }) => ({
+					name,
+					hiddenUntilArrival,
+					hiddenUntilFirstTurn,
+				})
+			)
+		).toEqual([
+			{
+				name: 'hidden-slot',
+				hiddenUntilArrival: true,
+				hiddenUntilFirstTurn: undefined,
+			},
+			{
+				name: 'visible-slot',
+				hiddenUntilArrival: false,
+				hiddenUntilFirstTurn: undefined,
+			},
+			{
+				name: 'hidden-participant',
+				hiddenUntilArrival: false,
+				hiddenUntilFirstTurn: true,
+			},
 		]);
 	});
 });
