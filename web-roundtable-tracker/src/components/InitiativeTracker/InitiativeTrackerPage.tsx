@@ -1519,9 +1519,12 @@ export function InitiativeTrackerPage() {
 		nextRoundAnnouncement ||
 		showResumeNotice
 	);
+	// Synced after every render, not only when the value changes: a prompt
+	// that never opens (e.g. the take-out notice of a K.O. that failed) set
+	// the ref while blockingPromptOpen stayed false.
 	useEffect(() => {
 		blockingPromptOpenRef.current = blockingPromptOpen;
-	}, [blockingPromptOpen]);
+	});
 
 	const handleParticipantSwipeAction = (
 		participantId: string,
