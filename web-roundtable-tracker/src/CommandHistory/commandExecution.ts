@@ -112,8 +112,9 @@ export const executeCommand = (
 /**
  * Runs a command in the same undo step as `step`, so one undo takes back both
  * (e.g. the GM's answer to a K.O. that already ran). They can only share a
- * step while `step` is the last one recorded; otherwise the command is
- * recorded as a step of its own. Throws when it fails.
+ * step while `step` is the last one recorded and the command doesn't move
+ * the turn or the round (an undo rewinds the timer only once); otherwise the
+ * command is recorded as a step of its own. Throws when it fails.
  */
 export const amendCommand = (
 	store: EncounterStoreApi,
@@ -121,13 +122,22 @@ export const amendCommand = (
 	command: Command,
 	now = Date.now()
 ) => {
+	const before = getTurnPosition(store.getState());
+	const keepsTurn = () => {
+		const after = getTurnPosition(store.getState());
+
+		return (
+			after.participantId === before.participantId &&
+			after.round === before.round
+		);
+	};
 	const amended = runForward(
 		store,
 		command,
 		() => [],
 		now,
 		(history, done) =>
-			step && history.at(-1) === step
+			step && history.at(-1) === step && keepsTurn()
 				? [
 						...history.slice(0, -1),
 						new CompositeCommand({ commands: [step, done] }),

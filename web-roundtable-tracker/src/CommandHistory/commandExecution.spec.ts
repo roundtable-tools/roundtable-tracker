@@ -235,4 +235,28 @@ describe('command execution with the encounter timer', () => {
 		expect(store.getState().history).toHaveLength(2);
 		expect(health()).toBe(10);
 	});
+
+	it('records an amended command that moves the turn as its own step', () => {
+		endTurn(30 * SECOND);
+		const step = store.getState().history.at(-1);
+		amendCommand(
+			store,
+			step,
+			getRoundActionCommand('goblin', 'end-turn', store.getState(), {
+				encounterStore: store,
+			}),
+			50 * SECOND
+		);
+
+		expect(store.getState().history).toHaveLength(2);
+		expect(store.getState().history[0]).toBe(step);
+
+		undoLastCommand(store, 60 * SECOND);
+
+		expect(store.getState().history).toEqual([step]);
+		expect(timer()).toMatchObject({
+			turnParticipantId: 'goblin',
+			turnLog: [{ participantId: 'hero', round: 1, durationMs: 30 * SECOND }],
+		});
+	});
 });
