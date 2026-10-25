@@ -1044,9 +1044,10 @@ export function InitiativeTrackerPage() {
 	>(storeInitiativeParticipants[0]?.id ?? null);
 	const [reorderOpen, setReorderOpen] = useState(false);
 	// The notices and the round dialog that are open or about to open. A card
-	// runs its action after its slide animation, through the handler of the
-	// render that started it, so the handler reads this ref to drop an action
-	// that comes due while one is open: nothing changes until it is answered.
+	// runs its action after its slide animation, possibly before a prompt
+	// opened in the meantime has rendered, so the handler reads this ref to
+	// drop an action that comes due while one is open: nothing changes until
+	// it is answered.
 	const openPromptsRef = useRef(new Set<string>());
 	const [nextRoundAnnouncement, setNextRoundAnnouncement] =
 		useBlockingPromptState<RoundAnnouncementState>('round', openPromptsRef);
