@@ -7,7 +7,7 @@ import {
 } from '@/store/encounterRuntimeInstance';
 import { Command } from './common';
 import {
-	amendLastCommand as amendLastStoreCommand,
+	amendCommand as amendStoreCommand,
 	executeCommand as executeStoreCommand,
 	redoNextCommand,
 	undoLastCommand,
@@ -23,8 +23,8 @@ export const CommandHistoryProvider: FC<{ children: ReactNode }> = ({
 
 	const executeCommand = (command: Command) =>
 		executeStoreCommand(getEncounterStore(), command);
-	const amendLastCommand = (command: Command) =>
-		amendLastStoreCommand(getEncounterStore(), command);
+	const amendCommand = (step: Command | undefined, command: Command) =>
+		amendStoreCommand(getEncounterStore(), step, command);
 	const undo = () => undoLastCommand(getEncounterStore());
 	const redo = () => redoNextCommand(getEncounterStore());
 
@@ -37,7 +37,7 @@ export const CommandHistoryProvider: FC<{ children: ReactNode }> = ({
 		<CommandHistoryContext.Provider
 			value={{
 				executeCommand,
-				amendLastCommand,
+				amendCommand,
 				undo,
 				redo,
 				clearHistory,

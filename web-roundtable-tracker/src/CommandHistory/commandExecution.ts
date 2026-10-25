@@ -110,12 +110,14 @@ export const executeCommand = (
 };
 
 /**
- * Runs a command as part of the last recorded one, so one undo takes back
- * both (e.g. the GM's answer to a K.O. that already ran). Throws when it
- * fails.
+ * Runs a command in the same undo step as `step`, so one undo takes back both
+ * (e.g. the GM's answer to a K.O. that already ran). They can only share a
+ * step while `step` is the last one recorded; otherwise the command is
+ * recorded as a step of its own. Throws when it fails.
  */
-export const amendLastCommand = (
+export const amendCommand = (
 	store: EncounterStoreApi,
+	step: Command | undefined,
 	command: Command,
 	now = Date.now()
 ) => {
@@ -124,16 +126,13 @@ export const amendLastCommand = (
 		command,
 		() => [],
 		now,
-		(history, done) => {
-			const last = history.at(-1);
-
-			return last
+		(history, done) =>
+			step && history.at(-1) === step
 				? [
 						...history.slice(0, -1),
-						new CompositeCommand({ commands: [last, done] }),
+						new CompositeCommand({ commands: [step, done] }),
 					]
-				: [done];
-		}
+				: [...history, done]
 	);
 
 	if (!amended) {

@@ -889,7 +889,7 @@ type RoundAnnouncementState = {
 };
 
 export function InitiativeTrackerPage() {
-	const { executeCommand, amendLastCommand, undo, redo, canUndo, canRedo } =
+	const { executeCommand, amendCommand, undo, redo, canUndo, canRedo } =
 		useContext(CommandHistoryContext);
 	const charactersOrder = useEncounterStore((state) => state.charactersOrder);
 	const timer = useEncounterStore((state) => state.timer);
@@ -1028,7 +1028,7 @@ export function InitiativeTrackerPage() {
 		before?: Command;
 		/** Runs last in the same undo step, e.g. removing a slain participant. */
 		after?: Command;
-		/** Runs in the same undo step as the last command (amendLastCommand). */
+		/** Runs in the same undo step as the K.O. the take-out notice asks about. */
 		amend?: boolean;
 	};
 	// A knocked-out or disabled participant's `reason` value left its take-out
@@ -1049,6 +1049,21 @@ export function InitiativeTrackerPage() {
 		null
 	);
 	const setTakeOutPromptId = opensBlockingPrompt(setTakeOutPromptIdState);
+	// Where in the history that K.O. is (or, behind the return prompt, will
+	// be) recorded. The round dialog it can open may record more steps before
+	// the notice is answered.
+	const takeOutStepIndexRef = useRef<number | null>(null);
+	/** Runs a command in the K.O.'s undo step while that is the last one. */
+	const amendTakeOutStep = (command: Command) => {
+		const index = takeOutStepIndexRef.current;
+
+		amendCommand(
+			index === null
+				? undefined
+				: getEncounterStore().getState().history[index],
+			command
+		);
+	};
 	const [returnPrompt, setReturnPromptState] =
 		useState<ReturnPromptState | null>(null);
 	const setReturnPrompt = opensBlockingPrompt(setReturnPromptState);
@@ -1210,7 +1225,7 @@ export function InitiativeTrackerPage() {
 		focusCurrentOnSuccess?: boolean;
 		before?: Command;
 		after?: Command;
-		/** Runs in the same undo step as the last command (amendLastCommand). */
+		/** Runs in the same undo step as the K.O. the take-out notice asks about. */
 		amend?: boolean;
 	}) => {
 		clearPinnedMarkerForCurrentRound();
@@ -1228,7 +1243,7 @@ export function InitiativeTrackerPage() {
 
 		try {
 			if (amend) {
-				amendLastCommand(command);
+				amendTakeOutStep(command);
 			} else {
 				executeCommand(command);
 			}
@@ -1534,6 +1549,8 @@ export function InitiativeTrackerPage() {
 
 		// The K.O. runs at once; TakeOutNotice then asks what follows it.
 		if (action === 'ko') {
+			takeOutStepIndexRef.current =
+				getEncounterStore().getState().history.length;
 			takeOutParticipant(participantId);
 			setTakeOutPromptId(participantId);
 
@@ -1630,7 +1647,7 @@ export function InitiativeTrackerPage() {
 		if (!effectCommands.some(Boolean)) return;
 
 		try {
-			amendLastCommand(inOneUndoStep(...effectCommands));
+			amendTakeOutStep(inOneUndoStep(...effectCommands));
 		} catch (error) {
 			console.error('Failed to apply the take-out values', error);
 		}
@@ -1727,7 +1744,7 @@ export function InitiativeTrackerPage() {
 			);
 
 			if (amend) {
-				amendLastCommand(command);
+				amendTakeOutStep(command);
 			} else {
 				executeCommand(command);
 			}
