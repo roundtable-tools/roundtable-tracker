@@ -231,4 +231,20 @@ describe('CompositeCommand', () => {
 
 		expect(order).toEqual(['command1.execute', 'command2.execute']);
 	});
+
+	it('names its parts unless given a description', () => {
+		const part = (type: string, description?: string): Command => ({
+			execute: vi.fn(),
+			undo: vi.fn(),
+			type,
+			description,
+			data: {},
+		});
+		const commands = [part('KnockOut', 'Knock Out'), part('Remove')];
+
+		expect(new CompositeCommand({ commands }).description).toBe(
+			'Knock Out + Remove'
+		);
+		expect(new CompositeCommand({ commands }, 'Slay').description).toBe('Slay');
+	});
 });

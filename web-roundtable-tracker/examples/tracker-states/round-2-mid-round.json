@@ -692,7 +692,7 @@
 					"uuid": "00000000-0000-4000-8000-000000000005",
 					"command": {
 						"type": "Command.CompositeCommand",
-						"description": "Composite Command",
+						"description": "Delay Character Command",
 						"data": {
 							"commands": [
 								{
@@ -762,7 +762,7 @@
 					"uuid": "00000000-0000-4000-8000-000000000010",
 					"command": {
 						"type": "Command.CompositeCommand",
-						"description": "Composite Command",
+						"description": "Delay Character Command",
 						"data": {
 							"commands": [
 								{
@@ -918,7 +918,7 @@
 					"uuid": "00000000-0000-4000-8000-000000000004",
 					"command": {
 						"type": "Command.CompositeCommand",
-						"description": "Composite Command",
+						"description": "Knock Out Character Command",
 						"data": {
 							"commands": [
 								{
@@ -1063,7 +1063,7 @@
 					"action": "end-turn",
 					"command": {
 						"type": "Command.CompositeCommand",
-						"description": "Composite Command",
+						"description": "End Turn Command + End Round Command",
 						"data": {
 							"commands": [
 								{
@@ -1767,7 +1767,7 @@
 					"uuid": "00000000-0000-4000-8000-000000000008",
 					"command": {
 						"type": "Command.CompositeCommand",
-						"description": "Composite Command",
+						"description": "Knock Out Character Command",
 						"data": {
 							"commands": [
 								{

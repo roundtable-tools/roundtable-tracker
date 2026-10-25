@@ -101,7 +101,28 @@ export const getChangeCharacterState = (
 	const errorMessage = validateCharacterStateChange(character, newState, deps);
 
 	if (errorMessage) return getFailureCommand(errorMessage);
-	else return new CompositeCommand({ commands });
+	else
+		return new CompositeCommand(
+			{ commands },
+			getStateChangeDescription(character.turnState, newState)
+		);
+};
+
+// Named like the single-step commands for the same change.
+const getStateChangeDescription = (
+	oldState: Character['turnState'],
+	newState: Character['turnState']
+) => {
+	switch (newState) {
+		case 'knocked-out':
+			return 'Knock Out Character Command';
+		case 'delayed':
+			return 'Delay Character Command';
+		case 'normal':
+			return oldState === 'delayed'
+				? 'Return to Initiative Command'
+				: 'Reactivate Character Command';
+	}
 };
 
 const validateCharacterStateChange = (
