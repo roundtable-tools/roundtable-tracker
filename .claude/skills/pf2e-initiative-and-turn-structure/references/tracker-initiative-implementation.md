@@ -80,7 +80,7 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 - **Disable is the hazard's K.O.** A disabled hazard has `turnState: 'knocked-out'` and goes through the same round action (`'ko'`) and transitions; only the names differ (`getOutOfFightNames`, `getParticipantStateLabel` in `store/trackerMappers.ts`): hazards are Disabled / Destroyed, everyone else Knocked Out / Slain, whatever took them out. A disabled complex hazard stays in the queue; a simple hazard only changes its `turnState`.
 - **0 HP or full disable checks** (`components/InitiativeTracker/takeOut.ts`): damage to 0 HP, or a disable success or correction that fills the checks, of a participant still in the fight knocks it out (disables a hazard) without asking, PCs and everyone else alike. Slay / Destroy stays a manual action. The HP or check change and the K.O. run as one `CompositeCommand`, so one undo takes back both.
 - **Coming back** (`BringBackNotice`): healing a knocked-out or disabled participant from 0 HP, or lowering its full disable checks, always asks (PCs too), since the tracker may not hold everything that keeps the participant out; the change and the answer run in one undo step. If another value is still at its take-out level (full checks after healing, 0 HP after lowering the checks), "Still Knocked Out?" / "Still Disabled?" keeps it out by default and offers "Also set HP to 1 / disable checks to X-1/X and reactivate". Otherwise "Reactivate?" brings it back by default and offers "Keep Knocked Out" / "Keep Disabled". The default never changes the other value, and the participant comes back only when no value is at its take-out level.
-- **Notices block the tracker** (`TimedNotice`): while the return prompt, the coming-back notice, the take-out notice or the resume-timer notice is open, nothing else on the page can be used. A click outside lands on a transparent backdrop and only gives the default answer, and keyboard focus stays in the notice. The change that opened a notice is held until it is answered, so no other change can run in between; there is only ever one notice. A take-out answer can open the return prompt, and K.O.s started in the card's slide delay queue up; the next take-out notice waits for the open one. A queued K.O. is dropped once its participant is gone or no longer out.
+- **Notices block the tracker** (`TimedNotice`): while the return prompt, the coming-back notice, the take-out notice or the resume-timer notice is open, nothing else on the page can be used. A click outside lands on a transparent backdrop and only gives the default answer, and keyboard focus stays in the notice. The change that opened a notice is held until it is answered (except a manual K.O., see "Exceptions kept for the animations" below), so no other change can run in between; there is only ever one notice. A card action whose slide delay ends while a notice or the round dialog is open is dropped (`blockingPromptOpenRef`); opening one sets that ref at once, so an action due in the same tick is dropped too. The take-out notice waits for the return prompt or the round dialog a K.O. opens, and is dropped once its participant is gone or no longer out.
 - **Manual Reactivate** sets every value at its take-out level back the same way (HP to 1, checks to one below full), in the same undo step.
 - **Manual K.O. / Disable** (swipe, the card's button, the Delaying and Hazards tabs) knocks out or disables at once (through the return prompt when it asks), then opens `TakeOutNotice` to ask what follows. Its default (timeout, close, Escape, and the last, dimmed button) follows the side (`getDefaultTakeOut`): opponents, hazards included, are Slain / Destroyed, PCs, allies and neutral participants stay Knocked Out / Disabled; the default changes no value. Buttons offer the other answer, and staying out with HP set to 0 (`ChangeHealthCommand`, temp HP included), the checks filled (`RecordDisableProgressCommand`) or both, for each value that would change (`getApplicableTakeOutEffects`). The answer runs through `amendLastCommand` (also through the return prompt, `ReturnPromptState.amend`), which records it in the K.O.'s undo step, so one Undo goes back to before the K.O. A per-participant default is #158.
 - `RecordDisableProgressCommand {uuid, delta | value}` only changes the success count (clamped to the required count), for any participant with one. It never changes the turn state; the tracker page decides about taking out or bringing back.
@@ -93,6 +93,32 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 - Knocked-out participants keep getting a turn every round, which fits recovery checks; the GM passes the turn.
 - `ChangeHealthCommand` itself doesn't knock out at 0 HP; the tracker page adds the K.O. (see above).
 - `RemoveCharacterCommand` ("Slay", "Destroy" for a hazard) deletes the participant from the map, both orders and the turn Set. When the participant is the current actor or the last one left to act (`removalEndsTurn`), `getRemoveCommand` (`roundActionCommand.ts`) ends its turn first through the round action (`'end-turn'`), in the same undo step, so the round goes on. The tracker uses it for Slay / Destroy and asks the return prompt first when someone is delaying.
+
+## Automation: necessary and sufficient conditions
+
+A rules condition the tracker can see is usually **necessary** for a state, not **sufficient**: the GM may know of an ability, a ruling or an effect the tracker doesn't hold. The tracker:
+
+- **acts without asking** only when a condition it sees is sufficient, or when a necessary condition stops holding (the state can't go on);
+- **asks** (a `TimedNotice`) when only a necessary condition is met, with the default that changes least;
+- **never** takes a participant out or brings it back on a guess beyond that.
+
+| Situation | Condition | Tracker |
+|---|---|---|
+| Damage to 0 HP, or disable checks filled | Positive HP and checks not full are necessary to stay active; one of them stops holding | K.O. / Disable without asking, in the change's undo step |
+| Healing from 0 HP, or lowering full checks | Necessary to come back, not sufficient | Always asks ("Reactivate?" / "Still Knocked Out?") |
+| Manual K.O. / Disable | The GM's decision is sufficient for the K.O.; whether the participant is slain and which values follow is not known | K.O. at once, then asks what follows (`TakeOutNotice`) |
+| A delayer's old spot comes up again (delayed a whole round) | Sufficient: the rules return it there | Returns without asking (`delayerReturningAfterTurn`) |
+| Another delayer at the end of a turn | Returning is the delayer's choice | Asks ("Return to Initiative?") |
+| Last participant with a turn ends it | Turn bookkeeping, not a judgement | Starts the next round without asking |
+
+When adding an automation, place it in this table first: name the condition, say whether it is necessary or sufficient, and ask whenever it is only necessary.
+
+### Exceptions kept for the animations
+
+The initiative cards animate an action before it runs, and these exceptions keep the animation truthful without giving up the lock:
+
+- **The card's slide delay.** A card button or swipe runs its action `actionTriggerMs` (about 100 ms) after the press, so the slide plays first. The action is dropped if a notice or the round dialog opened in that time (see "Notices block the tracker").
+- **K.O. before the question.** A manual K.O. / Disable runs before `TakeOutNotice` is answered, so the card's K.O. animation shows the change that really happened. That is the only change made before its notice is answered. The answer (stay out, with values to match, or slay) is recorded in the K.O.'s undo step through `amendLastCommand`, so one Undo returns to the state before the swipe.
 
 ## Reinforcements and hazards
 
