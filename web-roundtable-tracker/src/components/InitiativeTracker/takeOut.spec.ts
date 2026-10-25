@@ -113,6 +113,18 @@ describe('taking a participant out of the fight', () => {
 				'hp',
 			]);
 		});
+
+		it('leaves out HP at 0 even with temp HP left', () => {
+			store.setState({
+				charactersMap: {
+					...store.getState().charactersMap,
+					[HERO]: character(HERO, 0, 3),
+				},
+			});
+
+			expect(getApplicableTakeOutEffects(HERO, store.getState())).toEqual([]);
+			expect(getTakeOutEffectCommand(HERO, 'hp', store.getState())).toBeNull();
+		});
 	});
 
 	describe('getDefaultTakeOut', () => {

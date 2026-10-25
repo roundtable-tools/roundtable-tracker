@@ -62,16 +62,18 @@ export function getTakeOutEffects(
 	return effects;
 }
 
-/** Whether a take-out effect would change a value (HP above 0, checks not full). */
+/**
+ * Whether a take-out effect would change a value (HP above 0, checks not
+ * full). Temp HP doesn't count: 0 HP keeps a participant out whatever its
+ * temp HP (see getValuesAtTakeOutLevel).
+ */
 function takeOutEffectChanges(
 	uuid: UUID,
 	effect: TakeOutEffect,
 	{ charactersMap, trackerMetaMap }: TakeOutState
 ) {
 	if (effect === 'hp') {
-		const character = charactersMap[uuid];
-
-		return (character?.health ?? 0) + (character?.tempHealth ?? 0) > 0;
+		return (charactersMap[uuid]?.health ?? 0) > 0;
 	}
 
 	const meta = trackerMetaMap[uuid];
