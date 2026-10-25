@@ -142,6 +142,10 @@ export function InitiativeActionCarouselCard({
 	const TakeOutIcon = isHazard ? PowerOff : Ban;
 	const RemoveIcon = isHazard ? Hammer : Skull;
 	const koSideTitle = `${koSideLabel} ${participant.name}`;
+	// The slide delay runs the handler of the latest render, so the action is
+	// built from the state it lands on, not the state at the press.
+	const onSwipeActionRef = useRef(onSwipeAction);
+	onSwipeActionRef.current = onSwipeAction;
 	const swipeFlashTimeoutRef = useRef<number | null>(null);
 	const actionTriggerTimeoutRef = useRef<number | null>(null);
 	const swipeStateRef = useRef({
@@ -165,7 +169,7 @@ export function InitiativeActionCarouselCard({
 	}, []);
 
 	const registerSwipeInput = (action: SwipeAction) => {
-		if (!onSwipeAction(participant.id, action)) return;
+		if (!onSwipeActionRef.current(participant.id, action)) return;
 
 		setSwipeActionFlash(action);
 
