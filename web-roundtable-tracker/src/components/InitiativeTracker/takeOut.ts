@@ -62,6 +62,25 @@ export function getTakeOutEffects(
 	return effects;
 }
 
+/** Whether a take-out effect would change a value (HP above 0, checks not full). */
+function takeOutEffectChanges(
+	uuid: UUID,
+	effect: TakeOutEffect,
+	{ charactersMap, trackerMetaMap }: TakeOutState
+) {
+	if (effect === 'hp') {
+		const character = charactersMap[uuid];
+
+		return (character?.health ?? 0) + (character?.tempHealth ?? 0) > 0;
+	}
+
+	const meta = trackerMetaMap[uuid];
+
+	return Boolean(
+		meta && meta.disableChecksRequired > 0 && !hasFullDisableChecks(meta)
+	);
+}
+
 /**
  * The effects a manual K.O. or Disable can offer: those that would change a
  * value, e.g. not 'hp' for a participant already at 0 HP.
@@ -70,8 +89,8 @@ export function getApplicableTakeOutEffects(
 	uuid: UUID,
 	state: TakeOutState
 ): TakeOutEffect[] {
-	return getTakeOutEffects(uuid, state).filter(
-		(effect) => getTakeOutEffectCommand(uuid, effect, state) !== null
+	return getTakeOutEffects(uuid, state).filter((effect) =>
+		takeOutEffectChanges(uuid, effect, state)
 	);
 }
 
@@ -79,26 +98,24 @@ export function getApplicableTakeOutEffects(
 export function getTakeOutEffectCommand(
 	uuid: UUID,
 	effect: TakeOutEffect,
-	{ charactersMap, trackerMetaMap }: TakeOutState,
+	state: TakeOutState,
 	deps?: CommandDeps
 ): Command | null {
-	if (effect === 'hp') {
-		const character = charactersMap[uuid];
-		const hitPoints = (character?.health ?? 0) + (character?.tempHealth ?? 0);
+	if (!takeOutEffectChanges(uuid, effect, state)) return null;
 
-		return hitPoints > 0
-			? new ChangeHealthCommand({ uuid, delta: -hitPoints }, deps)
-			: null;
+	if (effect === 'hp') {
+		const character = state.charactersMap[uuid];
+
+		return new ChangeHealthCommand(
+			{ uuid, delta: -(character.health + character.tempHealth) },
+			deps
+		);
 	}
 
-	const meta = trackerMetaMap[uuid];
-
-	return meta && meta.disableChecksRequired > 0 && !hasFullDisableChecks(meta)
-		? new RecordDisableProgressCommand(
-				{ uuid, value: meta.disableChecksRequired },
-				deps
-			)
-		: null;
+	return new RecordDisableProgressCommand(
+		{ uuid, value: state.trackerMetaMap[uuid].disableChecksRequired },
+		deps
+	);
 }
 
 /**
