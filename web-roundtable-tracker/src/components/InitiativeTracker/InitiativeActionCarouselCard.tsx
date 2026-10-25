@@ -105,7 +105,8 @@ export function InitiativeActionCarouselCard({
 	selected: boolean;
 	onSelect: (id: string) => void;
 	isCurrent: boolean;
-	onSwipeAction: (participantId: string, action: SwipeAction) => void;
+	/** Returns false when the action was dropped (e.g. a notice is open). */
+	onSwipeAction: (participantId: string, action: SwipeAction) => boolean;
 	density: InitiativeCardDensity;
 	accent: ParticipantAccent;
 	indicatorLabel: string;
@@ -164,7 +165,8 @@ export function InitiativeActionCarouselCard({
 	}, []);
 
 	const registerSwipeInput = (action: SwipeAction) => {
-		onSwipeAction(participant.id, action);
+		if (!onSwipeAction(participant.id, action)) return;
+
 		setSwipeActionFlash(action);
 
 		if (swipeFlashTimeoutRef.current !== null) {

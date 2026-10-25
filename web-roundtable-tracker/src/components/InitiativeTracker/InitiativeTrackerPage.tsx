@@ -1,4 +1,12 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	type MutableRefObject,
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import Timeline from '@/components/InitiativeList/Timeline';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -887,6 +895,39 @@ type RoundAnnouncementState = {
 	focusCurrentOnClose: boolean;
 };
 
+/**
+ * The state of a prompt (a notice or the round dialog) that blocks card
+ * actions while it is set. Setting it adds `name` to `openPrompts` at once,
+ * before the render that shows it, so a card action that comes due in the
+ * same tick is dropped too. The name leaves when the setter clears it, or
+ * once a render commits the state as null (e.g. cleared while rendering); a
+ * render that hasn't caught up with the setter yet doesn't touch it.
+ */
+function useBlockingPromptState<T>(
+	name: string,
+	openPrompts: MutableRefObject<Set<string>>
+) {
+	const [value, setValue] = useState<T | null>(null);
+
+	useEffect(() => {
+		if (value === null) openPrompts.current.delete(name);
+	}, [name, openPrompts, value]);
+
+	const set = useCallback(
+		(next: T | null) => {
+			if (next === null) {
+				openPrompts.current.delete(name);
+			} else {
+				openPrompts.current.add(name);
+			}
+			setValue(next);
+		},
+		[name, openPrompts]
+	);
+
+	return [value, set] as const;
+}
+
 export function InitiativeTrackerPage() {
 	const { executeCommand, amendCommand, undo, redo, canUndo, canRedo } =
 		useContext(CommandHistoryContext);
@@ -1001,21 +1042,13 @@ export function InitiativeTrackerPage() {
 		string | null
 	>(storeInitiativeParticipants[0]?.id ?? null);
 	const [reorderOpen, setReorderOpen] = useState(false);
-	// Whether a notice or the round dialog is open (see blockingPromptOpen).
-	// Opening one sets it at once, before the render that shows it, so a card
-	// action that comes due in the same tick is dropped too.
-	const blockingPromptOpenRef = useRef(false);
-	const opensBlockingPrompt =
-		<T,>(set: (value: T | null) => void) =>
-		(value: T | null) => {
-			if (value !== null) blockingPromptOpenRef.current = true;
-			set(value);
-		};
-	const [nextRoundAnnouncement, setNextRoundAnnouncementState] =
-		useState<RoundAnnouncementState | null>(null);
-	const setNextRoundAnnouncement = opensBlockingPrompt(
-		setNextRoundAnnouncementState
-	);
+	// The notices and the round dialog that are open or about to open. A card
+	// runs its action after its slide animation, through the handler of the
+	// render that started it, so the handler reads this ref to drop an action
+	// that comes due while one is open: nothing changes until it is answered.
+	const openPromptsRef = useRef(new Set<string>());
+	const [nextRoundAnnouncement, setNextRoundAnnouncement] =
+		useBlockingPromptState<RoundAnnouncementState>('round', openPromptsRef);
 	const [pinnedMarkerRound, setPinnedMarkerRound] = useState<number | null>(
 		null
 	);
@@ -1039,15 +1072,14 @@ export function InitiativeTrackerPage() {
 		stillOut: TakeOutEffect[];
 		before: Command;
 	};
-	const [bringBackPrompt, setBringBackPromptState] =
-		useState<BringBackPromptState | null>(null);
-	const setBringBackPrompt = opensBlockingPrompt(setBringBackPromptState);
+	const [bringBackPrompt, setBringBackPrompt] =
+		useBlockingPromptState<BringBackPromptState>('bring-back', openPromptsRef);
 	// A manual K.O. / Disable waiting for the GM to pick what follows it
 	// (TakeOutNotice).
-	const [takeOutPromptId, setTakeOutPromptIdState] = useState<string | null>(
-		null
+	const [takeOutPromptId, setTakeOutPromptId] = useBlockingPromptState<string>(
+		'take-out',
+		openPromptsRef
 	);
-	const setTakeOutPromptId = opensBlockingPrompt(setTakeOutPromptIdState);
 	// Where in the history that K.O. is (or, behind the return prompt, will
 	// be) recorded. The round dialog it can open may record more steps before
 	// the notice is answered.
@@ -1063,9 +1095,8 @@ export function InitiativeTrackerPage() {
 			command
 		);
 	};
-	const [returnPrompt, setReturnPromptState] =
-		useState<ReturnPromptState | null>(null);
-	const setReturnPrompt = opensBlockingPrompt(setReturnPromptState);
+	const [returnPrompt, setReturnPrompt] =
+		useBlockingPromptState<ReturnPromptState>('return', openPromptsRef);
 
 	// Whose turn and which round the timer is on; when a new command (not an
 	// undo or redo) moves it on while the timer is paused, the GM is asked
@@ -1079,7 +1110,10 @@ export function InitiativeTrackerPage() {
 	const lastCommandRef = useRef(lastCommand);
 	// A redo moves the head of the redo stack back to the history.
 	const redoHeadRef = useRef(redoStack[0]);
-	const [resumePrompt, setResumePrompt] = useState<string | null>(null);
+	const [resumePrompt, setResumePrompt] = useBlockingPromptState<string>(
+		'resume',
+		openPromptsRef
+	);
 
 	useEffect(() => {
 		const isNewCommand =
@@ -1094,16 +1128,14 @@ export function InitiativeTrackerPage() {
 		lastTimerPositionRef.current = timerPosition;
 
 		if (isNewCommand && isTimerPaused && timerPosition) {
-			// Blocks card actions at once, like opensBlockingPrompt.
-			blockingPromptOpenRef.current = true;
 			setResumePrompt(timerPosition);
 		}
-	}, [timerPosition, isTimerPaused, lastCommand, redoStack]);
+	}, [timerPosition, isTimerPaused, lastCommand, redoStack, setResumePrompt]);
 
 	// A timer resumed some other way (e.g. the toolbar) answers the prompt.
 	useEffect(() => {
 		if (!isTimerPaused) setResumePrompt(null);
-	}, [isTimerPaused]);
+	}, [isTimerPaused, setResumePrompt]);
 	const [reorderDraftParticipants, setReorderDraftParticipants] = useState<
 		TrackerParticipant[]
 	>(storeInitiativeParticipants);
@@ -1513,7 +1545,7 @@ export function InitiativeTrackerPage() {
 	// Cleared while rendering, so a later K.O. of the same participant can't
 	// bring the notice back.
 	if (takeOutPromptId && !takeOutPromptParticipant) {
-		setTakeOutPromptIdState(null);
+		setTakeOutPromptId(null);
 	}
 
 	const showResumeNotice =
@@ -1524,29 +1556,13 @@ export function InitiativeTrackerPage() {
 		!takeOutPromptParticipant &&
 		// The round dialog traps the focus too; the notice waits for it.
 		nextRoundAnnouncement === null;
-	// Whether a notice or the round dialog is open. A card runs its action
-	// after its slide animation, through the handler of the render that
-	// started it, so the handler reads a ref to drop an action that comes due
-	// once one is open: nothing changes until it is answered.
-	const blockingPromptOpen = Boolean(
-		returnPrompt ||
-		bringBackPrompt ||
-		takeOutPromptParticipant ||
-		nextRoundAnnouncement ||
-		showResumeNotice
-	);
-	// Synced after every render, not only when the value changes: a prompt
-	// that never opens (e.g. the take-out notice of a K.O. that failed) set
-	// the ref while blockingPromptOpen stayed false.
-	useEffect(() => {
-		blockingPromptOpenRef.current = blockingPromptOpen;
-	});
 
+	/** Returns false when the action is dropped because a prompt is open. */
 	const handleParticipantSwipeAction = (
 		participantId: string,
 		action: SwipeAction
-	) => {
-		if (blockingPromptOpenRef.current) return;
+	): boolean => {
+		if (openPromptsRef.current.size > 0) return false;
 
 		// The K.O. runs at once; TakeOutNotice then asks what follows it.
 		if (action === 'ko') {
@@ -1555,7 +1571,7 @@ export function InitiativeTrackerPage() {
 			takeOutParticipant(participantId);
 			setTakeOutPromptId(participantId);
 
-			return;
+			return true;
 		}
 
 		if (action === 'reactivate') {
@@ -1567,16 +1583,18 @@ export function InitiativeTrackerPage() {
 				})
 			);
 
-			return;
+			return true;
 		}
 
 		if (action === 'slay') {
 			removeParticipant(participantId);
 
-			return;
+			return true;
 		}
 
 		takeOutParticipant(participantId, undefined, action);
+
+		return true;
 	};
 
 	// Brings a knocked-out or disabled participant back, with its `effects`
