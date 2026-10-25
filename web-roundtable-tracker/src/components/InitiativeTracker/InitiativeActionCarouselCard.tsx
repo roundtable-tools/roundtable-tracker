@@ -22,7 +22,6 @@ import {
 	showsDisableProgress,
 	type TrackerParticipant,
 } from '@/store/trackerMappers';
-import { getTakeOutTitle } from './takeOut';
 
 /** 'ko' and 'slay' are Disable and Destroy for a hazard. */
 export type SwipeAction = 'delay' | 'ko' | 'reactivate' | 'slay';
@@ -141,7 +140,7 @@ export function InitiativeActionCarouselCard({
 	const ReactivateIcon = isHazard ? Power : HeartPulse;
 	const TakeOutIcon = isHazard ? PowerOff : Ban;
 	const RemoveIcon = isHazard ? Hammer : Skull;
-	const koSideTitle = getTakeOutTitle(koSideLabel, participant.name);
+	const koSideTitle = `${koSideLabel} ${participant.name}`;
 	const swipeFlashTimeoutRef = useRef<number | null>(null);
 	const actionTriggerTimeoutRef = useRef<number | null>(null);
 	const swipeStateRef = useRef({

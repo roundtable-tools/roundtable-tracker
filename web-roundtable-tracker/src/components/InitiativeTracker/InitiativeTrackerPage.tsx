@@ -58,7 +58,6 @@ import {
 	getValuesAtTakeOutLevel,
 	healingLeavesZeroHp,
 	inOneUndoStep,
-	getTakeOutTitle,
 	type TakeOutEffect,
 } from './takeOut';
 import { ResumeTimerNotice } from './ResumeTimerNotice';
@@ -214,7 +213,7 @@ function OutOfFightRowActions({
 			size="sm"
 			variant="destructive"
 			className="h-7 px-2 text-xs"
-			title={getTakeOutTitle(names.takeOut, participant.name)}
+			title={`${names.takeOut} ${participant.name}`}
 			onClick={act('ko')}
 		>
 			{names.takeOutShort}
@@ -1095,6 +1094,8 @@ export function InitiativeTrackerPage() {
 		lastTimerPositionRef.current = timerPosition;
 
 		if (isNewCommand && isTimerPaused && timerPosition) {
+			// Blocks card actions at once, like opensBlockingPrompt.
+			blockingPromptOpenRef.current = true;
 			setResumePrompt(timerPosition);
 		}
 	}, [timerPosition, isTimerPaused, lastCommand, redoStack]);
@@ -1509,11 +1510,11 @@ export function InitiativeTrackerPage() {
 			)) ||
 		null;
 
-	useEffect(() => {
-		if (takeOutPromptId && !takeOutPromptParticipant) {
-			setTakeOutPromptIdState(null);
-		}
-	}, [takeOutPromptId, takeOutPromptParticipant]);
+	// Cleared while rendering, so a later K.O. of the same participant can't
+	// bring the notice back.
+	if (takeOutPromptId && !takeOutPromptParticipant) {
+		setTakeOutPromptIdState(null);
+	}
 
 	const showResumeNotice =
 		resumePrompt !== null &&
@@ -1631,13 +1632,11 @@ export function InitiativeTrackerPage() {
 	// The GM's answers to a manual K.O. / Disable (TakeOutNotice), which has
 	// already run: it stays, with the `effects` values set to match, or the
 	// participant is slain / destroyed. Either runs in the K.O.'s undo step.
-	const settleTakeOutPrompt = () => setTakeOutPromptId(null);
-
 	const handleTakeOutPromptTakeOut = (
 		participantId: string,
 		effects: TakeOutEffect[]
 	) => {
-		settleTakeOutPrompt();
+		setTakeOutPromptId(null);
 
 		const state = { charactersMap, trackerMetaMap };
 		const effectCommands = effects.map((effect) =>
@@ -1654,7 +1653,7 @@ export function InitiativeTrackerPage() {
 	};
 
 	const handleTakeOutPromptRemove = (participantId: string) => {
-		settleTakeOutPrompt();
+		setTakeOutPromptId(null);
 		removeParticipant(participantId, true);
 	};
 

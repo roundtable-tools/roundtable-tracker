@@ -29,10 +29,6 @@ export const TAKE_OUT_EFFECT_TEXT: Record<TakeOutEffect, string> = {
 	checks: 'fill the disable checks',
 };
 
-/** The title of a K.O. / Disable (or Slay / Destroy) button. */
-export const getTakeOutTitle = (action: string, name: string) =>
-	`${action} ${name}`;
-
 /**
  * The take-out notice's default answer: opponents (hazards included) are
  * slain or destroyed, everyone else is knocked out or disabled.
