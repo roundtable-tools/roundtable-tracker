@@ -11,10 +11,11 @@ import {
 } from './takeOut';
 
 /**
- * Asks how a manual K.O. or Disable takes a participant out: knocked out or
- * slain (disabled or destroyed for a hazard), and whether its `effects` values
- * are set to match. The default (see TimedNotice) follows the participant's
- * side (getDefaultTakeOut), is named in the title and changes no value.
+ * Asks what follows a manual K.O. or Disable, which has already run: the
+ * participant stays knocked out or is slain (disabled or destroyed for a
+ * hazard), and whether its `effects` values are set to match. The default
+ * (see TimedNotice) follows the participant's side (getDefaultTakeOut), is
+ * named in the title, changes no value, and has the least visible button.
  */
 export function TakeOutNotice({
 	participant,
@@ -29,6 +30,7 @@ export function TakeOutNotice({
 }) {
 	const names = getOutOfFightNames(participant);
 	const removeByDefault = getDefaultTakeOut(participant) === 'remove';
+	const takeOut = () => onTakeOut([]);
 	// Each value on its own, then all of them together.
 	const effectChoices =
 		effects.length > 1 ? [...effects.map((e) => [e]), effects] : [effects];
@@ -38,7 +40,7 @@ export function TakeOutNotice({
 			title={`${removeByDefault ? names.removedState : names.outState}?`}
 			description={`${participant.name} is out of the fight.`}
 			closeLabel={removeByDefault ? names.remove : names.takeOut}
-			onDismiss={removeByDefault ? onRemove : () => onTakeOut([])}
+			onDismiss={removeByDefault ? onRemove : takeOut}
 		>
 			{(settle) => (
 				<div className="grid gap-2">
@@ -46,9 +48,7 @@ export function TakeOutNotice({
 						size="sm"
 						variant={removeByDefault ? 'outline' : 'destructive'}
 						className="w-full"
-						onClick={() =>
-							settle(removeByDefault ? () => onTakeOut([]) : onRemove)
-						}
+						onClick={() => settle(removeByDefault ? takeOut : onRemove)}
 					>
 						{removeByDefault ? names.takeOut : names.remove}
 					</Button>
@@ -67,6 +67,14 @@ export function TakeOutNotice({
 									.join(' and ')}
 							</Button>
 						))}
+					<Button
+						size="sm"
+						variant="outline"
+						className="w-full text-muted-foreground"
+						onClick={() => settle(removeByDefault ? onRemove : takeOut)}
+					>
+						{removeByDefault ? names.remove : names.takeOut}
+					</Button>
 				</div>
 			)}
 		</TimedNotice>

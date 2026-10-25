@@ -889,9 +889,8 @@ type RoundAnnouncementState = {
 };
 
 export function InitiativeTrackerPage() {
-	const { executeCommand, undo, redo, canUndo, canRedo } = useContext(
-		CommandHistoryContext
-	);
+	const { executeCommand, amendLastCommand, undo, redo, canUndo, canRedo } =
+		useContext(CommandHistoryContext);
 	const charactersOrder = useEncounterStore((state) => state.charactersOrder);
 	const timer = useEncounterStore((state) => state.timer);
 	const setTimer = useEncounterStore((state) => state.setTimer);
@@ -1016,6 +1015,8 @@ export function InitiativeTrackerPage() {
 		before?: Command;
 		/** Runs last in the same undo step, e.g. removing a slain participant. */
 		after?: Command;
+		/** Runs in the same undo step as the last command (amendLastCommand). */
+		amend?: boolean;
 	};
 	// A knocked-out or disabled participant's `reason` value left its take-out
 	// level, while `stillOut` values may still be there. `before` is that
@@ -1184,6 +1185,7 @@ export function InitiativeTrackerPage() {
 		focusCurrentOnSuccess = false,
 		before,
 		after,
+		amend = false,
 	}: {
 		participantId: string;
 		/** `remove` is Slay / Destroy (see getRemoveCommand). */
@@ -1191,6 +1193,8 @@ export function InitiativeTrackerPage() {
 		focusCurrentOnSuccess?: boolean;
 		before?: Command;
 		after?: Command;
+		/** Runs in the same undo step as the last command (amendLastCommand). */
+		amend?: boolean;
 	}) => {
 		clearPinnedMarkerForCurrentRound();
 
@@ -1206,7 +1210,11 @@ export function InitiativeTrackerPage() {
 		);
 
 		try {
-			executeCommand(command);
+			if (amend) {
+				amendLastCommand(command);
+			} else {
+				executeCommand(command);
+			}
 
 			if (shouldAdvanceRound) {
 				const nextRoundState = getEncounterStore().getState();
@@ -1454,10 +1462,11 @@ export function InitiativeTrackerPage() {
 		}
 	}, [allParticipants, selectedParticipantId]);
 
-	// A queued K.O. / Disable is asked only while its participant is still in
-	// the tracker and not already out (e.g. dropped to 0 HP in between).
-	// A delayer is listed twice in allParticipants (the order and the Delaying
-	// tab), so each id takes only its first match.
+	// A queued K.O. / Disable is asked once its participant is knocked out (or
+	// disabled), and dropped once it is gone or no longer out. A K.O. held by
+	// the return prompt waits for it. A delayer is listed twice in
+	// allParticipants (the order and the Delaying tab), so each id takes only
+	// its first match.
 	const takeOutCandidates = useMemo(() => {
 		if (takeOutPromptIds.length === 0) return [];
 
@@ -1470,11 +1479,13 @@ export function InitiativeTrackerPage() {
 		return takeOutPromptIds.flatMap((id) => {
 			const participant = byId.get(id);
 
-			return participant && participant.state !== 'knocked-out'
+			return participant &&
+				(participant.state === 'knocked-out' ||
+					returnPrompt?.participantId === id)
 				? [participant]
 				: [];
 		});
-	}, [allParticipants, takeOutPromptIds]);
+	}, [allParticipants, takeOutPromptIds, returnPrompt]);
 	const takeOutPromptParticipant = takeOutCandidates[0] ?? null;
 
 	useEffect(() => {
@@ -1487,7 +1498,9 @@ export function InitiativeTrackerPage() {
 		participantId: string,
 		action: SwipeAction
 	) => {
+		// The K.O. runs at once; TakeOutNotice then asks what follows it.
 		if (action === 'ko') {
+			takeOutParticipant(participantId);
 			setTakeOutPromptIds((ids) =>
 				ids.includes(participantId) ? ids : [...ids, participantId]
 			);
@@ -1544,8 +1557,9 @@ export function InitiativeTrackerPage() {
 
 	// Slay, or Destroy for a hazard: the participant leaves the initiative,
 	// ending its turn first when it has to (see getRemoveCommand). Ending the
-	// current turn first asks whether a delaying participant returns.
-	const removeParticipant = (participantId: string) => {
+	// current turn first asks whether a delaying participant returns. With
+	// `amend`, it runs in the same undo step as the last command.
+	const removeParticipant = (participantId: string, amend = false) => {
 		if (
 			participantId === currentInitiativeParticipantId &&
 			removalEndsTurn(participantId, roundState) &&
@@ -1556,16 +1570,18 @@ export function InitiativeTrackerPage() {
 				action: 'end-turn',
 				focusCurrentOnSuccess: true,
 				after: new RemoveCharacterCommand({ uuid: participantId }),
+				amend,
 			});
 
 			return;
 		}
 
-		executeRoundAction({ participantId, action: 'remove' });
+		executeRoundAction({ participantId, action: 'remove', amend });
 	};
 
-	// The GM's answers to a manual K.O. / Disable (TakeOutNotice): taken out
-	// with the `effects` values set to match, or slain / destroyed.
+	// The GM's answers to a manual K.O. / Disable (TakeOutNotice), which has
+	// already run: it stays, with the `effects` values set to match, or the
+	// participant is slain / destroyed. Either runs in the K.O.'s undo step.
 	const settleTakeOutPrompt = (participantId: string) =>
 		setTakeOutPromptIds((ids) => ids.filter((id) => id !== participantId));
 
@@ -1580,17 +1596,18 @@ export function InitiativeTrackerPage() {
 			getTakeOutEffectCommand(participantId, effect, state)
 		);
 
-		takeOutParticipant(
-			participantId,
-			effectCommands.some(Boolean)
-				? inOneUndoStep(...effectCommands)
-				: undefined
-		);
+		if (!effectCommands.some(Boolean)) return;
+
+		try {
+			amendLastCommand(inOneUndoStep(...effectCommands));
+		} catch (error) {
+			console.error('Failed to apply the take-out values', error);
+		}
 	};
 
 	const handleTakeOutPromptRemove = (participantId: string) => {
 		settleTakeOutPrompt(participantId);
-		removeParticipant(participantId);
+		removeParticipant(participantId, true);
 	};
 
 	// K.O., or Disable for a hazard (and Delay, which ends the turn the same
@@ -1663,22 +1680,26 @@ export function InitiativeTrackerPage() {
 			return;
 		}
 
-		const { participantId, action, before, after } = returnPrompt;
+		const { participantId, action, before, after, amend } = returnPrompt;
 		setReturnPrompt(null);
 		clearPinnedMarkerForCurrentRound();
 
 		try {
-			executeCommand(
-				inOneUndoStep(
-					before,
-					new ReturnToInitiativeCommand({
-						activeUuid: participantId,
-						returningUuid: returningParticipantId,
-						action,
-					}),
-					after
-				)
+			const command = inOneUndoStep(
+				before,
+				new ReturnToInitiativeCommand({
+					activeUuid: participantId,
+					returningUuid: returningParticipantId,
+					action,
+				}),
+				after
 			);
+
+			if (amend) {
+				amendLastCommand(command);
+			} else {
+				executeCommand(command);
+			}
 			queueFocusCurrentParticipant();
 		} catch (error) {
 			console.error('Failed to return to initiative', error);
@@ -1690,8 +1711,14 @@ export function InitiativeTrackerPage() {
 			return;
 		}
 
-		const { participantId, action, focusCurrentOnSuccess, before, after } =
-			returnPrompt;
+		const {
+			participantId,
+			action,
+			focusCurrentOnSuccess,
+			before,
+			after,
+			amend,
+		} = returnPrompt;
 		setReturnPrompt(null);
 
 		executeRoundAction({
@@ -1700,6 +1727,7 @@ export function InitiativeTrackerPage() {
 			focusCurrentOnSuccess,
 			before,
 			after,
+			amend,
 		});
 	};
 

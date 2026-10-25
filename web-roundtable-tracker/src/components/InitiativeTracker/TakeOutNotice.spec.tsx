@@ -24,6 +24,7 @@ describe('TakeOutNotice', () => {
 		expect(markup).toContain('Slain?');
 		expect(markup).toContain('aria-label="Slay"');
 		expect(markup).toContain('>Knock Out</button>');
+		expect(markup).toMatch(/text-muted-foreground[^>]*>Slay<\/button><\/div>/);
 		expect(markup).toContain('>Knock Out and set HP to 0</button>');
 		expect(markup).toContain('>Knock Out and fill the disable checks</button>');
 		expect(markup).toContain(
@@ -42,6 +43,9 @@ describe('TakeOutNotice', () => {
 		expect(markup).toContain('Knocked Out?');
 		expect(markup).toContain('aria-label="Knock Out"');
 		expect(markup).toContain('>Slay</button>');
+		expect(markup).toMatch(
+			/text-muted-foreground[^>]*>Knock Out<\/button><\/div>/
+		);
 		expect(markup).toContain('>Knock Out and set HP to 0</button>');
 	});
 
@@ -60,6 +64,9 @@ describe('TakeOutNotice', () => {
 		expect(markup).toContain('Destroyed?');
 		expect(markup).toContain('aria-label="Destroy"');
 		expect(markup).toContain('>Disable</button>');
+		expect(markup).toMatch(
+			/text-muted-foreground[^>]*>Destroy<\/button><\/div>/
+		);
 		expect(markup).not.toContain('Disable and');
 	});
 });
