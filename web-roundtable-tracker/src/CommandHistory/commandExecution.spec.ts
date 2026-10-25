@@ -12,8 +12,10 @@ import { getEncounterStore } from '@/store/encounterRuntimeInstance';
 import { Character } from '@/store/data';
 import { getElapsed } from '@/store/encounterTimer';
 import { getRoundActionCommand } from '@/components/InitiativeTracker/roundActionCommand';
+import { ChangeHealthCommand } from './Commands/ChangeHealthCommand';
 import { ReorderCharactersCommand } from './Commands/ReorderCharactersCommand';
 import {
+	amendCommand,
 	executeCommand,
 	redoNextCommand,
 	undoLastCommand,
@@ -178,5 +180,83 @@ describe('command execution with the encounter timer', () => {
 		);
 
 		expect(timer()).toBe(before);
+	});
+
+	it('runs an amended command in the same undo step as its step', () => {
+		const health = () => store.getState().charactersMap.goblin.health;
+
+		endTurn(30 * SECOND);
+		amendCommand(
+			store,
+			store.getState().history.at(-1),
+			new ChangeHealthCommand(
+				{ uuid: 'goblin', delta: -4 },
+				{ encounterStore: store }
+			),
+			40 * SECOND
+		);
+
+		expect(store.getState().history).toHaveLength(1);
+		expect(health()).toBe(6);
+
+		undoLastCommand(store, 50 * SECOND);
+
+		expect(store.getState().history).toHaveLength(0);
+		expect(store.getState().charactersOrder[0]).toBe('hero');
+		expect(health()).toBe(10);
+
+		redoNextCommand(store, 60 * SECOND);
+
+		expect(store.getState().charactersOrder[0]).toBe('goblin');
+		expect(health()).toBe(6);
+	});
+
+	it('records an amended command as its own step once its step is not the last', () => {
+		const health = () => store.getState().charactersMap.goblin.health;
+
+		endTurn(30 * SECOND);
+		const step = store.getState().history.at(-1);
+		endTurn(40 * SECOND);
+		amendCommand(
+			store,
+			step,
+			new ChangeHealthCommand(
+				{ uuid: 'goblin', delta: -4 },
+				{ encounterStore: store }
+			),
+			50 * SECOND
+		);
+
+		expect(store.getState().history).toHaveLength(3);
+		expect(store.getState().history[0]).toBe(step);
+
+		undoLastCommand(store, 60 * SECOND);
+
+		expect(store.getState().history).toHaveLength(2);
+		expect(health()).toBe(10);
+	});
+
+	it('records an amended command that moves the turn as its own step', () => {
+		endTurn(30 * SECOND);
+		const step = store.getState().history.at(-1);
+		amendCommand(
+			store,
+			step,
+			getRoundActionCommand('goblin', 'end-turn', store.getState(), {
+				encounterStore: store,
+			}),
+			50 * SECOND
+		);
+
+		expect(store.getState().history).toHaveLength(2);
+		expect(store.getState().history[0]).toBe(step);
+
+		undoLastCommand(store, 60 * SECOND);
+
+		expect(store.getState().history).toEqual([step]);
+		expect(timer()).toMatchObject({
+			turnParticipantId: 'goblin',
+			turnLog: [{ participantId: 'hero', round: 1, durationMs: 30 * SECOND }],
+		});
 	});
 });

@@ -54,5 +54,6 @@ Read the section you need; both files have a table of contents or headings. For 
 
 - Model turn-flow changes as registered, undoable commands with a spec. See the implementation file's "Command history" section.
 - Check the "Known quirks" list before you assume a behaviour is intended.
+- Before automating a state change (take out, bring back, return, next round), place it in the implementation file's "Automation: necessary and sufficient conditions" table: act only on a sufficient condition or a broken necessary one, otherwise ask.
 - When the rules are silent (reinforcements, multi-slot bosses, ties between two tie-winners), the app has to choose. Say in the code or ticket that the choice is a house rule.
 - Keep [tracker-initiative-implementation.md](references/tracker-initiative-implementation.md) in sync when the turn flow changes.

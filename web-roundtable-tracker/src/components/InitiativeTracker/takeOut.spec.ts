@@ -18,7 +18,9 @@ import {
 	damageDropsToZeroHp,
 	disableProgressFillsChecks,
 	disableProgressLeavesFullChecks,
+	getApplicableTakeOutEffects,
 	getBringBackEffectCommand,
+	getDefaultTakeOut,
 	getOtherValuesAtTakeOutLevel,
 	getTakeOutEffectCommand,
 	getTakeOutEffects,
@@ -92,6 +94,54 @@ describe('taking a participant out of the fight', () => {
 			expect(getTakeOutEffects(HERO, state)).toEqual(['hp']);
 			expect(getTakeOutEffects(TRAP, state)).toEqual(['checks']);
 			expect(getTakeOutEffects(GHOST, state)).toEqual([]);
+		});
+	});
+
+	describe('getApplicableTakeOutEffects', () => {
+		it('leaves out values already at their take-out level', () => {
+			store.setState({
+				charactersMap: {
+					...store.getState().charactersMap,
+					[CLOCKWORK]: character(CLOCKWORK, 0),
+				},
+			});
+
+			expect(getApplicableTakeOutEffects(CLOCKWORK, store.getState())).toEqual([
+				'checks',
+			]);
+			expect(getApplicableTakeOutEffects(HERO, store.getState())).toEqual([
+				'hp',
+			]);
+		});
+
+		it('leaves out HP at 0 even with temp HP left', () => {
+			store.setState({
+				charactersMap: {
+					...store.getState().charactersMap,
+					[HERO]: character(HERO, 0, 3),
+				},
+			});
+
+			expect(getApplicableTakeOutEffects(HERO, store.getState())).toEqual([]);
+			expect(getTakeOutEffectCommand(HERO, 'hp', store.getState())).toBeNull();
+		});
+	});
+
+	describe('getDefaultTakeOut', () => {
+		it('slays or destroys opponents and knocks out everyone else', () => {
+			expect(
+				getDefaultTakeOut({ role: 'opponent', sideTheme: 'opponent' })
+			).toBe('remove');
+			expect(getDefaultTakeOut({ role: 'hazard', sideTheme: 'opponent' })).toBe(
+				'remove'
+			);
+			expect(getDefaultTakeOut({ role: 'pc', sideTheme: 'pc' })).toBe('out');
+			expect(getDefaultTakeOut({ role: 'ally', sideTheme: 'ally' })).toBe(
+				'out'
+			);
+			expect(getDefaultTakeOut({ role: 'neutral', sideTheme: 'neutral' })).toBe(
+				'out'
+			);
 		});
 	});
 

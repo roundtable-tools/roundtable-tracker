@@ -2,13 +2,23 @@ import { Command, STATUS } from '../common';
 
 /**
  * Runs its parts as one step. If a part fails, the parts that already ran are
- * rolled back, so a failed composite leaves the state unchanged.
+ * rolled back, so a failed composite leaves the state unchanged. Its
+ * description names its parts unless one is given.
  */
 export class CompositeCommand implements Command {
 	readonly type = 'CompositeCommand';
-	description = 'Composite Command';
+	description: string;
 
-	constructor(public data: { commands: Command[] }) {}
+	constructor(
+		public data: { commands: Command[] },
+		description?: string
+	) {
+		this.description =
+			description ??
+			data.commands
+				.map((command) => command.description ?? command.type)
+				.join(' + ');
+	}
 
 	execute() {
 		const executed: Command[] = [];

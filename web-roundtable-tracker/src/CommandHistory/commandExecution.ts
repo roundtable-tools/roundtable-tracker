@@ -7,6 +7,7 @@ import {
 	type TurnPosition,
 } from '@/store/encounterTimer';
 import { type StoreApi } from 'zustand/vanilla';
+import { CompositeCommand } from './Commands/CompositeCommand';
 import { Command, STATUS } from './common';
 
 type EncounterStoreApi = StoreApi<EncounterStore>;
@@ -76,7 +77,11 @@ const runForward = (
 	store: EncounterStoreApi,
 	command: Command,
 	redoStack: (prev: Command[]) => Command[],
-	now: number
+	now: number,
+	record: (history: Command[], command: Command) => Command[] = (
+		history,
+		done
+	) => [...history, done]
 ) => {
 	const hadTurn = timedParticipantHasTurn(store.getState());
 
@@ -85,7 +90,7 @@ const runForward = (
 	const state = store.getState();
 
 	store.setState({
-		history: [...state.history, command],
+		history: record(state.history, command),
 		redoStack: redoStack(state.redoStack),
 		timer: movedTimer(state, 'forward', timedTurnEnded(state, hadTurn), now),
 	});
@@ -100,6 +105,47 @@ export const executeCommand = (
 	now = Date.now()
 ) => {
 	if (!runForward(store, command, () => [], now)) {
+		throw new Error('Failed to execute command');
+	}
+};
+
+/**
+ * Runs a command in the same undo step as `step`, so one undo takes back both
+ * (e.g. the GM's answer to a K.O. that already ran). They can only share a
+ * step while `step` is the last one recorded and the command doesn't move
+ * the turn or the round (an undo rewinds the timer only once); otherwise the
+ * command is recorded as a step of its own. Throws when it fails.
+ */
+export const amendCommand = (
+	store: EncounterStoreApi,
+	step: Command | undefined,
+	command: Command,
+	now = Date.now()
+) => {
+	const before = getTurnPosition(store.getState());
+	const keepsTurn = () => {
+		const after = getTurnPosition(store.getState());
+
+		return (
+			after.participantId === before.participantId &&
+			after.round === before.round
+		);
+	};
+	const amended = runForward(
+		store,
+		command,
+		() => [],
+		now,
+		(history, done) =>
+			step && history.at(-1) === step && keepsTurn()
+				? [
+						...history.slice(0, -1),
+						new CompositeCommand({ commands: [step, done] }),
+					]
+				: [...history, done]
+	);
+
+	if (!amended) {
 		throw new Error('Failed to execute command');
 	}
 };
