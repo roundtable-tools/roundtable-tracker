@@ -900,8 +900,9 @@ type RoundAnnouncementState = {
  * actions while it is set. Setting it adds `name` to `openPrompts` at once,
  * before the render that shows it, so a card action that comes due in the
  * same tick is dropped too. The name leaves when the setter clears it, or
- * once a render commits the state as null (e.g. cleared while rendering); a
- * render that hasn't caught up with the setter yet doesn't touch it.
+ * once a render commits the state as null; a render that hasn't caught up
+ * with the setter yet doesn't touch it. Call the setter from handlers and
+ * effects, not while rendering.
  */
 function useBlockingPromptState<T>(
 	name: string,
@@ -1060,8 +1061,6 @@ export function InitiativeTrackerPage() {
 		before?: Command;
 		/** Runs last in the same undo step, e.g. removing a slain participant. */
 		after?: Command;
-		/** Runs in the same undo step as the K.O. the take-out notice asks about. */
-		amend?: boolean;
 	};
 	// A knocked-out or disabled participant's `reason` value left its take-out
 	// level, while `stillOut` values may still be there. `before` is that
@@ -1542,11 +1541,13 @@ export function InitiativeTrackerPage() {
 			)) ||
 		null;
 
-	// Cleared while rendering, so a later K.O. of the same participant can't
-	// bring the notice back.
-	if (takeOutPromptId && !takeOutPromptParticipant) {
-		setTakeOutPromptId(null);
-	}
+	// Until it is cleared, the prompt still blocks card actions, so a later
+	// K.O. of the same participant can't bring the notice back.
+	useEffect(() => {
+		if (takeOutPromptId && !takeOutPromptParticipant) {
+			setTakeOutPromptId(null);
+		}
+	}, [takeOutPromptId, takeOutPromptParticipant, setTakeOutPromptId]);
 
 	const showResumeNotice =
 		resumePrompt !== null &&
@@ -1626,7 +1627,9 @@ export function InitiativeTrackerPage() {
 	// Slay, or Destroy for a hazard: the participant leaves the initiative,
 	// ending its turn first when it has to (see getRemoveCommand). Ending the
 	// current turn first asks whether a delaying participant returns. With
-	// `amend`, it runs in the same undo step as the last command.
+	// `amend`, it runs in the same undo step as the K.O. the take-out notice
+	// asks about; one that ends the turn ends up as a step of its own anyway
+	// (see amendCommand), so the return prompt doesn't amend.
 	const removeParticipant = (participantId: string, amend = false) => {
 		if (
 			participantId === currentInitiativeParticipantId &&
@@ -1638,7 +1641,6 @@ export function InitiativeTrackerPage() {
 				action: 'end-turn',
 				focusCurrentOnSuccess: true,
 				after: new RemoveCharacterCommand({ uuid: participantId }),
-				amend,
 			});
 
 			return;
@@ -1745,26 +1747,22 @@ export function InitiativeTrackerPage() {
 			return;
 		}
 
-		const { participantId, action, before, after, amend } = returnPrompt;
+		const { participantId, action, before, after } = returnPrompt;
 		setReturnPrompt(null);
 		clearPinnedMarkerForCurrentRound();
 
 		try {
-			const command = inOneUndoStep(
-				before,
-				new ReturnToInitiativeCommand({
-					activeUuid: participantId,
-					returningUuid: returningParticipantId,
-					action,
-				}),
-				after
+			executeCommand(
+				inOneUndoStep(
+					before,
+					new ReturnToInitiativeCommand({
+						activeUuid: participantId,
+						returningUuid: returningParticipantId,
+						action,
+					}),
+					after
+				)
 			);
-
-			if (amend) {
-				amendTakeOutStep(command);
-			} else {
-				executeCommand(command);
-			}
 			queueFocusCurrentParticipant();
 		} catch (error) {
 			console.error('Failed to return to initiative', error);
@@ -1776,14 +1774,8 @@ export function InitiativeTrackerPage() {
 			return;
 		}
 
-		const {
-			participantId,
-			action,
-			focusCurrentOnSuccess,
-			before,
-			after,
-			amend,
-		} = returnPrompt;
+		const { participantId, action, focusCurrentOnSuccess, before, after } =
+			returnPrompt;
 		setReturnPrompt(null);
 
 		executeRoundAction({
@@ -1792,7 +1784,6 @@ export function InitiativeTrackerPage() {
 			focusCurrentOnSuccess,
 			before,
 			after,
-			amend,
 		});
 	};
 
