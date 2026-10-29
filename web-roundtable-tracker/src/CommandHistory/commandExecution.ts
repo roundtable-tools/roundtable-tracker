@@ -31,6 +31,16 @@ const timedParticipantHasTurn = (state: EncounterStore) => {
 };
 
 /**
+ * The name of the participant the timer is on, for its turn's log entry.
+ * Read before a command runs: Slay / Destroy removes the participant.
+ */
+const timedParticipantName = (state: EncounterStore) => {
+	const participantId = state.timer?.turnParticipantId;
+
+	return participantId ? (state.charactersMap[participantId]?.name ?? '') : '';
+};
+
+/**
  * Whether the command ended the turn the timer is on: its participant had a
  * turn and used it up (ending it or delaying), left the order (e.g. knocked
  * out) or the round ended with it. A reorder that only moves someone else on
@@ -48,11 +58,15 @@ const timedTurnEnded = (state: EncounterStore, hadTurn: boolean) => {
 	);
 };
 
-/** The timer after a command changed whose turn it is or the round. */
+/**
+ * The timer after a command changed whose turn it is or the round.
+ * `endedTurnName` names the turn the command ended, or is null when it
+ * ended none.
+ */
 const movedTimer = (
 	state: EncounterStore,
 	direction: 'forward' | 'back',
-	turnEnded: boolean,
+	endedTurnName: string | null,
 	now: number
 ): EncounterTimer | null => {
 	const position = getTurnPosition(state);
@@ -63,7 +77,7 @@ const movedTimer = (
 	}
 
 	return direction === 'forward'
-		? advanceTimer(timer, position, now, turnEnded)
+		? advanceTimer(timer, position, now, endedTurnName)
 		: rewindTimer(timer, position, now);
 };
 
@@ -83,7 +97,9 @@ const runForward = (
 		done
 	) => [...history, done]
 ) => {
-	const hadTurn = timedParticipantHasTurn(store.getState());
+	const before = store.getState();
+	const hadTurn = timedParticipantHasTurn(before);
+	const timedName = timedParticipantName(before);
 
 	if (command.execute() === STATUS.failure) return false;
 
@@ -92,7 +108,12 @@ const runForward = (
 	store.setState({
 		history: record(state.history, command),
 		redoStack: redoStack(state.redoStack),
-		timer: movedTimer(state, 'forward', timedTurnEnded(state, hadTurn), now),
+		timer: movedTimer(
+			state,
+			'forward',
+			timedTurnEnded(state, hadTurn) ? timedName : null,
+			now
+		),
 	});
 
 	return true;
@@ -167,7 +188,7 @@ export const undoLastCommand = (store: EncounterStoreApi, now = Date.now()) => {
 	store.setState({
 		history: state.history.slice(0, -1),
 		redoStack: [lastCommand, ...state.redoStack],
-		timer: movedTimer(state, 'back', false, now),
+		timer: movedTimer(state, 'back', null, now),
 	});
 };
 

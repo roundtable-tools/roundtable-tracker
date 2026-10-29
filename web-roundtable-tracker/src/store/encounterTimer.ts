@@ -1,8 +1,13 @@
 import { type UUID } from '@/utils/uuid';
 
-/** A finished turn: whose it was, in which round, and how long it took. */
+/**
+ * A finished turn: whose it was, in which round, and how long it took. The
+ * name is the one the participant had then, so the turn keeps it after the
+ * participant leaves the encounter.
+ */
 export type TurnLogEntry = {
 	participantId: UUID;
+	name: string;
 	round: number;
 	durationMs: number;
 };
@@ -57,14 +62,14 @@ export const getElapsed = (timer: EncounterTimer, now: number) => ({
 
 /**
  * Moves the timer to a new position after a tracker action: logs the turn
- * that ended (unless `logEndedTurn` is false, e.g. for a participant skipped
- * because it already acted) and, when the round changed, the round.
+ * that ended under `endedTurnName` (unless it is null, e.g. for a participant
+ * skipped because it already acted) and, when the round changed, the round.
  */
 export const advanceTimer = (
 	timer: EncounterTimer,
 	position: TurnPosition,
 	now: number,
-	logEndedTurn = true
+	endedTurnName: string | null
 ): EncounterTimer => {
 	if (isSamePosition(timer, position)) return timer;
 
@@ -78,11 +83,12 @@ export const advanceTimer = (
 		turnParticipantId: position.participantId,
 		turnStartedAt: at,
 		turnLog:
-			timer.turnParticipantId && logEndedTurn
+			timer.turnParticipantId && endedTurnName !== null
 				? [
 						...timer.turnLog,
 						{
 							participantId: timer.turnParticipantId,
+							name: endedTurnName,
 							round: timer.round,
 							durationMs: at - timer.turnStartedAt,
 						},
@@ -158,6 +164,8 @@ export const resumeTimer = (
 
 export type ParticipantTurnStats = {
 	participantId: UUID;
+	/** The name logged with the participant's latest turn. */
+	name: string;
 	turns: number;
 	totalMs: number;
 	averageMs: number;
@@ -170,15 +178,17 @@ export const getTurnStats = (
 ): ParticipantTurnStats[] => {
 	const byParticipant = new Map<UUID, ParticipantTurnStats>();
 
-	for (const { participantId, durationMs } of turnLog) {
+	for (const { participantId, name, durationMs } of turnLog) {
 		const stats = byParticipant.get(participantId) ?? {
 			participantId,
+			name,
 			turns: 0,
 			totalMs: 0,
 			averageMs: 0,
 			longestMs: 0,
 		};
 
+		stats.name = name;
 		stats.turns += 1;
 		stats.totalMs += durationMs;
 		stats.longestMs = Math.max(stats.longestMs, durationMs);

@@ -6,7 +6,9 @@ import { getSideAccent } from './sideAccent';
 /**
  * Finished turns per participant (count, average, longest, total), totals
  * for PCs and GM-owned participants, and the length of each finished round.
- * The turn in progress isn't counted until it ends.
+ * The turn in progress isn't counted until it ends. A participant that left
+ * the encounter (Slay / Destroy) keeps the name logged with its turns and
+ * reads as removed.
  */
 export function TurnStatsPanel() {
 	const timer = useEncounterStore((state) => state.timer);
@@ -17,7 +19,8 @@ export function TurnStatsPanel() {
 		() =>
 			getTurnStats(timer?.turnLog ?? []).map((stats) => ({
 				...stats,
-				name: charactersMap[stats.participantId]?.name ?? 'Removed',
+				name: charactersMap[stats.participantId]?.name ?? stats.name,
+				removed: !(stats.participantId in charactersMap),
 				sideTheme: trackerMetaMap[stats.participantId]?.sideTheme ?? 'other',
 			})),
 		[timer?.turnLog, charactersMap, trackerMetaMap]
@@ -65,6 +68,9 @@ export function TurnStatsPanel() {
 						>
 							<td className={`py-1 ${getSideAccent(row.sideTheme).name}`}>
 								{row.name}
+								{row.removed && (
+									<span className="text-muted-foreground"> (removed)</span>
+								)}
 							</td>
 							<td className="py-1 text-right">{row.turns}</td>
 							<td className="py-1 text-right">
