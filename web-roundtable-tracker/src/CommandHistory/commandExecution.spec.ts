@@ -13,6 +13,7 @@ import { Character } from '@/store/data';
 import { getElapsed } from '@/store/encounterTimer';
 import { getRoundActionCommand } from '@/components/InitiativeTracker/roundActionCommand';
 import { ChangeHealthCommand } from './Commands/ChangeHealthCommand';
+import { RemoveCharacterCommand } from './Commands/RemoveCharacterCommand';
 import { ReorderCharactersCommand } from './Commands/ReorderCharactersCommand';
 import {
 	amendCommand,
@@ -83,8 +84,18 @@ describe('command execution with the encounter timer', () => {
 		endTurn(50 * SECOND);
 
 		expect(timer().turnLog).toEqual([
-			{ participantId: 'hero', round: 1, durationMs: 30 * SECOND },
-			{ participantId: 'goblin', round: 1, durationMs: 20 * SECOND },
+			{
+				participantId: 'hero',
+				name: 'hero',
+				round: 1,
+				durationMs: 30 * SECOND,
+			},
+			{
+				participantId: 'goblin',
+				name: 'goblin',
+				round: 1,
+				durationMs: 20 * SECOND,
+			},
 		]);
 		expect(timer().roundLog).toEqual([{ round: 1, durationMs: 50 * SECOND }]);
 		expect(timer()).toMatchObject({ round: 2, turnParticipantId: 'hero' });
@@ -101,7 +112,12 @@ describe('command execution with the encounter timer', () => {
 		redoNextCommand(store, 110 * SECOND);
 
 		expect(timer().turnLog).toEqual([
-			{ participantId: 'hero', round: 1, durationMs: 40 * SECOND },
+			{
+				participantId: 'hero',
+				name: 'hero',
+				round: 1,
+				durationMs: 40 * SECOND,
+			},
 		]);
 	});
 
@@ -165,6 +181,30 @@ describe('command execution with the encounter timer', () => {
 		const recorded = states.find((state) => state.history.length === 1);
 
 		expect(recorded?.timer?.turnParticipantId).toBe('goblin');
+	});
+
+	it('logs the turn of a participant slain on its turn under its name', () => {
+		executeCommand(
+			store,
+			new RemoveCharacterCommand({ uuid: 'hero' }, { encounterStore: store }),
+			30 * SECOND
+		);
+
+		expect(store.getState().charactersMap.hero).toBeUndefined();
+		expect(timer().turnLog).toEqual([
+			{
+				participantId: 'hero',
+				name: 'hero',
+				round: 1,
+				durationMs: 30 * SECOND,
+			},
+		]);
+
+		undoLastCommand(store, 40 * SECOND);
+
+		expect(store.getState().charactersMap.hero).toBeDefined();
+		expect(timer().turnLog).toEqual([]);
+		expect(timer().turnParticipantId).toBe('hero');
 	});
 
 	it('leaves the timer alone for commands that keep the turn', () => {
@@ -256,7 +296,14 @@ describe('command execution with the encounter timer', () => {
 		expect(store.getState().history).toEqual([step]);
 		expect(timer()).toMatchObject({
 			turnParticipantId: 'goblin',
-			turnLog: [{ participantId: 'hero', round: 1, durationMs: 30 * SECOND }],
+			turnLog: [
+				{
+					participantId: 'hero',
+					name: 'hero',
+					round: 1,
+					durationMs: 30 * SECOND,
+				},
+			],
 		});
 	});
 });

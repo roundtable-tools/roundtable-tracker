@@ -26,11 +26,17 @@ describe('encounter timer', () => {
 		const timer = advanceTimer(
 			started,
 			{ participantId: 'goblin', round: 1 },
-			30 * SECOND
+			30 * SECOND,
+			'Hero'
 		);
 
 		expect(timer.turnLog).toEqual([
-			{ participantId: 'hero', round: 1, durationMs: 30 * SECOND },
+			{
+				participantId: 'hero',
+				name: 'Hero',
+				round: 1,
+				durationMs: 30 * SECOND,
+			},
 		]);
 		expect(getElapsed(timer, 40 * SECOND)).toEqual({
 			roundMs: 40 * SECOND,
@@ -42,17 +48,20 @@ describe('encounter timer', () => {
 		const second = advanceTimer(
 			started,
 			{ participantId: 'goblin', round: 1 },
-			30 * SECOND
+			30 * SECOND,
+			'Hero'
 		);
 		const nextRound = advanceTimer(
 			second,
 			{ participantId: 'hero', round: 2 },
-			50 * SECOND
+			50 * SECOND,
+			'Goblin'
 		);
 
 		expect(nextRound.roundLog).toEqual([{ round: 1, durationMs: 50 * SECOND }]);
 		expect(nextRound.turnLog.at(-1)).toEqual({
 			participantId: 'goblin',
+			name: 'Goblin',
 			round: 1,
 			durationMs: 20 * SECOND,
 		});
@@ -64,7 +73,12 @@ describe('encounter timer', () => {
 
 	it('leaves the timer alone when the turn and round stay the same', () => {
 		expect(
-			advanceTimer(started, { participantId: 'hero', round: 1 }, 99 * SECOND)
+			advanceTimer(
+				started,
+				{ participantId: 'hero', round: 1 },
+				99 * SECOND,
+				'Hero'
+			)
 		).toBe(started);
 	});
 
@@ -73,7 +87,7 @@ describe('encounter timer', () => {
 			started,
 			{ participantId: 'goblin', round: 1 },
 			5 * SECOND,
-			false
+			null
 		);
 
 		expect(timer.turnLog).toEqual([]);
@@ -84,7 +98,8 @@ describe('encounter timer', () => {
 		const advanced = advanceTimer(
 			started,
 			{ participantId: 'goblin', round: 1 },
-			30 * SECOND
+			30 * SECOND,
+			'Hero'
 		);
 		const rewound = rewindTimer(
 			advanced,
@@ -100,12 +115,14 @@ describe('encounter timer', () => {
 		const lastTurn = advanceTimer(
 			started,
 			{ participantId: 'goblin', round: 1 },
-			30 * SECOND
+			30 * SECOND,
+			'Hero'
 		);
 		const nextRound = advanceTimer(
 			lastTurn,
 			{ participantId: 'hero', round: 2 },
-			50 * SECOND
+			50 * SECOND,
+			'Goblin'
 		);
 		const rewound = rewindTimer(
 			nextRound,
@@ -153,7 +170,8 @@ describe('encounter timer', () => {
 		const advanced = advanceTimer(
 			paused,
 			{ participantId: 'goblin', round: 1 },
-			60 * SECOND
+			60 * SECOND,
+			'Hero'
 		);
 
 		expect(advanced.turnLog[0].durationMs).toBe(10 * SECOND);
@@ -165,16 +183,32 @@ describe('encounter timer', () => {
 		);
 	});
 
-	it('sums turn times per participant', () => {
+	it('sums turn times per participant, under the latest logged name', () => {
 		expect(
 			getTurnStats([
-				{ participantId: 'hero', round: 1, durationMs: 30 * SECOND },
-				{ participantId: 'goblin', round: 1, durationMs: 10 * SECOND },
-				{ participantId: 'hero', round: 2, durationMs: 50 * SECOND },
+				{
+					participantId: 'hero',
+					name: 'Hero',
+					round: 1,
+					durationMs: 30 * SECOND,
+				},
+				{
+					participantId: 'goblin',
+					name: 'Goblin',
+					round: 1,
+					durationMs: 10 * SECOND,
+				},
+				{
+					participantId: 'hero',
+					name: 'Kyra',
+					round: 2,
+					durationMs: 50 * SECOND,
+				},
 			])
 		).toEqual([
 			{
 				participantId: 'hero',
+				name: 'Kyra',
 				turns: 2,
 				totalMs: 80 * SECOND,
 				averageMs: 40 * SECOND,
@@ -182,6 +216,7 @@ describe('encounter timer', () => {
 			},
 			{
 				participantId: 'goblin',
+				name: 'Goblin',
 				turns: 1,
 				totalMs: 10 * SECOND,
 				averageMs: 10 * SECOND,

@@ -2042,63 +2042,99 @@
 			"turnStartedAt": 1767294740000,
 			"pausedAt": 1767294790000,
 			"turnLog": [
-				{ "participantId": "pc-valeros", "round": 1, "durationMs": 75000 },
+				{
+					"participantId": "pc-valeros",
+					"name": "Valeros",
+					"round": 1,
+					"durationMs": 75000
+				},
 				{
 					"participantId": "00000000-0000-4000-8000-000000000001",
+					"name": "Goblin Warchief",
 					"round": 1,
 					"durationMs": 40000
 				},
 				{
 					"participantId": "00000000-0000-4000-8000-000000000006",
+					"name": "Collapsing Bridge",
 					"round": 1,
 					"durationMs": 25000
 				},
-				{ "participantId": "pc-kyra", "round": 1, "durationMs": 95000 },
+				{
+					"participantId": "pc-kyra",
+					"name": "Kyra",
+					"round": 1,
+					"durationMs": 95000
+				},
 				{
 					"participantId": "00000000-0000-4000-8000-000000000002",
+					"name": "Goblin Archer A",
 					"round": 1,
 					"durationMs": 25000
 				},
 				{
 					"participantId": "00000000-0000-4000-8000-000000000005",
+					"name": "Goblin Sneak",
 					"round": 1,
 					"durationMs": 25000
 				},
 				{
 					"participantId": "00000000-0000-4000-8000-000000000010",
+					"name": "Bridge Keeper",
 					"round": 1,
 					"durationMs": 15000
 				},
-				{ "participantId": "pc-merisiel", "round": 1, "durationMs": 60000 },
+				{
+					"participantId": "pc-merisiel",
+					"name": "Merisiel",
+					"round": 1,
+					"durationMs": 60000
+				},
 				{
 					"participantId": "00000000-0000-4000-8000-000000000007",
+					"name": "Swinging Log",
 					"round": 1,
 					"durationMs": 25000
 				},
 				{
 					"participantId": "00000000-0000-4000-8000-000000000004",
+					"name": "Goblin Dog",
 					"round": 1,
 					"durationMs": 25000
 				},
 				{
 					"participantId": "00000000-0000-4000-8000-000000000003",
+					"name": "Goblin Archer B",
 					"round": 1,
 					"durationMs": 25000
 				},
-				{ "participantId": "pc-ezren", "round": 1, "durationMs": 140000 },
+				{
+					"participantId": "pc-ezren",
+					"name": "Ezren",
+					"round": 1,
+					"durationMs": 140000
+				},
 				{
 					"participantId": "00000000-0000-4000-8000-000000000008",
+					"name": "Rope Snare",
 					"round": 1,
 					"durationMs": 25000
 				},
-				{ "participantId": "pc-valeros", "round": 2, "durationMs": 75000 },
+				{
+					"participantId": "pc-valeros",
+					"name": "Valeros",
+					"round": 2,
+					"durationMs": 75000
+				},
 				{
 					"participantId": "00000000-0000-4000-8000-000000000001",
+					"name": "Goblin Warchief",
 					"round": 2,
 					"durationMs": 40000
 				},
 				{
 					"participantId": "00000000-0000-4000-8000-000000000006",
+					"name": "Collapsing Bridge",
 					"round": 2,
 					"durationMs": 25000
 				}
