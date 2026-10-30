@@ -22,5 +22,17 @@ describe('evaluateSumExpression', () => {
 		expect(evaluateSumExpression('5*3')).toBeNull();
 		expect(evaluateSumExpression('1.5')).toBeNull();
 		expect(evaluateSumExpression('abc')).toBeNull();
+		expect(evaluateSumExpression('1 2')).toBeNull();
+	});
+
+	it('rejects terms and totals beyond the safe integer range', () => {
+		const huge = '9'.repeat(400);
+
+		expect(evaluateSumExpression(`${huge}-${huge}`)).toBeNull();
+		expect(evaluateSumExpression('9007199254740992')).toBeNull();
+		expect(evaluateSumExpression('9007199254740991+1')).toBeNull();
+		expect(evaluateSumExpression('9007199254740991')).toBe(
+			Number.MAX_SAFE_INTEGER
+		);
 	});
 });
