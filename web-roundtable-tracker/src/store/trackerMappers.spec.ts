@@ -123,6 +123,22 @@ describe('trackerMappers', () => {
 		expect(queue[0].persistentDamage).toEqual([bleed, fire]);
 	});
 
+	it('shows persistent damage to players without HP data', () => {
+		const sonic = { id: 's', name: '1d6 sonic', icon: 'other' as const };
+		const queue = runtimeToPlayerInitiativeQueue({
+			charactersOrder: ['ezren'],
+			charactersMap: {
+				ezren: createCharacter({ uuid: 'ezren', persistentDamage: [sonic] }),
+			},
+			trackerMetaMap: { ezren: createMeta({ hasHealthData: false }) },
+		});
+
+		expect(queue[0]).toMatchObject({
+			hpSegments: null,
+			persistentDamage: [sonic],
+		});
+	});
+
 	it('builds a player-safe initiative queue with HP tiers', () => {
 		const charactersMap = {
 			healthy: createCharacter({

@@ -81,6 +81,12 @@ describe('ChangePersistentDamageCommand', () => {
 		).toBe(STATUS.failure);
 		expect(
 			change({
+				uuid: HERO,
+				change: { kind: 'set-amount', id: 'acid', amount: 5 },
+			}).execute()
+		).toBe(STATUS.failure);
+		expect(
+			change({
 				uuid: '00000000-0000-0000-0000-000000000009',
 				change: { kind: 'add', damage: fire },
 			}).execute()
