@@ -35,6 +35,39 @@ export const characterConfigToCharacter = (
 	};
 };
 
+/** Damage types a persistent damage entry can show as its icon. */
+export const PERSISTENT_DAMAGE_ICON_KEYS = [
+	'bleed',
+	'fire',
+	'acid',
+	'cold',
+	'electricity',
+	'poison',
+	'mental',
+	'spirit',
+	/** Any other kind of persistent damage. */
+	'other',
+] as const;
+
+export type PersistentDamageIconKey =
+	(typeof PERSISTENT_DAMAGE_ICON_KEYS)[number];
+
+/**
+ * Damage a participant takes at the end of each of its turns until a
+ * recovery check ends it.
+ */
+export type PersistentDamage = {
+	id: string;
+	/**
+	 * The damage last taken, offered again at the end of the next turn. Not
+	 * kept for a participant without HP data, whose damage isn't tracked.
+	 */
+	amount?: number;
+	/** E.g. "2d6 fire", for damage rolled again each time. */
+	name?: string;
+	icon: PersistentDamageIconKey;
+};
+
 export interface Character {
 	uuid: UUID;
 	name: string;
@@ -44,6 +77,7 @@ export interface Character {
 	maxHealth: number;
 	tempHealth: number;
 	tempHealthDescription?: string;
+	persistentDamage?: PersistentDamage[];
 	group?: 'players' | 'enemies';
 	level?: number; // Optional level property
 }

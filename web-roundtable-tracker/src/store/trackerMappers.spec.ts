@@ -101,6 +101,28 @@ describe('trackerMappers', () => {
 		expect(outOfInitiative.delayed[0].state).toBe('delayed');
 	});
 
+	it('shows persistent damage to players', () => {
+		const bleed = { id: 'b', amount: 3, icon: 'bleed' as const };
+		const fire = {
+			id: 'f',
+			name: '2d6 fire',
+			amount: 7,
+			icon: 'fire' as const,
+		};
+		const queue = runtimeToPlayerInitiativeQueue({
+			charactersOrder: ['burning'],
+			charactersMap: {
+				burning: createCharacter({
+					uuid: 'burning',
+					persistentDamage: [bleed, fire],
+				}),
+			},
+			trackerMetaMap: { burning: createMeta({}) },
+		});
+
+		expect(queue[0].persistentDamage).toEqual([bleed, fire]);
+	});
+
 	it('builds a player-safe initiative queue with HP tiers', () => {
 		const charactersMap = {
 			healthy: createCharacter({
@@ -145,6 +167,7 @@ describe('trackerMappers', () => {
 				hpSegments: 4,
 				isHazard: false,
 				disableProgress: null,
+				persistentDamage: [],
 				sideTheme: 'pc',
 			},
 			{
@@ -155,6 +178,7 @@ describe('trackerMappers', () => {
 				hpSegments: 2,
 				isHazard: false,
 				disableProgress: null,
+				persistentDamage: [],
 				sideTheme: 'opponent',
 			},
 			{
@@ -165,6 +189,7 @@ describe('trackerMappers', () => {
 				hpSegments: 0,
 				isHazard: false,
 				disableProgress: null,
+				persistentDamage: [],
 				sideTheme: 'ally',
 			},
 		]);

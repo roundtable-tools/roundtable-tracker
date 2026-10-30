@@ -1,6 +1,7 @@
 import {
 	Character,
 	Encounter,
+	PersistentDamage,
 	NarrativeSlot,
 	DIFFICULTY,
 	difficultyToString,
@@ -26,6 +27,7 @@ export type TrackerParticipant = {
 	maxHp?: number;
 	tempHp?: number;
 	tempHpDescription?: string;
+	persistentDamage?: PersistentDamage[];
 	disableChecksSucceeded?: number;
 	disableChecksRequired?: number;
 	shownProgress?: TrackerParticipantMeta['shownProgress'];
@@ -77,6 +79,7 @@ export type PlayerTrackerParticipant = {
 	isHazard: boolean;
 	/** Disable checks, when they are shown instead of HP. */
 	disableProgress: PlayerDisableProgress | null;
+	persistentDamage: PersistentDamage[];
 	sideTheme: ParticipantSideTheme;
 };
 
@@ -213,6 +216,9 @@ function characterToTrackerParticipant(
 				? character.tempHealth
 				: undefined,
 		tempHpDescription: character.tempHealthDescription,
+		persistentDamage: character.persistentDamage?.length
+			? character.persistentDamage
+			: undefined,
 		notes: meta.notes,
 		hardness: meta.hardness,
 		initiativeBonus: meta.initiativeBonus,
@@ -624,6 +630,7 @@ export function runtimeToPlayerInitiativeQueue(
 		isHazard: participant.role === 'hazard',
 		...toPlayerHealth(participant),
 		disableProgress: toPlayerDisableProgress(participant),
+		persistentDamage: participant.persistentDamage ?? [],
 		sideTheme: resolveParticipantSideTheme(participant),
 	}));
 }

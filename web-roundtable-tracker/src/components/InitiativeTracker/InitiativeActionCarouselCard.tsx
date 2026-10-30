@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { type EncounterTimer } from '@/store/encounterTimer';
 import { TurnTimeChip } from './TurnTimeChip';
+import { PersistentDamageChips } from './PersistentDamageChip';
 import {
 	Tooltip,
 	TooltipContent,
@@ -399,6 +400,7 @@ export function InitiativeActionCarouselCard({
 										className="text-[11px] text-current/85"
 									/>
 								)}
+								<PersistentDamageChips damages={participant.persistentDamage} />
 							</>
 						) : (
 							<div className="flex min-w-0 items-center justify-between gap-3">
@@ -410,6 +412,11 @@ export function InitiativeActionCarouselCard({
 								>
 									{participant.name}
 								</p>
+								<PersistentDamageChips
+									damages={participant.persistentDamage}
+									className="min-w-0 flex-nowrap overflow-hidden"
+									chipClassName="shrink-0"
+								/>
 								{isCurrent && (
 									<TurnTimeChip
 										timer={turnTimer}

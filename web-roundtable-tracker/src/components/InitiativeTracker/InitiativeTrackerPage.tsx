@@ -131,6 +131,16 @@ import { SetHiddenFromPlayersCommand } from '@/CommandHistory/Commands/SetHidden
 import { Input } from '@/components/ui/input';
 import { type SwipeAction } from './InitiativeActionCarouselCard';
 import { type Command } from '@/CommandHistory/common';
+import { ChangePersistentDamageCommand } from '@/CommandHistory/Commands/ChangePersistentDamageCommand';
+import {
+	PERSISTENT_DAMAGE_ICON_KEYS,
+	type PersistentDamage,
+	type PersistentDamageIconKey,
+} from '@/store/data';
+import { generateUUID } from '@/utils/uuid';
+import { PERSISTENT_DAMAGE_ICONS } from './persistentDamage';
+import { PersistentDamageChip } from './PersistentDamageChip';
+import { PersistentDamageDialog } from './PersistentDamageDialog';
 
 function DisableQuickActions({
 	participant,
@@ -405,6 +415,8 @@ type ParticipantDetailsProps = {
 	onHeal?: (amount: number) => void;
 	onDamage?: (amount: number) => void;
 	onSetTempHp?: (amount: number, description: string) => void;
+	onAddPersistentDamage?: (damage: Omit<PersistentDamage, 'id'>) => void;
+	onEndPersistentDamage?: (id: string) => void;
 	onGiveTurnBack?: () => void;
 	onRecordDisableProgress?: (change: DisableChange) => void;
 	onSetShownProgress?: (shownProgress: 'hp' | 'disable') => void;
@@ -417,6 +429,8 @@ function ParticipantDetails({
 	onHeal,
 	onDamage,
 	onSetTempHp,
+	onAddPersistentDamage,
+	onEndPersistentDamage,
 	onGiveTurnBack,
 	onRecordDisableProgress,
 	onSetShownProgress,
@@ -427,6 +441,10 @@ function ParticipantDetails({
 	const [disableSuccesses, setDisableSuccesses] = useState('');
 	const [tempHpAmount, setTempHpAmount] = useState('');
 	const [tempHpDescription, setTempHpDescription] = useState('');
+	const [persistentAmount, setPersistentAmount] = useState('');
+	const [persistentName, setPersistentName] = useState('');
+	const [persistentIcon, setPersistentIcon] =
+		useState<PersistentDamageIconKey>('bleed');
 
 	if (!participant) {
 		return (
@@ -479,6 +497,23 @@ function ParticipantDetails({
 		onSetTempHp?.(amount, tempHpDescription);
 		setTempHpAmount('');
 		setTempHpDescription('');
+	};
+
+	// With HP data the amount is needed and dealt at once; without, only the
+	// name and icon are kept. The name (e.g. dice rolled each time) is
+	// optional.
+	const handleAddPersistentDamage = () => {
+		const name = persistentName.trim();
+		const amount = hasHp ? evaluateSumExpression(persistentAmount) : undefined;
+
+		if (amount === null || (amount !== undefined && amount <= 0)) return;
+		onAddPersistentDamage?.({
+			amount,
+			name: name || undefined,
+			icon: persistentIcon,
+		});
+		setPersistentAmount('');
+		setPersistentName('');
 	};
 
 	return (
@@ -745,6 +780,84 @@ function ParticipantDetails({
 							Set Temp HP
 						</Button>
 					</div>
+				</div>
+			)}
+			{onAddPersistentDamage && (
+				<div className="space-y-2 rounded-md border p-3">
+					<h4 className="text-sm font-medium">Persistent Damage</h4>
+					{(participant.persistentDamage?.length ?? 0) > 0 && (
+						<div className="flex flex-wrap gap-1">
+							{participant.persistentDamage?.map((damage) => (
+								<PersistentDamageChip
+									key={damage.id}
+									damage={damage}
+									className="text-xs"
+									onRemove={
+										onEndPersistentDamage
+											? () => onEndPersistentDamage(damage.id)
+											: undefined
+									}
+								/>
+							))}
+						</div>
+					)}
+					<div className="flex gap-2">
+						{hasHp && (
+							<Input
+								aria-label="Persistent damage amount"
+								placeholder="Damage"
+								value={persistentAmount}
+								onChange={(e) => setPersistentAmount(e.target.value)}
+								className="h-8 w-24 shrink-0 text-sm"
+								onKeyDown={(e) => {
+									if (e.key === 'Enter') handleAddPersistentDamage();
+								}}
+							/>
+						)}
+						<Input
+							aria-label="Persistent damage name"
+							placeholder="Name, e.g. 2d6 fire"
+							value={persistentName}
+							onChange={(e) => setPersistentName(e.target.value)}
+							className="h-8 text-sm"
+							onKeyDown={(e) => {
+								if (e.key === 'Enter') handleAddPersistentDamage();
+							}}
+						/>
+					</div>
+					<div
+						role="group"
+						aria-label="Persistent damage type"
+						className="flex flex-wrap gap-1"
+					>
+						{PERSISTENT_DAMAGE_ICON_KEYS.map((key) => {
+							const { Icon, label, className } = PERSISTENT_DAMAGE_ICONS[key];
+							const pressed = persistentIcon === key;
+
+							return (
+								<Button
+									key={key}
+									size="icon"
+									variant={pressed ? 'secondary' : 'ghost'}
+									aria-label={label}
+									aria-pressed={pressed}
+									title={label}
+									className={`h-8 w-8 ${pressed ? 'ring-1 ring-current/40' : ''}`}
+									onClick={() => setPersistentIcon(key)}
+								>
+									<Icon className={`h-4 w-4 ${className}`} />
+								</Button>
+							);
+						})}
+					</div>
+					<Button
+						size="sm"
+						variant="outline"
+						className="w-full border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
+						onClick={handleAddPersistentDamage}
+					>
+						Add Persistent Damage
+					</Button>
 				</div>
 			)}
 			<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -1164,6 +1277,34 @@ export function InitiativeTrackerPage() {
 	};
 	const [returnPrompt, setReturnPrompt] =
 		useBlockingPromptState<ReturnPromptState>('return', openPromptsRef);
+	// The persistent damage entries a participant still has to answer for at
+	// the end of its turn (or when it delays), one dialog each, first to last.
+	type PersistentDamagePromptState = {
+		participantId: string;
+		damageIds: string[];
+		count: number;
+	};
+	const [persistentDamagePrompt, setPersistentDamagePrompt] =
+		useBlockingPromptState<PersistentDamagePromptState>(
+			'persistent-damage',
+			openPromptsRef
+		);
+	// Called once the participant's turn has ended, so it reads the store as
+	// that left it.
+	const askForPersistentDamage = (participantId: string) => {
+		const damageIds = (
+			getEncounterStore().getState().charactersMap[participantId]
+				?.persistentDamage ?? []
+		).map(({ id }) => id);
+
+		if (damageIds.length > 0) {
+			setPersistentDamagePrompt({
+				participantId,
+				damageIds,
+				count: damageIds.length,
+			});
+		}
+	};
 
 	// Whose turn and which round the timer is on; when a new command (not an
 	// undo or redo) moves it on while the timer is paused, the GM is asked
@@ -1333,6 +1474,9 @@ export function InitiativeTrackerPage() {
 		// A removal that closes the round always ends the turn first (see
 		// removalEndsTurn), so it advances the round like the other actions.
 		const shouldAdvanceRound = closesRound(participantId, roundState);
+		const endsOwnTurn =
+			(action === 'end-turn' || action === 'delay') &&
+			charactersWithTurn.has(participantId);
 		const command = inOneUndoStep(
 			before,
 			action === 'remove'
@@ -1347,6 +1491,8 @@ export function InitiativeTrackerPage() {
 			} else {
 				executeCommand(command);
 			}
+
+			if (endsOwnTurn) askForPersistentDamage(participantId);
 
 			if (shouldAdvanceRound) {
 				const nextRoundState = getEncounterStore().getState();
@@ -1623,6 +1769,7 @@ export function InitiativeTrackerPage() {
 		!returnPrompt &&
 		!bringBackPrompt &&
 		!takeOutPromptParticipant &&
+		!persistentDamagePrompt &&
 		// The round dialog traps the focus too; the notice waits for it.
 		nextRoundAnnouncement === null;
 
@@ -1816,6 +1963,8 @@ export function InitiativeTrackerPage() {
 		}
 
 		const { participantId, action, before, after } = returnPrompt;
+		const endsOwnTurn =
+			action !== 'ko' && charactersWithTurn.has(participantId);
 		setReturnPrompt(null);
 		clearPinnedMarkerForCurrentRound();
 
@@ -1831,6 +1980,8 @@ export function InitiativeTrackerPage() {
 					after
 				)
 			);
+
+			if (endsOwnTurn) askForPersistentDamage(participantId);
 			queueFocusCurrentParticipant();
 		} catch (error) {
 			console.error('Failed to return to initiative', error);
@@ -1966,20 +2117,54 @@ export function InitiativeTrackerPage() {
 			}
 		: undefined;
 
+	// Damage that drops the participant to 0 HP knocks it out. `before` runs
+	// in the same undo step.
+	const damageParticipant = (
+		participantId: string,
+		amount: number,
+		before?: Command
+	) => {
+		const command = inOneUndoStep(
+			before,
+			new ChangeHealthCommand({ uuid: participantId, delta: -amount })
+		);
+
+		if (
+			damageDropsToZeroHp(participantId, amount, {
+				charactersMap,
+				trackerMetaMap,
+			})
+		) {
+			takeOutParticipant(participantId, command);
+
+			return;
+		}
+
+		try {
+			executeCommand(command);
+		} catch (error) {
+			console.error('Failed to apply damage', error);
+		}
+	};
+
 	const handleSelectedDamage = selectedParticipantId
-		? (amount: number) => {
-				const command = new ChangeHealthCommand({
+		? (amount: number) => damageParticipant(selectedParticipantId, amount)
+		: undefined;
+
+	// A new entry with an amount deals it at once, in the same undo step, like
+	// the Damage button (a K.O. at 0 HP included).
+	const handleSelectedAddPersistentDamage = selectedParticipantId
+		? (damage: Omit<PersistentDamage, 'id'>) => {
+				const command = new ChangePersistentDamageCommand({
 					uuid: selectedParticipantId,
-					delta: -amount,
+					change: {
+						kind: 'add',
+						damage: { ...damage, id: generateUUID() },
+					},
 				});
 
-				if (
-					damageDropsToZeroHp(selectedParticipantId, amount, {
-						charactersMap,
-						trackerMetaMap,
-					})
-				) {
-					takeOutParticipant(selectedParticipantId, command);
+				if (damage.amount !== undefined) {
+					damageParticipant(selectedParticipantId, damage.amount, command);
 
 					return;
 				}
@@ -1987,10 +2172,78 @@ export function InitiativeTrackerPage() {
 				try {
 					executeCommand(command);
 				} catch (error) {
-					console.error('Failed to apply damage', error);
+					console.error('Failed to add persistent damage', error);
 				}
 			}
 		: undefined;
+
+	const endPersistentDamage = (participantId: string, id: string) => {
+		try {
+			executeCommand(
+				new ChangePersistentDamageCommand({
+					uuid: participantId,
+					change: { kind: 'end', id },
+				})
+			);
+		} catch (error) {
+			console.error('Failed to end persistent damage', error);
+		}
+	};
+
+	const handleSelectedEndPersistentDamage = selectedParticipantId
+		? (id: string) => endPersistentDamage(selectedParticipantId, id)
+		: undefined;
+
+	// The persistent damage dialog in front, and its entry; an entry that is
+	// gone (e.g. undone) is skipped.
+	const persistentDamagePromptEntry = persistentDamagePrompt
+		? charactersMap[
+				persistentDamagePrompt.participantId
+			]?.persistentDamage?.find(
+				({ id }) => id === persistentDamagePrompt.damageIds[0]
+			)
+		: undefined;
+
+	const nextPersistentDamagePrompt = () => {
+		if (!persistentDamagePrompt) return;
+
+		const damageIds = persistentDamagePrompt.damageIds.slice(1);
+
+		setPersistentDamagePrompt(
+			damageIds.length > 0 ? { ...persistentDamagePrompt, damageIds } : null
+		);
+	};
+
+	useEffect(() => {
+		if (persistentDamagePrompt && !persistentDamagePromptEntry) {
+			const damageIds = persistentDamagePrompt.damageIds.slice(1);
+
+			setPersistentDamagePrompt(
+				damageIds.length > 0 ? { ...persistentDamagePrompt, damageIds } : null
+			);
+		}
+	}, [
+		persistentDamagePrompt,
+		persistentDamagePromptEntry,
+		setPersistentDamagePrompt,
+	]);
+
+	// Deals the damage, keeping the amount for the next turn, in one undo step.
+	const takePersistentDamage = (
+		participantId: string,
+		damage: PersistentDamage,
+		amount: number
+	) =>
+		damageParticipant(
+			participantId,
+			amount,
+			damage.amount === amount
+				? undefined
+				: new ChangePersistentDamageCommand({
+						uuid: participantId,
+						change: { kind: 'set-amount', id: damage.id, amount },
+					})
+		);
 
 	const recordDisableProgress = (
 		participantId: string,
@@ -2568,6 +2821,8 @@ export function InitiativeTrackerPage() {
 								onHeal={handleSelectedHeal}
 								onDamage={handleSelectedDamage}
 								onSetTempHp={handleSelectedSetTempHp}
+								onAddPersistentDamage={handleSelectedAddPersistentDamage}
+								onEndPersistentDamage={handleSelectedEndPersistentDamage}
 								onGiveTurnBack={handleSelectedGiveTurnBack}
 								onRecordDisableProgress={handleSelectedRecordDisableProgress}
 								onSetShownProgress={handleSelectedSetShownProgress}
@@ -2908,6 +3163,8 @@ export function InitiativeTrackerPage() {
 								onHeal={handleSelectedHeal}
 								onDamage={handleSelectedDamage}
 								onSetTempHp={handleSelectedSetTempHp}
+								onAddPersistentDamage={handleSelectedAddPersistentDamage}
+								onEndPersistentDamage={handleSelectedEndPersistentDamage}
 								onGiveTurnBack={handleSelectedGiveTurnBack}
 								onRecordDisableProgress={handleSelectedRecordDisableProgress}
 								onSetShownProgress={handleSelectedSetShownProgress}
@@ -2918,8 +3175,9 @@ export function InitiativeTrackerPage() {
 				</Tabs>
 			</section>
 
+			{/* The damage comes at the end of the turn, before the next round. */}
 			<Dialog
-				open={nextRoundAnnouncement !== null}
+				open={nextRoundAnnouncement !== null && !persistentDamagePrompt}
 				onOpenChange={handleNextRoundAnnouncementChange}
 			>
 				<DialogContent className="sm:max-w-sm">
@@ -2989,6 +3247,45 @@ export function InitiativeTrackerPage() {
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
+
+			{persistentDamagePrompt && persistentDamagePromptEntry && (
+				<PersistentDamageDialog
+					key={`${persistentDamagePrompt.participantId}-${persistentDamagePromptEntry.id}`}
+					participantName={
+						charactersMap[persistentDamagePrompt.participantId]?.name ?? ''
+					}
+					damage={persistentDamagePromptEntry}
+					hasHp={
+						trackerMetaMap[persistentDamagePrompt.participantId]
+							?.hasHealthData !== false
+					}
+					position={
+						persistentDamagePrompt.count > 1
+							? {
+									index:
+										persistentDamagePrompt.count -
+										persistentDamagePrompt.damageIds.length,
+									count: persistentDamagePrompt.count,
+								}
+							: undefined
+					}
+					onDamage={(amount) =>
+						takePersistentDamage(
+							persistentDamagePrompt.participantId,
+							persistentDamagePromptEntry,
+							amount
+						)
+					}
+					onEnd={() => {
+						nextPersistentDamagePrompt();
+						endPersistentDamage(
+							persistentDamagePrompt.participantId,
+							persistentDamagePromptEntry.id
+						);
+					}}
+					onContinue={nextPersistentDamagePrompt}
+				/>
+			)}
 
 			{showResumeNotice && (
 				<ResumeTimerNotice
