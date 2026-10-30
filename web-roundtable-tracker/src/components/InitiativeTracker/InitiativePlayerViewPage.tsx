@@ -20,6 +20,8 @@ import { TurnTimeChip } from './TurnTimeChip';
 import { useTimerElapsed } from './useTimerElapsed';
 import { NextRoundMarkerCard } from './NextRoundMarkerCard';
 import { getRoundBoundaryIndex } from './roundBoundary';
+import { PersistentDamageChips } from './PersistentDamageChip';
+import { TempHpChip } from './StatusChip';
 
 const DELAYED_OPTION = {
 	status: 'Delayed',
@@ -218,7 +220,8 @@ function SegmentedBar({
 
 /**
  * A hazard that needs disable checks shows one segment per check; anyone else
- * shows HP in tiers. Without HP data the HP bar stays empty.
+ * shows HP in tiers. Without HP data (e.g. PCs whose players track it) there
+ * is no bar.
  */
 function PlayerProgressBar({
 	participant,
@@ -243,7 +246,9 @@ function PlayerProgressBar({
 		);
 	}
 
-	const filled = hpSegments ?? 0;
+	if (hpSegments === null) return null;
+
+	const filled = hpSegments;
 
 	return (
 		<SegmentedBar
@@ -375,8 +380,11 @@ export function InitiativePlayerViewPage() {
 									aria-current={isCurrent ? 'step' : undefined}
 									className={[
 										'flex items-center justify-between rounded-md border',
+										// The current row spans the inset (mx-4) of the
+										// others; its right padding takes it up, so its status
+										// group lines up with theirs.
 										isCurrent
-											? `px-4 py-4 ${accent.activeCard}`
+											? `py-4 pl-4 pr-7 ${accent.activeCard}`
 											: `mx-4 px-3 py-2 ${accent.inactiveMarker}`,
 										participant.isHazard
 											? getHazardStripe(participant.sideTheme)
@@ -400,15 +408,23 @@ export function InitiativePlayerViewPage() {
 												className="text-sm text-current/85"
 											/>
 										)}
+										<PersistentDamageChips
+											damages={participant.persistentDamage}
+											className="mt-1"
+										>
+											{participant.hasTempHp && <TempHpChip />}
+										</PersistentDamageChips>
 									</div>
+									{/* The status group ends the row, so it lines up with
+									    the other rows' whether or not a bar comes first. */}
 									<div className="flex shrink-0 items-center gap-2">
+										<PlayerProgressBar
+											participant={participant}
+											surface={surface}
+										/>
 										<PlayerStatusGroup
 											status={participant.status}
 											isHazard={participant.isHazard}
-											surface={surface}
-										/>
-										<PlayerProgressBar
-											participant={participant}
 											surface={surface}
 										/>
 									</div>

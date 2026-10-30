@@ -15,6 +15,7 @@ import { TriggerReinforcementEventCommand } from './Commands/TriggerReinforcemen
 import { UpdateCharacterDataCommand } from './Commands/UpdateCharacterDataCommand';
 import { SetHealthCommand } from './Commands/SetHealthCommand';
 import { SetTempHealthCommand } from './Commands/SetTempHealthCommand';
+import { ChangePersistentDamageCommand } from './Commands/ChangePersistentDamageCommand';
 import { RecordDisableProgressCommand } from './Commands/RecordDisableProgressCommand';
 import { SetShownProgressCommand } from './Commands/SetShownProgressCommand';
 import { SetHiddenFromPlayersCommand } from './Commands/SetHiddenFromPlayersCommand';
@@ -72,6 +73,7 @@ export const registerSerializableCommands = (classesMap = commandMap) => {
 	register(ChangeHealthCommand, 'ChangeHealthCommand');
 	register(SetHealthCommand, 'SetHealthCommand');
 	register(SetTempHealthCommand, 'SetTempHealthCommand');
+	register(ChangePersistentDamageCommand, 'ChangePersistentDamageCommand');
 	register(ReturnToInitiativeCommand, 'ReturnToInitiativeCommand');
 	register(GiveAdditionalTurnCommand, 'GiveAdditionalTurnCommand');
 	register(RecordDisableProgressCommand, 'RecordDisableProgressCommand');

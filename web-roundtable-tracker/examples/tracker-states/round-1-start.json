@@ -5,8 +5,8 @@
 				"uuid": "pc-valeros",
 				"name": "Valeros",
 				"initiative": 24,
-				"health": 45,
-				"maxHealth": 45,
+				"health": 1,
+				"maxHealth": 1,
 				"tempHealth": 0,
 				"turnState": "normal",
 				"group": "players"
@@ -35,8 +35,8 @@
 				"uuid": "pc-kyra",
 				"name": "Kyra",
 				"initiative": 19,
-				"health": 38,
-				"maxHealth": 38,
+				"health": 1,
+				"maxHealth": 1,
 				"tempHealth": 0,
 				"turnState": "normal",
 				"group": "players"
@@ -75,8 +75,8 @@
 				"uuid": "pc-merisiel",
 				"name": "Merisiel",
 				"initiative": 14,
-				"health": 32,
-				"maxHealth": 32,
+				"health": 1,
+				"maxHealth": 1,
 				"tempHealth": 0,
 				"turnState": "normal",
 				"group": "players"
@@ -161,7 +161,7 @@
 			"pc-valeros": {
 				"role": "pc",
 				"sideTheme": "pc",
-				"hasHealthData": true,
+				"hasHealthData": false,
 				"isSimpleHazard": false,
 				"disableChecksRequired": 0,
 				"disableChecksSucceeded": 0,
@@ -199,7 +199,7 @@
 			"pc-kyra": {
 				"role": "pc",
 				"sideTheme": "pc",
-				"hasHealthData": true,
+				"hasHealthData": false,
 				"isSimpleHazard": false,
 				"disableChecksRequired": 0,
 				"disableChecksSucceeded": 0,
@@ -243,7 +243,7 @@
 			"pc-merisiel": {
 				"role": "pc",
 				"sideTheme": "pc",
-				"hasHealthData": true,
+				"hasHealthData": false,
 				"isSimpleHazard": false,
 				"disableChecksRequired": 0,
 				"disableChecksSucceeded": 0,

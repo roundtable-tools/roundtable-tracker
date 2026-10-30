@@ -5,21 +5,37 @@
 				"uuid": "pc-valeros",
 				"name": "Valeros",
 				"initiative": 24,
-				"health": 25,
-				"maxHealth": 45,
+				"health": 1,
+				"maxHealth": 1,
 				"tempHealth": 0,
 				"turnState": "normal",
-				"group": "players"
+				"group": "players",
+				"persistentDamage": [
+					{
+						"name": "2d6 fire",
+						"icon": "fire",
+						"id": "00000000-0000-4000-8000-000000000015"
+					}
+				]
 			},
 			"00000000-0000-4000-8000-000000000001": {
 				"uuid": "00000000-0000-4000-8000-000000000001",
 				"name": "Goblin Warchief",
 				"initiative": 22,
-				"health": 56,
+				"health": 53,
 				"maxHealth": 70,
-				"tempHealth": 0,
+				"tempHealth": 8,
 				"turnState": "normal",
-				"group": "enemies"
+				"group": "enemies",
+				"tempHealthDescription": "Potion of Resistance, until the end of the encounter",
+				"persistentDamage": [
+					{
+						"amount": 3,
+						"name": "1d6 bleed",
+						"icon": "bleed",
+						"id": "00000000-0000-4000-8000-000000000014"
+					}
+				]
 			},
 			"00000000-0000-4000-8000-000000000006": {
 				"uuid": "00000000-0000-4000-8000-000000000006",
@@ -35,12 +51,11 @@
 				"uuid": "pc-kyra",
 				"name": "Kyra",
 				"initiative": 19,
-				"health": 38,
-				"maxHealth": 38,
-				"tempHealth": 8,
+				"health": 1,
+				"maxHealth": 1,
+				"tempHealth": 0,
 				"turnState": "normal",
-				"group": "players",
-				"tempHealthDescription": "False Life, until the end of the encounter"
+				"group": "players"
 			},
 			"00000000-0000-4000-8000-000000000002": {
 				"uuid": "00000000-0000-4000-8000-000000000002",
@@ -76,11 +91,19 @@
 				"uuid": "pc-merisiel",
 				"name": "Merisiel",
 				"initiative": 14,
-				"health": 4,
-				"maxHealth": 32,
+				"health": 1,
+				"maxHealth": 1,
 				"tempHealth": 0,
 				"turnState": "normal",
-				"group": "players"
+				"group": "players",
+				"persistentDamage": [
+					{ "icon": "acid", "id": "00000000-0000-4000-8000-000000000016" },
+					{
+						"name": "1 bleed",
+						"icon": "bleed",
+						"id": "00000000-0000-4000-8000-000000000017"
+					}
+				]
 			},
 			"00000000-0000-4000-8000-000000000007": {
 				"uuid": "00000000-0000-4000-8000-000000000007",
@@ -146,7 +169,7 @@
 				"uuid": "00000000-0000-4000-8000-000000000011",
 				"name": "Goblin Warrior A",
 				"initiative": 11,
-				"health": 15,
+				"health": 8,
 				"maxHealth": 15,
 				"tempHealth": 0,
 				"turnState": "normal",
@@ -157,12 +180,19 @@
 				"uuid": "00000000-0000-4000-8000-000000000012",
 				"name": "Goblin Warrior B",
 				"initiative": 11,
-				"health": 15,
+				"health": 13,
 				"maxHealth": 15,
 				"tempHealth": 0,
 				"turnState": "normal",
 				"group": "enemies",
-				"level": 2
+				"level": 2,
+				"persistentDamage": [
+					{
+						"amount": 2,
+						"icon": "poison",
+						"id": "00000000-0000-4000-8000-000000000018"
+					}
+				]
 			}
 		},
 		"charactersOrder": [
@@ -186,7 +216,7 @@
 			"pc-valeros": {
 				"role": "pc",
 				"sideTheme": "pc",
-				"hasHealthData": true,
+				"hasHealthData": false,
 				"isSimpleHazard": false,
 				"disableChecksRequired": 0,
 				"disableChecksSucceeded": 0,
@@ -224,7 +254,7 @@
 			"pc-kyra": {
 				"role": "pc",
 				"sideTheme": "pc",
-				"hasHealthData": true,
+				"hasHealthData": false,
 				"isSimpleHazard": false,
 				"disableChecksRequired": 0,
 				"disableChecksSucceeded": 0,
@@ -268,7 +298,7 @@
 			"pc-merisiel": {
 				"role": "pc",
 				"sideTheme": "pc",
-				"hasHealthData": true,
+				"hasHealthData": false,
 				"isSimpleHazard": false,
 				"disableChecksRequired": 0,
 				"disableChecksSucceeded": 0,
@@ -431,6 +461,66 @@
 				}
 			},
 			{
+				"type": "Command.CompositeCommand",
+				"description": "Add Persistent Damage + Change Health",
+				"data": {
+					"commands": [
+						{
+							"type": "Command.ChangePersistentDamageCommand",
+							"description": "Add Persistent Damage",
+							"data": {
+								"uuid": "00000000-0000-4000-8000-000000000001",
+								"change": {
+									"kind": "add",
+									"damage": {
+										"amount": 3,
+										"name": "1d6 bleed",
+										"icon": "bleed",
+										"id": "00000000-0000-4000-8000-000000000014"
+									}
+								},
+								"oldCharacter": {
+									"uuid": "00000000-0000-4000-8000-000000000001",
+									"name": "Goblin Warchief",
+									"initiative": 22,
+									"health": 56,
+									"maxHealth": 70,
+									"tempHealth": 0,
+									"turnState": "normal",
+									"group": "enemies"
+								}
+							}
+						},
+						{
+							"type": "Command.ChangeHealthCommand",
+							"description": "Change Health",
+							"data": {
+								"uuid": "00000000-0000-4000-8000-000000000001",
+								"delta": -3,
+								"oldCharacter": {
+									"uuid": "00000000-0000-4000-8000-000000000001",
+									"name": "Goblin Warchief",
+									"initiative": 22,
+									"health": 56,
+									"maxHealth": 70,
+									"tempHealth": 0,
+									"turnState": "normal",
+									"group": "enemies",
+									"persistentDamage": [
+										{
+											"amount": 3,
+											"name": "1d6 bleed",
+											"icon": "bleed",
+											"id": "00000000-0000-4000-8000-000000000014"
+										}
+									]
+								}
+							}
+						}
+					]
+				}
+			},
+			{
 				"type": "Command.EndTurnCommand",
 				"description": "End Turn Command",
 				"data": {
@@ -473,20 +563,54 @@
 				}
 			},
 			{
-				"type": "Command.ChangeHealthCommand",
-				"description": "Change Health",
+				"type": "Command.ChangePersistentDamageCommand",
+				"description": "Add Persistent Damage",
 				"data": {
 					"uuid": "pc-valeros",
-					"delta": -20,
+					"change": {
+						"kind": "add",
+						"damage": {
+							"name": "2d6 fire",
+							"icon": "fire",
+							"id": "00000000-0000-4000-8000-000000000015"
+						}
+					},
 					"oldCharacter": {
 						"uuid": "pc-valeros",
 						"name": "Valeros",
 						"initiative": 24,
-						"health": 45,
-						"maxHealth": 45,
+						"health": 1,
+						"maxHealth": 1,
 						"tempHealth": 0,
 						"turnState": "normal",
 						"group": "players"
+					}
+				}
+			},
+			{
+				"type": "Command.SetTempHealthCommand",
+				"description": "Set Temporary HP",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000001",
+					"tempHealth": 8,
+					"description": "Potion of Resistance, until the end of the encounter",
+					"oldCharacter": {
+						"uuid": "00000000-0000-4000-8000-000000000001",
+						"name": "Goblin Warchief",
+						"initiative": 22,
+						"health": 53,
+						"maxHealth": 70,
+						"tempHealth": 0,
+						"turnState": "normal",
+						"group": "enemies",
+						"persistentDamage": [
+							{
+								"amount": 3,
+								"name": "1d6 bleed",
+								"icon": "bleed",
+								"id": "00000000-0000-4000-8000-000000000014"
+							}
+						]
 					}
 				}
 			},
@@ -572,25 +696,6 @@
 				}
 			},
 			{
-				"type": "Command.SetTempHealthCommand",
-				"description": "Set Temporary HP",
-				"data": {
-					"uuid": "pc-kyra",
-					"tempHealth": 8,
-					"description": "False Life, until the end of the encounter",
-					"oldCharacter": {
-						"uuid": "pc-kyra",
-						"name": "Kyra",
-						"initiative": 19,
-						"health": 38,
-						"maxHealth": 38,
-						"tempHealth": 0,
-						"turnState": "normal",
-						"group": "players"
-					}
-				}
-			},
-			{
 				"type": "Command.EndTurnCommand",
 				"description": "End Turn Command",
 				"data": {
@@ -630,20 +735,54 @@
 				}
 			},
 			{
-				"type": "Command.ChangeHealthCommand",
-				"description": "Change Health",
+				"type": "Command.ChangePersistentDamageCommand",
+				"description": "Add Persistent Damage",
 				"data": {
 					"uuid": "pc-merisiel",
-					"delta": -28,
+					"change": {
+						"kind": "add",
+						"damage": {
+							"icon": "acid",
+							"id": "00000000-0000-4000-8000-000000000016"
+						}
+					},
 					"oldCharacter": {
 						"uuid": "pc-merisiel",
 						"name": "Merisiel",
 						"initiative": 14,
-						"health": 32,
-						"maxHealth": 32,
+						"health": 1,
+						"maxHealth": 1,
 						"tempHealth": 0,
 						"turnState": "normal",
 						"group": "players"
+					}
+				}
+			},
+			{
+				"type": "Command.ChangePersistentDamageCommand",
+				"description": "Add Persistent Damage",
+				"data": {
+					"uuid": "pc-merisiel",
+					"change": {
+						"kind": "add",
+						"damage": {
+							"name": "1 bleed",
+							"icon": "bleed",
+							"id": "00000000-0000-4000-8000-000000000017"
+						}
+					},
+					"oldCharacter": {
+						"uuid": "pc-merisiel",
+						"name": "Merisiel",
+						"initiative": 14,
+						"health": 1,
+						"maxHealth": 1,
+						"tempHealth": 0,
+						"turnState": "normal",
+						"group": "players",
+						"persistentDamage": [
+							{ "icon": "acid", "id": "00000000-0000-4000-8000-000000000016" }
+						]
 					}
 				}
 			},
@@ -1206,21 +1345,37 @@
 								"uuid": "pc-valeros",
 								"name": "Valeros",
 								"initiative": 24,
-								"health": 25,
-								"maxHealth": 45,
+								"health": 1,
+								"maxHealth": 1,
 								"tempHealth": 0,
 								"turnState": "normal",
-								"group": "players"
+								"group": "players",
+								"persistentDamage": [
+									{
+										"name": "2d6 fire",
+										"icon": "fire",
+										"id": "00000000-0000-4000-8000-000000000015"
+									}
+								]
 							},
 							"00000000-0000-4000-8000-000000000001": {
 								"uuid": "00000000-0000-4000-8000-000000000001",
 								"name": "Goblin Warchief",
 								"initiative": 22,
-								"health": 56,
+								"health": 53,
 								"maxHealth": 70,
-								"tempHealth": 0,
+								"tempHealth": 8,
 								"turnState": "normal",
-								"group": "enemies"
+								"group": "enemies",
+								"tempHealthDescription": "Potion of Resistance, until the end of the encounter",
+								"persistentDamage": [
+									{
+										"amount": 3,
+										"name": "1d6 bleed",
+										"icon": "bleed",
+										"id": "00000000-0000-4000-8000-000000000014"
+									}
+								]
 							},
 							"00000000-0000-4000-8000-000000000006": {
 								"uuid": "00000000-0000-4000-8000-000000000006",
@@ -1236,12 +1391,11 @@
 								"uuid": "pc-kyra",
 								"name": "Kyra",
 								"initiative": 19,
-								"health": 38,
-								"maxHealth": 38,
-								"tempHealth": 8,
+								"health": 1,
+								"maxHealth": 1,
+								"tempHealth": 0,
 								"turnState": "normal",
-								"group": "players",
-								"tempHealthDescription": "False Life, until the end of the encounter"
+								"group": "players"
 							},
 							"00000000-0000-4000-8000-000000000002": {
 								"uuid": "00000000-0000-4000-8000-000000000002",
@@ -1277,11 +1431,22 @@
 								"uuid": "pc-merisiel",
 								"name": "Merisiel",
 								"initiative": 14,
-								"health": 4,
-								"maxHealth": 32,
+								"health": 1,
+								"maxHealth": 1,
 								"tempHealth": 0,
 								"turnState": "normal",
-								"group": "players"
+								"group": "players",
+								"persistentDamage": [
+									{
+										"icon": "acid",
+										"id": "00000000-0000-4000-8000-000000000016"
+									},
+									{
+										"name": "1 bleed",
+										"icon": "bleed",
+										"id": "00000000-0000-4000-8000-000000000017"
+									}
+								]
 							},
 							"00000000-0000-4000-8000-000000000007": {
 								"uuid": "00000000-0000-4000-8000-000000000007",
@@ -1381,7 +1546,7 @@
 							"pc-valeros": {
 								"role": "pc",
 								"sideTheme": "pc",
-								"hasHealthData": true,
+								"hasHealthData": false,
 								"isSimpleHazard": false,
 								"disableChecksRequired": 0,
 								"disableChecksSucceeded": 0,
@@ -1419,7 +1584,7 @@
 							"pc-kyra": {
 								"role": "pc",
 								"sideTheme": "pc",
-								"hasHealthData": true,
+								"hasHealthData": false,
 								"isSimpleHazard": false,
 								"disableChecksRequired": 0,
 								"disableChecksSucceeded": 0,
@@ -1463,7 +1628,7 @@
 							"pc-merisiel": {
 								"role": "pc",
 								"sideTheme": "pc",
-								"hasHealthData": true,
+								"hasHealthData": false,
 								"isSimpleHazard": false,
 								"disableChecksRequired": 0,
 								"disableChecksSucceeded": 0,
@@ -1640,6 +1805,85 @@
 						"turnState": "normal",
 						"group": "enemies"
 					}
+				}
+			},
+			{
+				"type": "Command.ChangeHealthCommand",
+				"description": "Change Health",
+				"data": {
+					"uuid": "00000000-0000-4000-8000-000000000011",
+					"delta": -7,
+					"oldCharacter": {
+						"uuid": "00000000-0000-4000-8000-000000000011",
+						"name": "Goblin Warrior A",
+						"initiative": 11,
+						"health": 15,
+						"maxHealth": 15,
+						"tempHealth": 0,
+						"turnState": "normal",
+						"group": "enemies",
+						"level": 2
+					}
+				}
+			},
+			{
+				"type": "Command.CompositeCommand",
+				"description": "Add Persistent Damage + Change Health",
+				"data": {
+					"commands": [
+						{
+							"type": "Command.ChangePersistentDamageCommand",
+							"description": "Add Persistent Damage",
+							"data": {
+								"uuid": "00000000-0000-4000-8000-000000000012",
+								"change": {
+									"kind": "add",
+									"damage": {
+										"amount": 2,
+										"icon": "poison",
+										"id": "00000000-0000-4000-8000-000000000018"
+									}
+								},
+								"oldCharacter": {
+									"uuid": "00000000-0000-4000-8000-000000000012",
+									"name": "Goblin Warrior B",
+									"initiative": 11,
+									"health": 15,
+									"maxHealth": 15,
+									"tempHealth": 0,
+									"turnState": "normal",
+									"group": "enemies",
+									"level": 2
+								}
+							}
+						},
+						{
+							"type": "Command.ChangeHealthCommand",
+							"description": "Change Health",
+							"data": {
+								"uuid": "00000000-0000-4000-8000-000000000012",
+								"delta": -2,
+								"oldCharacter": {
+									"uuid": "00000000-0000-4000-8000-000000000012",
+									"name": "Goblin Warrior B",
+									"initiative": 11,
+									"health": 15,
+									"maxHealth": 15,
+									"tempHealth": 0,
+									"turnState": "normal",
+									"group": "enemies",
+									"level": 2,
+									"persistentDamage": [
+										{
+											"amount": 2,
+											"icon": "poison",
+											"id": "00000000-0000-4000-8000-000000000018"
+										}
+									]
+								}
+							}
+						}
+					]
 				}
 			},
 			{

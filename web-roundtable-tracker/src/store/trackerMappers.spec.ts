@@ -101,6 +101,58 @@ describe('trackerMappers', () => {
 		expect(outOfInitiative.delayed[0].state).toBe('delayed');
 	});
 
+	it('shows persistent damage to players', () => {
+		const bleed = { id: 'b', amount: 3, icon: 'bleed' as const };
+		const fire = {
+			id: 'f',
+			name: '2d6 fire',
+			amount: 7,
+			icon: 'fire' as const,
+		};
+		const queue = runtimeToPlayerInitiativeQueue({
+			charactersOrder: ['burning'],
+			charactersMap: {
+				burning: createCharacter({
+					uuid: 'burning',
+					persistentDamage: [bleed, fire],
+				}),
+			},
+			trackerMetaMap: { burning: createMeta({}) },
+		});
+
+		expect(queue[0].persistentDamage).toEqual([bleed, fire]);
+	});
+
+	it('shows persistent damage to players without HP data', () => {
+		const sonic = { id: 's', name: '1d6 sonic', icon: 'other' as const };
+		const queue = runtimeToPlayerInitiativeQueue({
+			charactersOrder: ['ezren'],
+			charactersMap: {
+				ezren: createCharacter({ uuid: 'ezren', persistentDamage: [sonic] }),
+			},
+			trackerMetaMap: { ezren: createMeta({ hasHealthData: false }) },
+		});
+
+		expect(queue[0]).toMatchObject({
+			hpSegments: null,
+			persistentDamage: [sonic],
+		});
+	});
+
+	it('tells players that a participant has temp HP, not how much', () => {
+		const queue = runtimeToPlayerInitiativeQueue({
+			charactersOrder: ['warded', 'plain'],
+			charactersMap: {
+				warded: createCharacter({ uuid: 'warded', tempHealth: 8 }),
+				plain: createCharacter({ uuid: 'plain' }),
+			},
+			trackerMetaMap: { warded: createMeta({}), plain: createMeta({}) },
+		});
+
+		expect(queue.map(({ hasTempHp }) => hasTempHp)).toEqual([true, false]);
+		expect(JSON.stringify(queue)).not.toContain('8');
+	});
+
 	it('builds a player-safe initiative queue with HP tiers', () => {
 		const charactersMap = {
 			healthy: createCharacter({
@@ -145,6 +197,8 @@ describe('trackerMappers', () => {
 				hpSegments: 4,
 				isHazard: false,
 				disableProgress: null,
+				persistentDamage: [],
+				hasTempHp: false,
 				sideTheme: 'pc',
 			},
 			{
@@ -155,6 +209,8 @@ describe('trackerMappers', () => {
 				hpSegments: 2,
 				isHazard: false,
 				disableProgress: null,
+				persistentDamage: [],
+				hasTempHp: false,
 				sideTheme: 'opponent',
 			},
 			{
@@ -165,6 +221,8 @@ describe('trackerMappers', () => {
 				hpSegments: 0,
 				isHazard: false,
 				disableProgress: null,
+				persistentDamage: [],
+				hasTempHp: false,
 				sideTheme: 'ally',
 			},
 		]);
