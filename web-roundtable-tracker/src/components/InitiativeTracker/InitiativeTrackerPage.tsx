@@ -443,7 +443,7 @@ function ParticipantDetails({
 	const handleSetHp = () => {
 		const health = evaluateSumExpression(setHpValue);
 
-		if (health === null || health < 0) return;
+		if (health === null) return;
 		onSetHp?.(health);
 		setSetHpValue('');
 	};
@@ -670,6 +670,7 @@ function ParticipantDetails({
 					<h4 className="text-sm font-medium">HP</h4>
 					<div className="flex gap-2">
 						<Input
+							aria-label="New HP"
 							placeholder="New HP, e.g. 20-7"
 							value={setHpValue}
 							onChange={(e) => setSetHpValue(e.target.value)}
@@ -689,6 +690,7 @@ function ParticipantDetails({
 					</div>
 					<div className="flex gap-2">
 						<Input
+							aria-label="HP amount"
 							placeholder="Amount, e.g. 8+3"
 							value={hpAmount}
 							onChange={(e) => setHpAmount(e.target.value)}
@@ -1892,6 +1894,17 @@ export function InitiativeTrackerPage() {
 
 	const handleSelectedSetHp = selectedParticipantId
 		? (health: number) => {
+				const character = charactersMap[selectedParticipantId];
+
+				// A Set that leaves HP as it is records no undo step.
+				if (
+					!character ||
+					Math.min(Math.max(health, 0), character.maxHealth) ===
+						character.health
+				) {
+					return;
+				}
+
 				const command = new SetHealthCommand({
 					uuid: selectedParticipantId,
 					health,
@@ -2549,6 +2562,7 @@ export function InitiativeTrackerPage() {
 					<Card className="flex min-h-0 min-w-0 flex-col p-4">
 						<ScrollArea className="h-full pr-3">
 							<ParticipantDetails
+								key={selectedParticipant?.id}
 								participant={selectedParticipant}
 								onSetHp={handleSelectedSetHp}
 								onHeal={handleSelectedHeal}
@@ -2888,6 +2902,7 @@ export function InitiativeTrackerPage() {
 					<TabsContent value="selected" className="mt-0">
 						<Card className="p-4">
 							<ParticipantDetails
+								key={selectedParticipant?.id}
 								participant={selectedParticipant}
 								onSetHp={handleSelectedSetHp}
 								onHeal={handleSelectedHeal}
