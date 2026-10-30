@@ -150,5 +150,8 @@ describe('ReturnToInitiativeCommand', () => {
 
 		expect(endReturnersTurn.execute()).toBe(STATUS.success);
 		expect(encounterStore.getState().round).toBe(2);
+		expect(encounterStore.getState().charactersWithTurn).toEqual(
+			new Set([rogue, hero, goblin])
+		);
 	});
 });
