@@ -404,9 +404,11 @@ export function InitiativeActionCarouselCard({
 							</>
 						) : (
 							<div className="flex min-w-0 items-center justify-between gap-3">
+								{/* The name keeps up to 45% of the row; the persistent
+								    damage chips wrap in the rest. */}
 								<p
 									className={[
-										'truncate text-sm font-semibold',
+										'max-w-[45%] shrink-0 truncate text-sm font-semibold',
 										!isCurrent ? accent.name : '',
 									].join(' ')}
 								>
@@ -414,8 +416,7 @@ export function InitiativeActionCarouselCard({
 								</p>
 								<PersistentDamageChips
 									damages={participant.persistentDamage}
-									className="min-w-0 flex-nowrap overflow-hidden"
-									chipClassName="shrink-0"
+									className="min-w-0"
 								/>
 								{isCurrent && (
 									<TurnTimeChip

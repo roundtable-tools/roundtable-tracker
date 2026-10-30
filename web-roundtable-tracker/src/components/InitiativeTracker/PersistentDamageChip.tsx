@@ -54,11 +54,9 @@ export function PersistentDamageChip({
 export function PersistentDamageChips({
 	damages,
 	className = '',
-	chipClassName,
 }: {
 	damages: PersistentDamage[] | undefined;
 	className?: string;
-	chipClassName?: string;
 }) {
 	if (!damages?.length) return null;
 
@@ -68,11 +66,7 @@ export function PersistentDamageChips({
 			className={`flex flex-wrap gap-1 ${className}`}
 		>
 			{damages.map((damage) => (
-				<PersistentDamageChip
-					key={damage.id}
-					damage={damage}
-					className={chipClassName}
-				/>
+				<PersistentDamageChip key={damage.id} damage={damage} />
 			))}
 		</span>
 	);
