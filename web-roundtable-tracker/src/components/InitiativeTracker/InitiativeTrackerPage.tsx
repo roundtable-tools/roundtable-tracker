@@ -87,7 +87,10 @@ import {
 	getEncounterStore,
 	useEncounterStore,
 } from '@/store/encounterRuntimeInstance';
-import { hasFullDisableChecks } from '@/store/encounterRuntimeStore';
+import {
+	hasFullDisableChecks,
+	isSimpleHazardId,
+} from '@/store/encounterRuntimeStore';
 import {
 	runtimeToInitiativeQueue,
 	runtimeToOutOfInitiativeData,
@@ -1966,20 +1969,23 @@ export function InitiativeTrackerPage() {
 			}
 		: undefined;
 
-	const handleSelectedSetHiddenFromPlayers = selectedParticipantId
-		? (hidden: boolean) => {
-				try {
-					executeCommand(
-						new SetHiddenFromPlayersCommand({
-							uuid: selectedParticipantId,
-							hidden,
-						})
-					);
-				} catch (error) {
-					console.error('Failed to change visibility to players', error);
+	// Simple hazards are never in the player view, so hiding them does nothing.
+	const handleSelectedSetHiddenFromPlayers =
+		selectedParticipantId &&
+		!isSimpleHazardId(trackerMetaMap, selectedParticipantId)
+			? (hidden: boolean) => {
+					try {
+						executeCommand(
+							new SetHiddenFromPlayersCommand({
+								uuid: selectedParticipantId,
+								hidden,
+							})
+						);
+					} catch (error) {
+						console.error('Failed to change visibility to players', error);
+					}
 				}
-			}
-		: undefined;
+			: undefined;
 
 	const handleSelectedSetTempHp = selectedParticipantId
 		? (amount: number, description: string) => {
