@@ -38,6 +38,7 @@ import {
 import {
 	ArrowRight,
 	ArrowUpDown,
+	Eye,
 	EyeOff,
 	Heart,
 	History,
@@ -86,7 +87,10 @@ import {
 	getEncounterStore,
 	useEncounterStore,
 } from '@/store/encounterRuntimeInstance';
-import { hasFullDisableChecks } from '@/store/encounterRuntimeStore';
+import {
+	hasFullDisableChecks,
+	isSimpleHazardId,
+} from '@/store/encounterRuntimeStore';
 import {
 	runtimeToInitiativeQueue,
 	runtimeToOutOfInitiativeData,
@@ -120,6 +124,7 @@ import {
 	RecordDisableProgressCommand,
 } from '@/CommandHistory/Commands/RecordDisableProgressCommand';
 import { SetShownProgressCommand } from '@/CommandHistory/Commands/SetShownProgressCommand';
+import { SetHiddenFromPlayersCommand } from '@/CommandHistory/Commands/SetHiddenFromPlayersCommand';
 import { Input } from '@/components/ui/input';
 import { type SwipeAction } from './InitiativeActionCarouselCard';
 import { type Command } from '@/CommandHistory/common';
@@ -314,7 +319,7 @@ function TraitBadges({ participant }: { participant: TrackerParticipant }) {
 			{participant.hiddenUntilFirstTurn && (
 				<Badge variant="outline" className="gap-1 text-[10px]">
 					<EyeOff className="size-3" />
-					Hidden until first turn
+					Hidden until its turn
 				</Badge>
 			)}
 			{participant.traits?.map((trait, index) => (
@@ -399,6 +404,7 @@ type ParticipantDetailsProps = {
 	onGiveTurnBack?: () => void;
 	onRecordDisableProgress?: (change: DisableChange) => void;
 	onSetShownProgress?: (shownProgress: 'hp' | 'disable') => void;
+	onSetHiddenFromPlayers?: (hidden: boolean) => void;
 };
 
 function ParticipantDetails({
@@ -409,6 +415,7 @@ function ParticipantDetails({
 	onGiveTurnBack,
 	onRecordDisableProgress,
 	onSetShownProgress,
+	onSetHiddenFromPlayers,
 }: ParticipantDetailsProps) {
 	const [hpAmount, setHpAmount] = useState('');
 	const [disableSuccesses, setDisableSuccesses] = useState('');
@@ -508,6 +515,33 @@ function ParticipantDetails({
 							);
 						})}
 					</div>
+				</div>
+			)}
+			{onSetHiddenFromPlayers && participant.state !== 'inactive' && (
+				<div className="flex items-center justify-between gap-2 rounded-md border p-3">
+					<p className="text-sm text-muted-foreground">
+						{participant.hiddenUntilFirstTurn
+							? 'Hidden from players until its turn starts.'
+							: 'Shown to players.'}
+					</p>
+					<Button
+						size="sm"
+						variant="outline"
+						className="shrink-0"
+						onClick={() =>
+							onSetHiddenFromPlayers(!participant.hiddenUntilFirstTurn)
+						}
+					>
+						{participant.hiddenUntilFirstTurn ? (
+							<>
+								<Eye className="h-4 w-4" /> Reveal
+							</>
+						) : (
+							<>
+								<EyeOff className="h-4 w-4" /> Hide
+							</>
+						)}
+					</Button>
 				</div>
 			)}
 			{onGiveTurnBack && (
@@ -1935,6 +1969,24 @@ export function InitiativeTrackerPage() {
 			}
 		: undefined;
 
+	// Simple hazards are never in the player view, so hiding them does nothing.
+	const handleSelectedSetHiddenFromPlayers =
+		selectedParticipantId &&
+		!isSimpleHazardId(trackerMetaMap, selectedParticipantId)
+			? (hidden: boolean) => {
+					try {
+						executeCommand(
+							new SetHiddenFromPlayersCommand({
+								uuid: selectedParticipantId,
+								hidden,
+							})
+						);
+					} catch (error) {
+						console.error('Failed to change visibility to players', error);
+					}
+				}
+			: undefined;
+
 	const handleSelectedSetTempHp = selectedParticipantId
 		? (amount: number, description: string) => {
 				try {
@@ -2436,6 +2488,7 @@ export function InitiativeTrackerPage() {
 								onGiveTurnBack={handleSelectedGiveTurnBack}
 								onRecordDisableProgress={handleSelectedRecordDisableProgress}
 								onSetShownProgress={handleSelectedSetShownProgress}
+								onSetHiddenFromPlayers={handleSelectedSetHiddenFromPlayers}
 							/>
 						</ScrollArea>
 					</Card>
@@ -2773,6 +2826,7 @@ export function InitiativeTrackerPage() {
 								onGiveTurnBack={handleSelectedGiveTurnBack}
 								onRecordDisableProgress={handleSelectedRecordDisableProgress}
 								onSetShownProgress={handleSelectedSetShownProgress}
+								onSetHiddenFromPlayers={handleSelectedSetHiddenFromPlayers}
 							/>
 						</Card>
 					</TabsContent>

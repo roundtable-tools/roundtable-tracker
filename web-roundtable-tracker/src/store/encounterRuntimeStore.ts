@@ -32,7 +32,11 @@ export type TrackerParticipantMeta = {
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
 	traits?: string[];
-	/** Kept from the players until the participant's first turn starts. */
+	/**
+	 * Kept from the players until the participant's next turn starts, or the GM
+	 * reveals it. Set by the builder (hidden until its first turn) or the
+	 * tracker's Hide.
+	 */
 	hiddenUntilFirstTurn?: boolean;
 	reinforcementSlotId?: string;
 };
@@ -163,11 +167,23 @@ const startEncounter = (
 		characters,
 		trackerMetaMap
 	);
+	// The first participant's turn starts now, which reveals it to the players
+	// (later turns reveal through executeCommand).
+	const firstId = charactersOrder[0];
 
 	return {
 		charactersMap,
 		charactersOrder,
-		trackerMetaMap,
+		trackerMetaMap:
+			firstId && trackerMetaMap[firstId]?.hiddenUntilFirstTurn
+				? {
+						...trackerMetaMap,
+						[firstId]: {
+							...trackerMetaMap[firstId],
+							hiddenUntilFirstTurn: false,
+						},
+					}
+				: trackerMetaMap,
 		pendingReinforcements,
 		round: 1,
 		charactersWithTurn: new Set(charactersOrder),

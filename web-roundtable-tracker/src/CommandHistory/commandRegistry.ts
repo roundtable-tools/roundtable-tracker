@@ -16,6 +16,7 @@ import { UpdateCharacterDataCommand } from './Commands/UpdateCharacterDataComman
 import { SetTempHealthCommand } from './Commands/SetTempHealthCommand';
 import { RecordDisableProgressCommand } from './Commands/RecordDisableProgressCommand';
 import { SetShownProgressCommand } from './Commands/SetShownProgressCommand';
+import { SetHiddenFromPlayersCommand } from './Commands/SetHiddenFromPlayersCommand';
 import { Command } from './common';
 
 const commandMap: Record<string, new (data: Command['data']) => Command> = {};
@@ -73,4 +74,5 @@ export const registerSerializableCommands = (classesMap = commandMap) => {
 	register(GiveAdditionalTurnCommand, 'GiveAdditionalTurnCommand');
 	register(RecordDisableProgressCommand, 'RecordDisableProgressCommand');
 	register(SetShownProgressCommand, 'SetShownProgressCommand');
+	register(SetHiddenFromPlayersCommand, 'SetHiddenFromPlayersCommand');
 };

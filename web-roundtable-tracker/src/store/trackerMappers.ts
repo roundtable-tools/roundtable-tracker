@@ -41,7 +41,7 @@ export type TrackerParticipant = {
 	adjustmentDescription?: string;
 	adjustmentLevelModifier?: number;
 	traits?: string[];
-	/** Kept from the players until the participant's first turn starts. */
+	/** Kept from the players until its next turn starts or the GM reveals it. */
 	hiddenUntilFirstTurn?: boolean;
 	/** A pending reinforcement kept from the players until its slot triggers. */
 	hiddenUntilArrival?: boolean;
@@ -599,13 +599,25 @@ const toPlayerDisableProgress = (
 	return { succeeded, required, label: getDisableProgressLabel(participant) };
 };
 
+/** The tracker's queue without the participants hidden from the players. */
+export function runtimeToPlayerVisibleQueue(
+	store: Pick<
+		EncounterStore,
+		'charactersOrder' | 'charactersMap' | 'trackerMetaMap'
+	>
+): TrackerParticipant[] {
+	return runtimeToInitiativeQueue(store).filter(
+		(participant) => !participant.hiddenUntilFirstTurn
+	);
+}
+
 export function runtimeToPlayerInitiativeQueue(
 	store: Pick<
 		EncounterStore,
 		'charactersOrder' | 'charactersMap' | 'trackerMetaMap'
 	>
 ): PlayerTrackerParticipant[] {
-	return runtimeToInitiativeQueue(store).map((participant) => ({
+	return runtimeToPlayerVisibleQueue(store).map((participant) => ({
 		id: participant.id,
 		name: participant.name,
 		status: getParticipantStateLabel(participant),

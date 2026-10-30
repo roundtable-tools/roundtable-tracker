@@ -15,12 +15,15 @@ type CommandData = {
 };
 
 /**
- * Ends the active participant's turn (with the given action) and simultaneously
- * returns a delayed participant to the initiative queue at the front.
+ * Ends the active participant's turn (with the given action) and returns a
+ * delaying participant to the front of the queue, with a turn this round.
  *
- * Corner case: when the active participant is the last one with a turn this round,
- * the returning participant re-enters as the new final participant of the current
- * round instead of triggering a round advance.
+ * Used for a delayer the GM picks in the return prompt, and for one whose old
+ * spot comes up mid-round (`delayerReturningAfterTurn`). After the round's
+ * last turn, a picked delayer becomes the last turn of the current round; the
+ * round advances when its turn ends. A delayer nobody picked whose spot comes
+ * up after the last turn goes through `FinalizeTurnAndReturnToInitiativeCommand`
+ * instead, which also advances the round.
  */
 export class ReturnToInitiativeCommand implements Command {
 	readonly type = 'ReturnToInitiativeCommand';

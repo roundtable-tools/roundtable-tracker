@@ -224,10 +224,50 @@ describe('player view sync', () => {
 			expect(stored({ round: '2' })).toBeNull();
 			expect(stored({ charactersWithTurn: ['hero'] })).toBeNull();
 			expect(stored({ encounterData: 'Bridge Fight' })).toBeNull();
-			expect(stored({ timer: 'running' })).toBeNull();
-			expect(stored({ timer: { ...timer, roundStartedAt: '0' } })).toBeNull();
-			expect(stored({ timer: { ...timer, turnLog: undefined } })).toBeNull();
 			expect(parsePlayerViewSnapshot('{"state":[]}')).toBeNull();
+		});
+
+		it('drops only a malformed timer or party level, keeping the order, round and HP', () => {
+			const hero = {
+				uuid: 'hero',
+				name: 'Hero',
+				initiative: 20,
+				turnState: 'normal',
+				group: 'players',
+				health: 20,
+				maxHealth: 30,
+				tempHealth: 0,
+			};
+			const stored = (state: object) =>
+				parsePlayerViewSnapshot(
+					JSON.stringify({
+						state: {
+							encounterData: encounter,
+							charactersMap: { hero },
+							charactersOrder: ['hero'],
+							round: 3,
+							...state,
+						},
+					})
+				);
+
+			for (const badTimer of [
+				'running',
+				{ ...timer, roundStartedAt: '0' },
+				{ ...timer, turnLog: undefined },
+			]) {
+				const snapshot = stored({ timer: badTimer });
+
+				expect(isEncounterRunning(snapshot)).toBe(true);
+				expect(snapshot).toMatchObject({
+					timer: null,
+					round: 3,
+					charactersOrder: ['hero'],
+					charactersMap: { hero: { health: 20 } },
+				});
+			}
+
+			expect(stored({ partyLevel: 'high' })?.partyLevel).toBe(1);
 		});
 
 		it('is not running without encounter data or participants', () => {

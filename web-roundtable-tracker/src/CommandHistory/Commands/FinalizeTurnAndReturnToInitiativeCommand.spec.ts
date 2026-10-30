@@ -46,7 +46,7 @@ describe('FinalizeTurnAndReturnToInitiativeCommand', () => {
 		encounterStore.getState().startEncounter(characters);
 	});
 
-	it('returns delayed participant and advances round for final active turn', () => {
+	it('advances the round and puts a delayer nobody returned back at its old spot', () => {
 		encounterStore.setState((state) => ({
 			charactersOrder: [
 				characters[0].uuid,

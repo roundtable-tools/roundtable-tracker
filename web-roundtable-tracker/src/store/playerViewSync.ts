@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { type EncounterStore } from './encounterRuntimeStore';
+import { type EncounterTimer } from './encounterTimer';
 import { isSetJSON } from './serializer';
 
 /** The parts of the GM's encounter that the player view shows. */
@@ -40,7 +41,7 @@ const isStringArray = (value: unknown): value is string[] =>
 	Array.isArray(value) && value.every((item) => typeof item === 'string');
 
 /** A stored timer with every field of its stored type. */
-const isStoredTimer = (value: unknown) =>
+const isStoredTimer = (value: unknown): value is EncounterTimer =>
 	isRecord(value) &&
 	typeof value.round === 'number' &&
 	typeof value.roundStartedAt === 'number' &&
@@ -51,7 +52,11 @@ const isStoredTimer = (value: unknown) =>
 	Array.isArray(value.turnLog) &&
 	Array.isArray(value.roundLog);
 
-/** Each field the player view reads is either missing or of its stored type. */
+/**
+ * Each field the player view needs to show the order is either missing or of
+ * its stored type. The timer and the party level only drop their own part
+ * (see parsePlayerViewSnapshot), so they aren't checked here.
+ */
 const isStoredStateShape = (state: unknown): state is Partial<EncounterStore> =>
 	isRecord(state) &&
 	(state.encounterData === undefined || isRecord(state.encounterData)) &&
@@ -59,18 +64,16 @@ const isStoredStateShape = (state: unknown): state is Partial<EncounterStore> =>
 	(state.charactersOrder === undefined ||
 		isStringArray(state.charactersOrder)) &&
 	(state.trackerMetaMap === undefined || isRecord(state.trackerMetaMap)) &&
-	(state.partyLevel === undefined || typeof state.partyLevel === 'number') &&
 	(state.round === undefined || typeof state.round === 'number') &&
 	(state.charactersWithTurn === undefined ||
-		state.charactersWithTurn instanceof Set) &&
-	(state.timer === undefined ||
-		state.timer === null ||
-		isStoredTimer(state.timer));
+		state.charactersWithTurn instanceof Set);
 
 /**
  * Builds a snapshot from the persisted encounter store JSON. Returns null for
- * a missing or unreadable value. Stored commands are left as plain JSON,
- * since the player view doesn't use the history.
+ * a missing or unreadable value. A malformed timer or party level is dropped
+ * on its own (no clocks, level 1), so players still see the order, round and
+ * HP. Stored commands are left as plain JSON, since the player view doesn't
+ * use the history.
  */
 export const parsePlayerViewSnapshot = (
 	json: string | null
@@ -98,10 +101,10 @@ export const parsePlayerViewSnapshot = (
 		charactersMap: state.charactersMap ?? {},
 		charactersOrder: state.charactersOrder ?? [],
 		trackerMetaMap: state.trackerMetaMap ?? {},
-		partyLevel: state.partyLevel ?? 1,
+		partyLevel: typeof state.partyLevel === 'number' ? state.partyLevel : 1,
 		round: state.round ?? 0,
 		charactersWithTurn: state.charactersWithTurn ?? new Set(),
-		timer: state.timer ?? null,
+		timer: isStoredTimer(state.timer) ? state.timer : null,
 	};
 };
 

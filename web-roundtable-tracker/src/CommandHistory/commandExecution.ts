@@ -6,11 +6,12 @@ import {
 	startTimer,
 	type TurnPosition,
 } from '@/store/encounterTimer';
-import { type StoreApi } from 'zustand/vanilla';
+import { isDelaying } from '@/store/operations';
 import { CompositeCommand } from './Commands/CompositeCommand';
-import { Command, STATUS } from './common';
+import { SetHiddenFromPlayersCommand } from './Commands/SetHiddenFromPlayersCommand';
+import { Command, type CommandDeps, STATUS } from './common';
 
-type EncounterStoreApi = StoreApi<EncounterStore>;
+type EncounterStoreApi = CommandDeps['encounterStore'];
 
 const commandName = (command: Command) => command.description ?? command.type;
 
@@ -82,6 +83,42 @@ const movedTimer = (
 };
 
 /**
+ * Reveals a participant hidden from the players when the command started its
+ * turn: the current participant or the round changed, and the new current
+ * participant acts (it has a turn and isn't delaying). Returns the command
+ * to record: the command alone, or it with the reveal in one undo step.
+ */
+const withRevealOnTurnStart = (
+	store: EncounterStoreApi,
+	command: Command,
+	before: TurnPosition
+): Command => {
+	const state = store.getState();
+	const after = getTurnPosition(state);
+	const participantId = after.participantId;
+
+	if (
+		!participantId ||
+		(after.participantId === before.participantId &&
+			after.round === before.round) ||
+		!state.charactersWithTurn.has(participantId) ||
+		isDelaying(state.charactersMap, participantId) ||
+		state.trackerMetaMap[participantId]?.hiddenUntilFirstTurn !== true
+	) {
+		return command;
+	}
+
+	const reveal = new SetHiddenFromPlayersCommand(
+		{ uuid: participantId, hidden: false },
+		{ encounterStore: store }
+	);
+
+	if (reveal.execute() === STATUS.failure) return command;
+
+	return new CompositeCommand({ commands: [command, reveal] });
+};
+
+/**
  * Runs a command forward, records it in the history and moves the timer, in
  * one store update so the player window never sees the order without its
  * timer. Returns false when the command fails, which leaves the state
@@ -103,10 +140,11 @@ const runForward = (
 
 	if (command.execute() === STATUS.failure) return false;
 
+	const done = withRevealOnTurnStart(store, command, getTurnPosition(before));
 	const state = store.getState();
 
 	store.setState({
-		history: record(state.history, command),
+		history: record(state.history, done),
 		redoStack: redoStack(state.redoStack),
 		timer: movedTimer(
 			state,
