@@ -118,6 +118,7 @@ import { ReturnToInitiativeCommand } from '@/CommandHistory/Commands/ReturnToIni
 import { ReorderCharactersCommand } from '@/CommandHistory/Commands/ReorderCharactersCommand';
 import { ChangeHealthCommand } from '@/CommandHistory/Commands/ChangeHealthCommand';
 import { SetHealthCommand } from '@/CommandHistory/Commands/SetHealthCommand';
+import { UpdateCharacterDataCommand } from '@/CommandHistory/Commands/UpdateCharacterDataCommand';
 import { SetTempHealthCommand } from '@/CommandHistory/Commands/SetTempHealthCommand';
 import { evaluateSumExpression } from '@/utils/sumExpression';
 import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/ReactivateCharacterCommand';
@@ -1277,33 +1278,45 @@ export function InitiativeTrackerPage() {
 	};
 	const [returnPrompt, setReturnPrompt] =
 		useBlockingPromptState<ReturnPromptState>('return', openPromptsRef);
-	// The persistent damage entries a participant still has to answer for at
-	// the end of its turn (or when it delays), one dialog each, first to last.
+	// How the current participant's turn ends: Next Turn, Delay or K.O.
+	type TurnEnd = { participantId: string; action: RoundAction };
+	// The persistent damage entries the current participant answers for at
+	// the end of its turn, one dialog each, first to last. The turn ends
+	// (`then`) after the last one, so damage that knocks the participant out
+	// lands on its own turn.
 	type PersistentDamagePromptState = {
 		participantId: string;
 		damageIds: string[];
 		count: number;
+		then: TurnEnd;
 	};
 	const [persistentDamagePrompt, setPersistentDamagePrompt] =
 		useBlockingPromptState<PersistentDamagePromptState>(
 			'persistent-damage',
 			openPromptsRef
 		);
-	// Called once the participant's turn has ended, so it reads the store as
-	// that left it.
-	const askForPersistentDamage = (participantId: string) => {
+	// The turn end the dialogs held back, run by an effect so it uses the
+	// state their answers left.
+	const [heldTurnEnd, setHeldTurnEnd] = useBlockingPromptState<TurnEnd>(
+		'held-turn-end',
+		openPromptsRef
+	);
+	/** Opens the dialogs before `turnEnd`; false when there are none. */
+	const askForPersistentDamage = (turnEnd: TurnEnd) => {
 		const damageIds = (
-			getEncounterStore().getState().charactersMap[participantId]
-				?.persistentDamage ?? []
+			charactersMap[turnEnd.participantId]?.persistentDamage ?? []
 		).map(({ id }) => id);
 
-		if (damageIds.length > 0) {
-			setPersistentDamagePrompt({
-				participantId,
-				damageIds,
-				count: damageIds.length,
-			});
-		}
+		if (damageIds.length === 0) return false;
+
+		setPersistentDamagePrompt({
+			participantId: turnEnd.participantId,
+			damageIds,
+			count: damageIds.length,
+			then: turnEnd,
+		});
+
+		return true;
 	};
 
 	// Whose turn and which round the timer is on; when a new command (not an
@@ -1474,9 +1487,6 @@ export function InitiativeTrackerPage() {
 		// A removal that closes the round always ends the turn first (see
 		// removalEndsTurn), so it advances the round like the other actions.
 		const shouldAdvanceRound = closesRound(participantId, roundState);
-		const endsOwnTurn =
-			(action === 'end-turn' || action === 'delay') &&
-			charactersWithTurn.has(participantId);
 		const command = inOneUndoStep(
 			before,
 			action === 'remove'
@@ -1491,8 +1501,6 @@ export function InitiativeTrackerPage() {
 			} else {
 				executeCommand(command);
 			}
-
-			if (endsOwnTurn) askForPersistentDamage(participantId);
 
 			if (shouldAdvanceRound) {
 				const nextRoundState = getEncounterStore().getState();
@@ -1547,9 +1555,34 @@ export function InitiativeTrackerPage() {
 			return;
 		}
 
-		if (returnPromptState.asks) {
-			setReturnPrompt({
-				participantId: currentParticipantId,
+		const turnEnd: TurnEnd = {
+			participantId: currentParticipantId,
+			action: 'end-turn',
+		};
+
+		if (!askForPersistentDamage(turnEnd)) endTurn(turnEnd);
+	};
+
+	// Ends a turn as the GM chose (or knocks out someone off their turn). A
+	// participant that persistent damage knocked out just ends its turn: it
+	// is out already.
+	const endTurn = ({ participantId, action }: TurnEnd) => {
+		const knockedOut =
+			charactersMap[participantId]?.turnState === 'knocked-out';
+
+		if (action === 'end-turn' || knockedOut) {
+			if (returnPromptState.asks) {
+				setReturnPrompt({
+					participantId,
+					action: 'end-turn',
+					focusCurrentOnSuccess: true,
+				});
+
+				return;
+			}
+
+			executeRoundAction({
+				participantId,
 				action: 'end-turn',
 				focusCurrentOnSuccess: true,
 			});
@@ -1557,12 +1590,27 @@ export function InitiativeTrackerPage() {
 			return;
 		}
 
-		executeRoundAction({
-			participantId: currentParticipantId,
-			action: 'end-turn',
-			focusCurrentOnSuccess: true,
-		});
+		// The K.O. runs at once; TakeOutNotice then asks what follows it.
+		if (action === 'ko') {
+			takeOutStepIndexRef.current =
+				getEncounterStore().getState().history.length;
+			takeOutParticipant(participantId);
+			setTakeOutPromptId(participantId);
+
+			return;
+		}
+
+		takeOutParticipant(participantId, undefined, action);
 	};
+
+	useEffect(() => {
+		if (!heldTurnEnd) return;
+
+		setHeldTurnEnd(null);
+		endTurn(heldTurnEnd);
+		// Runs once per held turn end, with the latest render's endTurn.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [heldTurnEnd]);
 
 	const resetReorderDraft = () => {
 		setReorderDraftParticipants(storeInitiativeParticipants);
@@ -1769,7 +1817,6 @@ export function InitiativeTrackerPage() {
 		!returnPrompt &&
 		!bringBackPrompt &&
 		!takeOutPromptParticipant &&
-		!persistentDamagePrompt &&
 		// The round dialog traps the focus too; the notice waits for it.
 		nextRoundAnnouncement === null;
 
@@ -1780,12 +1827,15 @@ export function InitiativeTrackerPage() {
 	): boolean => {
 		if (openPromptsRef.current.size > 0) return false;
 
-		// The K.O. runs at once; TakeOutNotice then asks what follows it.
-		if (action === 'ko') {
-			takeOutStepIndexRef.current =
-				getEncounterStore().getState().history.length;
-			takeOutParticipant(participantId);
-			setTakeOutPromptId(participantId);
+		if (action === 'ko' || action === 'delay') {
+			const turnEnd: TurnEnd = { participantId, action };
+			// Only the current participant's own turn ends with its
+			// persistent damage; a K.O. on someone else's turn doesn't.
+			const endsOwnTurn =
+				participantId === currentInitiativeParticipantId &&
+				charactersWithTurn.has(participantId);
+
+			if (!endsOwnTurn || !askForPersistentDamage(turnEnd)) endTurn(turnEnd);
 
 			return true;
 		}
@@ -1802,13 +1852,7 @@ export function InitiativeTrackerPage() {
 			return true;
 		}
 
-		if (action === 'slay') {
-			removeParticipant(participantId);
-
-			return true;
-		}
-
-		takeOutParticipant(participantId, undefined, action);
+		removeParticipant(participantId);
 
 		return true;
 	};
@@ -1963,8 +2007,6 @@ export function InitiativeTrackerPage() {
 		}
 
 		const { participantId, action, before, after } = returnPrompt;
-		const endsOwnTurn =
-			action !== 'ko' && charactersWithTurn.has(participantId);
 		setReturnPrompt(null);
 		clearPinnedMarkerForCurrentRound();
 
@@ -1980,8 +2022,6 @@ export function InitiativeTrackerPage() {
 					after
 				)
 			);
-
-			if (endsOwnTurn) askForPersistentDamage(participantId);
 			queueFocusCurrentParticipant();
 		} catch (error) {
 			console.error('Failed to return to initiative', error);
@@ -2204,46 +2244,66 @@ export function InitiativeTrackerPage() {
 			)
 		: undefined;
 
-	const nextPersistentDamagePrompt = () => {
-		if (!persistentDamagePrompt) return;
+	// The next dialog, or after the last one the turn end it held back.
+	const nextPersistentDamagePrompt = useCallback(
+		(prompt: PersistentDamagePromptState) => {
+			const damageIds = prompt.damageIds.slice(1);
 
-		const damageIds = persistentDamagePrompt.damageIds.slice(1);
+			if (damageIds.length > 0) {
+				setPersistentDamagePrompt({ ...prompt, damageIds });
 
-		setPersistentDamagePrompt(
-			damageIds.length > 0 ? { ...persistentDamagePrompt, damageIds } : null
-		);
-	};
+				return;
+			}
+
+			setPersistentDamagePrompt(null);
+			setHeldTurnEnd(prompt.then);
+		},
+		[setPersistentDamagePrompt, setHeldTurnEnd]
+	);
 
 	useEffect(() => {
 		if (persistentDamagePrompt && !persistentDamagePromptEntry) {
-			const damageIds = persistentDamagePrompt.damageIds.slice(1);
-
-			setPersistentDamagePrompt(
-				damageIds.length > 0 ? { ...persistentDamagePrompt, damageIds } : null
-			);
+			nextPersistentDamagePrompt(persistentDamagePrompt);
 		}
 	}, [
 		persistentDamagePrompt,
 		persistentDamagePromptEntry,
-		setPersistentDamagePrompt,
+		nextPersistentDamagePrompt,
 	]);
 
-	// Deals the damage, keeping the amount for the next turn, in one undo step.
+	// Deals the damage, keeping the amount for the next turn, in one undo
+	// step. It comes before the turn ends, so 0 HP only knocks the
+	// participant out; the turn then ends as it would anyway (see endTurn).
 	const takePersistentDamage = (
 		participantId: string,
 		damage: PersistentDamage,
 		amount: number
-	) =>
-		damageParticipant(
-			participantId,
-			amount,
-			damage.amount === amount
-				? undefined
-				: new ChangePersistentDamageCommand({
-						uuid: participantId,
-						change: { kind: 'set-amount', id: damage.id, amount },
+	) => {
+		try {
+			executeCommand(
+				inOneUndoStep(
+					damage.amount === amount
+						? undefined
+						: new ChangePersistentDamageCommand({
+								uuid: participantId,
+								change: { kind: 'set-amount', id: damage.id, amount },
+							}),
+					new ChangeHealthCommand({ uuid: participantId, delta: -amount }),
+					damageDropsToZeroHp(participantId, amount, {
+						charactersMap,
+						trackerMetaMap,
 					})
-		);
+						? new UpdateCharacterDataCommand({
+								uuid: participantId,
+								newCharacterProps: { turnState: 'knocked-out' },
+							})
+						: undefined
+				)
+			);
+		} catch (error) {
+			console.error('Failed to apply persistent damage', error);
+		}
+	};
 
 	const recordDisableProgress = (
 		participantId: string,
@@ -3175,9 +3235,8 @@ export function InitiativeTrackerPage() {
 				</Tabs>
 			</section>
 
-			{/* The damage comes at the end of the turn, before the next round. */}
 			<Dialog
-				open={nextRoundAnnouncement !== null && !persistentDamagePrompt}
+				open={nextRoundAnnouncement !== null}
 				onOpenChange={handleNextRoundAnnouncementChange}
 			>
 				<DialogContent className="sm:max-w-sm">
@@ -3277,13 +3336,13 @@ export function InitiativeTrackerPage() {
 						)
 					}
 					onEnd={() => {
-						nextPersistentDamagePrompt();
+						nextPersistentDamagePrompt(persistentDamagePrompt);
 						endPersistentDamage(
 							persistentDamagePrompt.participantId,
 							persistentDamagePromptEntry.id
 						);
 					}}
-					onContinue={nextPersistentDamagePrompt}
+					onContinue={() => nextPersistentDamagePrompt(persistentDamagePrompt)}
 				/>
 			)}
 
