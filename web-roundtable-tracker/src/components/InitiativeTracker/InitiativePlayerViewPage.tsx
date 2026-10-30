@@ -8,7 +8,7 @@ import {
 } from '@/store/playerViewSync';
 import {
 	encounterToTrackerHeader,
-	runtimeToInitiativeQueue,
+	runtimeToPlayerVisibleQueue,
 	runtimeToPlayerInitiativeQueue,
 	PLAYER_HP_SEGMENTS,
 	type PlayerDisableProgress,
@@ -275,13 +275,13 @@ export function InitiativePlayerViewPage() {
 		[encounter]
 	);
 
-	// The player queue keeps the tracker's order, so the tracker's round
-	// boundary applies to it unchanged.
+	// The player queue keeps the tracker's order without the hidden
+	// participants, so the round boundary is found in that same list.
 	const roundBoundaryIndex = useMemo(
 		() =>
 			encounter
 				? getRoundBoundaryIndex(
-						runtimeToInitiativeQueue(encounter),
+						runtimeToPlayerVisibleQueue(encounter),
 						encounter.charactersWithTurn
 					)
 				: 0,
