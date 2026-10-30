@@ -1077,6 +1077,16 @@ type RoundAnnouncementState = {
 };
 
 /**
+ * Knocks a participant out without touching the turn order: for its own
+ * turn, which then ends as usual, keeping its next turn.
+ */
+const knockOutInPlaceCommand = (uuid: string) =>
+	new UpdateCharacterDataCommand({
+		uuid,
+		newCharacterProps: { turnState: 'knocked-out' },
+	});
+
+/**
  * The state of a prompt (a notice or the round dialog) that blocks card
  * actions while it is set. Setting it adds `name` to `openPrompts` at once,
  * before the render that shows it, so a card action that comes due in the
@@ -1301,10 +1311,14 @@ export function InitiativeTrackerPage() {
 		'held-turn-end',
 		openPromptsRef
 	);
-	/** Opens the dialogs before `turnEnd`; false when there are none. */
+	/**
+	 * Opens the dialogs before `turnEnd`; false when there are none. Reads the
+	 * store, so an entry added in the same handler counts.
+	 */
 	const askForPersistentDamage = (turnEnd: TurnEnd) => {
 		const damageIds = (
-			charactersMap[turnEnd.participantId]?.persistentDamage ?? []
+			getEncounterStore().getState().charactersMap[turnEnd.participantId]
+				?.persistentDamage ?? []
 		).map(({ id }) => id);
 
 		if (damageIds.length === 0) return false;
@@ -1937,15 +1951,42 @@ export function InitiativeTrackerPage() {
 	};
 
 	// K.O., or Disable for a hazard (and Delay, which ends the turn the same
-	// way). `before` runs in the same undo step.
+	// way). `before` runs in the same undo step. `addsPersistentDamage` says
+	// that `before` adds an entry.
 	const takeOutParticipant = (
 		participantId: string,
 		before?: Command,
-		action: 'ko' | 'delay' | 'end-turn' = 'ko'
+		action: 'ko' | 'delay' | 'end-turn' = 'ko',
+		addsPersistentDamage = false
 	) => {
 		const isCurrentActive =
 			participantId === currentInitiativeParticipantId &&
 			charactersWithTurn.has(participantId);
+
+		// A change (e.g. damage) that knocks out the current participant ends
+		// its turn, so its persistent damage comes first: the change knocks it
+		// out in place, and the turn ends after the dialogs (see endTurn).
+		if (
+			isCurrentActive &&
+			action === 'ko' &&
+			before &&
+			(addsPersistentDamage ||
+				(charactersMap[participantId]?.persistentDamage?.length ?? 0) > 0)
+		) {
+			try {
+				executeCommand(
+					inOneUndoStep(before, knockOutInPlaceCommand(participantId))
+				);
+			} catch (error) {
+				console.error('Failed to knock out', error);
+
+				return;
+			}
+
+			askForPersistentDamage({ participantId, action: 'end-turn' });
+
+			return;
+		}
 
 		if (isCurrentActive && returnPromptState.asks) {
 			setReturnPrompt({
@@ -2175,7 +2216,13 @@ export function InitiativeTrackerPage() {
 				trackerMetaMap,
 			})
 		) {
-			takeOutParticipant(participantId, command);
+			takeOutParticipant(
+				participantId,
+				command,
+				'ko',
+				before instanceof ChangePersistentDamageCommand &&
+					before.data.change.kind === 'add'
+			);
 
 			return;
 		}
@@ -2293,10 +2340,7 @@ export function InitiativeTrackerPage() {
 						charactersMap,
 						trackerMetaMap,
 					})
-						? new UpdateCharacterDataCommand({
-								uuid: participantId,
-								newCharacterProps: { turnState: 'knocked-out' },
-							})
+						? knockOutInPlaceCommand(participantId)
 						: undefined
 				)
 			);
