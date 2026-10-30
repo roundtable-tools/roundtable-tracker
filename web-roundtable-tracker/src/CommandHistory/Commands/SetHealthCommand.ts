@@ -25,16 +25,20 @@ export class SetHealthCommand implements Command {
 	}
 
 	execute() {
-		getDeps(this.deps)
-			.encounterStore.getState()
-			.updateCharacter(this.data.uuid, (old) => {
-				this.data.oldCharacter = structuredClone(old);
+		const { encounterStore } = getDeps(this.deps);
 
-				return {
-					...old,
-					health: Math.min(Math.max(this.data.health, 0), old.maxHealth),
-				};
-			});
+		if (!encounterStore.getState().charactersMap[this.data.uuid]) {
+			return STATUS.failure;
+		}
+
+		encounterStore.getState().updateCharacter(this.data.uuid, (old) => {
+			this.data.oldCharacter = structuredClone(old);
+
+			return {
+				...old,
+				health: Math.min(Math.max(this.data.health, 0), old.maxHealth),
+			};
+		});
 
 		return STATUS.success;
 	}

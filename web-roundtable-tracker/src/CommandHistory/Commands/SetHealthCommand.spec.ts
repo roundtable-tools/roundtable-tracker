@@ -44,6 +44,16 @@ describe('SetHealthCommand', () => {
 		expect(hero()).toEqual(character);
 	});
 
+	it('fails for a participant not in the encounter, changing nothing', () => {
+		const command = new SetHealthCommand(
+			{ uuid: '00000000-0000-0000-0000-000000000009', health: 5 },
+			{ encounterStore: store }
+		);
+
+		expect(command.execute()).toBe(STATUS.failure);
+		expect(hero()).toEqual(character);
+	});
+
 	it('clamps HP to 0..max HP', () => {
 		set(50).execute();
 		expect(hero().health).toBe(20);
