@@ -1,9 +1,10 @@
-import { X } from 'lucide-react';
+import { type ReactNode } from 'react';
 import { type PersistentDamage } from '@/store/data';
 import {
 	getPersistentDamageLabel,
 	PERSISTENT_DAMAGE_ICONS,
 } from './persistentDamage';
+import { StatusChip } from './StatusChip';
 
 /**
  * A persistent damage entry: its damage type icon and its label. With
@@ -12,7 +13,7 @@ import {
 export function PersistentDamageChip({
 	damage,
 	onRemove,
-	className = '',
+	className,
 }: {
 	damage: PersistentDamage;
 	onRemove?: () => void;
@@ -26,46 +27,38 @@ export function PersistentDamageChip({
 	const label = getPersistentDamageLabel(damage);
 
 	return (
-		<span
-			data-slot="persistent-damage-chip"
+		<StatusChip
+			slot="persistent-damage-chip"
+			Icon={Icon}
+			iconClassName={iconClassName}
+			label={label}
 			title={`Persistent ${type.toLowerCase()} damage: ${label}`}
-			className={`inline-flex max-w-full items-center gap-1 rounded-full border border-current/25 bg-background/40 px-2 py-0.5 text-[11px] font-medium ${className}`}
-		>
-			<Icon className={`h-3 w-3 shrink-0 ${iconClassName}`} />
-			<span className="truncate">{label}</span>
-			{onRemove && (
-				<button
-					type="button"
-					aria-label={`End persistent damage ${label}`}
-					className="-mr-1 rounded-full p-0.5 opacity-70 hover:bg-current/15 hover:opacity-100"
-					onClick={(event) => {
-						event.stopPropagation();
-						onRemove();
-					}}
-				>
-					<X className="h-3 w-3" />
-				</button>
-			)}
-		</span>
+			removeLabel={`End persistent damage ${label}`}
+			onRemove={onRemove}
+			className={className}
+		/>
 	);
 }
 
-/** Every persistent damage entry of a participant, one chip each. */
+/**
+ * Every persistent damage entry of a participant, one chip each, after
+ * `children` (e.g. a temp HP chip).
+ */
 export function PersistentDamageChips({
 	damages,
 	className = '',
+	children,
 }: {
 	damages: PersistentDamage[] | undefined;
 	className?: string;
+	children?: ReactNode;
 }) {
-	if (!damages?.length) return null;
+	if (!damages?.length && !children) return null;
 
 	return (
-		<span
-			aria-label="Persistent damage"
-			className={`flex flex-wrap gap-1 ${className}`}
-		>
-			{damages.map((damage) => (
+		<span className={`flex flex-wrap gap-1 ${className}`}>
+			{children}
+			{damages?.map((damage) => (
 				<PersistentDamageChip key={damage.id} damage={damage} />
 			))}
 		</span>

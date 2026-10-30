@@ -80,6 +80,8 @@ export type PlayerTrackerParticipant = {
 	/** Disable checks, when they are shown instead of HP. */
 	disableProgress: PlayerDisableProgress | null;
 	persistentDamage: PersistentDamage[];
+	/** Whether it has temp HP; players don't see how much. */
+	hasTempHp: boolean;
 	sideTheme: ParticipantSideTheme;
 };
 
@@ -631,6 +633,7 @@ export function runtimeToPlayerInitiativeQueue(
 		...toPlayerHealth(participant),
 		disableProgress: toPlayerDisableProgress(participant),
 		persistentDamage: participant.persistentDamage ?? [],
+		hasTempHp: (participant.tempHp ?? 0) > 0,
 		sideTheme: resolveParticipantSideTheme(participant),
 	}));
 }

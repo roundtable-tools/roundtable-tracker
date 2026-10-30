@@ -21,6 +21,7 @@ import { useTimerElapsed } from './useTimerElapsed';
 import { NextRoundMarkerCard } from './NextRoundMarkerCard';
 import { getRoundBoundaryIndex } from './roundBoundary';
 import { PersistentDamageChips } from './PersistentDamageChip';
+import { TempHpChip } from './StatusChip';
 
 const DELAYED_OPTION = {
 	status: 'Delayed',
@@ -410,7 +411,9 @@ export function InitiativePlayerViewPage() {
 										<PersistentDamageChips
 											damages={participant.persistentDamage}
 											className="mt-1"
-										/>
+										>
+											{participant.hasTempHp && <TempHpChip />}
+										</PersistentDamageChips>
 									</div>
 									{/* The status group ends the row, so it lines up with
 									    the other rows' whether or not a bar comes first. */}

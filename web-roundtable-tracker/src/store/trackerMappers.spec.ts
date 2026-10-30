@@ -139,6 +139,20 @@ describe('trackerMappers', () => {
 		});
 	});
 
+	it('tells players that a participant has temp HP, not how much', () => {
+		const queue = runtimeToPlayerInitiativeQueue({
+			charactersOrder: ['warded', 'plain'],
+			charactersMap: {
+				warded: createCharacter({ uuid: 'warded', tempHealth: 8 }),
+				plain: createCharacter({ uuid: 'plain' }),
+			},
+			trackerMetaMap: { warded: createMeta({}), plain: createMeta({}) },
+		});
+
+		expect(queue.map(({ hasTempHp }) => hasTempHp)).toEqual([true, false]);
+		expect(JSON.stringify(queue)).not.toContain('8');
+	});
+
 	it('builds a player-safe initiative queue with HP tiers', () => {
 		const charactersMap = {
 			healthy: createCharacter({
@@ -184,6 +198,7 @@ describe('trackerMappers', () => {
 				isHazard: false,
 				disableProgress: null,
 				persistentDamage: [],
+				hasTempHp: false,
 				sideTheme: 'pc',
 			},
 			{
@@ -195,6 +210,7 @@ describe('trackerMappers', () => {
 				isHazard: false,
 				disableProgress: null,
 				persistentDamage: [],
+				hasTempHp: false,
 				sideTheme: 'opponent',
 			},
 			{
@@ -206,6 +222,7 @@ describe('trackerMappers', () => {
 				isHazard: false,
 				disableProgress: null,
 				persistentDamage: [],
+				hasTempHp: false,
 				sideTheme: 'ally',
 			},
 		]);

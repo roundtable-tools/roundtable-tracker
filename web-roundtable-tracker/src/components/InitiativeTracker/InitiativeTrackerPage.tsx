@@ -141,6 +141,7 @@ import {
 import { generateUUID } from '@/utils/uuid';
 import { PERSISTENT_DAMAGE_ICONS } from './persistentDamage';
 import { PersistentDamageChip } from './PersistentDamageChip';
+import { TempHpChip } from './StatusChip';
 import { PersistentDamageDialog } from './PersistentDamageDialog';
 
 function DisableQuickActions({
@@ -753,6 +754,16 @@ function ParticipantDetails({
 						</Button>
 					</div>
 					<div className="space-y-1.5">
+						{(participant.tempHp ?? 0) > 0 && (
+							<div className="flex flex-wrap gap-1">
+								<TempHpChip
+									tempHp={participant.tempHp ?? 0}
+									description={participant.tempHpDescription}
+									className="text-xs"
+									onRemove={() => onSetTempHp?.(0, '')}
+								/>
+							</div>
+						)}
 						<div className="flex gap-2">
 							<Input
 								type="number"

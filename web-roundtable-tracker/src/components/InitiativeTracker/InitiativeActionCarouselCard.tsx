@@ -13,6 +13,7 @@ import {
 import { type EncounterTimer } from '@/store/encounterTimer';
 import { TurnTimeChip } from './TurnTimeChip';
 import { PersistentDamageChips } from './PersistentDamageChip';
+import { TempHpChip } from './StatusChip';
 import {
 	Tooltip,
 	TooltipContent,
@@ -143,6 +144,12 @@ export function InitiativeActionCarouselCard({
 	const TakeOutIcon = isHazard ? PowerOff : Ban;
 	const RemoveIcon = isHazard ? Hammer : Skull;
 	const koSideTitle = `${koSideLabel} ${participant.name}`;
+	const tempHpChip = participant.tempHp ? (
+		<TempHpChip
+			tempHp={participant.tempHp}
+			description={participant.tempHpDescription}
+		/>
+	) : null;
 	// The slide delay runs the handler of the latest render, so the action is
 	// built from the state it lands on, not the state at the press.
 	const onSwipeActionRef = useRef(onSwipeAction);
@@ -400,7 +407,9 @@ export function InitiativeActionCarouselCard({
 										className="text-[11px] text-current/85"
 									/>
 								)}
-								<PersistentDamageChips damages={participant.persistentDamage} />
+								<PersistentDamageChips damages={participant.persistentDamage}>
+									{tempHpChip}
+								</PersistentDamageChips>
 							</>
 						) : (
 							<div className="flex min-w-0 items-center justify-between gap-3">
@@ -417,7 +426,9 @@ export function InitiativeActionCarouselCard({
 								<PersistentDamageChips
 									damages={participant.persistentDamage}
 									className="min-w-0"
-								/>
+								>
+									{tempHpChip}
+								</PersistentDamageChips>
 								{isCurrent && (
 									<TurnTimeChip
 										timer={turnTimer}
