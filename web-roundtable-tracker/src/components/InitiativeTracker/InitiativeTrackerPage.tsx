@@ -67,6 +67,7 @@ import {
 	getValuesAtTakeOutLevel,
 	healingLeavesZeroHp,
 	inOneUndoStep,
+	settingDropsToZeroHp,
 	type TakeOutEffect,
 } from './takeOut';
 import { ResumeTimerNotice } from './ResumeTimerNotice';
@@ -116,7 +117,9 @@ import { TriggerReinforcementEventCommand } from '@/CommandHistory/Commands/Trig
 import { ReturnToInitiativeCommand } from '@/CommandHistory/Commands/ReturnToInitiativeCommand';
 import { ReorderCharactersCommand } from '@/CommandHistory/Commands/ReorderCharactersCommand';
 import { ChangeHealthCommand } from '@/CommandHistory/Commands/ChangeHealthCommand';
+import { SetHealthCommand } from '@/CommandHistory/Commands/SetHealthCommand';
 import { SetTempHealthCommand } from '@/CommandHistory/Commands/SetTempHealthCommand';
+import { evaluateSumExpression } from '@/utils/sumExpression';
 import { ReactivateCharacterCommand } from '@/CommandHistory/Commands/ReactivateCharacterCommand';
 import { RemoveCharacterCommand } from '@/CommandHistory/Commands/RemoveCharacterCommand';
 import {
@@ -398,6 +401,7 @@ function ParticipantRow({
 
 type ParticipantDetailsProps = {
 	participant: TrackerParticipant | null;
+	onSetHp?: (health: number) => void;
 	onHeal?: (amount: number) => void;
 	onDamage?: (amount: number) => void;
 	onSetTempHp?: (amount: number, description: string) => void;
@@ -409,6 +413,7 @@ type ParticipantDetailsProps = {
 
 function ParticipantDetails({
 	participant,
+	onSetHp,
 	onHeal,
 	onDamage,
 	onSetTempHp,
@@ -417,6 +422,7 @@ function ParticipantDetails({
 	onSetShownProgress,
 	onSetHiddenFromPlayers,
 }: ParticipantDetailsProps) {
+	const [setHpValue, setSetHpValue] = useState('');
 	const [hpAmount, setHpAmount] = useState('');
 	const [disableSuccesses, setDisableSuccesses] = useState('');
 	const [tempHpAmount, setTempHpAmount] = useState('');
@@ -431,21 +437,29 @@ function ParticipantDetails({
 	}
 
 	const isHazard = participant.role === 'hazard';
-	const showHpControls = onHeal || onDamage || onSetTempHp;
+	const showHpControls = onSetHp || onHeal || onDamage || onSetTempHp;
 	const hasHp = hasHpData(participant);
 
-	const handleHeal = () => {
-		const amount = parseInt(hpAmount, 10);
+	const handleSetHp = () => {
+		const health = evaluateSumExpression(setHpValue);
 
-		if (!Number.isFinite(amount) || amount <= 0) return;
+		if (health === null || health < 0) return;
+		onSetHp?.(health);
+		setSetHpValue('');
+	};
+
+	const handleHeal = () => {
+		const amount = evaluateSumExpression(hpAmount);
+
+		if (amount === null || amount <= 0) return;
 		onHeal?.(amount);
 		setHpAmount('');
 	};
 
 	const handleDamage = () => {
-		const amount = parseInt(hpAmount, 10);
+		const amount = evaluateSumExpression(hpAmount);
 
-		if (!Number.isFinite(amount) || amount <= 0) return;
+		if (amount === null || amount <= 0) return;
 		onDamage?.(amount);
 		setHpAmount('');
 	};
@@ -656,9 +670,26 @@ function ParticipantDetails({
 					<h4 className="text-sm font-medium">HP</h4>
 					<div className="flex gap-2">
 						<Input
-							type="number"
-							min={1}
-							placeholder="Amount"
+							placeholder="New HP, e.g. 20-7"
+							value={setHpValue}
+							onChange={(e) => setSetHpValue(e.target.value)}
+							className="h-8 text-sm"
+							onKeyDown={(e) => {
+								if (e.key === 'Enter') handleSetHp();
+							}}
+						/>
+						<Button
+							size="sm"
+							variant="outline"
+							className="shrink-0"
+							onClick={handleSetHp}
+						>
+							Set
+						</Button>
+					</div>
+					<div className="flex gap-2">
+						<Input
+							placeholder="Amount, e.g. 8+3"
 							value={hpAmount}
 							onChange={(e) => setHpAmount(e.target.value)}
 							className="h-8 text-sm"
@@ -1859,6 +1890,43 @@ export function InitiativeTrackerPage() {
 	const selectedParticipant =
 		allParticipants.find((p) => p.id === selectedParticipantId) ?? null;
 
+	const handleSelectedSetHp = selectedParticipantId
+		? (health: number) => {
+				const command = new SetHealthCommand({
+					uuid: selectedParticipantId,
+					health,
+				});
+
+				if (
+					settingDropsToZeroHp(selectedParticipantId, health, {
+						charactersMap,
+						trackerMetaMap,
+					})
+				) {
+					takeOutParticipant(selectedParticipantId, command);
+
+					return;
+				}
+
+				if (
+					healingLeavesZeroHp(selectedParticipantId, health, {
+						charactersMap,
+						trackerMetaMap,
+					})
+				) {
+					handleBringBackTrigger(selectedParticipantId, 'hp', command);
+
+					return;
+				}
+
+				try {
+					executeCommand(command);
+				} catch (error) {
+					console.error('Failed to set HP', error);
+				}
+			}
+		: undefined;
+
 	const handleSelectedHeal = selectedParticipantId
 		? (amount: number) => {
 				const command = new ChangeHealthCommand({
@@ -2482,6 +2550,7 @@ export function InitiativeTrackerPage() {
 						<ScrollArea className="h-full pr-3">
 							<ParticipantDetails
 								participant={selectedParticipant}
+								onSetHp={handleSelectedSetHp}
 								onHeal={handleSelectedHeal}
 								onDamage={handleSelectedDamage}
 								onSetTempHp={handleSelectedSetTempHp}
@@ -2820,6 +2889,7 @@ export function InitiativeTrackerPage() {
 						<Card className="p-4">
 							<ParticipantDetails
 								participant={selectedParticipant}
+								onSetHp={handleSelectedSetHp}
 								onHeal={handleSelectedHeal}
 								onDamage={handleSelectedDamage}
 								onSetTempHp={handleSelectedSetTempHp}

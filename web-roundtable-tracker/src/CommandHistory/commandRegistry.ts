@@ -13,6 +13,7 @@ import { ReorderCharactersCommand } from './Commands/ReorderCharactersCommand';
 import { ReturnToInitiativeCommand } from './Commands/ReturnToInitiativeCommand';
 import { TriggerReinforcementEventCommand } from './Commands/TriggerReinforcementEventCommand';
 import { UpdateCharacterDataCommand } from './Commands/UpdateCharacterDataCommand';
+import { SetHealthCommand } from './Commands/SetHealthCommand';
 import { SetTempHealthCommand } from './Commands/SetTempHealthCommand';
 import { RecordDisableProgressCommand } from './Commands/RecordDisableProgressCommand';
 import { SetShownProgressCommand } from './Commands/SetShownProgressCommand';
@@ -69,6 +70,7 @@ export const registerSerializableCommands = (classesMap = commandMap) => {
 		'TriggerReinforcementEventCommand'
 	);
 	register(ChangeHealthCommand, 'ChangeHealthCommand');
+	register(SetHealthCommand, 'SetHealthCommand');
 	register(SetTempHealthCommand, 'SetTempHealthCommand');
 	register(ReturnToInitiativeCommand, 'ReturnToInitiativeCommand');
 	register(GiveAdditionalTurnCommand, 'GiveAdditionalTurnCommand');

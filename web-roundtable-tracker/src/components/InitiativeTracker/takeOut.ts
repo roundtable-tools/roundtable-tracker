@@ -141,6 +141,28 @@ export function damageDropsToZeroHp(
 }
 
 /**
+ * Whether setting HP takes a participant that is still in the fight to 0 HP,
+ * which knocks it out. Temp HP doesn't count: Set changes only HP.
+ */
+export function settingDropsToZeroHp(
+	uuid: UUID,
+	health: number,
+	{ charactersMap, trackerMetaMap }: TakeOutState
+) {
+	const character = charactersMap[uuid];
+
+	if (
+		!character ||
+		character.turnState === 'knocked-out' ||
+		trackerMetaMap[uuid]?.hasHealthData === false
+	) {
+		return false;
+	}
+
+	return character.health > 0 && health <= 0;
+}
+
+/**
  * Whether a disable progress change fills the checks of a participant that
  * is still in the fight, which knocks it out (disables a hazard).
  */
