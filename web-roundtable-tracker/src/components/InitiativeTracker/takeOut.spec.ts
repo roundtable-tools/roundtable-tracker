@@ -27,6 +27,7 @@ import {
 	getValuesAtTakeOutLevel,
 	healingLeavesZeroHp,
 	inOneUndoStep,
+	settingDropsToZeroHp,
 } from './takeOut';
 
 const HERO = '00000000-0000-0000-0000-000000000001';
@@ -219,6 +220,31 @@ describe('taking a participant out of the fight', () => {
 			expect(damageDropsToZeroHp(GHOST, 50, state)).toBe(false);
 			expect(damageDropsToZeroHp(HERO, 5, state)).toBe(false);
 			expect(damageDropsToZeroHp(CLOCKWORK, 50, state)).toBe(false);
+		});
+	});
+
+	describe('settingDropsToZeroHp', () => {
+		it('is true when HP is set to 0, whatever the temp HP', () => {
+			const state = store.getState();
+
+			expect(settingDropsToZeroHp(HERO, 0, state)).toBe(true);
+			expect(settingDropsToZeroHp(HERO, 1, state)).toBe(false);
+			expect(settingDropsToZeroHp(CLOCKWORK, 0, state)).toBe(true);
+		});
+
+		it('is false without HP data, at 0 HP already or when already out', () => {
+			store.setState({
+				charactersMap: {
+					...store.getState().charactersMap,
+					[HERO]: character(HERO, 0),
+					[CLOCKWORK]: { ...character(CLOCKWORK), turnState: 'knocked-out' },
+				},
+			});
+			const state = store.getState();
+
+			expect(settingDropsToZeroHp(GHOST, 0, state)).toBe(false);
+			expect(settingDropsToZeroHp(HERO, 0, state)).toBe(false);
+			expect(settingDropsToZeroHp(CLOCKWORK, 0, state)).toBe(false);
 		});
 	});
 
