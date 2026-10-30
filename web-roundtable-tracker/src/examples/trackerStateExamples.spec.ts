@@ -37,6 +37,9 @@ import { pauseTimer } from '@/store/encounterTimer';
 import { ChangeHealthCommand } from '@/CommandHistory/Commands/ChangeHealthCommand';
 import { RecordDisableProgressCommand } from '@/CommandHistory/Commands/RecordDisableProgressCommand';
 import { SetTempHealthCommand } from '@/CommandHistory/Commands/SetTempHealthCommand';
+import { ChangePersistentDamageCommand } from '@/CommandHistory/Commands/ChangePersistentDamageCommand';
+import { type PersistentDamage } from '@/store/data';
+import { inOneUndoStep } from '@/components/InitiativeTracker/takeOut';
 import { TriggerReinforcementEventCommand } from '@/CommandHistory/Commands/TriggerReinforcementEventCommand';
 import {
 	generateParticipants,
@@ -55,6 +58,7 @@ import {
 import { ENCOUNTER_STORE_KEY } from '@/store/playerViewSync';
 import { runtimeToPlayerInitiativeQueue } from '@/store/trackerMappers';
 import { delayingIds } from '@/store/operations';
+import { generateUUID } from '@/utils/uuid';
 
 // Stable ids, so the files only change when the state does.
 const uuidCounter = vi.hoisted(() => ({ next: 0 }));
@@ -65,6 +69,7 @@ vi.mock('@/utils/uuid', () => ({
 
 type EncounterStoreApi = ReturnType<typeof createEncounterStore>;
 
+// No max HP: players track their own, so the tracker has no HP data for PCs.
 const party: Party = {
 	id: 'example-party',
 	name: 'Example Party',
@@ -75,24 +80,20 @@ const party: Party = {
 			uuid: 'pc-valeros',
 			name: 'Valeros',
 			level: 3,
-			maxHealth: 45,
 			tiePriority: true,
 		},
 		{
 			uuid: 'pc-kyra',
 			name: 'Kyra',
 			level: 3,
-			maxHealth: 38,
 			tiePriority: true,
 		},
 		{
 			uuid: 'pc-merisiel',
 			name: 'Merisiel',
 			level: 3,
-			maxHealth: 32,
 			tiePriority: true,
 		},
-		// No max HP: the tracker shows no HP data for this PC.
 		{ uuid: 'pc-ezren', name: 'Ezren', level: 3, tiePriority: true },
 	],
 };
@@ -380,6 +381,36 @@ const changeHealth = (store: EncounterStoreApi, name: string, delta: number) =>
 	);
 
 /**
+ * Adds persistent damage as the HP panel does: with an amount, it is dealt
+ * at once in the same step; a participant without HP data keeps only the
+ * name and icon.
+ */
+const addPersistentDamage = (
+	store: EncounterStoreApi,
+	name: string,
+	damage: Omit<PersistentDamage, 'id'>
+) => {
+	const uuid = uuidOf(store, name);
+	const deps = { encounterStore: store };
+
+	run(
+		store,
+		inOneUndoStep(
+			new ChangePersistentDamageCommand(
+				{
+					uuid,
+					change: { kind: 'add', damage: { ...damage, id: generateUUID() } },
+				},
+				deps
+			),
+			damage.amount === undefined
+				? undefined
+				: new ChangeHealthCommand({ uuid, delta: -damage.amount }, deps)
+		)
+	);
+};
+
+/**
  * Every participant in initiative appears once for players, except the ones
  * still hidden from them. A delayer keeps its spot in the order, so it is one
  * of them.
@@ -463,26 +494,32 @@ describe('tracker state examples', () => {
 		);
 	});
 
-	it('round-2-mid-round: damage, temp HP, two delays, knock-out, reinforcements and disable progress', async () => {
+	it('round-2-mid-round: damage, temp HP, persistent damage, two delays, knock-out, reinforcements and disable progress', async () => {
 		// Round 1
 		changeHealth(store, 'Goblin Warchief', -14);
+		addPersistentDamage(store, 'Goblin Warchief', {
+			amount: 3,
+			name: '1d6 bleed',
+			icon: 'bleed',
+		});
 		act(store, 'Valeros', 'end-turn');
-		changeHealth(store, 'Valeros', -20);
-		act(store, 'Goblin Warchief', 'end-turn');
-		act(store, 'Collapsing Bridge', 'end-turn');
+		addPersistentDamage(store, 'Valeros', { name: '2d6 fire', icon: 'fire' });
 		run(
 			store,
 			new SetTempHealthCommand(
 				{
-					uuid: uuidOf(store, 'Kyra'),
+					uuid: uuidOf(store, 'Goblin Warchief'),
 					tempHealth: 8,
-					description: 'False Life, until the end of the encounter',
+					description: 'Potion of Resistance, until the end of the encounter',
 				},
 				{ encounterStore: store }
 			)
 		);
+		act(store, 'Goblin Warchief', 'end-turn');
+		act(store, 'Collapsing Bridge', 'end-turn');
 		act(store, 'Kyra', 'end-turn');
-		changeHealth(store, 'Merisiel', -28);
+		addPersistentDamage(store, 'Merisiel', { icon: 'acid' });
+		addPersistentDamage(store, 'Merisiel', { name: '1 bleed', icon: 'bleed' });
 		act(store, 'Goblin Archer A', 'end-turn');
 		act(store, 'Goblin Sneak', 'delay');
 		act(store, 'Bridge Keeper', 'delay');
@@ -505,6 +542,11 @@ describe('tracker state examples', () => {
 			)
 		);
 		changeHealth(store, 'Goblin Archer A', -12);
+		changeHealth(store, 'Goblin Warrior A', -7);
+		addPersistentDamage(store, 'Goblin Warrior B', {
+			amount: 2,
+			icon: 'poison',
+		});
 		act(store, 'Valeros', 'end-turn');
 		act(store, 'Goblin Warchief', 'end-turn');
 
