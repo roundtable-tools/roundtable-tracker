@@ -3,6 +3,7 @@ import { createEncounterStore } from '@/store/encounterRuntimeStore';
 import { Character } from '@/store/data';
 import { STATUS } from '../common';
 import { ReturnToInitiativeCommand } from './ReturnToInitiativeCommand';
+import { FinalizeTurnAndAdvanceRoundCommand } from './FinalizeTurnAndAdvanceRoundCommand';
 import { delayingIds } from '@/store/operations';
 
 describe('ReturnToInitiativeCommand', () => {
@@ -120,5 +121,34 @@ describe('ReturnToInitiativeCommand', () => {
 		expect(stateAfterUndo.charactersMap[characters[1].uuid].turnState).toBe(
 			'delayed'
 		);
+	});
+
+	it('keeps the round when a delayer is picked after the last turn, until its turn ends', () => {
+		const [hero, rogue, goblin] = characters.map(({ uuid }) => uuid);
+		encounterStore.setState(() => ({
+			charactersOrder: [goblin, hero, rogue],
+			charactersWithTurn: new Set([goblin]),
+		}));
+
+		const pick = new ReturnToInitiativeCommand(
+			{ activeUuid: goblin, returningUuid: rogue, action: 'end-turn' },
+			{ encounterStore }
+		);
+
+		expect(pick.execute()).toBe(STATUS.success);
+		expect(encounterStore.getState()).toMatchObject({
+			round: 1,
+			charactersOrder: [rogue, hero, goblin],
+			charactersWithTurn: new Set([rogue]),
+		});
+		expect(delayingIds(encounterStore.getState())).toEqual([]);
+
+		const endReturnersTurn = new FinalizeTurnAndAdvanceRoundCommand(
+			{ uuid: rogue, action: 'end-turn' },
+			{ encounterStore }
+		);
+
+		expect(endReturnersTurn.execute()).toBe(STATUS.success);
+		expect(encounterStore.getState().round).toBe(2);
 	});
 });

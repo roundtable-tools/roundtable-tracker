@@ -18,6 +18,17 @@ const getRemainingTurnCount = (
 	charactersWithTurn: Set<UUID>
 ) => charactersOrder.filter((uuid) => charactersWithTurn.has(uuid)).length;
 
+/**
+ * Ends the round's last turn when the next spot in the queue belongs to a
+ * delaying participant that nobody chose to return: the GM skipped the return
+ * prompt, or that delayer was the only one, so nobody was asked. It delayed a
+ * whole round, so its delayed turn is lost: the round advances and it acts
+ * from its old spot (`ReturnToInitiativeCommand` plus `EndRoundCommand`, one
+ * undo step).
+ *
+ * A delayer the GM picks in the return prompt doesn't go through here: plain
+ * `ReturnToInitiativeCommand` makes it the last turn of the current round.
+ */
 export class FinalizeTurnAndReturnToInitiativeCommand implements Command {
 	readonly type = 'FinalizeTurnAndReturnToInitiativeCommand';
 	description = 'Finalize Turn And Return To Initiative Command';

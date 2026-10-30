@@ -50,11 +50,14 @@ A participant has acted this round once it is no longer in `charactersWithTurn`.
 | `EndTurnCommand {uuid}` | Removes the turn, moves the participant to the end of `charactersOrder` and skips participants without a turn. Fails if it has no turn |
 | `EndRoundCommand` | `round + 1`. Every participant in `charactersOrder` gets a turn again, delayers too, including knocked-out ones. No reordering |
 | `FinalizeTurnAndAdvanceRoundCommand {uuid, action: 'end-turn' \| 'delay' \| 'ko'}` | One undo step: the action plus `EndRoundCommand`. Valid only when `uuid` is the last participant with a turn |
-| `FinalizeTurnAndReturnToInitiativeCommand {activeUuid, returningUuid, action}` | One undo step: `ReturnToInitiativeCommand` plus `EndRoundCommand` (see quirks) |
+| `FinalizeTurnAndReturnToInitiativeCommand {activeUuid, returningUuid, action}` | One undo step: `ReturnToInitiativeCommand` plus `EndRoundCommand`. Runs after the round's last turn when the next spot belongs to a delayer nobody picked (see "Return after the last turn") |
 | `GiveAdditionalTurnCommand {uuid}` | Gives the turn back. "Give Turn Back" in the selected-participant panel, for a participant that already acted |
 
 - **Delaying a whole round.** A delaying participant keeps its entry in `charactersOrder` (shown as an "is delaying" marker), which is its old spot. When the turn before that entry ends, `getRoundActionCommand` returns it there through `ReturnToInitiativeCommand` (`delayerReturningAfterTurn`: `charactersOrder[1]` is delaying). The delayed turn is lost, as the rules say.
 - **Return prompt.** Before a turn ends, the UI asks whether a delaying participant returns when `asksToReturnFromDelay` is true: some delayer other than the one coming back after this turn anyway. The prompt then lists every delayer (`returnPromptEntries`), nearest old spot first, with the number of turns before that spot in parentheses (0: right after this turn; other delayers' spots don't count).
+- **Return after the last turn.** When the round's last turn ends while someone is delaying:
+  - **Pick** (a delayer chosen in the return prompt): plain `ReturnToInitiativeCommand`. The returner takes the last turn of the current round, and the round advances when that turn ends.
+  - **Skip** (the prompt skipped or closed, or no prompt because the only delayer's old spot is next): the round action. When the next spot belongs to a delayer, that is `FinalizeTurnAndReturnToInitiativeCommand`: the delayer delayed a whole round, so the round advances and it acts from its old spot. Its delayed turn is lost.
 - After a round advances, a "Round N" dialog lists that round's narrative and reinforcement slots.
 - **Not modelled:**
   - start-of-turn and end-of-turn steps
@@ -159,5 +162,4 @@ The initiative cards animate an action before it runs, and these exceptions keep
 
 Check whether each is still open before relying on it.
 
-- Returning from Delay after the last turn of a round advances the round first. The returner then acts as the first turn of the next round, not the last turn of the current one (#93).
 - Simple hazards stay in the turn bookkeeping. The final-turn checks in the commands count them, while the UI doesn't (#92).
