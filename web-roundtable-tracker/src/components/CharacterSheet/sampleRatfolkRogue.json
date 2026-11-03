@@ -1,0 +1,293 @@
+{
+	"success": true,
+	"build": {
+		"name": " ",
+		"class": "Rogue",
+		"dualClass": null,
+		"level": 2,
+		"xp": 0,
+		"ancestry": "Ratfolk",
+		"heritage": "Shadow Rat",
+		"background": "Gambler",
+		"alignment": "N",
+		"gender": "Not set",
+		"age": "Not set",
+		"deity": "Not set",
+		"size": 1,
+		"sizeName": "Small",
+		"keyability": "dex",
+		"languages": ["Common", "Goblin", "Shadowtongue", "Ysoki"],
+		"rituals": [],
+		"resistances": [],
+		"inventorMods": [],
+		"abilities": {
+			"str": 8,
+			"dex": 18,
+			"con": 12,
+			"int": 14,
+			"wis": 10,
+			"cha": 16,
+			"breakdown": {
+				"ancestryFree": ["Cha"],
+				"ancestryBoosts": ["Dex", "Int"],
+				"ancestryFlaws": ["Str"],
+				"backgroundBoosts": ["Cha", "Dex"],
+				"classBoosts": ["Dex"],
+				"mapLevelledBoosts": { "1": ["Dex", "Cha", "Int", "Con"] }
+			}
+		},
+		"attributes": {
+			"ancestryhp": 6,
+			"classhp": 8,
+			"bonushp": 0,
+			"bonushpPerLevel": 0,
+			"speed": 25,
+			"speedBonus": 0
+		},
+		"proficiencies": {
+			"classDC": 2,
+			"perception": 4,
+			"fortitude": 2,
+			"reflex": 4,
+			"will": 4,
+			"heavy": 0,
+			"medium": 0,
+			"light": 2,
+			"unarmored": 2,
+			"advanced": 0,
+			"martial": 2,
+			"simple": 2,
+			"unarmed": 2,
+			"castingArcane": 0,
+			"castingDivine": 0,
+			"castingOccult": 0,
+			"castingPrimal": 0,
+			"acrobatics": 2,
+			"arcana": 2,
+			"athletics": 2,
+			"crafting": 2,
+			"deception": 2,
+			"diplomacy": 0,
+			"intimidation": 2,
+			"medicine": 2,
+			"nature": 0,
+			"occultism": 2,
+			"performance": 2,
+			"religion": 0,
+			"society": 2,
+			"stealth": 2,
+			"survival": 2,
+			"thievery": 4,
+			"piloting": 0,
+			"computers": 0
+		},
+		"mods": {},
+		"feats": [
+			["Lie to Me", null, "Awarded Feat", 1],
+			[
+				"Shadow Rat",
+				null,
+				"Heritage",
+				1,
+				"Heritage Feat",
+				"standardChoice",
+				null
+			],
+			[
+				"Vicious Critique",
+				null,
+				"Skill Feat",
+				1,
+				"Skill Feat 1",
+				"standardChoice",
+				null
+			],
+			[
+				"You're Next",
+				null,
+				"Class Feat",
+				1,
+				"Rogue Feat 1",
+				"standardChoice",
+				null
+			],
+			[
+				"Tinkering Fingers",
+				null,
+				"Ancestry Feat",
+				1,
+				"Ratfolk Feat 1",
+				"standardChoice",
+				null
+			],
+			[
+				"Wary Disarmament",
+				null,
+				"Skill Feat",
+				2,
+				"Skill Feat 2",
+				"standardChoice",
+				null
+			],
+			[
+				"Card Sharp's Fourberie",
+				null,
+				"Class Feat",
+				2,
+				"Rogue Feat 2",
+				"standardChoice",
+				null
+			]
+		],
+		"specials": [
+			"Thief Racket",
+			"Sneak Attack",
+			"Surprise Attack",
+			"Low-Light Vision",
+			"Shadow Rat"
+		],
+		"lores": [["Games", 2]],
+		"equipmentContainers": {
+			"a7d270ea-ec6f-4068-87bf-376e8d3a801b": {
+				"containerName": "Backpack",
+				"bagOfHolding": false,
+				"backpack": true,
+				"augmentations": false
+			}
+		},
+		"equipment": [
+			["Marked Playing Cards", 1, "Invested"],
+			["Backpack", 1, "Invested"],
+			["Bedroll", 1, "a7d270ea-ec6f-4068-87bf-376e8d3a801b", "Invested"],
+			["Chalk", 10, "a7d270ea-ec6f-4068-87bf-376e8d3a801b", "Invested"],
+			[
+				"Flint and Steel",
+				1,
+				"a7d270ea-ec6f-4068-87bf-376e8d3a801b",
+				"Invested"
+			],
+			["Rope", 1, "a7d270ea-ec6f-4068-87bf-376e8d3a801b", "Invested"],
+			["Rations", 1, "a7d270ea-ec6f-4068-87bf-376e8d3a801b", "Invested"],
+			["Torch", 5, "a7d270ea-ec6f-4068-87bf-376e8d3a801b", "Invested"],
+			["Waterskin", 1, "a7d270ea-ec6f-4068-87bf-376e8d3a801b", "Invested"],
+			["Soap", 1, "a7d270ea-ec6f-4068-87bf-376e8d3a801b", "Invested"],
+			["Repair Kit", 1, "a7d270ea-ec6f-4068-87bf-376e8d3a801b", "Invested"],
+			[
+				"Thieves' Toolkit",
+				1,
+				"a7d270ea-ec6f-4068-87bf-376e8d3a801b",
+				"Invested"
+			],
+			["Crowbar", 1, "a7d270ea-ec6f-4068-87bf-376e8d3a801b", "Invested"],
+			["Wax Key Blank", 1, "a7d270ea-ec6f-4068-87bf-376e8d3a801b", "Invested"]
+		],
+		"specificProficiencies": {
+			"trained": [],
+			"expert": [],
+			"master": [],
+			"legendary": []
+		},
+		"weapons": [
+			{
+				"name": "Dagger",
+				"qty": 1,
+				"prof": "simple",
+				"die": "d4",
+				"pot": 0,
+				"str": "",
+				"mat": null,
+				"display": "Deck of Cards (dagger)",
+				"runes": [],
+				"damageType": "P",
+				"attack": 8,
+				"damageBonus": 4,
+				"extraDamage": [],
+				"increasedDice": false,
+				"isInventor": false,
+				"grade": ""
+			},
+			{
+				"name": "Dart",
+				"qty": 1,
+				"prof": "simple",
+				"die": "d4",
+				"pot": 0,
+				"str": "",
+				"mat": null,
+				"display": "Deck of Cards (dart)",
+				"runes": [],
+				"damageType": "P",
+				"attack": 8,
+				"damageBonus": -1,
+				"extraDamage": [],
+				"increasedDice": false,
+				"isInventor": false,
+				"grade": ""
+			},
+			{
+				"name": "Rapier",
+				"qty": 1,
+				"prof": "martial",
+				"die": "d6",
+				"pot": 0,
+				"str": "",
+				"mat": null,
+				"display": "Rapier",
+				"runes": [],
+				"damageType": "P",
+				"attack": 8,
+				"damageBonus": 4,
+				"extraDamage": [],
+				"increasedDice": false,
+				"isInventor": false,
+				"grade": ""
+			},
+			{
+				"name": "Fist",
+				"qty": 1,
+				"prof": "unarmed",
+				"die": "d4",
+				"pot": 0,
+				"str": "",
+				"mat": null,
+				"display": "Fist",
+				"runes": [],
+				"damageType": "B",
+				"attack": 8,
+				"damageBonus": 4,
+				"extraDamage": [],
+				"increasedDice": false,
+				"isInventor": false,
+				"grade": ""
+			}
+		],
+		"money": { "cp": 0, "sp": 4, "gp": 17, "pp": 0 },
+		"armor": [
+			{
+				"name": "Leather Armor",
+				"qty": 1,
+				"prof": "light",
+				"pot": 0,
+				"res": "",
+				"mat": null,
+				"display": "Leather",
+				"worn": true,
+				"runes": [],
+				"grade": ""
+			}
+		],
+		"spellCasters": [],
+		"focusPoints": 0,
+		"focus": {},
+		"formula": [],
+		"acTotal": {
+			"acProfBonus": 4,
+			"acAbilityBonus": 4,
+			"acItemBonus": 1,
+			"acTotal": 19,
+			"shieldBonus": null
+		},
+		"pets": [],
+		"familiars": []
+	}
+}

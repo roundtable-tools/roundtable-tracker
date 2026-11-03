@@ -3,6 +3,7 @@ import {
 	House,
 	MonitorPlay,
 	PencilRuler,
+	ScrollText,
 	Swords,
 	Users,
 	type LucideIcon,
@@ -23,6 +24,7 @@ export const ROUTE_TITLES: Record<RoutePath, string> = {
 	'/encounters': 'Encounters',
 	'/builder': 'Builder',
 	'/party_setup': 'Parties',
+	'/character_sheet': 'Character sheet',
 	'/initiative_tracker': 'Tracker',
 	'/initiative_player': 'Player view',
 	'/preview': 'Preview',
@@ -46,6 +48,7 @@ const NAV_ICONS: Record<NavPath, LucideIcon> = {
 	'/encounters': FolderOpen,
 	'/builder': PencilRuler,
 	'/party_setup': Users,
+	'/character_sheet': ScrollText,
 	'/initiative_tracker': Swords,
 	'/initiative_player': MonitorPlay,
 };
@@ -59,9 +62,15 @@ const toNavItem = (url: NavPath): NavItem => ({
 export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
 	{
 		title: 'Prepare',
-		items: (['/', '/encounters', '/builder', '/party_setup'] as const).map(
-			toNavItem
-		),
+		items: (
+			[
+				'/',
+				'/encounters',
+				'/builder',
+				'/party_setup',
+				'/character_sheet',
+			] as const
+		).map(toNavItem),
 	},
 	{
 		title: 'Play',

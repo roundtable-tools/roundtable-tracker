@@ -16,6 +16,7 @@ describe('app navigation', () => {
 			'Encounters',
 			'Builder',
 			'Parties',
+			'Character sheet',
 			'Tracker',
 			'Player view',
 		]);

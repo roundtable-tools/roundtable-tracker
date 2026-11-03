@@ -1,0 +1,297 @@
+{
+	"success": true,
+	"build": {
+		"name": " ",
+		"class": "Cleric",
+		"dualClass": null,
+		"level": 2,
+		"xp": 0,
+		"ancestry": "Human",
+		"heritage": "Versatile Human",
+		"background": "Sponsored by a Stranger (Nature, Dubious Knowledge)",
+		"alignment": "N",
+		"gender": "Not set",
+		"age": "Not set",
+		"deity": "Granduncle Taproot (He Who Hides in Humus)",
+		"size": 2,
+		"sizeName": "Medium",
+		"keyability": "wis",
+		"languages": ["Common"],
+		"rituals": [],
+		"resistances": [],
+		"inventorMods": [],
+		"abilities": {
+			"str": 16,
+			"dex": 12,
+			"con": 12,
+			"int": 10,
+			"wis": 18,
+			"cha": 10,
+			"breakdown": {
+				"ancestryFree": ["Str", "Wis"],
+				"ancestryBoosts": [],
+				"ancestryFlaws": [],
+				"backgroundBoosts": ["Wis", "Str"],
+				"classBoosts": ["Wis"],
+				"mapLevelledBoosts": { "1": ["Str", "Wis", "Dex", "Con"] }
+			}
+		},
+		"attributes": {
+			"ancestryhp": 8,
+			"classhp": 8,
+			"bonushp": 0,
+			"bonushpPerLevel": 1,
+			"speed": 25,
+			"speedBonus": 0
+		},
+		"proficiencies": {
+			"classDC": 2,
+			"perception": 2,
+			"fortitude": 4,
+			"reflex": 2,
+			"will": 4,
+			"heavy": 0,
+			"medium": 2,
+			"light": 2,
+			"unarmored": 2,
+			"advanced": 0,
+			"martial": 0,
+			"simple": 2,
+			"unarmed": 2,
+			"castingArcane": 0,
+			"castingDivine": 2,
+			"castingOccult": 0,
+			"castingPrimal": 0,
+			"acrobatics": 0,
+			"arcana": 2,
+			"athletics": 4,
+			"crafting": 0,
+			"deception": 0,
+			"diplomacy": 0,
+			"intimidation": 0,
+			"medicine": 0,
+			"nature": 2,
+			"occultism": 2,
+			"performance": 0,
+			"religion": 2,
+			"society": 0,
+			"stealth": 0,
+			"survival": 2,
+			"thievery": 0,
+			"piloting": 0,
+			"computers": 0
+		},
+		"mods": {},
+		"feats": [
+			["Shield Block", null, "Awarded Feat", 1],
+			["Dubious Knowledge", null, "Awarded Feat", 1],
+			["Titan Wrestler", null, "Awarded Feat", 2],
+			[
+				"Versatile Human",
+				null,
+				"Heritage",
+				1,
+				"Heritage Feat",
+				"parentChoice",
+				null
+			],
+			[
+				"Toughness",
+				null,
+				"General Feat",
+				1,
+				"Heritage Featversatile heritage",
+				"childChoice",
+				"Heritage Feat"
+			],
+			[
+				"Natural Ambition",
+				null,
+				"Ancestry Feat",
+				1,
+				"Human Feat 1",
+				"parentChoice",
+				null
+			],
+			[
+				"Domain Initiate",
+				null,
+				"Class Feat",
+				1,
+				"Natural Ambition Class FeatHuman Feat 1",
+				"childChoice",
+				"Human Feat 1"
+			],
+			[
+				"Lead Climber",
+				null,
+				"Skill Feat",
+				2,
+				"Skill Feat 2",
+				"standardChoice",
+				null
+			],
+			[
+				"Wrestler Dedication",
+				null,
+				"Class Feat",
+				2,
+				"Cleric Feat 2",
+				"standardChoice",
+				null
+			]
+		],
+		"specials": [
+			"Deity",
+			"Healing Font",
+			"Cleric Spellcasting",
+			"Warpriest",
+			"Anathema",
+			"Neither",
+			"Domain: Might",
+			"Versatile Human"
+		],
+		"lores": [["Insect", 2]],
+		"equipmentContainers": {},
+		"equipment": [],
+		"specificProficiencies": {
+			"trained": ["Shield Boss"],
+			"expert": [],
+			"master": [],
+			"legendary": []
+		},
+		"weapons": [
+			{
+				"name": "Shield Boss",
+				"qty": 1,
+				"prof": "martial",
+				"die": "d6",
+				"pot": 0,
+				"str": "",
+				"mat": null,
+				"display": "Shield Boss",
+				"runes": [],
+				"damageType": "B",
+				"attack": 7,
+				"damageBonus": 3,
+				"extraDamage": [],
+				"increasedDice": false,
+				"isInventor": false,
+				"grade": ""
+			},
+			{
+				"name": "Fist",
+				"qty": 1,
+				"prof": "unarmed",
+				"die": "d4",
+				"pot": 0,
+				"str": "",
+				"mat": null,
+				"display": "Fist",
+				"runes": [],
+				"damageType": "B",
+				"attack": 7,
+				"damageBonus": 3,
+				"extraDamage": [],
+				"increasedDice": false,
+				"isInventor": false,
+				"grade": ""
+			}
+		],
+		"money": { "cp": 0, "sp": 5, "gp": 17, "pp": 0 },
+		"armor": [
+			{
+				"name": "Chain Mail",
+				"qty": 1,
+				"prof": "medium",
+				"pot": 0,
+				"res": "",
+				"mat": null,
+				"display": "Chain Mail",
+				"worn": true,
+				"runes": [],
+				"grade": ""
+			},
+			{
+				"name": "Swordstealer Shield",
+				"qty": 1,
+				"prof": "shield",
+				"pot": 0,
+				"res": "",
+				"mat": null,
+				"display": "",
+				"worn": true,
+				"runes": [],
+				"grade": ""
+			}
+		],
+		"spellCasters": [
+			{
+				"name": "Cleric",
+				"magicTradition": "divine",
+				"spellcastingType": "prepared",
+				"ability": "wis",
+				"proficiency": 2,
+				"focusPoints": 0,
+				"innate": false,
+				"perDay": [5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+				"spells": [
+					{
+						"spellLevel": 0,
+						"list": [
+							"Detect Magic",
+							"Guidance",
+							"Light",
+							"Needle Darts",
+							"Daze"
+						]
+					},
+					{
+						"spellLevel": 1,
+						"list": ["Runic Weapon", "Sacred Beasts", "Sacred Beasts"]
+					}
+				],
+				"prepared": [],
+				"blendedSpells": []
+			},
+			{
+				"name": "Cleric Font",
+				"magicTradition": "divine",
+				"spellcastingType": "prepared",
+				"ability": "wis",
+				"proficiency": 2,
+				"focusPoints": 0,
+				"innate": false,
+				"perDay": [0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+				"spells": [
+					{ "spellLevel": 0, "list": [] },
+					{ "spellLevel": 1, "list": ["Heal", "Heal", "Heal", "Heal"] }
+				],
+				"prepared": [],
+				"blendedSpells": []
+			}
+		],
+		"focusPoints": 1,
+		"focus": {
+			"divine": {
+				"wis": {
+					"abilityBonus": 4,
+					"proficiency": 2,
+					"itemBonus": 0,
+					"focusCantrips": [],
+					"focusSpells": ["Athletic Rush"]
+				}
+			}
+		},
+		"formula": [],
+		"acTotal": {
+			"acProfBonus": 4,
+			"acAbilityBonus": 1,
+			"acItemBonus": 4,
+			"acTotal": 19,
+			"shieldBonus": "2"
+		},
+		"pets": [],
+		"familiars": []
+	}
+}
