@@ -481,7 +481,13 @@
 	text-align: right;
 	font-size: 9pt;
 	font-weight: 800;
-	white-space: nowrap;
+	/* Long lore names ("Mountains Lore") wrap; two lines fit the row. */
+	line-height: 1.05;
+	overflow-wrap: anywhere;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
 	overflow: hidden;
 }
 

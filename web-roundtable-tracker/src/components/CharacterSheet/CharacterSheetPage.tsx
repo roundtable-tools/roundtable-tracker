@@ -501,8 +501,8 @@ export function CharacterSheetPage() {
 							<h2 className="font-semibold">Strikes</h2>
 							<p className="text-muted-foreground text-sm">
 								Pick which strikes are printed: each weapon, the ranged option
-								of a thrown weapon, and the fist added when the build has no
-								unarmed attack.
+								of a thrown weapon, the fist added when the build has no unarmed
+								attack, and a kineticist's melee and ranged Elemental Blasts.
 							</p>
 						</div>
 						<div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-x-4 gap-y-1">

@@ -7,6 +7,8 @@ Writes src/components/CharacterSheet/data/pf2eActions.json with:
   - exploration: general exploration activities
   - feats: every feat that takes an action (free action, reaction, 1-3
     actions), keyed by lower-case name, for the feats a character has
+  - classActions: actions that carry a class's trait (Channel Elements,
+    Rage), keyed by lower-case name, for the class features a character has
   - featRefs: for every feat, the skill, exploration and basic actions its
     rules text links to (Lie to Me -> Lie), so the sheet can pre-select the
     actions a character's feats change
@@ -408,6 +410,14 @@ def main():
     for key, doc in sorted(by_name(feats).items()):
         data["feats"][key] = entry(doc)
 
+    # Actions a class feature grants (Channel Elements, Rage): actions with a
+    # class's trait, for the class features in Pathbuilder's specials.
+    class_names = {d["name"] for d in current("class")}
+    data["classActions"] = {
+        key: entry(doc) for key, doc in sorted(actions.items())
+        if class_names & set(doc.get("trait") or []) and key not in data["feats"]
+    }
+
     # Action links in feat text: /Actions.aspx?ID=<n>. Legacy feats link to
     # legacy actions, so ids of every version map to the action's name.
     action_names = {
@@ -462,7 +472,8 @@ def main():
     print(f"wrote {REFERENCE_OUT} ({REFERENCE_OUT.stat().st_size // 1024} KiB, "
           + ", ".join(f"{len(v)} {k}" for k, v in ref.items()) + ")")
     print(f"wrote {OUT} ({OUT.stat().st_size // 1024} KiB, "
-          f"{len(data['feats'])} action feats, {len(data['featRefs'])} feats "
+          f"{len(data['feats'])} action feats, {len(data['classActions'])} class "
+          f"actions, {len(data['featRefs'])} feats "
           f"linking actions, {len(data['ancestries'])} ancestries)")
 
 

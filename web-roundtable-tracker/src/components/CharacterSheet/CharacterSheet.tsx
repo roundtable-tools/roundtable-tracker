@@ -373,7 +373,16 @@ function StrikeCard({
 	firstRanged?: boolean;
 }) {
 	const [second, third] = s ? mapPenalties(s) : [5, 10];
-	const icon: SheetIconName = !s ? 'attack' : s.ranged ? 'ranged' : 'melee';
+	const impulse = s?.prof === 'impulse';
+	const icon: SheetIconName = !s
+		? 'attack'
+		: s.ranged
+			? impulse
+				? 'rangedImpulse'
+				: 'ranged'
+			: impulse
+				? 'meleeImpulse'
+				: 'melee';
 
 	return (
 		<div className={`cs-strike ${firstRanged ? 'cs-first-ranged' : ''}`}>
@@ -417,7 +426,7 @@ function StrikeCard({
 			/>
 			<span className="cs-bps">
 				{['B', 'P', 'S'].map((t) => (
-					<span key={t} className={s?.damageType === t ? 'cs-on' : ''}>
+					<span key={t} className={s?.damageType.includes(t) ? 'cs-on' : ''}>
 						{t}
 					</span>
 				))}

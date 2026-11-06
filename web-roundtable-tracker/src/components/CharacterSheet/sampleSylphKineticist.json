@@ -1,0 +1,213 @@
+{
+	"success": true,
+	"build": {
+		"name": " ",
+		"class": "Kineticist",
+		"dualClass": null,
+		"level": 2,
+		"xp": 0,
+		"ancestry": "Human",
+		"heritage": "Sylph",
+		"background": "Scout",
+		"alignment": "N",
+		"gender": "Not set",
+		"age": "Not set",
+		"deity": "Not set",
+		"size": 2,
+		"sizeName": "Medium",
+		"keyability": "con",
+		"languages": ["Common", "Sussuran"],
+		"rituals": [],
+		"resistances": [],
+		"inventorMods": [],
+		"abilities": {
+			"str": 10,
+			"dex": 16,
+			"con": 18,
+			"int": 12,
+			"wis": 12,
+			"cha": 10,
+			"breakdown": {
+				"ancestryFree": ["Con", "Dex"],
+				"ancestryBoosts": [],
+				"ancestryFlaws": [],
+				"backgroundBoosts": ["Dex", "Con"],
+				"classBoosts": ["Con"],
+				"mapLevelledBoosts": { "1": ["Con", "Wis", "Int", "Dex"] }
+			}
+		},
+		"attributes": {
+			"ancestryhp": 8,
+			"classhp": 8,
+			"bonushp": 0,
+			"bonushpPerLevel": 0,
+			"speed": 25,
+			"speedBonus": 5
+		},
+		"proficiencies": {
+			"classDC": 2,
+			"perception": 2,
+			"fortitude": 4,
+			"reflex": 4,
+			"will": 2,
+			"heavy": 0,
+			"medium": 0,
+			"light": 2,
+			"unarmored": 2,
+			"advanced": 0,
+			"martial": 0,
+			"simple": 2,
+			"unarmed": 2,
+			"castingArcane": 0,
+			"castingDivine": 0,
+			"castingOccult": 0,
+			"castingPrimal": 0,
+			"acrobatics": 2,
+			"arcana": 0,
+			"athletics": 2,
+			"crafting": 0,
+			"deception": 0,
+			"diplomacy": 0,
+			"intimidation": 0,
+			"medicine": 0,
+			"nature": 2,
+			"occultism": 0,
+			"performance": 0,
+			"religion": 0,
+			"society": 0,
+			"stealth": 2,
+			"survival": 2,
+			"thievery": 2,
+			"piloting": 0,
+			"computers": 0
+		},
+		"mods": {},
+		"feats": [
+			["Forager", null, "Awarded Feat", 1],
+			["Sylph", null, "Heritage", 1, "Heritage Feat", "standardChoice", null],
+			[
+				"Air Cushion",
+				null,
+				"Class Feat",
+				1,
+				"Kineticist Feat 1",
+				"standardChoice",
+				null
+			],
+			[
+				"Swift",
+				null,
+				"Ancestry Feat",
+				1,
+				"Human Feat 1",
+				"standardChoice",
+				null
+			],
+			[
+				"Four Winds",
+				null,
+				"Kineticist Feat",
+				1,
+				"Single Gate Element Impulse Feat 0",
+				"standardChoice",
+				null
+			],
+			[
+				"Aerial Boomerang",
+				null,
+				"Kineticist Feat",
+				1,
+				"Single Gate Element Impulse Feat 1",
+				"standardChoice",
+				null
+			],
+			[
+				"Dirty Trick",
+				null,
+				"Skill Feat",
+				2,
+				"Skill Feat 2",
+				"standardChoice",
+				null
+			],
+			[
+				"Scout Dedication",
+				null,
+				"Class Feat",
+				2,
+				"Kineticist Feat 2",
+				"standardChoice",
+				null
+			]
+		],
+		"specials": [
+			"Single Gate",
+			"Air Element",
+			"Kinetic Aura",
+			"Channel Elements",
+			"Impulses",
+			"Elemental Blast",
+			"Base Kinesis",
+			"Low-Light Vision",
+			"Air Impulse Junction",
+			"Sylph"
+		],
+		"lores": [["One Terrain", 2]],
+		"equipmentContainers": {},
+		"equipment": [],
+		"specificProficiencies": {
+			"trained": [],
+			"expert": [],
+			"master": [],
+			"legendary": []
+		},
+		"weapons": [
+			{
+				"name": "Fist",
+				"qty": 1,
+				"prof": "unarmed",
+				"die": "d4",
+				"pot": 0,
+				"str": "",
+				"mat": null,
+				"display": "Fist",
+				"runes": [],
+				"damageType": "B",
+				"attack": 7,
+				"damageBonus": 0,
+				"extraDamage": [],
+				"increasedDice": false,
+				"isInventor": false,
+				"grade": ""
+			}
+		],
+		"money": { "cp": 0, "sp": 0, "gp": 28, "pp": 0 },
+		"armor": [
+			{
+				"name": "Leather Armor",
+				"qty": 1,
+				"prof": "light",
+				"pot": 0,
+				"res": "",
+				"mat": null,
+				"display": "Leather",
+				"worn": true,
+				"runes": [],
+				"grade": ""
+			}
+		],
+		"spellCasters": [],
+		"focusPoints": 0,
+		"focus": {},
+		"formula": [],
+		"acTotal": {
+			"acProfBonus": 4,
+			"acAbilityBonus": 3,
+			"acItemBonus": 1,
+			"acTotal": 18,
+			"shieldBonus": null
+		},
+		"pets": [],
+		"familiars": []
+	}
+}

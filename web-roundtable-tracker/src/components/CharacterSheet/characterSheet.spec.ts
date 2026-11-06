@@ -21,6 +21,7 @@ import {
 	splitBackground,
 } from './pathbuilder';
 import clericJson from './sampleHumanCleric.json?raw';
+import kineticistJson from './sampleSylphKineticist.json?raw';
 import { spellNames, spellPages } from './spells';
 import {
 	descriptionOptions,
@@ -249,6 +250,7 @@ describe('action cards', () => {
 			"fane's fourberie": entry("Fane's Fourberie", 'Single Action'),
 			"you're next": entry("You're Next", 'Reaction'),
 		},
+		classActions: {},
 		featRefs: {
 			'lie to me': ['Lie'],
 			"you're next": ['Demoralize'],
@@ -326,6 +328,81 @@ describe('action cards', () => {
 		expect(
 			chosenCards(options, pick(['Grapple']), sheet).map((c) => c.entry.name)
 		).toContain('Grapple');
+	});
+
+	it('merges Leap with High Jump and Long Jump', () => {
+		const withJumps: ActionData = {
+			...data,
+			basic: [entry('Leap', 'Single Action', ['Move'])],
+			skills: {
+				athletics: [
+					entry('High Jump', 'Two Actions'),
+					entry('Long Jump', 'Two Actions'),
+				],
+			},
+		};
+		const options = actionOptions(withJumps, build);
+		const pick = (keys: string[]) =>
+			Object.fromEntries(keys.map((k) => [k, true]));
+		const all = chosenCards(
+			options,
+			pick([
+				'basic:Leap',
+				'skill:athletics:High Jump',
+				'skill:athletics:Long Jump',
+			]),
+			sheet
+		);
+		const jumps = all.filter((c) => /Leap|Jump/.test(c.entry.name));
+		expect(jumps).toHaveLength(1);
+		expect(jumps[0]).toMatchObject({
+			kind: 'action',
+			checks: ['Athletics +2'],
+			entry: {
+				name: 'Leap / High Jump / Long Jump',
+				actions: 'Single Action or Two Actions',
+				traits: ['Move'],
+			},
+		});
+		expect(jumps[0].entry.text).toMatch(
+			/^Leap \(1 action\).* High Jump and Long Jump: Stride.* High Jump \(2 actions, DC 30\).* Long Jump \(2 actions, DC 15\)/
+		);
+		expect(jumps[0].entry.text).toContain('3 feet up and 5 feet across');
+
+		const athleticsOnly = chosenCards(
+			options,
+			pick(['skill:athletics:High Jump', 'skill:athletics:Long Jump']),
+			sheet
+		).find((c) => /Jump/.test(c.entry.name))!;
+		expect(athleticsOnly.entry.name).toBe('High Jump / Long Jump');
+		expect(athleticsOnly.entry.actions).toBe('Two Actions');
+
+		// Leap alone keeps its own card and text.
+		const leap = chosenCards(options, pick(['basic:Leap']), sheet);
+		expect(leap.map((c) => c.entry.name)).toContain('Leap');
+	});
+
+	it('gives class features that are actions a card (Channel Elements)', () => {
+		const kineticist = parsePathbuilderJson(kineticistJson);
+		const withClassActions: ActionData = {
+			...data,
+			classActions: {
+				'channel elements': entry('Channel Elements', 'Single Action', [
+					'Aura',
+					'Kineticist',
+					'Primal',
+				]),
+			},
+		};
+		const cards = chosenCards(
+			actionOptions(withClassActions, kineticist),
+			{},
+			deriveSheet(kineticist)
+		);
+		expect(cards.map((c) => [c.entry.name, c.kind])).toContainEqual([
+			'Channel Elements',
+			'action',
+		]);
 	});
 
 	it('merges one action picked for several skills into one card', () => {
@@ -526,5 +603,61 @@ describe('cleric: spells, shield and origin', () => {
 			'Domain: Might',
 			'Deity: Granduncle Taproot (He Who Hides in Humus)',
 		]);
+	});
+});
+
+describe('kineticist: Elemental Blasts as strikes', () => {
+	const kineticist = parsePathbuilderJson(kineticistJson);
+	const sheet = deriveSheet(kineticist);
+
+	it('lists a melee and a ranged blast per element before the weapons', () => {
+		expect(sheet.strikes.map((s) => s.key)).toEqual([
+			'blast:air:melee',
+			'blast:air:ranged',
+			'weapon:0:melee',
+		]);
+	});
+
+	it('uses the class DC attribute and proficiency for the impulse attack', () => {
+		expect(sheet.strikes[0]).toMatchObject({
+			name: 'Air Blast',
+			baseName: 'Elemental Blast',
+			attack: 4 + 4,
+			ability: 'con',
+			abilityPart: 4,
+			profPart: 4,
+			rank: 2,
+			damage: '1d6',
+			damageType: 'S',
+		});
+		expect(sheet.strikes[0].traits).toContain('electricity or slashing');
+		expect(sheet.strikes[0].traits).toContain('2 actions: +4 status damage');
+		expect(sheet.strikes[1]).toMatchObject({ ranged: true, range: '60 ft.' });
+	});
+
+	it('adds a damage die at 5th level and Str to melee blasts', () => {
+		const higher = deriveSheet({
+			...kineticist,
+			level: 5,
+			abilities: { ...kineticist.abilities, str: 14 },
+		});
+		expect(higher.strikes[0].damage).toBe('2d6+2');
+		expect(higher.strikes[1].damage).toBe('2d6');
+	});
+
+	it('puts impulse feats Pathbuilder types "Kineticist Feat" in the class column', () => {
+		const row1 = sheet.levels.find((r) => r.level === 1)!;
+		expect(row1.right.map((f) => f.name)).toEqual([
+			'Air Cushion',
+			'Four Winds',
+			'Aerial Boomerang',
+		]);
+		expect(row1.left.map((f) => f.name)).not.toContain('Four Winds');
+	});
+
+	it('gives other classes no blasts', () => {
+		expect(
+			deriveSheet({ ...kineticist, class: 'Fighter' }).strikes.map((s) => s.key)
+		).toEqual(['weapon:0:melee']);
 	});
 });

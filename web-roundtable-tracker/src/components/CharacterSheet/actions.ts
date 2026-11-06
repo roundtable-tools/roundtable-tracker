@@ -23,6 +23,9 @@ export type ActionData = {
 	exploration: ActionEntry[];
 	skills: Record<string, ActionEntry[]>;
 	feats: Record<string, ActionEntry>;
+	// Actions a class feature grants (Channel Elements, Rage), for the class
+	// features in Pathbuilder's specials.
+	classActions: Record<string, ActionEntry>;
 	// Actions each feat's rules text links to, e.g. "lie to me": ["Lie"].
 	featRefs: Record<string, string[]>;
 	// Action cost, rank and traits by lower-case spell name.
@@ -94,7 +97,7 @@ export function actionOptions(
 	].filter((n, i, all) => all.indexOf(n) === i);
 
 	const feats = featNames.flatMap((name): ActionOption[] => {
-		const entry = data.feats[featKey(name)];
+		const entry = data.feats[featKey(name)] ?? data.classActions[featKey(name)];
 
 		return entry
 			? [
@@ -202,7 +205,7 @@ export function chosenCards(
 		});
 	}
 
-	return mergeAthleticsManeuvers([...cards.values()]);
+	return mergeJumps(mergeAthleticsManeuvers([...cards.values()]));
 }
 
 // Athletics maneuvers that roll against the same defense share one card when
@@ -279,6 +282,60 @@ function mergeAthleticsManeuvers(cards: ActionCard[]): ActionCard[] {
 	}
 
 	return result;
+}
+
+// Leap, High Jump and Long Jump share one card when two or more are picked.
+// The rules are written out here with the outcomes the jumps need: AoN's
+// card text drops outcome lines (Player Core pg. 235 and 417).
+const JUMP_TEXT: Record<string, string> = {
+	Leap: 'Leap (1 action): jump 10 feet horizontally (15 feet if your Speed is 30 feet or more; no horizontal Leap below 15 feet), or 3 feet up and 5 feet across onto an elevated surface.',
+	'High Jump':
+		'High Jump (2 actions, DC 30): critical success 8 feet up and 10 across; success 5 feet up and 5 across; failure a normal Leap; critical failure you fall prone in your space.',
+	'Long Jump':
+		'Long Jump (2 actions, DC 15), in the direction you Strode: success a Leap as far as the check result rounded down to 5 feet, no farther than your land Speed; failure a normal horizontal Leap; critical failure the same, then you land prone.',
+};
+
+const STRIDE_FIRST =
+	'High Jump and Long Jump: Stride, then attempt an Athletics check; if you Strode less than 10 feet, you automatically fail.';
+
+function mergeJumps(cards: ActionCard[]): ActionCard[] {
+	const names = Object.keys(JUMP_TEXT);
+	const group = names.flatMap((name) =>
+		cards.filter((c) => c.entry.name === name)
+	);
+
+	if (group.length < 2) return cards;
+	const athletics = group.filter((c) => c.entry.name !== 'Leap');
+	const merged: ActionCard = {
+		key: group.map((c) => c.key).join('+'),
+		kind: 'action',
+		checks: unique(group.flatMap((c) => c.checks)),
+		modifiedBy: unique(group.flatMap((c) => c.modifiedBy)),
+		entry: {
+			name: group.map((c) => c.entry.name).join(' / '),
+			actions:
+				athletics.length < group.length
+					? 'Single Action or Two Actions'
+					: 'Two Actions',
+			traits: unique(['Move', ...group.flatMap((c) => c.entry.traits)]),
+			source: unique(group.map((c) => c.entry.source)).join(', '),
+			// Leap's own rule, then what both Athletics jumps share, then each.
+			text: [
+				...group
+					.filter((c) => c.entry.name === 'Leap')
+					.map((c) => JUMP_TEXT[c.entry.name]),
+				...(athletics.length ? [STRIDE_FIRST] : []),
+				...athletics.map((c) => JUMP_TEXT[c.entry.name]),
+			].join(' '),
+		},
+	};
+	// Leap is a basic action listed after the skill actions; the merged card
+	// takes the place of whichever comes first.
+	const first = Math.min(...group.map((c) => cards.indexOf(c)));
+
+	return cards.flatMap((c, i) =>
+		i === first ? [merged] : group.includes(c) ? [] : [c]
+	);
 }
 
 // Characters of the Pathfinder2eActions font: 1-3 actions, 4 free action,

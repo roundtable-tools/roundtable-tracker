@@ -300,19 +300,21 @@ function check(
 }
 
 export type Strike = {
-	// Stable id for the player's on/off choice: weapon:<index>:melee|ranged, or
-	// fist.
+	// Stable id for the player's on/off choice: weapon:<index>:melee|ranged,
+	// fist, or blast:<element>:melee|ranged.
 	key: string;
 	name: string;
 	baseName: string;
 	ranged: boolean;
 	attack: number;
-	ability: 'str' | 'dex';
+	ability: AbilityKey;
 	abilityPart: number;
 	profPart: number;
 	itemPart: number;
 	rank: number;
 	damage: string;
+	// Physical damage types as letters, one or more ("S", "BP"); empty when
+	// the Strike deals only energy damage.
 	damageType: string;
 	prof: string;
 	traits?: string;
@@ -325,6 +327,40 @@ export type Strike = {
 const signed = (n: number) => (n ? `${n > 0 ? '+' : '-'}${Math.abs(n)}` : '');
 
 const FIST_TRAITS = 'Agile, Finesse, Nonlethal, Unarmed';
+
+// The kineticist's Elemental Blast per element: damage die, damage types
+// (physical ones as letters, energy ones by name) and the ranged blast's
+// range (Rage of Elements pg. 16).
+const ELEMENTAL_BLASTS: Record<
+	string,
+	{ die: string; physical: string; energy: string[]; range: string }
+> = {
+	air: { die: 'd6', physical: 'S', energy: ['electricity'], range: '60 ft.' },
+	earth: { die: 'd8', physical: 'BP', energy: [], range: '30 ft.' },
+	fire: { die: 'd6', physical: '', energy: ['fire'], range: '60 ft.' },
+	metal: { die: 'd8', physical: 'PS', energy: [], range: '30 ft.' },
+	water: { die: 'd8', physical: 'B', energy: ['cold'], range: '30 ft.' },
+	wood: { die: 'd8', physical: 'B', energy: ['vitality'], range: '30 ft.' },
+};
+
+const BLAST_TRAITS = 'Attack, Impulse, Kineticist, Primal';
+
+const DAMAGE_TYPE_NAMES: Record<string, string> = {
+	B: 'bludgeoning',
+	P: 'piercing',
+	S: 'slashing',
+};
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+// Kinetic elements from Pathbuilder's specials ("Air Element"), in the order
+// listed.
+const kineticElements = (build: PathbuilderBuild) =>
+	build.specials.flatMap((s) => {
+		const element = /^(\w+) Element$/i.exec(s.trim())?.[1].toLowerCase();
+
+		return element && ELEMENTAL_BLASTS[element] ? [element] : [];
+	});
 
 const STRIKING_DICE: Record<string, number> = {
 	striking: 2,
@@ -349,14 +385,17 @@ export const FEAT_GROUP_TITLES: Record<FeatGroup, string> = {
 	bonus: 'Bonus',
 };
 
-function featGroup(type: string): FeatGroup {
+// Pathbuilder types most class feats "Class Feat", but some by the class's
+// name: a kineticist's gate impulse feats are "Kineticist Feat".
+function featGroup(type: string, classNames: string[]): FeatGroup {
 	const t = type.toLowerCase();
 
 	if (t.includes('ancestry') || t.includes('heritage')) return 'ancestry';
 
 	if (t.includes('archetype')) return 'archetype';
 
-	if (t.includes('class')) return 'class';
+	if (t.includes('class') || classNames.some((c) => t === `${c} feat`))
+		return 'class';
 
 	if (t.includes('skill')) return 'skill';
 
@@ -544,11 +583,69 @@ export function deriveSheet(build: PathbuilderBuild) {
 		});
 	}
 
+	// A kineticist's Elemental Blasts come first: a melee and a ranged one per
+	// kinetic element. The impulse attack uses the class DC's attribute and
+	// proficiency; the blast gains a damage die at 5th level and every 4
+	// levels after.
+	if ([build.class, build.dualClass].some((c) => /kineticist/i.test(c ?? ''))) {
+		const rank = p.classDC ?? 0;
+		const profPart = proficiencyBonus(rank, level);
+		const abilityPart = mods[build.keyability];
+		const dice = 1 + Math.floor((level - 1) / 4);
+		const twoActionNote = `2 actions: +${Math.max(0, mods.con)} status damage`;
+
+		strikes.unshift(
+			...kineticElements(build).flatMap((element): Strike[] => {
+				const blast = ELEMENTAL_BLASTS[element];
+				const name = `${cap(element)} Blast`;
+				const types = [
+					...blast.energy,
+					...[...blast.physical].map((t) => DAMAGE_TYPE_NAMES[t]),
+				].join(' or ');
+				const base = {
+					baseName: 'Elemental Blast',
+					attack: abilityPart + profPart,
+					ability: build.keyability,
+					abilityPart,
+					profPart,
+					itemPart: 0,
+					rank,
+					damageType: blast.physical,
+					prof: 'impulse',
+					traits: `${BLAST_TRAITS}, ${cap(element)} · ${types} · ${twoActionNote}`,
+				};
+
+				return [
+					{
+						...base,
+						key: `blast:${element}:melee`,
+						name,
+						ranged: false,
+						damage: `${dice}${blast.die}${signed(mods.str)}`,
+					},
+					{
+						...base,
+						key: `blast:${element}:ranged`,
+						name,
+						ranged: true,
+						damage: `${dice}${blast.die}`,
+						range: blast.range,
+					},
+				];
+			})
+		);
+	}
+
 	const feats: SheetFeat[] = build.feats
 		.map(([name, extra, type, featLevel]) => ({
 			name: extra ? `${name} (${extra})` : name,
 			level: featLevel,
-			group: featGroup(type),
+			group: featGroup(
+				type,
+				[build.class, build.dualClass].flatMap((c) =>
+					c ? [c.toLowerCase()] : []
+				)
+			),
 		}))
 		.sort((a, b) => a.level - b.level);
 
