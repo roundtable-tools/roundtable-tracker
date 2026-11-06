@@ -167,8 +167,8 @@ export type ActionCard = {
 };
 
 function cardKind(entry: ActionEntry): CardKind {
-	if (entry.actions === 'Free Action' || entry.actions === 'Reaction')
-		return 'reaction';
+	// Aid's "Single Action and Reaction" is a reaction prepared on your turn.
+	if (/(^|and )(Free Action|Reaction)$/.test(entry.actions)) return 'reaction';
 
 	if (
 		!entry.actions ||
@@ -374,14 +374,18 @@ const ACTION_GLYPHS: Record<string, string> = {
 
 export type GlyphPart = { glyph: string } | { text: string };
 
-// "Single Action to Three Actions" -> glyph 1, " to ", glyph 3. Costs that
+// Separators between glyphs: a range, a choice, or both costs (Aid's action
+// and reaction).
+const GLYPH_SEPARATORS: Record<string, string> = { to: '–', and: '+' };
+
+// "Single Action to Three Actions" -> glyph 1, "–", glyph 3. Costs that
 // aren't actions (e.g. "1 minute") stay text.
 export function actionGlyphs(actions: string): GlyphPart[] {
 	return actions
-		.split(/( to | or )/)
+		.split(/( to | or | and )/)
 		.map((part) =>
 			ACTION_GLYPHS[part]
 				? { glyph: ACTION_GLYPHS[part] }
-				: { text: part.trim() === 'to' ? '–' : part }
+				: { text: GLYPH_SEPARATORS[part.trim()] ?? part }
 		);
 }

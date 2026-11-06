@@ -351,6 +351,19 @@ describe('action cards', () => {
 		expect(keys).toEqual(["feat:you're next", "feat:card sharp's fourberie"]);
 	});
 
+	it('files Aid, an action and a reaction, with the reactions', () => {
+		const withAid: ActionData = {
+			...data,
+			basic: [entry('Aid', 'Single Action and Reaction')],
+		};
+		const [aid] = chosenCards(
+			actionOptions(withAid, build),
+			{ 'basic:Aid': true },
+			sheet
+		).filter((c) => c.entry.name === 'Aid');
+		expect(aid.kind).toBe('reaction');
+	});
+
 	it('merges Athletics maneuvers that target the same defense', () => {
 		const athletics = (name: string, trained = false) => ({
 			...entry(name, 'Single Action', ['Attack']),
@@ -517,6 +530,11 @@ describe('action glyphs', () => {
 			{ glyph: '5' },
 			{ text: ' or ' },
 			{ glyph: '2' },
+		]);
+		expect(actionGlyphs('Single Action and Reaction')).toEqual([
+			{ glyph: '1' },
+			{ text: '+' },
+			{ glyph: '5' },
 		]);
 	});
 });

@@ -80,6 +80,10 @@ BASIC = [
     "Fly", "Grab an Edge", "Mount", "Point Out", "Raise a Shield", "Sustain",
 ]
 
+# Costs that differ from AoN's: Aid is a reaction you prepare with an action
+# on your own turn.
+ACTION_COSTS = {"Aid": "Single Action and Reaction"}
+
 EXPLORATION = [
     "Avoid Notice", "Defend", "Detect Magic", "Follow the Expert", "Hustle",
     "Investigate", "Repeat a Spell", "Scout", "Search", "Refocus",
@@ -213,7 +217,7 @@ def entry(doc):
               .replace("GM Core", "GMC"))
     out = {
         "name": doc["name"],
-        "actions": doc.get("actions") or "",
+        "actions": ACTION_COSTS.get(doc["name"]) or doc.get("actions") or "",
         "traits": [t for t in (doc.get("trait") or [])
                    if t not in ("Common", "General", "Skill")],
         "text": shorten(clean(body)),
