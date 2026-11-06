@@ -1,0 +1,1759 @@
+/* Character sheet: A4 paper, always dark ink on white, also in the app's dark mode. */
+
+/* Action cost glyphs: 1-3 actions, 4 free action, 5 reaction. */
+@font-face {
+	font-family: 'Pathfinder2eActions';
+	src: url('./fonts/Pathfinder2eActions.ttf') format('truetype');
+	font-display: block;
+}
+
+.pf2-actions {
+	font-family: 'Pathfinder2eActions';
+	font-size: 1.15em;
+	line-height: 1;
+}
+
+.cs-glyphs {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3em;
+}
+
+.cs-sheet {
+	--cs-ink: #1b1b1b;
+	--cs-muted: #666666;
+	--cs-rule: #a5a5a5;
+	--cs-accent: #7b2d26;
+	--cs-head: #234236;
+	--cs-fill-bg: #f3f1ee;
+	--cs-icon: #e3d2cd;
+	color: var(--cs-ink);
+	font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+	font-size: 8pt;
+	line-height: 1.2;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+}
+
+.cs-page {
+	box-sizing: border-box;
+	width: 210mm;
+	min-height: 297mm;
+	padding: 7mm 8mm;
+	background: #ffffff;
+	box-shadow: 0 2px 12px rgb(0 0 0 / 0.35);
+	display: flex;
+	flex-direction: column;
+	gap: 1.6mm;
+}
+
+.cs-sheet *,
+.cs-sheet *::before,
+.cs-sheet *::after {
+	box-sizing: border-box;
+}
+
+/* Section heading: small caps title with a rule running to the right. */
+.cs-section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.8mm;
+	min-width: 0;
+	break-inside: avoid;
+}
+
+.cs-section-title {
+	margin: 0;
+	display: flex;
+	align-items: center;
+	gap: 1.5mm;
+	color: var(--cs-head);
+	font-size: 8pt;
+	font-weight: 800;
+	font-variant: small-caps;
+	letter-spacing: 0.06em;
+	text-transform: lowercase;
+	white-space: nowrap;
+}
+
+.cs-section-title::after {
+	content: '';
+	flex: 1;
+	border-bottom: 2px solid var(--cs-head);
+}
+
+.cs-sub {
+	margin: 0.5mm 0 0;
+	font-size: 8.5pt;
+	font-weight: 800;
+}
+
+.cs-row {
+	display: flex;
+	gap: 1.5mm;
+	min-width: 0;
+}
+
+.cs-top-align {
+	align-items: flex-start;
+}
+
+.cs-grow {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.cs-grow-2 {
+	flex: 2 1 0;
+	min-width: 0;
+}
+
+/* Framed field */
+.cs-box {
+	position: relative;
+	border: 1px solid var(--cs-accent);
+	padding: 0.4mm 1.2mm 0.6mm;
+	min-height: 6.5mm;
+	min-width: 0;
+}
+
+.cs-box-label {
+	display: block;
+	font-size: 5.8pt;
+	color: var(--cs-muted);
+	line-height: 1.1;
+}
+
+.cs-box-value {
+	font-size: 9pt;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.cs-big-box {
+	min-height: 9mm;
+}
+
+.cs-big-box .cs-box-value {
+	font-size: 12pt;
+	font-weight: 700;
+}
+
+.cs-tall {
+	min-height: 11mm;
+}
+
+.cs-tall-2 {
+	min-height: 18mm;
+}
+
+.cs-fill {
+	flex: 1;
+}
+
+.cs-fill .cs-box-value {
+	white-space: normal;
+}
+
+.cs-small {
+	font-size: 6.5pt;
+	color: var(--cs-muted);
+}
+
+.cs-tiny {
+	font-size: 5.8pt;
+	color: var(--cs-muted);
+	line-height: 1.25;
+}
+
+.cs-strong {
+	font-weight: 700;
+	color: var(--cs-ink);
+}
+
+/* Proficiency ranks: four stacked squares, filled up to the rank. */
+.cs-ranks {
+	display: inline-flex;
+	flex-direction: column;
+	gap: 0.1mm;
+	flex: none;
+}
+
+.cs-rank {
+	width: 1.75mm;
+	height: 1.75mm;
+	border: 0.6px solid var(--cs-ink);
+	font-size: 3.4pt;
+	font-weight: 700;
+	line-height: 1.6mm;
+	text-align: center;
+	color: var(--cs-muted);
+}
+
+.cs-rank-on {
+	background: var(--cs-ink);
+	color: #ffffff;
+}
+
+/* Breakdown: values over small labels, e.g. +4 Dex  +4 Prof */
+.cs-parts {
+	display: inline-flex;
+	gap: 1mm;
+	align-items: flex-end;
+}
+
+.cs-part {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	min-width: 6mm;
+}
+
+.cs-part b {
+	width: 100%;
+	text-align: center;
+	font-weight: 500;
+	border: 1px solid var(--cs-accent);
+	min-height: 3.6mm;
+	line-height: 3.4mm;
+}
+
+.cs-part i {
+	font-style: normal;
+	font-size: 5.5pt;
+	font-weight: 700;
+	color: var(--cs-ink);
+}
+
+.cs-total {
+	display: inline-block;
+	min-width: 9mm;
+	padding: 0.4mm 1mm;
+	border: 1.4px solid var(--cs-head);
+	border-radius: 1.5mm;
+	min-height: 6.2mm;
+	font-size: 10pt;
+	font-weight: 700;
+	text-align: center;
+}
+
+.cs-total-big {
+	min-width: 12mm;
+	font-size: 15pt;
+}
+
+.cs-check-box {
+	display: inline-block;
+	width: 2.4mm;
+	height: 2.4mm;
+	border: 0.8px solid var(--cs-ink);
+	vertical-align: middle;
+}
+
+.cs-check-box.cs-on {
+	background: var(--cs-ink);
+}
+
+.cs-lines {
+	display: flex;
+	flex-direction: column;
+}
+
+.cs-line {
+	height: 4.6mm;
+	border-bottom: 1px solid var(--cs-rule);
+}
+
+.cs-squares {
+	display: inline-flex;
+	gap: 0.6mm;
+	vertical-align: middle;
+}
+
+.cs-squares > span {
+	width: 3mm;
+	height: 3mm;
+	border: 1px solid var(--cs-ink);
+	transform: rotate(45deg) scale(0.8);
+}
+
+/* --- Page 1 --- */
+
+.cs-top {
+	display: grid;
+	grid-template-columns: 34mm 1fr 30mm 34mm;
+	gap: 2.5mm;
+	align-items: start;
+}
+
+.cs-wordmark {
+	display: flex;
+	flex-direction: column;
+	border: 2px solid var(--cs-head);
+	border-radius: 2mm;
+	padding: 1.5mm 2mm;
+	color: var(--cs-head);
+}
+
+.cs-wordmark span {
+	font-size: 7pt;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+
+.cs-wordmark b {
+	font-size: 11pt;
+	font-variant: small-caps;
+	letter-spacing: 0.04em;
+}
+
+.cs-level-wrap {
+	display: flex;
+	align-items: center;
+	gap: 1.5mm;
+}
+
+.cs-level-badge,
+.cs-diamond {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.cs-level-badge {
+	width: 11mm;
+	height: 11mm;
+	border: 1.6px solid var(--cs-accent);
+	transform: rotate(45deg);
+	font-size: 13pt;
+	font-weight: 700;
+	margin: 1.5mm;
+}
+
+.cs-level-badge span {
+	transform: rotate(-45deg);
+}
+
+.cs-level-wrap .cs-box {
+	flex: 1;
+}
+
+.cs-hero-boxes {
+	display: flex;
+	gap: 1.5mm;
+}
+
+.cs-hero-boxes span {
+	width: 7mm;
+	height: 7mm;
+	border: 1.4px solid var(--cs-ink);
+	border-radius: 2mm;
+}
+
+.cs-origin {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 2.5mm;
+}
+
+/* The bottom box of each column stretches, so all three end on one line. */
+.cs-origin > .cs-section > .cs-box:last-child {
+	flex: 1 1 auto;
+}
+
+.cs-attributes {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	gap: 2mm;
+}
+
+.cs-attribute {
+	display: flex;
+	align-items: center;
+	gap: 1mm;
+}
+
+.cs-attribute-mod {
+	min-width: 9mm;
+	padding: 0.6mm 0;
+	border: 1.4px solid var(--cs-accent);
+	border-radius: 1.5mm;
+	font-size: 13pt;
+	font-weight: 700;
+	text-align: center;
+}
+
+.cs-attribute-name {
+	display: flex;
+	flex-direction: column;
+	font-size: 9pt;
+	font-weight: 800;
+}
+
+.cs-attribute-name small {
+	display: flex;
+	align-items: center;
+	gap: 0.8mm;
+	font-size: 5.8pt;
+	font-weight: 400;
+}
+
+.cs-defenses-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 54mm;
+	gap: 2.5mm;
+}
+
+.cs-save {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.6mm;
+}
+
+.cs-save-name {
+	font-size: 9.5pt;
+	font-weight: 800;
+}
+
+.cs-save-total {
+	display: flex;
+	align-items: center;
+	gap: 1mm;
+}
+
+.cs-save-total > span:first-child {
+	min-width: 14mm;
+	padding: 1mm 0;
+	border: 1.4px solid var(--cs-head);
+	border-radius: 2mm;
+	font-size: 15pt;
+	font-weight: 700;
+	text-align: center;
+}
+
+.cs-hp-grid {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) 24mm;
+	gap: 1mm;
+	align-items: stretch;
+}
+
+.cs-main {
+	flex: 1 1 auto;
+	display: grid;
+	grid-template-columns: 70mm 1fr;
+	gap: 3mm;
+	align-items: stretch;
+}
+
+.cs-main > .cs-section,
+.cs-main-right {
+	min-height: 0;
+}
+
+.cs-skills {
+	gap: 0;
+}
+
+.cs-skill {
+	display: grid;
+	grid-template-columns: 22mm 10mm auto 1fr;
+	align-items: center;
+	gap: 1.2mm;
+	/* Matches ROW_MM.skill; leaves a clear gap between the rank boxes of
+	   neighbouring rows. */
+	height: 8.5mm;
+}
+
+.cs-write-line {
+	display: inline-block;
+	width: 20mm;
+	height: 4mm;
+	border-bottom: 1px solid var(--cs-ink);
+}
+
+.cs-skill-name {
+	text-align: right;
+	font-size: 9pt;
+	font-weight: 800;
+	/* Long lore names ("Mountains Lore") wrap; two lines fit the row. */
+	line-height: 1.05;
+	overflow-wrap: anywhere;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow: hidden;
+}
+
+.cs-notes-box {
+	margin-top: 1mm;
+}
+
+.cs-main-right {
+	display: flex;
+	flex-direction: column;
+	gap: 1.6mm;
+}
+
+.cs-lps {
+	display: grid;
+	grid-template-columns: 1fr 1.25fr 0.9fr;
+	gap: 2mm;
+}
+
+.cs-lps > .cs-section:first-child .cs-box {
+	min-height: 19mm;
+}
+
+.cs-perception,
+.cs-dc {
+	display: flex;
+	align-items: center;
+	gap: 1mm;
+}
+
+.cs-strike-traits {
+	grid-column: 1 / -1;
+	border: 1px solid var(--cs-accent);
+	padding: 0.3mm 1.2mm;
+	min-height: 5mm;
+	font-size: 7pt;
+}
+
+.cs-strike-traits .cs-box-label {
+	display: inline;
+	margin-right: 1mm;
+}
+
+.cs-bps {
+	display: flex;
+	flex-direction: column;
+	font-size: 5.5pt;
+	font-weight: 700;
+	line-height: 1.1;
+}
+
+.cs-bps span::before {
+	content: '';
+	display: inline-block;
+	width: 1.8mm;
+	height: 1.8mm;
+	margin-right: 0.5mm;
+	border: 0.8px solid var(--cs-ink);
+	border-radius: 50%;
+	vertical-align: -0.2mm;
+}
+
+.cs-bps span.cs-on::before {
+	background: var(--cs-ink);
+}
+
+.cs-class-dc {
+	flex: none;
+}
+
+.cs-reminders {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 2mm;
+	font-size: 6pt;
+}
+
+.cs-reminders div {
+	display: flex;
+	flex-direction: column;
+}
+
+/* --- Page 2 --- */
+
+.cs-page2 {
+	flex: 1 1 auto;
+	display: grid;
+	grid-template-columns: 1fr 62mm;
+	gap: 3mm;
+	align-items: stretch;
+}
+
+/* Level rows share the page height, so feat spots fill the page. */
+.cs-ladder {
+	display: flex;
+	flex-direction: column;
+}
+
+.cs-ladder-row {
+	flex: 1 1 auto;
+}
+
+.cs-ladder-head,
+.cs-ladder-row {
+	display: grid;
+	grid-template-columns: 7mm 1fr 1fr;
+	gap: 0 1.5mm;
+}
+
+.cs-ladder-row {
+	min-height: 11mm;
+	border-top: 1px solid var(--cs-accent);
+	break-inside: avoid;
+}
+
+.cs-ladder-row:last-child {
+	border-bottom: 1px solid var(--cs-accent);
+}
+
+.cs-diamond {
+	width: 5.5mm;
+	height: 5.5mm;
+	margin: 1.2mm 0 0 0.6mm;
+	background: var(--cs-rule);
+	color: #ffffff;
+	transform: rotate(45deg);
+	font-size: 7pt;
+	font-weight: 700;
+}
+
+.cs-diamond span {
+	transform: rotate(-45deg);
+}
+
+.cs-reached .cs-diamond {
+	background: var(--cs-accent);
+}
+
+.cs-ladder-cell {
+	position: relative;
+	padding: 0.5mm 0 1mm;
+	display: flex;
+	flex-direction: column;
+	gap: 0.8mm;
+}
+
+.cs-ladder-cell + .cs-ladder-cell {
+	border-left: 1px solid var(--cs-accent);
+	padding-left: 1.5mm;
+}
+
+.cs-feat {
+	font-size: 8pt;
+}
+
+.cs-tag {
+	margin-left: 1mm;
+	padding: 0 0.8mm;
+	border-radius: 0.8mm;
+	background: var(--cs-fill-bg);
+	font-size: 5.5pt;
+	color: var(--cs-muted);
+	text-transform: uppercase;
+}
+
+.cs-boosts {
+	position: absolute;
+	top: 0.5mm;
+	right: 0.5mm;
+	font-size: 5.5pt;
+	font-weight: 700;
+	color: var(--cs-accent);
+}
+
+.cs-inventory {
+	display: flex;
+	flex-direction: column;
+	gap: 1.6mm;
+}
+
+.cs-inventory-box {
+	flex: 1 1 auto;
+	border: 1px solid var(--cs-accent);
+	display: flex;
+	flex-direction: column;
+}
+
+.cs-items.cs-stretch {
+	display: flex;
+	flex-direction: column;
+}
+
+.cs-items {
+	padding: 0.6mm 1.2mm 1mm;
+	break-inside: avoid;
+}
+
+.cs-items + .cs-items {
+	border-top: 1px solid var(--cs-accent);
+}
+
+.cs-items-head,
+.cs-item {
+	display: flex;
+	align-items: center;
+	gap: 1mm;
+}
+
+.cs-items-head .cs-strong {
+	flex: 1;
+	font-size: 7pt;
+}
+
+.cs-item {
+	height: 4.4mm;
+	border-bottom: 1px solid var(--cs-rule);
+}
+
+/* One line, so a long name keeps the row's fixed height. */
+.cs-item-name {
+	flex: 1;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.cs-inv-col {
+	flex: none;
+	width: 8mm;
+	text-align: center;
+}
+
+.cs-item .cs-check-box.cs-inv-col {
+	width: 2.4mm;
+	margin: 0 2.8mm;
+}
+
+.cs-bulk-col {
+	flex: none;
+	width: 7mm;
+	text-align: right;
+}
+
+.cs-hint-row {
+	display: flex;
+	gap: 1mm;
+	margin-bottom: 0.3mm;
+}
+
+.cs-group-total {
+	flex: none;
+	font-weight: 700;
+	color: var(--cs-ink);
+}
+
+.cs-hint {
+	flex: 1;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.cs-items-head {
+	white-space: nowrap;
+}
+
+.cs-bulk {
+	display: flex;
+	gap: 2mm;
+	align-items: center;
+}
+
+.cs-coins {
+	display: flex;
+	justify-content: space-between;
+}
+
+.cs-coin {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.cs-coin small {
+	font-size: 6.5pt;
+	font-weight: 800;
+}
+
+.cs-coin span {
+	width: 12mm;
+	height: 12mm;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 2px solid var(--cs-ink);
+	border-radius: 50%;
+	font-size: 11pt;
+}
+
+/* --- Page 3 --- */
+
+.cs-page3-top {
+	display: grid;
+	grid-template-columns: 62mm 1fr;
+	gap: 3mm;
+}
+
+.cs-page3-top > div {
+	display: flex;
+	flex-direction: column;
+	gap: 1.6mm;
+}
+
+.cs-campaign {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 2mm;
+}
+
+.cs-campaign-side {
+	display: flex;
+	flex-direction: column;
+	gap: 1mm;
+}
+
+.cs-campaign-side .cs-box {
+	flex: 1;
+}
+
+.cs-actions {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 3mm;
+}
+
+/* --- Page 4 --- */
+
+/* --- Defenses: AC and shield on the left, saves and notes on the right --- */
+
+.cs-defenses-grid {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: 2.5mm;
+	align-items: stretch;
+}
+
+.cs-ac-block {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6mm;
+}
+
+/* AC and shield icons on top, the AC breakdown under them; the shield block
+   and armor proficiencies take the third column. */
+.cs-ac-row {
+	display: grid;
+	grid-template-columns: auto auto auto;
+	grid-template-rows: auto auto;
+	align-items: start;
+	gap: 0.6mm 0.6mm;
+}
+
+.cs-ac-breakdown {
+	grid-column: 1 / span 2;
+	grid-row: 2;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3mm;
+}
+
+/* The footnote wraps to the breakdown's width instead of widening the AC
+   column. */
+.cs-ac-breakdown .cs-tiny {
+	width: 0;
+	min-width: 100%;
+}
+
+.cs-ac-col {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.4mm;
+}
+
+.cs-stat-title {
+	font-size: 8.5pt;
+	font-weight: 800;
+	line-height: 1.1;
+}
+
+.cs-small-title {
+	font-size: 6.5pt;
+	margin-top: 0.4mm;
+}
+
+.cs-ac-stat {
+	display: flex;
+	align-items: center;
+	gap: 0.6mm;
+}
+
+.cs-ac {
+	width: 17mm;
+	height: 17mm;
+}
+
+.cs-ac .cs-icon-number {
+	font-size: 17pt;
+}
+
+.cs-shield-icon {
+	width: 15mm;
+	height: 17mm;
+}
+
+.cs-shield-icon .cs-icon-number {
+	font-size: 14pt;
+}
+
+.cs-shield-side {
+	grid-column: 3;
+	min-width: 0;
+	grid-row: 1 / span 2;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4mm;
+	padding-top: 4mm;
+}
+
+.cs-shield-block {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	border: 1px solid var(--cs-accent);
+	min-height: 7mm;
+}
+
+.cs-shield-block > span {
+	padding: 0.3mm 0.8mm;
+}
+
+.cs-shield-block > span + span {
+	border-left: 1px solid var(--cs-accent);
+}
+
+.cs-shield-block > span {
+	display: flex;
+	flex-direction: column;
+}
+
+.cs-shield-block b {
+	font-size: 9pt;
+	font-weight: 600;
+	text-align: center;
+}
+
+.cs-shield-block i {
+	font-style: normal;
+	font-size: 5.5pt;
+	color: var(--cs-muted);
+}
+
+.cs-defenses-right {
+	display: flex;
+	flex-direction: column;
+	gap: 1mm;
+}
+
+.cs-saves {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1mm;
+}
+
+/* Narrower breakdown boxes so three saves fit beside the larger AC. */
+.cs-saves .cs-parts {
+	gap: 0.5mm;
+}
+
+.cs-saves .cs-part {
+	min-width: 5.2mm;
+}
+
+.cs-defense-notes {
+	flex: 1 1 auto;
+	border: 1px solid var(--cs-accent);
+	padding: 0.4mm 1.2mm;
+	font-size: 6.8pt;
+	line-height: 1.3;
+}
+
+/* --- Origin boxes whose text may wrap (background and class details) --- */
+
+.cs-wrap .cs-box-value {
+	white-space: normal;
+	font-size: 7.5pt;
+	line-height: 1.25;
+}
+
+/* Perception and Speed: the stat row has one height, so the boxes under
+   them line up. */
+.cs-lps-stat {
+	height: 12mm;
+	display: flex;
+	align-items: center;
+	gap: 1mm;
+}
+
+/* Ranged strikes follow the melee ones after a gap. */
+.cs-strike.cs-first-ranged {
+	margin-top: 2.5mm;
+}
+
+/* --- Low-level characters: notes under the feats and inventory --- */
+
+/* Left column of page 2: the feat ladder, then (merged page) the notes. */
+.cs-page2-left {
+	display: flex;
+	flex-direction: column;
+	gap: 2mm;
+	min-height: 0;
+}
+
+.cs-page2-left > .cs-ladder {
+	flex: 1 1 auto;
+}
+
+.cs-merged .cs-page2-left > .cs-ladder {
+	flex: none;
+}
+
+.cs-merged .cs-ladder-row {
+	flex: none;
+	min-height: 7mm;
+}
+
+.cs-merged .cs-diamond {
+	width: 4.5mm;
+	height: 4.5mm;
+	margin-top: 1.2mm;
+	font-size: 6pt;
+}
+
+.cs-compact-notes {
+	flex: 1 1 auto;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 2.5mm;
+}
+
+.cs-compact-col {
+	display: flex;
+	flex-direction: column;
+	gap: 1.6mm;
+	min-height: 0;
+}
+
+.cs-stretch > .cs-campaign,
+.cs-stretch > .cs-box.cs-fill {
+	flex: 1 1 auto;
+}
+
+.cs-compact-notes .cs-campaign > .cs-box {
+	min-height: 20mm;
+}
+
+/* --- Reference page --- */
+
+.cs-reference {
+	columns: 2;
+	column-gap: 3mm;
+}
+
+.cs-reference-entry {
+	break-inside: avoid;
+	margin-bottom: 1.6mm;
+	padding-left: 1.5mm;
+	border-left: 2px solid var(--cs-accent);
+	font-size: 7.2pt;
+	line-height: 1.3;
+}
+
+.cs-condition-label {
+	font-size: 6.5pt;
+	font-weight: 700;
+}
+
+.cs-armor-profs-block {
+	/* Pulled left into the space beside the shield icon's narrowing bottom. */
+	margin-left: -2mm;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3mm;
+}
+
+.cs-armor-profs {
+	display: grid;
+	grid-template-columns: repeat(4, auto);
+	justify-content: start;
+	gap: 1.4mm;
+}
+
+.cs-armor-profs > span {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.3mm;
+	padding: 0.3mm 0.6mm;
+	border-radius: 1mm;
+}
+
+.cs-armor-profs i {
+	font-style: normal;
+	font-size: 5.5pt;
+	font-weight: 700;
+}
+
+.cs-armor-profs > .cs-current {
+	outline: 1.2px solid var(--cs-head);
+	background: var(--cs-fill-bg);
+}
+
+/* Hit points: Temporary HP, Dying and Wounded in a column beside Current HP. */
+.cs-hp-side {
+	display: flex;
+	flex-direction: column;
+	gap: 0.8mm;
+}
+
+.cs-condition-line {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.8mm;
+}
+
+.cs-wounded-field {
+	width: 9mm;
+	height: 4.6mm;
+	border: 1px solid var(--cs-accent);
+}
+
+.cs-hp-conditions {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 0.8mm;
+}
+
+.cs-conditions-icon {
+	position: absolute;
+	z-index: 0;
+	left: 50%;
+	top: 50%;
+	width: 12mm;
+	height: 12mm;
+	transform: translate(-50%, -50%);
+	fill: var(--cs-icon);
+}
+
+.cs-hp-conditions .cs-condition-line {
+	position: relative;
+}
+
+/* The skull stays behind the HP boxes it overlaps: they are opaque and
+   stacked above it. */
+.cs-hp .cs-box,
+.cs-dying-boxes,
+.cs-wounded-field {
+	position: relative;
+	z-index: 1;
+	background: #ffffff;
+}
+
+/* Dying: four boxes side by side, no gaps. */
+.cs-dying-boxes {
+	display: inline-flex;
+}
+
+.cs-dying-boxes > span {
+	width: 3mm;
+	height: 3mm;
+	border: 1px solid var(--cs-ink);
+	border-radius: 0.8mm;
+	background: #ffffff;
+}
+
+/* Item descriptions in the narrow inventory column. */
+.cs-side-descriptions {
+	display: flex;
+	flex-direction: column;
+}
+
+.cs-side-descriptions .cs-reference-entry {
+	margin-bottom: 1mm;
+	font-size: 6.5pt;
+	line-height: 1.25;
+}
+
+.cs-title-hidden {
+	visibility: hidden;
+}
+
+/* --- Spells page (official page 4 layout) --- */
+
+.cs-spells-grid {
+	flex: 1 1 auto;
+	display: grid;
+	grid-template-columns: 68mm 1fr;
+	gap: 3mm;
+	align-items: stretch;
+}
+
+.cs-spells-left,
+.cs-spells-right {
+	display: flex;
+	flex-direction: column;
+	gap: 1.6mm;
+	min-height: 0;
+}
+
+.cs-spell-block {
+	flex: 1 1 0;
+	min-height: 0;
+}
+
+.cs-grow-2-flex {
+	flex-grow: 2;
+}
+
+.cs-tradition {
+	display: flex;
+	gap: 2mm;
+	align-items: center;
+}
+
+.cs-tradition-names {
+	display: grid;
+	grid-template-columns: auto auto;
+	gap: 0.3mm 2mm;
+	font-weight: 800;
+	font-size: 8.5pt;
+}
+
+.cs-tradition-names span,
+.cs-caster-type span {
+	color: var(--cs-muted);
+}
+
+.cs-tradition-names .cs-on {
+	color: var(--cs-ink);
+	text-decoration: underline;
+	text-decoration-thickness: 1.5px;
+}
+
+.cs-caster-type {
+	display: flex;
+	flex-direction: column;
+	font-size: 6.5pt;
+}
+
+.cs-caster-type span::before {
+	content: '';
+	display: inline-block;
+	width: 2mm;
+	height: 2mm;
+	margin-right: 0.8mm;
+	border: 0.8px solid var(--cs-ink);
+	border-radius: 50%;
+	vertical-align: -0.3mm;
+}
+
+.cs-caster-type .cs-on {
+	color: var(--cs-ink);
+}
+
+.cs-caster-type .cs-on::before {
+	background: var(--cs-ink);
+}
+
+.cs-spell-stats {
+	display: flex;
+	gap: 3mm;
+}
+
+.cs-spell-table {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+	border: 1px solid var(--cs-accent);
+	padding: 0 1mm;
+}
+
+.cs-spell-row {
+	display: grid;
+	grid-template-columns: 1fr 13mm 7mm;
+	align-items: center;
+	gap: 1mm;
+	height: 5mm;
+	border-bottom: 1px solid var(--cs-rule);
+	font-size: 7.5pt;
+}
+
+.cs-spell-row.cs-with-rank {
+	grid-template-columns: 1fr 13mm 7mm 7mm;
+}
+
+.cs-spell-row.cs-no-prep {
+	grid-template-columns: 1fr 13mm;
+}
+
+.cs-spell-row.cs-innate {
+	grid-template-columns: 1fr 13mm 10mm;
+}
+
+.cs-spell-row.cs-ritual {
+	grid-template-columns: 1fr 9mm 12mm;
+}
+
+.cs-spell-row > span:not(.cs-spell-name) {
+	text-align: center;
+}
+
+.cs-spell-head {
+	font-size: 5.8pt;
+	color: var(--cs-muted);
+	border-bottom-color: var(--cs-accent);
+}
+
+.cs-spell-head > span:first-child,
+.cs-spell-name {
+	text-align: left;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.cs-spell-columns {
+	flex: 1 1 auto;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 2mm;
+	min-height: 0;
+}
+
+.cs-focus-head {
+	align-items: center;
+}
+
+.cs-focus-points {
+	display: inline-flex;
+	gap: 0.6mm;
+	flex: 1;
+}
+
+.cs-focus-points > span {
+	width: 3.6mm;
+	height: 3.6mm;
+	border: 1px solid var(--cs-ink);
+	border-radius: 50%;
+}
+
+.cs-focus-points > .cs-on {
+	background: var(--cs-ink);
+}
+
+.cs-slots {
+	display: grid;
+	grid-template-columns: 22mm repeat(10, 1fr);
+	gap: 0.8mm 1mm;
+	align-items: center;
+}
+
+.cs-slots-label {
+	font-size: 6.5pt;
+	text-align: right;
+}
+
+.cs-slot-box {
+	min-height: 6mm;
+	border: 1px solid var(--cs-accent);
+	text-align: center;
+	font-size: 9pt;
+	line-height: 5.6mm;
+}
+
+.cs-slot-rank {
+	text-align: center;
+	font-size: 9pt;
+}
+
+/* Two one-entry description sections side by side. */
+.cs-section-pair {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 3mm;
+	align-items: start;
+}
+
+.cs-measure {
+	display: flex;
+	flex-direction: column;
+	gap: 1.6mm;
+}
+
+/* --- Filling a page: a column part that takes the space left --- */
+
+.cs-stretch {
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.cs-filler {
+	flex: 1 1 0;
+	min-height: 0;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.cs-perception-stat {
+	width: 13mm;
+	height: 11mm;
+}
+
+.cs-perception-stat .cs-icon-number {
+	font-size: 14pt;
+}
+
+/* --- Icons: a faint game-icons.net shape behind a number --- */
+
+.cs-icon-stat {
+	position: relative;
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+}
+
+.cs-icon {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	fill: var(--cs-icon);
+}
+
+.cs-icon-number,
+.cs-icon-stat small {
+	position: relative;
+}
+
+.cs-icon-number {
+	font-weight: 800;
+	line-height: 1;
+}
+
+.cs-icon-stat small {
+	font-size: 5pt;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.cs-ac .cs-icon-number {
+	font-size: 17pt;
+}
+
+.cs-hp-max {
+	width: 15mm;
+	height: 13mm;
+}
+
+.cs-hp-max .cs-icon-number {
+	font-size: 15pt;
+}
+
+.cs-speed {
+	width: 16mm;
+	height: 12mm;
+}
+
+.cs-speed .cs-icon-number {
+	font-size: 15pt;
+}
+
+.cs-bulk-stat {
+	width: 15mm;
+	height: 15mm;
+}
+
+.cs-bulk-stat .cs-icon-number {
+	font-size: 11pt;
+}
+
+.cs-attack {
+	width: 10mm;
+	height: 10mm;
+}
+
+.cs-attack .cs-icon-number {
+	font-size: 12pt;
+}
+
+/* Attack bonus with the multiple attack penalty right next to it. */
+.cs-attack-group {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.6mm;
+}
+
+.cs-map {
+	display: inline-flex;
+	flex-direction: column;
+	gap: 0.3mm;
+}
+
+.cs-map span {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.6mm;
+}
+
+.cs-map b {
+	min-width: 6mm;
+	padding: 0 0.6mm;
+	border: 1px solid var(--cs-rule);
+	border-radius: 1mm;
+	font-size: 7pt;
+	font-weight: 600;
+	text-align: center;
+}
+
+.cs-map i {
+	font-style: normal;
+	font-size: 5pt;
+	color: var(--cs-muted);
+}
+
+.cs-strike {
+	display: grid;
+	grid-template-columns: 1fr auto auto auto 21mm auto;
+	align-content: start;
+	align-items: center;
+	gap: 0.4mm 1.2mm;
+	height: 15mm;
+}
+
+.cs-strike-name .cs-tiny {
+	display: block;
+}
+
+/* Proficiency: rank boxes, the category and its rank in words. */
+.cs-prof-row {
+	display: grid;
+	grid-template-columns: repeat(4, auto);
+	justify-content: start;
+	gap: 0.5mm 1.2mm;
+}
+
+.cs-prof {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.8mm;
+	padding: 0.3mm 0.8mm;
+	border-radius: 1mm;
+}
+
+.cs-prof > span:last-child {
+	display: flex;
+	flex-direction: column;
+	line-height: 1.1;
+}
+
+.cs-prof-name {
+	font-size: 6.5pt;
+	font-weight: 700;
+}
+
+.cs-prof-rank {
+	font-size: 5.5pt;
+	color: var(--cs-muted);
+}
+
+.cs-prof.cs-current {
+	outline: 1.2px solid var(--cs-head);
+	background: var(--cs-fill-bg);
+}
+
+.cs-attachment {
+	min-height: 3.6mm;
+	padding-left: 3mm;
+	font-size: 7pt;
+	color: var(--cs-muted);
+}
+
+.cs-credit {
+	margin-top: auto;
+	font-size: 5pt;
+	color: var(--cs-muted);
+	text-align: right;
+}
+
+/* --- Actions page --- */
+
+.cs-action-grid {
+	columns: 2;
+	column-gap: 3mm;
+}
+
+.cs-action-card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6mm;
+	margin-bottom: 2mm;
+	padding: 1mm 1.5mm 1.2mm;
+	border: 1px solid var(--cs-accent);
+	border-radius: 1.5mm;
+	break-inside: avoid;
+	font-size: 7.2pt;
+	line-height: 1.3;
+}
+
+.cs-action-head {
+	display: flex;
+	align-items: baseline;
+	gap: 1.5mm;
+	font-size: 8.5pt;
+}
+
+.cs-action-cost {
+	color: var(--cs-accent);
+	letter-spacing: -0.05em;
+}
+
+/* The glyphs sit on the title's baseline. */
+.cs-action-cost .cs-glyphs {
+	align-items: baseline;
+}
+
+/* Action, free action and reaction glyphs on cards: about twice the text.
+   The font draws them low in their box: the nudge centers them on the
+   title's capitals, and line-height 0 keeps them from heightening the row. */
+.cs-action-cost .pf2-actions {
+	font-size: 2em;
+	line-height: 0;
+	position: relative;
+	top: 0.07em;
+}
+
+.cs-action-source {
+	margin-left: auto;
+	font-size: 5.5pt;
+	color: var(--cs-muted);
+}
+
+.cs-action-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.8mm;
+	align-items: center;
+}
+
+.cs-action-meta .cs-tag {
+	margin-left: 0;
+}
+
+.cs-action-modified {
+	font-size: 6.2pt;
+	font-style: italic;
+	color: var(--cs-muted);
+}
+
+.cs-blank-cards {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-auto-rows: 27mm;
+	column-gap: 3mm;
+	align-content: start;
+}
+
+.cs-action-card.cs-action-blank {
+	height: 25mm;
+	margin: 0;
+}
+
+.cs-action-check {
+	padding: 0 0.8mm;
+	border: 1px solid var(--cs-head);
+	border-radius: 0.8mm;
+	font-size: 6.5pt;
+	font-weight: 700;
+}
+
+/* --- Notes page --- */
+
+.cs-sketch {
+	flex: 1;
+	min-height: 95mm;
+	border: 1.4px solid var(--cs-ink);
+}
+
+.cs-backstory {
+	min-height: 45mm;
+}
+
+.cs-notes-page .cs-grow-page {
+	flex: 1;
+}
+
+.cs-notes-page .cs-campaign {
+	flex: 1;
+}
+
+.cs-campaign > .cs-box {
+	min-height: 60mm;
+}
+
+/* The sheet is rendered a second time straight under <body> for printing. */
+.cs-print-portal {
+	display: none;
+}
+
+@media print {
+	/* Side margins 0.5 mm narrower than the preview's padding, made up by the
+	   page padding below: borders on the right content edge would otherwise
+	   be clipped at the printable area's edge. */
+	@page {
+		size: A4;
+		margin: 7mm 7.5mm;
+	}
+
+	html,
+	body {
+		height: auto !important;
+		background: #ffffff !important;
+	}
+
+	body.cs-printable > *:not(.cs-print-portal) {
+		display: none !important;
+	}
+
+	body.cs-printable > .cs-print-portal {
+		display: block;
+	}
+
+	.cs-print-portal .cs-sheet {
+		display: block;
+	}
+
+	.cs-print-portal .cs-page {
+		/* A page that outgrows A4 flows onto the next sheet. */
+		width: auto;
+		/* The A4 content box less 1 mm of slack; fillers are counted on the
+		   preview's 283 mm box with 1.5 mm to spare. */
+		min-height: 282mm;
+		padding: 0 0.5mm;
+		box-shadow: none;
+		break-after: page;
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+
+	.cs-print-portal .cs-page:last-child {
+		break-after: auto;
+	}
+}

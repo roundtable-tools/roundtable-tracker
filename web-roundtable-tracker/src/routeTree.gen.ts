@@ -14,6 +14,7 @@ import { Route as Party_setupRouteImport } from './routes/party_setup'
 import { Route as Initiative_trackerRouteImport } from './routes/initiative_tracker'
 import { Route as Initiative_playerRouteImport } from './routes/initiative_player'
 import { Route as EncountersRouteImport } from './routes/encounters'
+import { Route as Character_sheetRouteImport } from './routes/character_sheet'
 import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -42,6 +43,11 @@ const EncountersRoute = EncountersRouteImport.update({
   path: '/encounters',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Character_sheetRoute = Character_sheetRouteImport.update({
+  id: '/character_sheet',
+  path: '/character_sheet',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuilderRoute = BuilderRouteImport.update({
   id: '/builder',
   path: '/builder',
@@ -56,6 +62,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
+  '/character_sheet': typeof Character_sheetRoute
   '/encounters': typeof EncountersRoute
   '/initiative_player': typeof Initiative_playerRoute
   '/initiative_tracker': typeof Initiative_trackerRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
+  '/character_sheet': typeof Character_sheetRoute
   '/encounters': typeof EncountersRoute
   '/initiative_player': typeof Initiative_playerRoute
   '/initiative_tracker': typeof Initiative_trackerRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
+  '/character_sheet': typeof Character_sheetRoute
   '/encounters': typeof EncountersRoute
   '/initiative_player': typeof Initiative_playerRoute
   '/initiative_tracker': typeof Initiative_trackerRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/builder'
+    | '/character_sheet'
     | '/encounters'
     | '/initiative_player'
     | '/initiative_tracker'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/builder'
+    | '/character_sheet'
     | '/encounters'
     | '/initiative_player'
     | '/initiative_tracker'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/builder'
+    | '/character_sheet'
     | '/encounters'
     | '/initiative_player'
     | '/initiative_tracker'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BuilderRoute: typeof BuilderRoute
+  Character_sheetRoute: typeof Character_sheetRoute
   EncountersRoute: typeof EncountersRoute
   Initiative_playerRoute: typeof Initiative_playerRoute
   Initiative_trackerRoute: typeof Initiative_trackerRoute
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EncountersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/character_sheet': {
+      id: '/character_sheet'
+      path: '/character_sheet'
+      fullPath: '/character_sheet'
+      preLoaderRoute: typeof Character_sheetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/builder': {
       id: '/builder'
       path: '/builder'
@@ -178,6 +198,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BuilderRoute: BuilderRoute,
+  Character_sheetRoute: Character_sheetRoute,
   EncountersRoute: EncountersRoute,
   Initiative_playerRoute: Initiative_playerRoute,
   Initiative_trackerRoute: Initiative_trackerRoute,
