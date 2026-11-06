@@ -12,7 +12,8 @@ Writes src/components/CharacterSheet/data/pf2eActions.json with:
   - featRefs: for every feat, the skill, exploration and basic actions its
     rules text links to (Lie to Me -> Lie), so the sheet can pre-select the
     actions a character's feats change
-  - spells: action cost, rank and traits of every spell, for the spells page
+  - spells: action cost, rank and traits of every spell, for the spells page,
+    also under the legacy names of remastered spells (Magic Missile)
   - ancestries / heritages: their traits (rarity left out), keyed by
     lower-case name; heritages only when they add traits
 
@@ -22,17 +23,20 @@ classFeatures, subclasses (rackets, instincts, doctrines, ... under several
 spellings, since Pathbuilder writes "Thief Racket" for AoN's racket "Thief"),
 backgrounds (with the skills and feat they grant as `details`), heritages and
 items (equipment, weapons, armor and shields that have a description) and
-spells.
+spells (also under legacy names).
 
 and src/components/CharacterSheet/data/pf2eItemStats.json: Bulk, hands,
 traits, weapon type and range, and armor numbers of every item.
 
 AoN has no field linking actions to skills, so the skill lists below follow
 Player Core's skill chapter. Remastered documents win over their legacy
-versions. Run from web-roundtable-tracker/:  python3 scripts/generate-pf2e-actions.py
+versions. The files are written only after every fetch succeeds, and not at
+all when an action listed below is missing on AoN.
+Run from web-roundtable-tracker/:  python3 scripts/generate-pf2e-actions.py
 """
 
 import json
+import os
 import re
 import sys
 import urllib.request
@@ -70,8 +74,8 @@ TEXT_LIMIT = 320
 BASIC = [
     "Aid", "Crawl", "Delay", "Drop Prone", "Escape", "Interact", "Leap",
     "Ready", "Release", "Seek", "Sense Motive", "Stand", "Step", "Stride",
-    "Strike", "Take Cover", "Arrest a Fall", "Avert Gaze", "Burrow", "Fly",
-    "Grab an Edge", "Mount", "Point Out", "Raise a Shield",
+    "Strike", "Take Cover", "Arrest a Fall", "Avert Gaze", "Burrow", "Dismiss",
+    "Fly", "Grab an Edge", "Mount", "Point Out", "Raise a Shield", "Sustain",
 ]
 
 EXPLORATION = [
@@ -340,7 +344,10 @@ def item_stats():
             hands = first_int(d.get("hands"))
             if hands > 0:
                 entry["hands"] = hands
-            traits = trait_labels(d.get("markdown", ""))
+            # Pages without a traits block still have the trait field, only
+            # without values.
+            traits = trait_labels(d.get("markdown", "")) or [
+                t for t in (d.get("trait") or []) if t not in RARITY]
             if traits:
                 entry["traits"] = ", ".join(traits)
             if category == "weapon" and d.get("weapon_type"):
@@ -381,13 +388,53 @@ def by_name(docs):
     return found
 
 
+def legacy_spell_names(current_docs):
+    """Lower-case legacy name of each remastered spell -> the lower-case name
+    of its remaster (magic missile -> force barrage)."""
+    names = {d["id"]: d["name"].lower() for d in current_docs}
+    legacy = search({
+        "size": 10000,
+        "_source": ["name", "remaster_id"],
+        "query": {"bool": {"filter": [
+            {"term": {"category": "spell"}},
+            {"exists": {"field": "remaster_id"}},
+        ]}},
+    })
+    out = {}
+    for d in legacy:
+        ids = d["remaster_id"] if isinstance(d["remaster_id"], list) else [d["remaster_id"]]
+        target = next((names[i] for i in ids if i in names), None)
+        if target:
+            out.setdefault(d["name"].lower(), target)
+    return out
+
+
+def with_legacy_names(spells, legacy_names):
+    """The spell map plus each legacy name pointing at its remaster's entry."""
+    out = dict(spells)
+    for legacy, target in legacy_names.items():
+        if target in spells:
+            out.setdefault(legacy, spells[target])
+    return out
+
+
+def write_json(path, value):
+    """Write through a temporary file, so an interrupted run keeps the old
+    file whole."""
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(json.dumps(value, ensure_ascii=False, separators=(",", ":")),
+                   encoding="utf-8")
+    os.replace(tmp, path)
+
+
 def main():
     actions = by_name(current("action"))
+    missing = []
 
     def pick(name):
         doc = actions.get(name.lower())
         if not doc:
-            print(f"missing action: {name}", file=sys.stderr)
+            missing.append(name)
             return None
         return entry(doc)
 
@@ -405,6 +452,8 @@ def main():
             if e:
                 rows.append({**e, "trained": trained})
         data["skills"][skill] = rows
+    if missing:
+        sys.exit("missing actions on AoN, nothing written: " + ", ".join(missing))
 
     feats = current("feat", {"exists": {"field": "actions"}})
     for key, doc in sorted(by_name(feats).items()):
@@ -433,42 +482,44 @@ def main():
         ids = re.findall(r"/Actions\.aspx\?ID=(\d+)", md)
         refs = {action_names[i] for i in ids if action_names.get(i) in listed}
         # Rules text capitalizes action names, often without a link
-        # ("attempt to Demoralize"), so match those too.
-        text = clean(rules_body(md))
+        # ("attempt to Demoralize"), so match those too. The feat's own name
+        # is left out: Repair Module doesn't refer to Repair.
+        text = clean(rules_body(md)).replace(doc["name"], "")
         refs |= {n for n in listed if re.search(r"\b" + re.escape(n) + r"(?:s|d)?\b", text)}
         refs = sorted(refs)
         if refs:
             data["featRefs"][key] = refs
 
     # Spells: action cost, rank and traits, for the spells page.
-    data["spells"] = {
+    spell_docs = search({
+        "size": 10000,
+        "_source": ["id", "name", "actions", "level", "trait", "primary_source_raw"],
+        "query": {"bool": {
+            "filter": [{"term": {"category": "spell"}}],
+            "must_not": [{"exists": {"field": "remaster_id"}}],
+        }},
+    })
+    legacy_names = legacy_spell_names(spell_docs)
+    data["spells"] = with_legacy_names({
         k: {"actions": d.get("actions") or "",
             "rank": d.get("level") or 0,
             "traits": [t for t in (d.get("trait") or []) if t not in RARITY]}
-        for k, d in sorted(by_name(search({
-            "size": 10000,
-            "_source": ["name", "actions", "level", "trait", "primary_source_raw"],
-            "query": {"bool": {
-                "filter": [{"term": {"category": "spell"}}],
-                "must_not": [{"exists": {"field": "remaster_id"}}],
-            }},
-        })).items())
-    }
+        for k, d in sorted(by_name(spell_docs).items())
+    }, legacy_names)
 
     data["ancestries"] = traits_by_name(current("ancestry", with_legacy=True))
     data["heritages"] = traits_by_name(current("heritage", with_legacy=True))
 
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")),
-                   encoding="utf-8")
     stats = item_stats()
-    ITEM_STATS_OUT.write_text(
-        json.dumps(stats, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    ref = reference()
+    ref["spells"] = with_legacy_names(ref["spells"], legacy_names)
+
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    write_json(OUT, data)
+    write_json(ITEM_STATS_OUT, stats)
+    write_json(REFERENCE_OUT, ref)
     print(f"wrote {ITEM_STATS_OUT} ({ITEM_STATS_OUT.stat().st_size // 1024} KiB, "
           f"{len(stats)} items)")
-    ref = reference()
-    REFERENCE_OUT.write_text(
-        json.dumps(ref, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"wrote {REFERENCE_OUT} ({REFERENCE_OUT.stat().st_size // 1024} KiB, "
           + ", ".join(f"{len(v)} {k}" for k, v in ref.items()) + ")")
     print(f"wrote {OUT} ({OUT.stat().st_size // 1024} KiB, "
