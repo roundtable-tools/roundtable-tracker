@@ -55,7 +55,7 @@ import {
 	type ReferenceData,
 } from './reference';
 import sampleJson from './sampleRatfolkRogue.json?raw';
-import { spellNames } from './spells';
+import { spellNames, spellPages } from './spells';
 
 const JSON_KEY = 'character-sheet:json';
 
@@ -182,9 +182,19 @@ export function CharacterSheetPage() {
 
 	const onFile = async (e: ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
-
-		if (file) load(await file.text());
 		e.target.value = '';
+
+		if (!file) return;
+		let text: string;
+
+		try {
+			text = await file.text();
+		} catch {
+			setImportError('Could not read this file.');
+
+			return;
+		}
+		load(text);
 	};
 
 	const updateOverride = (id: string, change: ItemOverride) => {
@@ -336,6 +346,11 @@ export function CharacterSheetPage() {
 			})(),
 		}),
 		[traits, build, refData]
+	);
+	// Focus spells alone also get a spell page.
+	const hasSpellPage = useMemo(
+		() => (build ? spellPages(build).length > 0 : false),
+		[build]
 	);
 	const mergeNotes =
 		layout.mergeNotes ?? (build?.level ?? 0) <= MERGE_NOTES_MAX_LEVEL;
@@ -599,7 +614,7 @@ export function CharacterSheetPage() {
 								))}
 							</select>
 						</label>
-						{(build.spellCasters ?? []).length > 0 && (
+						{hasSpellPage && (
 							<label className="flex items-center gap-2 text-sm">
 								<input
 									type="checkbox"
@@ -612,7 +627,7 @@ export function CharacterSheetPage() {
 								exploration cards (blank spell rows shrink to fit)
 							</label>
 						)}
-						{(build.spellCasters ?? []).length > 0 && (
+						{hasSpellPage && (
 							<label className="flex items-center gap-2 text-sm">
 								<input
 									type="checkbox"

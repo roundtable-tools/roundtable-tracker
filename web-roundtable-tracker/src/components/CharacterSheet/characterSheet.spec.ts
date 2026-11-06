@@ -18,6 +18,7 @@ import {
 import {
 	deriveSheet,
 	parsePathbuilderJson,
+	PathbuilderParseError,
 	splitBackground,
 } from './pathbuilder';
 import clericJson from './sampleHumanCleric.json?raw';
@@ -131,6 +132,26 @@ describe('deriveSheet (level 2 ratfolk rogue)', () => {
 		expect(sheet.speed).toBe(25);
 	});
 
+	it('derives AC from the worn armor when the export has no total', () => {
+		// Leather (+1, Dex cap 4) for the rogue, chain mail (+4, Dex cap 1)
+		// for the cleric: the same numbers Pathbuilder exports.
+		for (const json of [sampleJson, clericJson]) {
+			const exported = parsePathbuilderJson(json);
+			const derived = deriveSheet({ ...exported, acTotal: undefined }).ac;
+			expect(derived).toEqual({ ...exported.acTotal, shieldBonus: null });
+		}
+	});
+
+	it('rejects an export without abilities, attributes or proficiencies', () => {
+		for (const key of ['abilities', 'attributes', 'proficiencies']) {
+			const broken = JSON.parse(sampleJson);
+			broken.build[key] = null;
+			expect(() => parsePathbuilderJson(JSON.stringify(broken))).toThrow(
+				PathbuilderParseError
+			);
+		}
+	});
+
 	it('shows the custom weapon name and damage', () => {
 		expect(sheet.strikes[0]).toMatchObject({
 			name: 'Deck of Cards (dagger)',
@@ -165,6 +186,19 @@ describe('inventory', () => {
 		expect(where('Leather Armor')).toBe('worn');
 		expect(where('Rapier')).toBe('ready');
 		expect(where('Marked Playing Cards')).toBe('ready');
+	});
+
+	it('counts nothing inside a backpack that is not carried', () => {
+		const inventory = buildInventory(build);
+		const pack = inventory.find((i) => i.name === 'Backpack')!;
+		const groups = groupInventory(
+			build,
+			resolveItems(inventory, { [pack.id]: { location: 'other' } })
+		);
+		const backpack = groups.find((g) => g.location === BACKPACK)!;
+		expect(backpack.contentBulk).toBe(21);
+		expect(backpack.countedBulk).toBe(0);
+		expect(backpack.hint).toBe('Not carried');
 	});
 
 	it('lets the first 2 Bulk in a worn backpack go uncounted', () => {
@@ -210,11 +244,28 @@ describe('attaching items', () => {
 			'Marked Playing Cards',
 		]);
 		expect(parent.bulkWithAttachments).toBe(2);
+		expect(parent.bulkWithAttachmentsKnown).toBe(true);
 		const held = groupInventory(build, items).find(
 			(g) => g.location === 'held'
 		)!;
 		expect(held.items.map((i) => i.id)).toEqual([dagger.id]);
 		expect(held.contentBulk).toBe(2);
+	});
+
+	it('marks the parent’s Bulk unknown when an attachment’s is', () => {
+		const charm = {
+			id: 'gear:Lucky Charm#0',
+			name: 'Lucky Charm',
+			qty: 1,
+			kind: 'gear' as const,
+			defaultLocation: 'ready' as const,
+		};
+		const items = resolveItems([...inventory, charm], {
+			[charm.id]: { attachedTo: dagger.id },
+		});
+		const parent = items.find((i) => i.id === dagger.id)!;
+		expect(items.find((i) => i.id === charm.id)!.bulkKnown).toBe(false);
+		expect(parent.bulkWithAttachmentsKnown).toBe(false);
 	});
 
 	it('ignores chains: an item attached to an attached item stays put', () => {
@@ -254,7 +305,9 @@ describe('action cards', () => {
 		featRefs: {
 			'lie to me': ['Lie'],
 			"you're next": ['Demoralize'],
-			'animal feat': ['Command an Animal'],
+			// A feat in the build; Command an Animal stays off because the
+			// character is untrained in Nature.
+			'tinkering fingers': ['Command an Animal'],
 		},
 		spells: {},
 		ancestries: { ratfolk: ['Humanoid', 'Ratfolk'] },
@@ -290,10 +343,19 @@ describe('action cards', () => {
 		]);
 	});
 
+	it('lists a feat once when feats and specials spell it differently', () => {
+		const curly = { ...build, specials: [...build.specials, 'You’re Next'] };
+		const keys = actionOptions(data, curly)
+			.filter((o) => o.group === 'feat')
+			.map((o) => o.key);
+		expect(keys).toEqual(["feat:you're next", "feat:card sharp's fourberie"]);
+	});
+
 	it('merges Athletics maneuvers that target the same defense', () => {
 		const athletics = (name: string, trained = false) => ({
 			...entry(name, 'Single Action', ['Attack']),
 			text: `${name} first sentence. More text.`,
+			requirements: `Shared rule. ${name} rule.`,
 			trained,
 		});
 		const withManeuvers: ActionData = {
@@ -321,6 +383,9 @@ describe('action cards', () => {
 		expect(names).toContain('Trip / Disarm');
 		const trip = cards.find((c) => c.entry.name === 'Trip / Disarm')!;
 		expect(trip.checks).toEqual(['Athletics +2']);
+		expect(trip.entry.requirements).toBe(
+			'Shared rule. Trip: Trip rule. Disarm: Disarm rule.'
+		);
 		expect(trip.entry.text).toBe(
 			"Each is an Athletics check against the target's Reflex DC. Trip: Trip first sentence. Disarm (trained): Disarm first sentence."
 		);
@@ -566,6 +631,29 @@ describe('cleric: spells, shield and origin', () => {
 			['Heal', 'Font'],
 		]);
 		expect(spellNames(cleric)).toContain('Athletic Rush');
+	});
+
+	it('gives a spontaneous entry its own page next to a prepared one', () => {
+		const pages = spellPages({
+			...cleric,
+			spellCasters: [
+				...(cleric.spellCasters ?? []),
+				{
+					name: 'Spontaneous Divine',
+					magicTradition: 'divine',
+					spellcastingType: 'spontaneous',
+					ability: 'wis',
+					proficiency: 2,
+					perDay: [5, 2],
+					spells: [{ spellLevel: 1, list: ['Bless'] }],
+				},
+			],
+		});
+		expect(pages.map((p) => [p.prepared, p.focusSpells])).toEqual([
+			[true, ['Athletic Rush']],
+			[false, []],
+		]);
+		expect(pages[1].spells.map((r) => r.name)).toEqual(['Bless']);
 	});
 
 	it('takes the raised shield bonus and the shield numbers', () => {

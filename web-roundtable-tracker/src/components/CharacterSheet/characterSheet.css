@@ -706,9 +706,13 @@
 	border-bottom: 1px solid var(--cs-rule);
 }
 
+/* One line, so a long name keeps the row's fixed height. */
 .cs-item-name {
 	flex: 1;
 	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .cs-inv-col {

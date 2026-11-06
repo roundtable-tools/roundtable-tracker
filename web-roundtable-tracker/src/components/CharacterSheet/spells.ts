@@ -1,7 +1,9 @@
 // Spells page data from Pathbuilder's spellCasters and focus entries.
-// Spellcasting entries with the same tradition, attribute and proficiency
-// share one page (a cleric's "Cleric" and "Cleric Font"), as on the official
-// sheet's page 4.
+// Spellcasting entries with the same tradition, attribute, proficiency and
+// casting type (prepared or spontaneous) share one page (a cleric's "Cleric"
+// and "Cleric Font"), as on the official sheet's page 4. Innate and focus
+// spells join a page with the same tradition, attribute and proficiency of
+// either casting type.
 
 import {
 	abilityMod,
@@ -48,15 +50,19 @@ export function spellPages(build: PathbuilderBuild): SpellPage[] {
 	const casters = build.spellCasters ?? [];
 	const groups = new Map<string, SpellPage>();
 	const firstName = new Map<string, string>();
-	const keyOf = (tradition: string, ability: string, rank: number) =>
-		`${tradition.toLowerCase()}|${ability}|${rank}`;
+	const keyOf = (
+		tradition: string,
+		ability: string,
+		rank: number,
+		prepared: boolean
+	) => `${tradition.toLowerCase()}|${ability}|${rank}|${prepared}`;
 	const pageFor = (
 		tradition: string,
 		ability: AbilityKey,
 		rank: number,
 		prepared: boolean
 	) => {
-		const key = keyOf(tradition, ability, rank);
+		const key = keyOf(tradition, ability, rank, prepared);
 		let page = groups.get(key);
 
 		if (!page) {
@@ -84,13 +90,26 @@ export function spellPages(build: PathbuilderBuild): SpellPage[] {
 		return page;
 	};
 
-	for (const c of casters) {
-		const page = pageFor(
-			c.magicTradition,
-			c.ability,
-			c.proficiency,
-			c.spellcastingType === 'prepared'
-		);
+	// The first page of either casting type, or a new prepared one.
+	const anyPageFor = (tradition: string, ability: AbilityKey, rank: number) =>
+		[...groups.values()].find(
+			(page) =>
+				page.tradition === tradition.toLowerCase() &&
+				page.ability === ability &&
+				page.rank === rank
+		) ?? pageFor(tradition, ability, rank, true);
+
+	// Regular entries first, so innate spells find their pages.
+	const ordered = [
+		...casters.filter((c) => !c.innate),
+		...casters.filter((c) => c.innate),
+	];
+
+	for (const c of ordered) {
+		const prepared = c.spellcastingType === 'prepared';
+		const page = c.innate
+			? anyPageFor(c.magicTradition, c.ability, c.proficiency)
+			: pageFor(c.magicTradition, c.ability, c.proficiency, prepared);
 		const lists = c.prepared?.length ? c.prepared : (c.spells ?? []);
 
 		if (c.innate) {
@@ -105,7 +124,7 @@ export function spellPages(build: PathbuilderBuild): SpellPage[] {
 			continue;
 		}
 
-		const key = keyOf(c.magicTradition, c.ability, c.proficiency);
+		const key = keyOf(c.magicTradition, c.ability, c.proficiency, prepared);
 
 		if (!firstName.has(key)) firstName.set(key, c.name);
 		const first = firstName.get(key) ?? c.name;
@@ -134,11 +153,10 @@ export function spellPages(build: PathbuilderBuild): SpellPage[] {
 			];
 
 			if (names.length === 0) continue;
-			const page = pageFor(
+			const page = anyPageFor(
 				tradition,
 				ability as AbilityKey,
-				entry.proficiency ?? 0,
-				true
+				entry.proficiency ?? 0
 			);
 
 			page.focusSpells.push(...names);

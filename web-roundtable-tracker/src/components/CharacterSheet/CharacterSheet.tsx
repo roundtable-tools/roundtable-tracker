@@ -983,9 +983,11 @@ function ItemRow({ item, worn }: { item: ResolvedItem; worn: boolean }) {
 				</span>
 				{worn && <span className="cs-check-box cs-inv-col" />}
 				<span className="cs-bulk-col">
-					{item.bulkKnown || item.attachments.length
-						? formatBulk(item.bulkWithAttachments)
-						: ''}
+					{item.attachments.length && !item.bulkWithAttachmentsKnown
+						? '?'
+						: item.bulkKnown || item.attachments.length
+							? formatBulk(item.bulkWithAttachments)
+							: ''}
 				</span>
 			</div>
 			{item.attachments.map((a) => (
@@ -1429,7 +1431,9 @@ function SpellsContent({
 					<Section title="Cantrips" className="cs-spell-block cs-grow-2-flex">
 						<div className="cs-row">
 							<Box
-								label="Cantrips per day"
+								// Cantrips have no daily limit: this is how many are
+								// prepared, or known by a spontaneous caster.
+								label={page.prepared ? 'Cantrips prepared' : 'Cantrips known'}
 								value={page.cantripsPerDay ?? NBSP}
 							/>
 							<Box label="Cantrip rank" value={lowRank} />

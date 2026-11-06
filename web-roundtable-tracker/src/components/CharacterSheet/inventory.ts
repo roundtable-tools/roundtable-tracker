@@ -52,6 +52,8 @@ export type ResolvedItem = InventoryItem & {
 	attachments: ResolvedItem[];
 	// totalBulk plus the attachments' Bulk.
 	bulkWithAttachments: number;
+	// False when this item or one of its attachments has unknown Bulk.
+	bulkWithAttachmentsKnown: boolean;
 };
 
 export const bulkToTenths = (bulk: BulkValue) =>
@@ -192,6 +194,7 @@ export function resolveItems(
 			traits: catalog?.traits,
 			attachments: [],
 			bulkWithAttachments: totalBulk,
+			bulkWithAttachmentsKnown: unitBulk !== undefined,
 		};
 	});
 
@@ -215,6 +218,7 @@ export function resolveItems(
 		item.location = parent.location;
 		parent.attachments.push(item);
 		parent.bulkWithAttachments += item.totalBulk;
+		parent.bulkWithAttachmentsKnown &&= item.bulkKnown;
 	}
 
 	return resolved;
@@ -295,20 +299,26 @@ export function groupInventory(
 		([id, c]): InventoryGroup => {
 			const list = at(`container:${id}`);
 			const contentBulk = sum(list);
-			const counted = c.bagOfHolding
-				? 0
-				: c.backpack
-					? Math.max(0, contentBulk - BACKPACK_FREE_TENTHS)
-					: contentBulk;
+			// A container left behind takes its contents with it.
+			const carried =
+				items.find((i) => i.containerId === id)?.location !== 'other';
+			const counted =
+				!carried || c.bagOfHolding
+					? 0
+					: c.backpack
+						? Math.max(0, contentBulk - BACKPACK_FREE_TENTHS)
+						: contentBulk;
 
 			return {
 				location: `container:${id}`,
 				title: c.containerName,
-				hint: c.bagOfHolding
-					? 'Contents add no Bulk'
-					: c.backpack
-						? 'First 2 Bulk inside don’t count'
-						: 'Stowed',
+				hint: !carried
+					? 'Not carried'
+					: c.bagOfHolding
+						? 'Contents add no Bulk'
+						: c.backpack
+							? 'First 2 Bulk inside don’t count'
+							: 'Stowed',
 				items: list,
 				contentBulk,
 				countedBulk: counted,

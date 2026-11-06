@@ -128,6 +128,9 @@ export type PathbuilderBuild = {
 
 export class PathbuilderParseError extends Error {}
 
+const isObject = (value: unknown): value is Record<string, unknown> =>
+	!!value && typeof value === 'object';
+
 export function parsePathbuilderJson(text: string): PathbuilderBuild {
 	let data: unknown;
 
@@ -141,15 +144,16 @@ export function parsePathbuilderJson(text: string): PathbuilderBuild {
 			? (data as { build: unknown }).build
 			: data;
 
+	// The sheet reads these without further checks.
 	if (
-		!build ||
-		typeof build !== 'object' ||
-		!('abilities' in build) ||
-		!('proficiencies' in build) ||
+		!isObject(build) ||
+		!isObject(build.abilities) ||
+		!isObject(build.attributes) ||
+		!isObject(build.proficiencies) ||
 		!('class' in build)
 	) {
 		throw new PathbuilderParseError(
-			'This does not look like a Pathbuilder export (no build with abilities and proficiencies).'
+			'This does not look like a Pathbuilder export (no build with abilities, attributes and proficiencies).'
 		);
 	}
 	const b = build as PathbuilderBuild;
@@ -455,6 +459,30 @@ export function splitBackground(background: string) {
 		: { name: background, choices: undefined };
 }
 
+// AC for an export without Pathbuilder's acTotal: the worn armor's AC bonus,
+// potency rune and Dex cap, and the proficiency of its category.
+function armorClass(
+	build: PathbuilderBuild,
+	mods: Record<AbilityKey, number>,
+	armorStats: ReturnType<typeof wornArmorStats>
+): NonNullable<PathbuilderBuild['acTotal']> {
+	const category = armorStats?.category ?? 'unarmored';
+	const acProfBonus = proficiencyBonus(
+		build.proficiencies[category] ?? 0,
+		build.level
+	);
+	const acAbilityBonus = Math.min(mods.dex, armorStats?.dexCap ?? mods.dex);
+	const acItemBonus = (armorStats?.ac ?? 0) + (findWornArmor(build)?.pot ?? 0);
+
+	return {
+		acProfBonus,
+		acAbilityBonus,
+		acItemBonus,
+		acTotal: 10 + acAbilityBonus + acProfBonus + acItemBonus,
+		shieldBonus: null,
+	};
+}
+
 export type DerivedSheet = ReturnType<typeof deriveSheet>;
 
 export function deriveSheet(build: PathbuilderBuild) {
@@ -469,14 +497,9 @@ export function deriveSheet(build: PathbuilderBuild) {
 		(build.attributes.classhp + build.attributes.bonushpPerLevel + mods.con) *
 			level;
 
-	const ac = build.acTotal ?? {
-		acProfBonus: proficiencyBonus(p.unarmored ?? 0, level),
-		acAbilityBonus: mods.dex,
-		acItemBonus: 0,
-		acTotal: 10 + mods.dex + proficiencyBonus(p.unarmored ?? 0, level),
-		shieldBonus: null,
-	};
 	const wornArmor = findWornArmor(build);
+	const armorStats = wornArmorStats(build);
+	const ac = build.acTotal ?? armorClass(build, mods, armorStats);
 	const shieldArmor = build.armor.find(isShield);
 	const shieldStats = shieldArmor
 		? lookupItem(shieldArmor.name)?.shield
@@ -491,7 +514,6 @@ export function deriveSheet(build: PathbuilderBuild) {
 		hp: shieldStats?.hp,
 		bt: shieldStats?.bt,
 	};
-	const armorStats = wornArmorStats(build);
 	// Meeting the armor's Strength value lowers its Speed penalty by 5 feet.
 	const speedPenalty = armorStats?.speedPenalty
 		? Math.min(

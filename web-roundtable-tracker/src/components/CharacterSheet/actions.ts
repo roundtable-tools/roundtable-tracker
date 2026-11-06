@@ -94,7 +94,10 @@ export function actionOptions(
 	const featNames = [
 		...build.feats.map(([name]) => name),
 		...build.specials,
-	].filter((n, i, all) => all.indexOf(n) === i);
+	].filter(
+		// Feats and specials can spell a name with different apostrophes.
+		(n, i, all) => all.findIndex((m) => normalize(m) === normalize(n)) === i
+	);
 
 	const feats = featNames.flatMap((name): ActionOption[] => {
 		const entry = data.feats[featKey(name)] ?? data.classActions[featKey(name)];
