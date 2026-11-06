@@ -3,6 +3,8 @@
 
 Writes src/components/CharacterSheet/data/pf2eActions.json with:
   - basic: basic and specialty basic actions (Player Core)
+    (every action entry carries its outcome lines, Critical Success to
+    Critical Failure, as `outcomes` when it has them)
   - skills: skill actions per skill, with the trained-only flag
   - exploration: general exploration activities
   - feats: every feat that takes an action (free action, reaction, 1-3
@@ -193,13 +195,18 @@ def rules_body(md):
     return re.split(r"\n\*\*Source\*\*|<title", body)[0]
 
 
+OUTCOME = r"\*\*(Critical Success|Success|Failure|Critical Failure)\*\*"
+
+
 def entry(doc):
     md = doc.get("markdown", "")
-    # Outcome lines (Critical Success, ...) are dropped to keep cards short.
-    body = re.split(
-        r"\n\*\*(?:Critical Success|Success|Failure|Critical Failure)\*\*",
-        rules_body(md),
-    )[0]
+    rules = rules_body(md)
+    # The text up to the outcome lines; the outcomes go in their own field.
+    body = re.split(r"\n" + OUTCOME, rules)[0]
+    outcomes = [
+        {"degree": m.group(1), "text": shorten(clean(m.group(2)))}
+        for m in re.finditer(r"^" + OUTCOME + r"\s*(.+)$", rules, re.M)
+    ]
     body = re.sub(r"\*\*(Trigger|Requirements|Frequency)\*\*[^\n]*\n?", "", body)
     source = doc.get("primary_source_raw") or ""
     source = (source.replace("Player Core 2", "PC2").replace("Player Core", "PC")
@@ -212,6 +219,8 @@ def entry(doc):
         "text": shorten(clean(body)),
         "source": source,
     }
+    if outcomes:
+        out["outcomes"] = outcomes
     for key, label in (("trigger", "Trigger"), ("requirements", "Requirements"),
                        ("frequency", "Frequency")):
         value = field(md, label)

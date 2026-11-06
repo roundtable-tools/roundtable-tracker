@@ -1196,6 +1196,11 @@ function ActionCardView({ card }: { card: ActionCard }) {
 				</div>
 			)}
 			<div className="cs-action-text">{entry.text}</div>
+			{entry.outcomes?.map((o) => (
+				<div key={o.degree}>
+					<b>{o.degree}</b> {o.text}
+				</div>
+			))}
 			{card.modifiedBy.length > 0 && (
 				<div className="cs-action-modified">
 					See also: {card.modifiedBy.join(', ')}

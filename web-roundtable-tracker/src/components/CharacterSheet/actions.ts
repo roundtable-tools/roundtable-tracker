@@ -16,6 +16,8 @@ export type ActionEntry = {
 	requirements?: string;
 	frequency?: string;
 	trained?: boolean;
+	// Degrees of success the action spells out, in AoN's order.
+	outcomes?: { degree: string; text: string }[];
 };
 
 export type ActionData = {
@@ -248,6 +250,24 @@ function mergedRequirements(group: ActionCard[]): string | undefined {
 	return [...shared, ...own].join(' ') || undefined;
 }
 
+const DEGREES = ['Critical Success', 'Success', 'Failure', 'Critical Failure'];
+
+// Each degree of success once, with what each action does on it
+// ("Trip: the target falls prone. Disarm: ...").
+function mergedOutcomes(group: ActionCard[]): ActionEntry['outcomes'] {
+	const outcomes = DEGREES.flatMap((degree) => {
+		const parts = group.flatMap((c) => {
+			const outcome = c.entry.outcomes?.find((o) => o.degree === degree);
+
+			return outcome ? [`${c.entry.name}: ${outcome.text}`] : [];
+		});
+
+		return parts.length ? [{ degree, text: parts.join(' ') }] : [];
+	});
+
+	return outcomes.length ? outcomes : undefined;
+}
+
 function mergeAthleticsManeuvers(cards: ActionCard[]): ActionCard[] {
 	let result = cards;
 
@@ -267,6 +287,7 @@ function mergeAthleticsManeuvers(cards: ActionCard[]): ActionCard[] {
 				source: group[0].entry.source,
 				trained: group.some((c) => c.entry.trained),
 				requirements: mergedRequirements(group),
+				outcomes: mergedOutcomes(group),
 				text: [
 					`Each is an Athletics check against the target's ${defense}.`,
 					...group.map(
@@ -288,8 +309,8 @@ function mergeAthleticsManeuvers(cards: ActionCard[]): ActionCard[] {
 }
 
 // Leap, High Jump and Long Jump share one card when two or more are picked.
-// The rules are written out here with the outcomes the jumps need: AoN's
-// card text drops outcome lines (Player Core pg. 235 and 417).
+// The merged card writes out each jump's rules with its outcomes in one text
+// (Player Core pg. 235 and 417).
 const JUMP_TEXT: Record<string, string> = {
 	Leap: 'Leap (1 action): jump 10 feet horizontally (15 feet if your Speed is 30 feet or more; no horizontal Leap below 15 feet), or 3 feet up and 5 feet across onto an elevated surface.',
 	'High Jump':

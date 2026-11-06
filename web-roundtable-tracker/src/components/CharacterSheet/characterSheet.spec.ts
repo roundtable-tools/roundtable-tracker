@@ -356,6 +356,13 @@ describe('action cards', () => {
 			...entry(name, 'Single Action', ['Attack']),
 			text: `${name} first sentence. More text.`,
 			requirements: `Shared rule. ${name} rule.`,
+			outcomes:
+				name === 'Disarm'
+					? [{ degree: 'Success', text: 'Disarm success.' }]
+					: [
+							{ degree: 'Critical Success', text: `${name} crit.` },
+							{ degree: 'Success', text: `${name} success.` },
+						],
 			trained,
 		});
 		const withManeuvers: ActionData = {
@@ -386,6 +393,13 @@ describe('action cards', () => {
 		expect(trip.entry.requirements).toBe(
 			'Shared rule. Trip: Trip rule. Disarm: Disarm rule.'
 		);
+		expect(trip.entry.outcomes).toEqual([
+			{ degree: 'Critical Success', text: 'Trip: Trip crit.' },
+			{
+				degree: 'Success',
+				text: 'Trip: Trip success. Disarm: Disarm success.',
+			},
+		]);
 		expect(trip.entry.text).toBe(
 			"Each is an Athletics check against the target's Reflex DC. Trip: Trip first sentence. Disarm (trained): Disarm first sentence."
 		);
