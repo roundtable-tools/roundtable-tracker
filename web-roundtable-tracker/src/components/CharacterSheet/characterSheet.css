@@ -1621,14 +1621,23 @@
 }
 
 .cs-action-cost {
-	align-self: center;
 	color: var(--cs-accent);
 	letter-spacing: -0.05em;
 }
 
-/* Action, free action and reaction glyphs on cards: about twice the text. */
+/* The glyphs sit on the title's baseline. */
+.cs-action-cost .cs-glyphs {
+	align-items: baseline;
+}
+
+/* Action, free action and reaction glyphs on cards: about twice the text.
+   The font draws them low in their box: the nudge centers them on the
+   title's capitals, and line-height 0 keeps them from heightening the row. */
 .cs-action-cost .pf2-actions {
 	font-size: 2em;
+	line-height: 0;
+	position: relative;
+	top: 0.07em;
 }
 
 .cs-action-source {
